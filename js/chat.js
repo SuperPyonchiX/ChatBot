@@ -174,15 +174,14 @@ export async function sendMessage(userInput, chatMessages, currentConversation, 
         // チャットタイトルがデフォルトの場合、最初のメッセージをタイトルに設定
         if (currentConversation.title === '新しいチャット' && currentConversation.messages.filter(m => m.role === 'user').length === 1) {
             currentConversation.title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
-            return { titleUpdated: true, response: null };
         }
         
-        // 「入力中...」の表示
+        // 「Thinking...」の表示
         const typingIndicator = document.createElement('div');
         typingIndicator.classList.add('message', 'bot', 'typing-indicator');
         typingIndicator.innerHTML = `
             <div class="message-content">
-                <p>入力中...</p>
+                <p>Thinking<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>
             </div>
         `;
         chatMessages.appendChild(typingIndicator);
@@ -201,7 +200,7 @@ export async function sendMessage(userInput, chatMessages, currentConversation, 
                 currentConversation.model
             );
             
-            // 入力中の表示を削除
+            // Thinkingの表示を削除
             chatMessages.removeChild(typingIndicator);
             
             // ボットの応答を表示
@@ -215,7 +214,7 @@ export async function sendMessage(userInput, chatMessages, currentConversation, 
             
             return { titleUpdated: false, response: botResponse };
         } catch (error) {
-            // 入力中の表示を削除
+            // Thinkingの表示を削除
             chatMessages.removeChild(typingIndicator);
             
             // エラーメッセージを表示

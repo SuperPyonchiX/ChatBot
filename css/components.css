@@ -340,3 +340,41 @@
 .hidden {
     display: none;
 }
+
+/* Thinking アニメーション */
+.typing-dots {
+    display: inline-block;
+}
+
+.typing-dots span {
+    display: inline-block;
+    animation: typingDot 1.4s infinite;
+    opacity: 0;
+    margin: 0 2px;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typingDot {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.typing-indicator {
+    padding: 12px;
+    background-color: var(--message-bot-bg);
+    border-radius: 8px;
+}
+
+.typing-indicator p {
+    color: var(--text-color);
+    font-size: 0.95rem;
+    margin: 0;
+}
