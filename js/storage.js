@@ -3,6 +3,16 @@
  * ローカルストレージの読み書き機能を提供します
  */
 
+// サイドバーの状態を保存
+export function saveSidebarState(isCollapsed) {
+    localStorage.setItem('sidebarCollapsed', isCollapsed);
+}
+
+// サイドバーの状態を読み込む
+export function loadSidebarState() {
+    return localStorage.getItem('sidebarCollapsed') === 'true';
+}
+
 // APIキー設定を読み込む
 export function loadApiSettings() {
     return {

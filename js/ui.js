@@ -3,20 +3,44 @@
  * UI関連の機能を提供します
  */
 
+import * as Storage from './storage.js';
+
 // モバイル用のサイドバートグルボタンを作成
 export function createSidebarToggle() {
     const sidebar = document.querySelector('.sidebar');
     const appContainer = document.querySelector('.app-container');
     
+    // トグルボタンの表示エリアを作成
+    const toggleArea = document.createElement('div');
+    toggleArea.classList.add('sidebar-toggle-area');
+    
     // トグルボタンを作成
     const toggleButton = document.createElement('button');
     toggleButton.classList.add('sidebar-toggle');
     toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
+
+    // 保存された状態を復元
+    const isCollapsed = Storage.loadSidebarState();
+    if (isCollapsed) {
+        sidebar.classList.add('collapsed');
+    } else {
+        toggleButton.classList.add('sidebar-visible');
+    }
+    
     toggleButton.addEventListener('click', function() {
-        sidebar.classList.toggle('show');
+        const isNowCollapsed = sidebar.classList.contains('collapsed');
+        if (isNowCollapsed) {
+            sidebar.classList.remove('collapsed');
+            toggleButton.classList.add('sidebar-visible');
+            Storage.saveSidebarState(false);
+        } else {
+            sidebar.classList.add('collapsed');
+            toggleButton.classList.remove('sidebar-visible');
+            Storage.saveSidebarState(true);
+        }
     });
     
-    // チャットエリアのクリックでサイドバーを閉じる
+    // チャットエリアのクリックでサイドバーを閉じる（モバイルのみ）
     document.querySelector('.chat-container').addEventListener('click', function() {
         if (window.innerWidth <= 576 && sidebar.classList.contains('show')) {
             sidebar.classList.remove('show');
@@ -30,7 +54,9 @@ export function createSidebarToggle() {
         }
     });
     
-    appContainer.appendChild(toggleButton);
+    // トグルボタンを表示エリアに追加
+    toggleArea.appendChild(toggleButton);
+    appContainer.appendChild(toggleArea);
 }
 
 // テキストエリアの高さを自動調整する関数
