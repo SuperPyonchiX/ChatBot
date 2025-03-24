@@ -387,82 +387,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // メッセージを送信する関数
     async function sendMessage() {
-        const message = userInput.value.trim();
         const currentConversation = getConversationById(currentConversationId);
         if (!currentConversation) return;
 
-        if (message) {
-            // ユーザーメッセージを表示
-            Chat.addUserMessage(message, chatMessages);
-            userInput.value = '';
-            userInput.style.height = 'auto';
-
-            // 現在の会話にユーザーメッセージを追加
-            currentConversation.messages.push({
-                role: 'user',
-                content: message
-            });
-
-            // チャットタイトルがデフォルトの場合、最初のメッセージをタイトルに設定
-            if (currentConversation.title === '新しいチャット' && currentConversation.messages.filter(m => m.role === 'user').length === 1) {
-                currentConversation.title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
-                renderChatHistory();
-            }
-            
-            // 「入力中...」の表示
-            const typingIndicator = document.createElement('div');
-            typingIndicator.classList.add('message', 'bot', 'typing-indicator');
-            typingIndicator.innerHTML = `
-                <div class="message-content">
-                    <p>入力中...</p>
-                </div>
-            `;
-            chatMessages.appendChild(typingIndicator);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            try {
-                // モデルを保存
-                currentConversation.model = modelSelect.value;
-                
-                // システムプロンプトを追加
-                const messagesWithSystem = [
-                    { role: 'system', content: systemPrompt },
-                    ...currentConversation.messages.filter(m => m.role !== 'system')
-                ];
-                
-                // API呼び出し
-                const botResponse = await callOpenAIAPI(messagesWithSystem, currentConversation.model);
-                
-                // 入力中の表示を削除
-                chatMessages.removeChild(typingIndicator);
-                
-                // ボットの応答を表示
-                Chat.addBotMessage(botResponse, chatMessages);
-                
-                // 応答をメッセージ履歴に追加
-                currentConversation.messages.push({
-                    role: 'assistant',
-                    content: botResponse
-                });
-                
-                // 会話を保存
-                Storage.saveConversations(conversations);
-            } catch (error) {
-                // 入力中の表示を削除
-                chatMessages.removeChild(typingIndicator);
-                
-                // エラーメッセージを表示
-                const errorMessageDiv = document.createElement('div');
-                errorMessageDiv.classList.add('message', 'bot', 'error');
-                errorMessageDiv.innerHTML = `
-                    <div class="message-content">
-                        <p>エラーが発生しました: ${error.message}</p>
-                        <button id="showApiSettings" class="error-action">API設定を確認する</button>
-                    </div>
-                `;
-                chatMessages.appendChild(errorMessageDiv);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
+        const result = await Chat.sendMessage(userInput, chatMessages, currentConversation, apiSettings, systemPrompt);
+        
+        if (result.titleUpdated) {
+            renderChatHistory();
+        } else if (!result.error) {
+            // 会話を保存
+            Storage.saveConversations(conversations);
         }
     }
 });
