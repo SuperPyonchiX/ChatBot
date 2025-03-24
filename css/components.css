@@ -1,0 +1,342 @@
+/* ボタンスタイル */
+.new-chat-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #343541;
+    color: white;
+    border: 1px solid #565869;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.new-chat-button:hover {
+    background-color: #40414f;
+}
+
+.history-action-button {
+    background: none;
+    border: none;
+    color: #c5c5d2;
+    padding: 5px;
+    margin-right: 5px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.history-action-button:hover {
+    opacity: 1;
+}
+
+/* サイドバーフッターボタン */
+.clear-history-button, .settings-button {
+    width: 40px;
+    height: 40px;
+    background: none;
+    color: #c5c5d2;
+    border: 1px solid #565869;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.clear-history-button:hover, .settings-button:hover {
+    background-color: #343541;
+    transform: scale(1.05);
+}
+
+/* 送信ボタン */
+#sendButton {
+    background-color: #404040;
+    color: #e0e0e0;
+    border: 1px solid #505050;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    margin-left: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+#sendButton:hover {
+    background-color: #505050;
+}
+
+#sendButton:disabled {
+    background-color: #2d2d2d;
+    border-color: #363636;
+    color: #666;
+    cursor: not-allowed;
+}
+
+/* フォーム要素スタイル */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #e0e0e0;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* モデルセレクター */
+.model-selector select {
+    padding: 5px 10px;
+    border-radius: 4px;
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border: 1px solid #404040;
+    outline: none;
+    cursor: pointer;
+}
+
+.model-selector select:hover {
+    background-color: #404040;
+}
+
+/* モーダルスタイル */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    padding: 25px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    color: #e0e0e0;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+#saveApiKey, #saveSystemPrompt, #saveRenameChat {
+    background-color: #404040;
+    color: #e0e0e0;
+    border: 1px solid #505050;
+    border-radius: 4px;
+    padding: 8px 15px;
+}
+
+#saveApiKey:hover, #saveSystemPrompt:hover, #saveRenameChat:hover {
+    background-color: #505050;
+}
+
+#cancelApiKey, #cancelSystemPrompt, #cancelRenameChat {
+    background-color: #2d2d2d;
+    border: 1px solid #404040;
+    color: #e0e0e0;
+    border-radius: 4px;
+    padding: 8px 15px;
+}
+
+#cancelApiKey:hover, #cancelSystemPrompt:hover, #cancelRenameChat:hover {
+    background-color: #363636;
+}
+
+/* 設定メニュー */
+.settings-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.settings-menu {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background-color: #2d2d2d;
+    min-width: 200px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #404040;
+    border-radius: 4px;
+    z-index: 1000;
+    margin-bottom: 8px;
+}
+
+.settings-menu.show {
+    display: block;
+}
+
+.settings-menu button {
+    width: 100%;
+    padding: 10px 15px;
+    border: none;
+    background: none;
+    color: #e0e0e0;
+    text-align: left;
+    transition: background-color 0.2s;
+}
+
+.settings-menu button:hover {
+    background-color: #404040;
+}
+
+/* テンプレート一覧エリアのスタイル */
+.template-list-title {
+    margin-bottom: 5px;
+    font-size: 1rem;
+    color: #e0e0e0;
+}
+
+.template-list-area {
+    margin: 5px 0 15px 0;
+    padding: 10px;
+    background-color: #1e1e1e;
+    border-radius: 4px;
+    border: 1px solid #404040;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.template-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 5px;
+    background-color: #2d2d2d;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.template-item:hover {
+    background-color: #363636;
+}
+
+.template-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.template-delete-button {
+    background: none;
+    border: none;
+    color: #888;
+    padding: 4px 8px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s, color 0.2s;
+}
+
+.template-delete-button:hover {
+    opacity: 1;
+    color: #e25555;
+}
+
+.secondary-button {
+    background-color: #363636;
+    border: 1px solid #505050;
+    color: #e0e0e0;
+    border-radius: 4px;
+    padding: 5px 10px;
+    margin-top: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.secondary-button:hover {
+    background-color: #404040;
+}
+
+/* Azureモデルエンドポイント設定部分のスタイル */
+.azure-model-endpoints {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #404040;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #1e1e1e;
+}
+
+.azure-model-endpoints .form-group {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #404040;
+}
+
+.azure-model-endpoints .form-group:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.azure-model-endpoints label {
+    font-weight: 500;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+}
+
+.azure-model-endpoints input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+.radio-group {
+    display: flex;
+    gap: 15px;
+}
+
+.hidden {
+    display: none;
+}

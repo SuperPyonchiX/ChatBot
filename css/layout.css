@@ -1,0 +1,160 @@
+/* アプリケーションのレイアウト */
+.app-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    background-color: #1e1e1e;
+}
+
+/* サイドバーレイアウト */
+.sidebar {
+    width: 260px;
+    background-color: #202123;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* サイドバーフッター */
+.sidebar-footer {
+    padding: 15px;
+    border-top: 1px solid #4d4d4f;
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+}
+
+/* チャットコンテナレイアウト */
+.chat-container {
+    flex: 1;
+    background-color: #2d2d2d;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* チャットヘッダー */
+.chat-header {
+    background-color: #363636;
+    color: #e0e0e0;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* チャットメッセージエリアレイアウト */
+.chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background-color: #1e1e1e;
+}
+
+/* チャット入力エリアレイアウト */
+.chat-input-container {
+    display: flex;
+    padding: 15px;
+    border-top: 1px solid #404040;
+    background-color: #2d2d2d;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    position: relative;
+    background-color: #1e1e1e;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+#userInput {
+    flex: 1;
+    border: none;
+    padding: 8px;
+    resize: none;
+    font-size: 0.95rem;
+    outline: none;
+    overflow-y: auto;
+    max-height: 150px;
+    line-height: 1.4;
+    background-color: transparent;
+    color: #e0e0e0;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 200px;
+    }
+    
+    .chat-messages {
+        padding: 10px;
+    }
+    
+    .message {
+        max-width: 90%;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 15px;
+    }
+}
+
+/* 小さい画面でのサイドバー切り替え */
+@media (max-width: 576px) {
+    .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 80%;
+        height: 100%;
+        z-index: 100;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .sidebar-toggle {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 101;
+        background-color: #10a37f;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+}
