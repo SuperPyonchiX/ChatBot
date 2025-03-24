@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatBot</title>
+    <link rel="icon" href="ChatBot.png" type="image/png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Prism.jsのスタイルシート -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/show-language/prism-show-language.min.css">
+    <!-- マークダウンライブラリを先に読み込み -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // マークダウン設定をページロード時に初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof marked !== 'undefined') {
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true,
+                    headerIds: false,
+                    mangle: false,
+                    sanitize: false,
+                    highlight: function(code, lang) {
+                        if (Prism.languages[lang]) {
+                            return Prism.highlight(code, Prism.languages[lang], lang);
+                        } else {
+                            return code;
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- サイドバー -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <button id="newChatButton" class="new-chat-button">
+                    <i class="fas fa-plus"></i> 新しいチャット
+                </button>
+            </div>
+            <div class="chat-history" id="chatHistory">
+                <!-- チャット履歴はJSで動的に追加 -->
+            </div>
+            <div class="sidebar-footer">
+                <button id="clearHistoryButton" class="clear-history-button" title="履歴を一括クリア">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <div class="settings-dropdown">
+                    <button id="settingsButton" class="settings-button" title="設定">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <div id="settingsMenu" class="settings-menu">
+                        <button id="openSystemPromptSettings">システムプロンプト設定</button>
+                        <button id="openApiSettings">API設定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- メインチャットエリア -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <h1>ChatBot</h1>
+                <div class="model-selector">
+                    <select id="modelSelect">
+                        <option value="gpt-4o-mini">gpt-4o-mini</option>
+                        <option value="gpt-4o">gpt-4o</option>
+                        <option value="o1-mini">o1-mini</option>
+                        <option value="o1">o1</option>
+                    </select>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+            </div>
+            <div class="chat-input-container">
+                <div class="input-wrapper">
+                    <textarea id="userInput" placeholder="メッセージを入力..." rows="1"></textarea>
+                    <label class="file-upload-label" title="ファイルを添付する">
+                        <input type="file" id="fileInput" multiple>
+                        <i class="fas fa-paperclip"></i>
+                    </label>
+                </div>
+                <button id="sendButton">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APIキー設定モーダル -->
+    <div id="apiKeyModal" class="modal">
+        <div class="modal-content">
+            <h2>API設定</h2>
+            <div class="form-group">
+                <label>API種類:</label>
+                <div class="radio-group">
+                    <input type="radio" id="openaiRadio" name="apiType" value="openai" checked>
+                    <label for="openaiRadio">OpenAI</label>
+                    <input type="radio" id="azureRadio" name="apiType" value="azure">
+                    <label for="azureRadio">Azure OpenAI</label>
+                </div>
+            </div>
+            <div id="openaiSettings" class="form-group">
+                <label for="apiKeyInput">OpenAI APIキー:</label>
+                <input type="password" id="apiKeyInput" placeholder="sk-...">
+            </div>
+            <div id="azureSettings" class="hidden">
+                <div class="form-group">
+                    <label for="azureApiKeyInput">Azure APIキー:</label>
+                    <input type="password" id="azureApiKeyInput" placeholder="Azure APIキーを入力">
+                </div>
+                <div class="azure-model-endpoints">
+                    <div class="form-group">
+                        <label for="azureEndpointGpt4oMini">gpt-4o-mini エンドポイントURL:</label>
+                        <input type="text" id="azureEndpointGpt4oMini" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
+                    </div>
+                    <div class="form-group">
+                        <label for="azureEndpointGpt4o">gpt-4o エンドポイントURL:</label>
+                        <input type="text" id="azureEndpointGpt4o" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
+                    </div>
+                    <div class="form-group">
+                        <label for="azureEndpointO1Mini">o1-mini エンドポイントURL:</label>
+                        <input type="text" id="azureEndpointO1Mini" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
+                    </div>
+                    <div class="form-group">
+                        <label for="azureEndpointO1">o1 エンドポイントURL:</label>
+                        <input type="text" id="azureEndpointO1" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="saveApiKey">保存</button>
+                <button id="cancelApiKey">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- チャット名変更モーダル -->
+    <div id="renameChatModal" class="modal">
+        <div class="modal-content">
+            <h2>チャット名を変更</h2>
+            <div class="form-group">
+                <label for="chatTitleInput">タイトル:</label>
+                <input type="text" id="chatTitleInput" placeholder="チャットタイトル">
+            </div>
+            <div class="modal-buttons">
+                <button id="saveRenameChat">保存</button>
+                <button id="cancelRenameChat">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- システムプロンプト設定モーダル -->
+    <div id="systemPromptModal" class="modal">
+        <div class="modal-content">
+            <h2>システムプロンプト設定</h2>
+            <h3 class="template-list-title">テンプレート一覧</h3>
+            <div id="templateListArea" class="template-list-area">
+                <!-- テンプレート一覧はJSで動的に生成 -->
+            </div>
+            <div class="form-group">
+                <label for="systemPromptInput">システムプロンプト:</label>
+                <textarea id="systemPromptInput" rows="10" placeholder="システムプロンプトを入力..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="newTemplateName">新規テンプレート名:</label>
+                <input type="text" id="newTemplateName" placeholder="新しいテンプレート名">
+                <button id="saveNewTemplate" class="secondary-button">新規テンプレートとして保存</button>
+            </div>
+            <div class="modal-buttons">
+                <button id="saveSystemPrompt">保存</button>
+                <button id="cancelSystemPrompt">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+</body>
+</html>
