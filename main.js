@@ -3,13 +3,6 @@
  * アプリケーションのエントリーポイントとなるファイルです
  */
 
-import * as UI from './js/ui.js';
-import * as Chat from './js/chat.js';
-import * as Storage from './js/storage.js';
-import * as FileHandler from './js/fileHandler.js';
-import * as Markdown from './js/markdown.js';
-import { callOpenAIAPI } from './js/api.js';
-
 document.addEventListener('DOMContentLoaded', function() {
     // DOM要素
     const chatMessages = document.getElementById('chatMessages');
@@ -49,24 +42,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // 状態変数
     let conversations = [];
     let currentConversationId = null;
-    let apiSettings = Storage.loadApiSettings();
-    let systemPrompt = Storage.loadSystemPrompt();
-    let promptTemplates = Storage.loadPromptTemplates();
+    let apiSettings = window.Storage.loadApiSettings();
+    let systemPrompt = window.Storage.loadSystemPrompt();
+    let promptTemplates = window.Storage.loadPromptTemplates();
 
     // グローバルなapiSettingsを設定
     window.apiSettings = apiSettings;
 
     // モバイル用のサイドバートグルボタンを追加
-    UI.createSidebarToggle();
+    window.UI.createSidebarToggle();
 
     // 初期化
     init();
 
     // 外部ライブラリの読み込み - Markdown用
-    Markdown.loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js')
+    window.Markdown.loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js')
         .then(() => {
             console.log('Marked.js loaded successfully');
-            Markdown.initializeMarkdown();
+            window.Markdown.initializeMarkdown();
         })
         .catch(err => console.error('Failed to load Marked.js:', err));
 
@@ -74,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function init() {
         // API設定がなければモーダルを表示
         if (!apiSettings.openaiApiKey && !apiSettings.azureApiKey) {
-            UI.showApiKeyModal(apiSettings);
+            window.UI.showApiKeyModal(apiSettings);
         }
 
         // 会話の履歴を読み込む
@@ -86,13 +79,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 会話履歴を読み込む
     function loadConversations() {
-        const savedConversations = Storage.loadConversations();
+        const savedConversations = window.Storage.loadConversations();
         if (savedConversations && savedConversations.length > 0) {
             conversations = savedConversations;
             renderChatHistory();
         }
 
-        currentConversationId = Storage.loadCurrentConversationId();
+        currentConversationId = window.Storage.loadCurrentConversationId();
 
         // 新しい会話を作成
         if (conversations.length === 0) {
@@ -116,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // テキストエリアの入力イベント（自動リサイズ）
-        userInput.addEventListener('input', () => UI.autoResizeTextarea(userInput));
+        userInput.addEventListener('input', () => window.UI.autoResizeTextarea(userInput));
 
         // 新しいチャットボタン
         newChatButton.addEventListener('click', createNewConversation);
@@ -125,16 +118,16 @@ document.addEventListener('DOMContentLoaded', function() {
         clearHistoryButton.addEventListener('click', clearAllHistory);
 
         // APIキー関連
-        openaiRadio.addEventListener('change', UI.toggleAzureSettings);
-        azureRadio.addEventListener('change', UI.toggleAzureSettings);
+        openaiRadio.addEventListener('change', window.UI.toggleAzureSettings);
+        azureRadio.addEventListener('change', window.UI.toggleAzureSettings);
         saveApiKey.addEventListener('click', saveApiSettings);
-        cancelApiKey.addEventListener('click', UI.hideApiKeyModal);
+        cancelApiKey.addEventListener('click', window.UI.hideApiKeyModal);
 
         // 名前変更モーダルの保存ボタン
         document.getElementById('saveRenameChat').addEventListener('click', saveRenamedChat);
         
         // 名前変更モーダルのキャンセルボタン
-        document.getElementById('cancelRenameChat').addEventListener('click', UI.hideRenameChatModal);
+        document.getElementById('cancelRenameChat').addEventListener('click', window.UI.hideRenameChatModal);
 
         // 設定メニューのイベントリスナー
         settingsButton.addEventListener('click', (e) => {
@@ -150,25 +143,25 @@ document.addEventListener('DOMContentLoaded', function() {
         // システムプロンプト設定を開く
         openSystemPromptSettings.addEventListener('click', () => {
             settingsMenu.classList.remove('show');
-            UI.showSystemPromptModal(systemPrompt, loadPromptTemplates);
+            window.UI.showSystemPromptModal(systemPrompt, loadPromptTemplates);
         });
 
         // API設定を開く
         openApiSettings.addEventListener('click', () => {
             settingsMenu.classList.remove('show');
-            UI.showApiKeyModal(apiSettings);
+            window.UI.showApiKeyModal(apiSettings);
         });
 
         // システムプロンプトを保存
         saveSystemPrompt.addEventListener('click', () => {
             systemPrompt = systemPromptInput.value;
-            Storage.saveSystemPrompt(systemPrompt);
-            UI.hideSystemPromptModal();
+            window.Storage.saveSystemPrompt(systemPrompt);
+            window.UI.hideSystemPromptModal();
         });
 
         // システムプロンプト設定をキャンセル
         cancelSystemPrompt.addEventListener('click', () => {
-            UI.hideSystemPromptModal();
+            window.UI.hideSystemPromptModal();
         });
 
         // 新規テンプレートとして保存
@@ -176,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const name = newTemplateName.value.trim();
             if (name) {
                 promptTemplates[name] = systemPromptInput.value;
-                Storage.savePromptTemplates(promptTemplates);
+                window.Storage.savePromptTemplates(promptTemplates);
                 loadPromptTemplates();
                 newTemplateName.value = '';
             }
@@ -190,12 +183,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // ファイル選択イベント
-        fileInput.addEventListener('change', FileHandler.handleFileSelect);
+        fileInput.addEventListener('change', window.FileHandler.handleFileSelect);
 
         // エラー時のAPIキー設定ボタンイベント処理
         document.addEventListener('click', function(e) {
             if (e.target && e.target.id === 'showApiSettings') {
-                UI.showApiKeyModal(apiSettings);
+                window.UI.showApiKeyModal(apiSettings);
             }
         });
     }
@@ -218,8 +211,8 @@ document.addEventListener('DOMContentLoaded', function() {
         window.apiSettings = apiSettings;
 
         // ローカルストレージに保存
-        Storage.saveApiSettings(apiSettings);
-        UI.hideApiKeyModal();
+        window.Storage.saveApiSettings(apiSettings);
+        window.UI.hideApiKeyModal();
     }
 
     // 現在の会話を読み込む
@@ -229,16 +222,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // 会話履歴から現在の会話を選択状態にする
-        Chat.updateActiveChatInHistory(currentConversationId);
+        window.Chat.updateActiveChatInHistory(currentConversationId);
 
         // チャットメッセージを表示
-        Chat.displayConversation(getConversationById(currentConversationId), chatMessages, modelSelect);
+        window.Chat.displayConversation(getConversationById(currentConversationId), chatMessages, modelSelect);
     }
 
     // プロンプトテンプレートを読み込む関数
     function loadPromptTemplates() {
         // テンプレート一覧を更新
-        UI.updateTemplateList(
+        window.UI.updateTemplateList(
             promptTemplates, 
             (templateName) => {
                 systemPromptInput.value = promptTemplates[templateName];
@@ -267,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // テンプレートを削除
             delete promptTemplates[templateName];
-            Storage.savePromptTemplates(promptTemplates);
+            window.Storage.savePromptTemplates(promptTemplates);
             
             // テンプレート一覧を更新
             loadPromptTemplates();
@@ -277,10 +270,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // 会話を切り替える
     function switchConversation(conversationId) {
         currentConversationId = conversationId;
-        Storage.saveCurrentConversationId(currentConversationId);
+        window.Storage.saveCurrentConversationId(currentConversationId);
         
-        Chat.updateActiveChatInHistory(currentConversationId);
-        Chat.displayConversation(getConversationById(currentConversationId), chatMessages, modelSelect);
+        window.Chat.updateActiveChatInHistory(currentConversationId);
+        window.Chat.displayConversation(getConversationById(currentConversationId), chatMessages, modelSelect);
     }
 
     // 新しい会話を作成
@@ -298,13 +291,13 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         conversations.unshift(newConversation);
-        Storage.saveConversations(conversations);
+        window.Storage.saveConversations(conversations);
         
         currentConversationId = newConversation.id;
-        Storage.saveCurrentConversationId(currentConversationId);
+        window.Storage.saveCurrentConversationId(currentConversationId);
         
         renderChatHistory();
-        Chat.displayConversation(newConversation, chatMessages, modelSelect);
+        window.Chat.displayConversation(newConversation, chatMessages, modelSelect);
     }
 
     // IDで会話を取得
@@ -314,12 +307,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 会話履歴を表示する
     function renderChatHistory() {
-        Chat.renderChatHistory(
+        window.Chat.renderChatHistory(
             conversations, 
             currentConversationId, 
             chatHistory, 
             switchConversation, 
-            UI.showRenameChatModal, 
+            window.UI.showRenameChatModal, 
             deleteConversation
         );
     }
@@ -333,15 +326,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // チャットを削除
             conversations = conversations.filter(conv => conv.id !== conversationId);
-            Storage.saveConversations(conversations);
+            window.Storage.saveConversations(conversations);
             
             // 削除したチャットが現在表示中だった場合、別のチャットに切り替える
             if (isCurrentChat) {
                 if (conversations.length > 0) {
                     // 最初のチャットに切り替え
                     currentConversationId = conversations[0].id;
-                    Storage.saveCurrentConversationId(currentConversationId);
-                    Chat.displayConversation(getConversationById(currentConversationId), chatMessages, modelSelect);
+                    window.Storage.saveCurrentConversationId(currentConversationId);
+                    window.Chat.displayConversation(getConversationById(currentConversationId), chatMessages, modelSelect);
                 } else {
                     // チャットがなくなった場合は新しいチャットを作成
                     createNewConversation();
@@ -358,7 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function clearAllHistory() {
         if (confirm('すべての会話履歴を削除してもよろしいですか？')) {
             conversations = [];
-            Storage.saveConversations(conversations);
+            window.Storage.saveConversations(conversations);
             createNewConversation();
         }
     }
@@ -376,13 +369,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const conversation = getConversationById(conversationId);
             if (conversation) {
                 conversation.title = newTitle;
-                Storage.saveConversations(conversations);
+                window.Storage.saveConversations(conversations);
                 renderChatHistory();
             }
         }
         
         // モーダルを閉じる
-        UI.hideRenameChatModal();
+        window.UI.hideRenameChatModal();
     }
 
     // メッセージを送信する関数
@@ -390,13 +383,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentConversation = getConversationById(currentConversationId);
         if (!currentConversation) return;
 
-        const result = await Chat.sendMessage(userInput, chatMessages, currentConversation, apiSettings, systemPrompt);
+        const result = await window.Chat.sendMessage(userInput, chatMessages, currentConversation, apiSettings, systemPrompt);
         
         if (result.titleUpdated) {
             renderChatHistory();
         } else if (!result.error) {
             // 会話を保存
-            Storage.saveConversations(conversations);
+            window.Storage.saveConversations(conversations);
         }
     }
 });
