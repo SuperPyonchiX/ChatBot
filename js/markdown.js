@@ -5,25 +5,118 @@
 
 // グローバルスコープに関数を公開
 window.Markdown = {
-    // Markdownをレンダリングする関数
-    renderMarkdown: function(text) {
+    // マークダウンライブラリの初期化
+    initializeMarkdown: function() {
+        if (typeof marked !== 'undefined') {
+            console.log('Marked.js初期化開始');
+            
+            // デフォルトの言語エイリアスを設定
+            const languageAliases = {
+                'c++': 'cpp',
+                'c#': 'csharp',
+                'cs': 'csharp', 
+                'vb': 'basic',
+                'vba': 'basic',  // VBAはbasicとして処理
+                'vb.net': 'vbnet',
+                'visualbasic': 'vbnet',
+                'basic': 'basic',
+                'bash': 'shell',
+                'sh': 'shell',
+                'js': 'javascript',
+                'ts': 'typescript'
+            };
+            
+            // marked.jsのレンダラーをカスタマイズ
+            const renderer = new marked.Renderer();
+            
+            // コードブロックのレンダリング処理をカスタマイズ
+            renderer.code = (code, lang, escaped) => {
+                console.log('コードブロックのレンダリング:', { 言語: lang });
+                
+                // 言語名の正規化とエイリアス解決
+                let normalizedLang = lang ? lang.toLowerCase() : '';
+                if (languageAliases[normalizedLang]) {
+                    normalizedLang = languageAliases[normalizedLang];
+                    console.log('言語エイリアス変換:', { 元の言語: lang, 変換後: normalizedLang });
+                }
+                
+                // シンタックスハイライトの適用
+                let highlightedCode = code;
+                if (normalizedLang && Prism.languages[normalizedLang]) {
+                    try {
+                        highlightedCode = Prism.highlight(code, Prism.languages[normalizedLang], normalizedLang);
+                        console.log('シンタックスハイライト適用成功:', normalizedLang);
+                    } catch (e) {
+                        console.error('シンタックスハイライト適用エラー:', e);
+                    }
+                }
+                
+                // コードブロックのHTML生成
+                return `<pre class="language-${normalizedLang}"><code class="language-${normalizedLang}">${highlightedCode}</code></pre>`;
+            };
+            
+            // marked.jsの設定を適用
+            marked.setOptions({
+                renderer: renderer,
+                langPrefix: 'language-',
+                breaks: true,
+                gfm: true,
+                headerIds: false,
+                mangle: false,
+                sanitize: false
+            });
+            
+            console.log('Marked.js初期化完了');
+        }
+    },
+    
+    // シンタックスハイライト適用関数
+    highlight: function(code, lang) {
+        if (!Prism || !lang || !Prism.languages[lang]) {
+            return Prism.util.encode(code);
+        }
+        
         try {
-            if (typeof marked !== 'undefined') {
-                return marked.parse(text);
-            } else {
-                console.warn('Marked library is not loaded yet');
-                return this.escapeHtml(text).replace(/\n/g, '<br>');
-            }
+            return Prism.highlight(code, Prism.languages[lang], lang);
         } catch (e) {
-            console.error('Markdown rendering error:', e);
-            return this.escapeHtml(text).replace(/\n/g, '<br>');
+            console.error('ハイライト処理エラー:', e);
+            return Prism.util.encode(code);
         }
     },
 
+    // マークダウンをレンダリングする関数
+    renderMarkdown: function(text) {
+        try {
+            if (typeof marked === 'undefined') {
+                console.warn('Marked.jsが読み込まれていません');
+                return this.escapeHtml(text).replace(/\n/g, '<br>');
+            }
+            
+            // コードブロックの言語指定を抽出してログ出力
+            const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+            let match;
+            while ((match = codeBlockRegex.exec(text)) !== null) {
+                console.log('コードブロック検出:', {
+                    言語: match[1] || 'なし',
+                    コードの一部: match[2].slice(0, 50) + '...'
+                });
+            }
+            
+            const result = marked.parse(text);
+            return result;
+        } catch (e) {
+            console.error('Markdownレンダリングエラー:', e);
+            return this.escapeHtml(text).replace(/\n/g, '<br>');
+        }
+    },
+    
     // コードブロックにコピーボタンを追加する関数
     addCodeBlockCopyButtons: function(messageElement) {
         const codeBlocks = messageElement.querySelectorAll('pre code');
+        console.log('コードブロック数:', codeBlocks.length);
+        
         codeBlocks.forEach((codeBlock, index) => {
+            console.log(`コードブロック${index + 1}のクラス:`, codeBlock.className);
             const pre = codeBlock.parentElement;
             
             // すでにラッパーがある場合はスキップ
@@ -104,28 +197,16 @@ window.Markdown = {
         });
     },
 
-    // マークダウンライブラリの初期化
-    initializeMarkdown: function() {
-        // マークダウンのレンダリングオプション設定
-        if (typeof marked !== 'undefined') {
-            marked.setOptions({
-                breaks: true,        // 改行を認識
-                gfm: true,           // GitHub Flavored Markdown
-                headerIds: false,    // ヘッダーIDを無効化
-                mangle: false,       // リンクを難読化しない
-                sanitize: false,     // HTMLタグを許可
-                highlight: function(code, lang) {
-                    if (Prism && Prism.languages && Prism.languages[lang]) {
-                        try {
-                            return Prism.highlight(code, Prism.languages[lang], lang);
-                        } catch (e) {
-                            console.error('Syntax highlighting error:', e);
-                            return code;
-                        }
-                    }
-                    return code;
-                }
-            });
+    // 不明な言語でもコードブロックを適切に処理
+    ensurePrismLanguages: function() {
+        if (typeof Prism !== 'undefined') {
+            // text言語が存在しない場合、空のオブジェクトを作成
+            if (!Prism.languages.text) {
+                Prism.languages.text = {};
+            }
+            
+            // コードブロックがすでにレンダリングされている場合はハイライト
+            Prism.highlightAll();
         }
     }
 };

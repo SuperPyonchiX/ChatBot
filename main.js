@@ -414,6 +414,19 @@ document.addEventListener('DOMContentLoaded', function() {
             window.Storage.saveConversations(conversations);
         }
         
+        // シンタックスハイライトを適用
+        setTimeout(() => {
+            console.log("Prism言語一覧:", Object.keys(Prism.languages));
+            window.Markdown.ensurePrismLanguages();
+            
+            // 各コードブロックの言語属性をログに出力（デバッグ用）
+            const codeBlocks = document.querySelectorAll('pre code');
+            codeBlocks.forEach((block, idx) => {
+                const className = block.className;
+                console.log(`コードブロック${idx+1}のクラス:`, className);
+            });
+        }, 500);
+        
         // 送信後は添付ファイルをクリア
         currentAttachments = [];
         window.FileHandler.clearSelectedFiles();
