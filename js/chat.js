@@ -68,24 +68,6 @@ window.Chat = {
         // コードブロックにコピーボタンを追加とシンタックスハイライトの適用
         setTimeout(() => {
             window.Markdown.addCodeBlockCopyButtons(messageDiv);
-            
-            // VBAコードブロックの言語クラスを修正
-            const codeBlocks = messageDiv.querySelectorAll('pre code');
-            codeBlocks.forEach((block) => {
-                const classes = block.className.split(' ');
-                for (const cls of classes) {
-                    if (cls.startsWith('language-')) {
-                        const lang = cls.replace('language-', '');
-                        if (lang === 'vba') {
-                            block.className = block.className.replace('language-vba', 'language-basic');
-                            block.parentElement.className = block.parentElement.className.replace('language-vba', 'language-basic');
-                        }
-                        break;
-                    }
-                }
-            });
-            
-            // シンタックスハイライトを適用
             Prism.highlightAllUnder(messageDiv);
         }, 10);
         
@@ -140,24 +122,6 @@ window.Chat = {
         // コードブロックにコピーボタンを追加とシンタックスハイライトの適用
         setTimeout(() => {
             window.Markdown.addCodeBlockCopyButtons(messageDiv);
-            
-            // VBAコードブロックの言語クラスを修正
-            const codeBlocks = messageDiv.querySelectorAll('pre code');
-            codeBlocks.forEach((block) => {
-                const classes = block.className.split(' ');
-                for (const cls of classes) {
-                    if (cls.startsWith('language-')) {
-                        const lang = cls.replace('language-', '');
-                        if (lang === 'vba') {
-                            block.className = block.className.replace('language-vba', 'language-basic');
-                            block.parentElement.className = block.parentElement.className.replace('language-vba', 'language-basic');
-                        }
-                        break;
-                    }
-                }
-            });
-            
-            // シンタックスハイライトを適用
             Prism.highlightAllUnder(messageDiv);
         }, 10);
         
@@ -184,43 +148,8 @@ window.Chat = {
         
         // モデルを設定
         modelSelect.value = conversation.model || 'gpt-4o-mini';
-        
-        // シンタックスハイライトを再適用（遅延実行）
-        setTimeout(() => {
-            if (typeof Prism !== 'undefined') {
-                try {
-                    console.log('シンタックスハイライト再適用');
-                    // まず、コードブロックの言語クラスを修正
-                    const codeBlocks = chatMessages.querySelectorAll('pre code');
-                    codeBlocks.forEach((block) => {
-                        const classes = block.className.split(' ');
-                        for (const cls of classes) {
-                            if (cls.startsWith('language-')) {
-                                const lang = cls.replace('language-', '');
-                                if (lang === 'vba') {
-                                    // VBAをbasicとして処理
-                                    block.className = block.className.replace('language-vba', 'language-basic');
-                                    block.parentElement.className = block.parentElement.className.replace('language-vba', 'language-basic');
-                                }
-                                break;
-                            }
-                        }
-                    });
-                    
-                    // シンタックスハイライトを適用
-                    Prism.highlightAllUnder(chatMessages);
-                    
-                    // クラス名を確認用にログ出力
-                    codeBlocks.forEach((block, index) => {
-                        console.log(`再適用後のコードブロック${index + 1}のクラス:`, block.className);
-                    });
-                } catch (e) {
-                    console.error('シンタックスハイライト適用エラー:', e);
-                }
-            } else {
-                console.warn('Prism.jsが利用できません');
-            }
-        }, 100);
+        // シンタックスハイライトを再適用
+        Prism.highlightAll();
     },
 
     // メッセージを送信する関数
