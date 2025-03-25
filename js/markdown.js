@@ -10,22 +10,6 @@ window.Markdown = {
         if (typeof marked !== 'undefined') {
             console.log('Marked.js初期化開始');
             
-            // デフォルトの言語エイリアスを設定
-            const languageAliases = {
-                'c++': 'cpp',
-                'c#': 'csharp',
-                'cs': 'csharp', 
-                'vb': 'basic',
-                'vba': 'basic',  // VBAはbasicとして処理
-                'vb.net': 'vbnet',
-                'visualbasic': 'vbnet',
-                'basic': 'basic',
-                'bash': 'shell',
-                'sh': 'shell',
-                'js': 'javascript',
-                'ts': 'typescript'
-            };
-            
             // marked.jsのレンダラーをカスタマイズ
             const renderer = new marked.Renderer();
             
@@ -33,19 +17,14 @@ window.Markdown = {
             renderer.code = (code, lang, escaped) => {
                 console.log('コードブロックのレンダリング:', { 言語: lang });
                 
-                // 言語名の正規化とエイリアス解決
+                // 言語名を小文字に変換
                 let normalizedLang = lang ? lang.toLowerCase() : '';
-                if (languageAliases[normalizedLang]) {
-                    normalizedLang = languageAliases[normalizedLang];
-                    console.log('言語エイリアス変換:', { 元の言語: lang, 変換後: normalizedLang });
-                }
                 
                 // シンタックスハイライトの適用
                 let highlightedCode = code;
                 if (normalizedLang && Prism.languages[normalizedLang]) {
                     try {
                         highlightedCode = Prism.highlight(code, Prism.languages[normalizedLang], normalizedLang);
-                        console.log('シンタックスハイライト適用成功:', normalizedLang);
                     } catch (e) {
                         console.error('シンタックスハイライト適用エラー:', e);
                     }
