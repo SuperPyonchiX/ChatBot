@@ -5,7 +5,7 @@
 
 // グローバルスコープに関数を公開
 window.API = {
-    callOpenAIAPI: async function(messages, model) {
+    callOpenAIAPI: async function(messages, model, attachments = []) {
         if (!window.apiSettings) {
             throw new Error('API設定が見つかりません');
         }
@@ -23,6 +23,48 @@ window.API = {
         }
     
         let endpoint, headers, body;
+        
+        // ファイル添付がある場合、メッセージを処理
+        if (attachments.length > 0) {
+            // 最後のユーザーメッセージを見つける
+            let lastUserMessageIndex = messages.length - 1;
+            for (let i = messages.length - 1; i >= 0; i--) {
+                if (messages[i].role === 'user') {
+                    lastUserMessageIndex = i;
+                    break;
+                }
+            }
+            
+            // 添付ファイルを持つメッセージを作成
+            if (messages[lastUserMessageIndex].role === 'user') {
+                const userMessage = messages[lastUserMessageIndex];
+                const contentItems = [];
+                
+                // テキストコンテンツを追加
+                contentItems.push({
+                    type: "text",
+                    text: userMessage.content
+                });
+                
+                // 添付ファイルを追加
+                for (const attachment of attachments) {
+                    if (attachment.type === 'image') {
+                        contentItems.push({
+                            type: "image_url",
+                            image_url: {
+                                url: attachment.data
+                            }
+                        });
+                    }
+                }
+                
+                // メッセージを更新
+                messages[lastUserMessageIndex] = {
+                    role: "user",
+                    content: contentItems
+                };
+            }
+        }
         
         if (window.apiSettings.apiType === 'openai') {
             // OpenAI API
@@ -67,5 +109,24 @@ window.API = {
         
         const data = await response.json();
         return data.choices[0].message.content;
+    },
+    
+    /**
+     * 画像ファイルをbase64エンコードする
+     * @param {File} file - 画像ファイル
+     * @returns {Promise<string>} base64エンコードされた画像データ
+     */
+    encodeImageToBase64: function(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const base64String = reader.result;
+                resolve(base64String);
+            };
+            reader.onerror = (error) => {
+                reject(error);
+            };
+            reader.readAsDataURL(file);
+        });
     }
 };

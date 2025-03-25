@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const openApiSettings = document.getElementById('openApiSettings');
     const settingsMenu = document.getElementById('settingsMenu');
     const fileInput = document.getElementById('fileInput');
+    const chatInputContainer = document.getElementById('chatInputContainer');
     
     // システムプロンプト関連
     const systemPromptModal = document.getElementById('systemPromptModal');
@@ -45,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let apiSettings = window.Storage.loadApiSettings();
     let systemPrompt = window.Storage.loadSystemPrompt();
     let promptTemplates = window.Storage.loadPromptTemplates();
+    let currentAttachments = []; // 添付ファイルを保存する配列
 
     // グローバルなapiSettingsを設定
     window.apiSettings = apiSettings;
@@ -183,7 +185,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // ファイル選択イベント
-        fileInput.addEventListener('change', window.FileHandler.handleFileSelect);
+        fileInput.addEventListener('change', window.FileHandler.handleFileSelect.bind(window.FileHandler));
+
+        // ファイル添付イベント
+        document.addEventListener('file-attached', function(e) {
+            currentAttachments = e.detail.attachments;
+        });
+
+        // ファイル削除イベント
+        document.addEventListener('attachment-removed', function() {
+            currentAttachments = [];
+        });
 
         // エラー時のAPIキー設定ボタンイベント処理
         document.addEventListener('click', function(e) {
@@ -382,8 +394,18 @@ document.addEventListener('DOMContentLoaded', function() {
     async function sendMessage() {
         const currentConversation = getConversationById(currentConversationId);
         if (!currentConversation) return;
-
-        const result = await window.Chat.sendMessage(userInput, chatMessages, currentConversation, apiSettings, systemPrompt);
+        
+        // FileHandlerから現在の添付ファイルを取得
+        const apiAttachments = await window.FileHandler.getAttachmentsForAPI();
+        
+        const result = await window.Chat.sendMessage(
+            userInput, 
+            chatMessages, 
+            currentConversation, 
+            apiSettings, 
+            systemPrompt,
+            apiAttachments.length > 0 ? apiAttachments : currentAttachments // FileHandlerの添付ファイルを優先
+        );
         
         if (result.titleUpdated) {
             renderChatHistory();
@@ -391,5 +413,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // 会話を保存
             window.Storage.saveConversations(conversations);
         }
+        
+        // 送信後は添付ファイルをクリア
+        currentAttachments = [];
+        window.FileHandler.clearSelectedFiles();
     }
 });

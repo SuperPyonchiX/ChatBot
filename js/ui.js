@@ -202,5 +202,150 @@ window.UI = {
             
             templateListArea.appendChild(templateItem);
         });
+    },
+    
+    /**
+     * ファイル添付ボタンと添付ファイル表示エリアを作成
+     * @param {HTMLElement} chatInputContainer - チャット入力コンテナ要素
+     * @param {Function} onFileAttached - ファイル添付時のコールバック関数
+     */
+    createFileAttachmentUI: function(chatInputContainer, onFileAttached) {
+        // ファイル入力要素を作成（非表示）
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'fileAttachment';
+        fileInput.accept = 'image/*';  // 画像ファイルのみ許可
+        fileInput.style.display = 'none';
+        fileInput.multiple = false;    // 1つのファイルのみ
+        
+        // ファイル添付ボタンを作成
+        const attachButton = document.createElement('button');
+        attachButton.classList.add('attachment-button');
+        attachButton.innerHTML = '<i class="fas fa-paperclip"></i>';
+        attachButton.title = '画像を添付';
+        
+        // 添付ファイル表示エリアを作成
+        const attachmentPreviewArea = document.createElement('div');
+        attachmentPreviewArea.classList.add('attachment-preview-area');
+        attachmentPreviewArea.style.display = 'none';
+        
+        // ファイル選択ダイアログを表示
+        attachButton.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // ファイル選択時の処理
+        fileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                try {
+                    // ファイルをbase64エンコード
+                    const base64Data = await window.API.encodeImageToBase64(file);
+                    
+                    // プレビュー表示
+                    this.showAttachmentPreview(attachmentPreviewArea, file, base64Data);
+                    
+                    // コールバック関数を実行
+                    if (onFileAttached) {
+                        onFileAttached({
+                            type: 'image',
+                            name: file.name,
+                            data: base64Data
+                        });
+                    }
+                } catch (error) {
+                    console.error('ファイルの処理中にエラーが発生しました:', error);
+                    alert('ファイルの処理中にエラーが発生しました');
+                }
+            }
+            
+            // input要素をリセット（同じファイルを連続で選択できるように）
+            fileInput.value = '';
+        });
+        
+        // 要素を追加
+        chatInputContainer.appendChild(fileInput);
+        
+        // 入力ボタングループに添付ボタンを追加
+        const inputButtonGroup = chatInputContainer.querySelector('.input-button-group');
+        if (inputButtonGroup) {
+            // 送信ボタンの前に挿入
+            const sendButton = inputButtonGroup.querySelector('.send-button');
+            if (sendButton) {
+                inputButtonGroup.insertBefore(attachButton, sendButton);
+            } else {
+                inputButtonGroup.appendChild(attachButton);
+            }
+        } else {
+            chatInputContainer.appendChild(attachButton);
+        }
+        
+        // 添付ファイル表示エリアを追加
+        chatInputContainer.insertBefore(attachmentPreviewArea, inputButtonGroup || chatInputContainer.firstChild);
+        
+        return {
+            fileInput,
+            attachButton,
+            attachmentPreviewArea
+        };
+    },
+    
+    /**
+     * 添付ファイルのプレビューを表示
+     * @param {HTMLElement} previewArea - プレビュー表示エリア
+     * @param {File} file - 添付ファイル
+     * @param {string} base64Data - Base64エンコードされたファイルデータ
+     */
+    showAttachmentPreview: function(previewArea, file, base64Data) {
+        previewArea.innerHTML = '';
+        previewArea.style.display = 'flex';
+        
+        // プレビュー要素を作成
+        const previewItem = document.createElement('div');
+        previewItem.classList.add('attachment-preview-item');
+        
+        // 画像プレビュー
+        if (file.type.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.src = base64Data;
+            img.alt = file.name;
+            img.classList.add('attachment-preview-image');
+            previewItem.appendChild(img);
+        }
+        
+        // ファイル情報
+        const fileInfo = document.createElement('div');
+        fileInfo.classList.add('attachment-file-info');
+        fileInfo.textContent = file.name;
+        previewItem.appendChild(fileInfo);
+        
+        // 削除ボタン
+        const removeButton = document.createElement('button');
+        removeButton.classList.add('attachment-remove-button');
+        removeButton.innerHTML = '<i class="fas fa-times"></i>';
+        removeButton.title = '添付を削除';
+        
+        removeButton.addEventListener('click', () => {
+            previewArea.innerHTML = '';
+            previewArea.style.display = 'none';
+            
+            // 添付ファイル削除イベントを発火
+            const removeEvent = new CustomEvent('attachment-removed');
+            previewArea.dispatchEvent(removeEvent);
+        });
+        
+        previewItem.appendChild(removeButton);
+        previewArea.appendChild(previewItem);
+    },
+    
+    /**
+     * 添付ファイルをクリア
+     * @param {HTMLElement} previewArea - プレビュー表示エリア
+     */
+    clearAttachments: function(previewArea) {
+        if (previewArea) {
+            previewArea.innerHTML = '';
+            previewArea.style.display = 'none';
+        }
     }
 };

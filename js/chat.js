@@ -6,7 +6,7 @@
 // グローバルスコープに関数を公開
 window.Chat = {
     // ユーザーメッセージを追加する関数
-    addUserMessage: function(message, chatMessages) {
+    addUserMessage: function(message, chatMessages, attachments = []) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', 'user');
         
@@ -39,6 +39,30 @@ window.Chat = {
         
         contentDiv.appendChild(copyButton);
         contentDiv.appendChild(markdownContent);
+        
+        // 添付画像があれば表示
+        if (attachments && attachments.length > 0) {
+            const attachmentsDiv = document.createElement('div');
+            attachmentsDiv.classList.add('message-attachments');
+            
+            attachments.forEach(attachment => {
+                if (attachment.type === 'image') {
+                    const imgContainer = document.createElement('div');
+                    imgContainer.classList.add('attachment-image-container');
+                    
+                    const img = document.createElement('img');
+                    img.src = attachment.data;
+                    img.alt = attachment.name || '添付画像';
+                    img.classList.add('attachment-image');
+                    
+                    imgContainer.appendChild(img);
+                    attachmentsDiv.appendChild(imgContainer);
+                }
+            });
+            
+            contentDiv.appendChild(attachmentsDiv);
+        }
+        
         messageDiv.appendChild(contentDiv);
         
         // コードブロックにコピーボタンを追加とシンタックスハイライトの適用
@@ -129,38 +153,21 @@ window.Chat = {
     },
 
     // メッセージを送信する関数
-    sendMessage: async function(userInput, chatMessages, currentConversation, apiSettings, systemPrompt) {
+    sendMessage: async function(userInput, chatMessages, currentConversation, apiSettings, systemPrompt, attachments = []) {
         const message = userInput.value.trim();
-        const selectedFiles = window.FileHandler.getSelectedFiles();
         
-        if (message || selectedFiles.length > 0) {
-            // メッセージとファイルの情報を組み合わせる
-            let messageContent = message;
-            // ファイルがある場合は、Base64エンコードして追加
-            if (selectedFiles.length > 0) {
-                const fileContents = await Promise.all(selectedFiles.map(async file => {
-                    const base64 = await window.FileHandler.readFileAsBase64(file);
-                    return {
-                        name: file.name,
-                        type: file.type,
-                        content: base64
-                    };
-                }));
-                messageContent += '\n\n添付ファイル:\n' + fileContents.map(file => 
-                    `[${file.name}](data:${file.type};base64,${file.content})`
-                ).join('\n');
-            }
-            // ユーザーメッセージを表示
-            this.addUserMessage(messageContent, chatMessages);
+        if (message || attachments.length > 0) {
+            // ユーザーメッセージを表示（添付ファイル付き）
+            this.addUserMessage(message, chatMessages, attachments);
             userInput.value = '';
             userInput.style.height = 'auto';
-            // 選択されたファイルをクリア
-            window.FileHandler.clearSelectedFiles();
+            
             // 現在の会話にユーザーメッセージを追加
             currentConversation.messages.push({
                 role: 'user',
-                content: messageContent
+                content: message  // 純粋なテキストメッセージ
             });
+            
             // チャットタイトルがデフォルトの場合、最初のメッセージをタイトルに設定
             if (currentConversation.title === '新しいチャット' && currentConversation.messages.filter(m => m.role === 'user').length === 1) {
                 currentConversation.title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
@@ -187,7 +194,8 @@ window.Chat = {
                 // API呼び出し
                 const botResponse = await window.API.callOpenAIAPI(
                     messagesWithSystem, 
-                    currentConversation.model
+                    currentConversation.model,
+                    attachments
                 );
                 
                 // Thinkingの表示を削除
