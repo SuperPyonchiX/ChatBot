@@ -55,6 +55,12 @@ window.API = {
                                 url: attachment.data
                             }
                         });
+                    } else if (attachment.type === 'file') {
+                        // ファイルタイプの添付ファイルをテキストとして処理
+                        contentItems.push({
+                            type: "text",
+                            text: `添付ファイル: ${attachment.name} (タイプ: ${attachment.mimeType})\n\nデータ: ${attachment.data.substring(0, 50)}...`
+                        });
                     }
                 }
                 

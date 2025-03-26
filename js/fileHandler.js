@@ -165,8 +165,16 @@ window.FileHandler = {
                     name: file.name,
                     data: dataUrl
                 };
+            } else {
+                // 非画像ファイルの場合
+                const base64 = await this.readFileAsBase64(file);
+                return {
+                    type: 'file',
+                    name: file.name,
+                    mimeType: file.type,
+                    data: `data:${file.type};base64,${base64}`
+                };
             }
-            return null;
-        })).then(results => results.filter(Boolean));
+        }));
     }
 };
