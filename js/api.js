@@ -59,7 +59,7 @@ window.API = {
                         // ファイルタイプの添付ファイルをテキストとして処理
                         contentItems.push({
                             type: "text",
-                            text: `添付ファイル: ${attachment.name} (タイプ: ${attachment.mimeType})\n\nデータ: ${attachment.data.substring(0, 50)}...`
+                            text: `添付ファイル:\n[${attachment.name}](data:${attachment.mimeType};base64:${attachment.data.substring(0, 50)})`
                         });
                     }
                 }
