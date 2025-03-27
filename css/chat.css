@@ -27,6 +27,46 @@
     width: 100%;
 }
 
+/* メッセージの添付ファイル表示 */
+.message-attachments {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.attachment-image-container {
+    max-width: 100%;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.attachment-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.attachment-file-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #363636;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #404040;
+}
+
+.attachment-file-container .fas {
+    color: #aaa;
+}
+
+.attachment-file-name {
+    font-size: 0.9rem;
+    color: #e0e0e0;
+    word-break: break-all;
+}
+
 /* Bot応答のコードブロックスタイル */
 .message.bot .markdown-content pre {
     background-color: #282c34;

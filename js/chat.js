@@ -40,7 +40,7 @@ window.Chat = {
         contentDiv.appendChild(copyButton);
         contentDiv.appendChild(markdownContent);
         
-        // 添付画像があれば表示
+        // 添付ファイルがあれば表示
         if (attachments && attachments.length > 0) {
             const attachmentsDiv = document.createElement('div');
             attachmentsDiv.classList.add('message-attachments');
@@ -57,6 +57,21 @@ window.Chat = {
                     
                     imgContainer.appendChild(img);
                     attachmentsDiv.appendChild(imgContainer);
+                } else if (attachment.type === 'file') {
+                    // 画像以外のファイル添付表示
+                    const fileContainer = document.createElement('div');
+                    fileContainer.classList.add('attachment-file-container');
+                    
+                    const fileIcon = document.createElement('i');
+                    fileIcon.className = 'fas fa-file';
+                    
+                    const fileName = document.createElement('span');
+                    fileName.textContent = attachment.name || '添付ファイル';
+                    fileName.classList.add('attachment-file-name');
+                    
+                    fileContainer.appendChild(fileIcon);
+                    fileContainer.appendChild(fileName);
+                    attachmentsDiv.appendChild(fileContainer);
                 }
             });
             
