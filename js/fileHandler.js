@@ -172,7 +172,7 @@ window.FileHandler = {
                     type: 'file',
                     name: file.name,
                     mimeType: file.type,
-                    data: `data:${file.type};base64,${base64}`
+                    data: `base64,${base64}`
                 };
             }
         }));
