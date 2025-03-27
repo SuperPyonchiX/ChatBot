@@ -155,6 +155,7 @@ window.Chat = {
     // メッセージを送信する関数
     sendMessage: async function(userInput, chatMessages, currentConversation, apiSettings, systemPrompt, attachments = []) {
         const message = userInput.value.trim();
+        let titleUpdated = false;
         
         if (message || attachments.length > 0) {
             // ユーザーメッセージを表示（添付ファイル付き）
@@ -171,6 +172,7 @@ window.Chat = {
             // チャットタイトルがデフォルトの場合、最初のメッセージをタイトルに設定
             if (currentConversation.title === '新しいチャット' && currentConversation.messages.filter(m => m.role === 'user').length === 1) {
                 currentConversation.title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
+                titleUpdated = true;
             }
             
             // 「Thinking...」の表示
@@ -210,7 +212,7 @@ window.Chat = {
                     content: botResponse
                 });
                 
-                return { titleUpdated: false, response: botResponse };
+                return { titleUpdated, response: botResponse };
             } catch (error) {
                 // Thinkingの表示を削除
                 chatMessages.removeChild(typingIndicator);
@@ -228,11 +230,11 @@ window.Chat = {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
                 
                 // エラーを返す
-                return { titleUpdated: false, error: error.message };
+                return { titleUpdated, error: error.message };
             }
         }
         
-        return { titleUpdated: false, response: null };
+        return { titleUpdated, response: null };
     },
 
     // 会話履歴を表示する
