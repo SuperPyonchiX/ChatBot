@@ -241,60 +241,195 @@ window.Chat = {
     renderChatHistory: function(conversations, currentConversationId, chatHistory, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
         chatHistory.innerHTML = '';
         
-        conversations.forEach(conversation => {
-            const historyItem = document.createElement('div');
-            historyItem.classList.add('history-item');
-            historyItem.dataset.id = conversation.id;
+        // プロンプトごとにグループ化するための処理
+        const promptGroups = this.groupConversationsByPrompt(conversations);
+        
+        // 各プロンプトグループごとにセクションを作成
+        for (const promptKey in promptGroups) {
+            const groupConversations = promptGroups[promptKey];
             
-            // コンテンツとアクションボタンを含むコンテナを作成
-            const itemContent = document.createElement('div');
-            itemContent.classList.add('history-item-content');
-            itemContent.innerHTML = `
-                <i class="fas fa-comments"></i>
-                <span class="history-item-title">${conversation.title || '新しいチャット'}</span>
-            `;
+            // カテゴリーの状態を取得（展開/折りたたみ）
+            const categoryStates = window.Storage.loadCategoryStates();
+            const isExpanded = categoryStates[promptKey] !== false; // デフォルトは展開状態
             
-            // アクションボタンのコンテナ
-            const actionButtons = document.createElement('div');
-            actionButtons.classList.add('history-item-actions');
+            // カテゴリーセクションを作成
+            const categorySection = document.createElement('div');
+            categorySection.classList.add('chat-category');
             
-            // 編集ボタン
-            const editButton = document.createElement('button');
-            editButton.classList.add('history-action-button', 'edit-button');
-            editButton.innerHTML = '<i class="fas fa-edit"></i>';
-            editButton.title = 'チャットの名前を変更';
-            editButton.addEventListener('click', (e) => {
-                e.stopPropagation();  // クリックイベントの伝播を止める
-                onShowRenameModal(conversation);
+            // カテゴリーヘッダーを作成
+            const categoryHeader = document.createElement('div');
+            categoryHeader.classList.add('category-header');
+            
+            // 展開/折りたたみアイコン
+            const toggleIcon = document.createElement('i');
+            toggleIcon.classList.add('fas', isExpanded ? 'fa-chevron-down' : 'fa-chevron-right');
+            
+            // カテゴリー名
+            const categoryName = document.createElement('span');
+            categoryName.textContent = this.getPromptNiceName(promptKey);
+            
+            // 会話数バッジ
+            const countBadge = document.createElement('span');
+            countBadge.classList.add('category-count');
+            countBadge.textContent = groupConversations.length;
+            
+            // ヘッダーに要素を追加
+            categoryHeader.appendChild(toggleIcon);
+            categoryHeader.appendChild(categoryName);
+            categoryHeader.appendChild(countBadge);
+            
+            // 会話リストコンテナを作成
+            const conversationList = document.createElement('div');
+            conversationList.classList.add('category-conversations');
+            if (!isExpanded) {
+                conversationList.style.display = 'none';
+            }
+            
+            // ヘッダークリックで展開/折りたたみ
+            categoryHeader.addEventListener('click', () => {
+                const isNowExpanded = toggleIcon.classList.contains('fa-chevron-down');
+                if (isNowExpanded) {
+                    toggleIcon.classList.replace('fa-chevron-down', 'fa-chevron-right');
+                    conversationList.style.display = 'none';
+                } else {
+                    toggleIcon.classList.replace('fa-chevron-right', 'fa-chevron-down');
+                    conversationList.style.display = 'block';
+                }
+                // 状態を保存
+                window.Storage.saveCategoryState(promptKey, !isNowExpanded);
             });
             
-            // 削除ボタン
-            const deleteButton = document.createElement('button');
-            deleteButton.classList.add('history-action-button', 'delete-button');
-            deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
-            deleteButton.title = 'チャットを削除';
-            deleteButton.addEventListener('click', (e) => {
-                e.stopPropagation();  // クリックイベントの伝播を止める
-                onDeleteConversation(conversation.id);
+            // カテゴリー内の会話を表示
+            groupConversations.forEach(conversation => {
+                const historyItem = document.createElement('div');
+                historyItem.classList.add('history-item');
+                historyItem.dataset.id = conversation.id;
+                
+                // コンテンツとアクションボタンを含むコンテナを作成
+                const itemContent = document.createElement('div');
+                itemContent.classList.add('history-item-content');
+                itemContent.innerHTML = `
+                    <i class="fas fa-comments"></i>
+                    <span class="history-item-title">${conversation.title || '新しいチャット'}</span>
+                `;
+                
+                // アクションボタンのコンテナ
+                const actionButtons = document.createElement('div');
+                actionButtons.classList.add('history-item-actions');
+                
+                // 編集ボタン
+                const editButton = document.createElement('button');
+                editButton.classList.add('history-action-button', 'edit-button');
+                editButton.innerHTML = '<i class="fas fa-edit"></i>';
+                editButton.title = 'チャットの名前を変更';
+                editButton.addEventListener('click', (e) => {
+                    e.stopPropagation();  // クリックイベントの伝播を止める
+                    onShowRenameModal(conversation);
+                });
+                
+                // 削除ボタン
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('history-action-button', 'delete-button');
+                deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteButton.title = 'チャットを削除';
+                deleteButton.addEventListener('click', (e) => {
+                    e.stopPropagation();  // クリックイベントの伝播を止める
+                    onDeleteConversation(conversation.id);
+                });
+                
+                // ボタンをアクションコンテナに追加
+                actionButtons.appendChild(editButton);
+                actionButtons.appendChild(deleteButton);
+                
+                // 内容とアクションボタンをアイテムに追加
+                historyItem.appendChild(itemContent);
+                historyItem.appendChild(actionButtons);
+                
+                // チャットアイテムのクリックイベント（チャット切り替え）
+                itemContent.addEventListener('click', () => {
+                    onSwitchConversation(conversation.id);
+                });
+                
+                // 会話リストに追加
+                conversationList.appendChild(historyItem);
             });
             
-            // ボタンをアクションコンテナに追加
-            actionButtons.appendChild(editButton);
-            actionButtons.appendChild(deleteButton);
+            // カテゴリーセクションに追加
+            categorySection.appendChild(categoryHeader);
+            categorySection.appendChild(conversationList);
             
-            // 内容とアクションボタンをアイテムに追加
-            historyItem.appendChild(itemContent);
-            historyItem.appendChild(actionButtons);
-            
-            // チャットアイテムのクリックイベント（チャット切り替え）
-            itemContent.addEventListener('click', () => {
-                onSwitchConversation(conversation.id);
-            });
-            
-            chatHistory.appendChild(historyItem);
-        });
+            // チャット履歴に追加
+            chatHistory.appendChild(categorySection);
+        }
         
         this.updateActiveChatInHistory(currentConversationId);
+    },
+
+    // 会話をシステムプロンプトでグループ化する
+    groupConversationsByPrompt: function(conversations) {
+        const groups = {};
+        
+        conversations.forEach(conversation => {
+            // システムプロンプトを取得
+            let systemPrompt = '未分類';
+            
+            // システムメッセージからプロンプトを取得
+            const systemMessage = conversation.messages.find(m => m.role === 'system');
+            if (systemMessage && systemMessage.content) {
+                systemPrompt = this.getPromptCategory(systemMessage.content);
+            }
+            
+            // グループが存在しない場合は作成
+            if (!groups[systemPrompt]) {
+                groups[systemPrompt] = [];
+            }
+            
+            // 会話をグループに追加
+            groups[systemPrompt].push(conversation);
+        });
+        
+        return groups;
+    },
+    
+    // システムプロンプトからカテゴリを判定
+    getPromptCategory: function(promptText) {
+        // プロンプトテンプレートを取得
+        const templates = window.Storage.loadPromptTemplates();
+        
+        // テンプレートと照合
+        for (const templateName in templates) {
+            if (templates[templateName] === promptText) {
+                return templateName;
+            }
+        }
+        
+        // プロンプトの先頭部分で判定（最初の20文字）
+        const promptStart = promptText.substring(0, 20);
+        
+        // 特定のキーワードで判定
+        if (promptText.includes('開発者') || promptText.includes('エンジニア')) {
+            return 'developer';
+        } else if (promptText.includes('クリエイティブ') || promptText.includes('創造的')) {
+            return 'creative';
+        } else if (promptText.includes('技術的') || promptText.includes('technical')) {
+            return 'technical';
+        }
+        
+        // デフォルトは未分類
+        return '未分類';
+    },
+    
+    // プロンプトカテゴリの表示名を取得
+    getPromptNiceName: function(categoryKey) {
+        const displayNames = {
+            'default': 'デフォルト',
+            'creative': 'クリエイティブ',
+            'technical': '技術的',
+            'developer': '開発者',
+            '未分類': '未分類'
+        };
+        
+        return displayNames[categoryKey] || categoryKey;
     },
 
     // アクティブなチャットを更新

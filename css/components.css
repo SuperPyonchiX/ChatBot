@@ -77,6 +77,54 @@
     cursor: not-allowed;
 }
 
+/* チャット履歴カテゴリースタイル */
+.chat-category {
+    margin-bottom: 15px;
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    background-color: #2a2a2d;
+    margin-bottom: 5px;
+    transition: background-color 0.2s;
+}
+
+.category-header:hover {
+    background-color: #343541;
+}
+
+.category-header i {
+    margin-right: 10px;
+    width: 16px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.category-header .fa-chevron-down {
+    transform: rotate(0deg);
+}
+
+.category-header .fa-chevron-right {
+    transform: rotate(0deg);
+}
+
+.category-count {
+    margin-left: auto;
+    background-color: #404040;
+    color: #e0e0e0;
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.category-conversations {
+    margin-left: 15px;
+}
+
 /* フォーム要素スタイル */
 .form-group {
     margin-bottom: 15px;

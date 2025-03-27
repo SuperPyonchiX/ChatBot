@@ -66,6 +66,19 @@ window.Storage = {
         localStorage.setItem('promptTemplates', JSON.stringify(promptTemplates));
     },
 
+    // カテゴリー設定状態（展開/折りたたみ）を保存
+    saveCategoryState: function(categoryName, isExpanded) {
+        const categoryStates = this.loadCategoryStates();
+        categoryStates[categoryName] = isExpanded;
+        localStorage.setItem('categoryStates', JSON.stringify(categoryStates));
+    },
+
+    // カテゴリー設定状態を読み込む
+    loadCategoryStates: function() {
+        const savedStates = localStorage.getItem('categoryStates');
+        return savedStates ? JSON.parse(savedStates) : {};
+    },
+
     // 会話履歴をローカルストレージから読み込む
     loadConversations: function() {
         const savedConversations = localStorage.getItem('conversations');
