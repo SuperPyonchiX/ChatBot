@@ -148,10 +148,13 @@ window.FileHandler = {
     clearSelectedFiles: function() {
         this.selectedFiles = [];
         
-        // プレビューをクリア
-        const previewArea = document.querySelector('.file-preview');
-        if (previewArea) {
-            previewArea.remove();
+        // プレビューをクリア（より確実な方法で）
+        const inputWrapper = document.querySelector('.input-wrapper');
+        if (inputWrapper) {
+            const previewArea = inputWrapper.querySelector('.file-preview');
+            if (previewArea) {
+                previewArea.remove();
+            }
         }
     },
     
