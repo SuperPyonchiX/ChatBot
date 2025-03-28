@@ -40,15 +40,14 @@ window.API = {
                 const userMessage = messages[lastUserMessageIndex];
                 const contentItems = [];
                 
-                // テキストコンテンツを追加
-                contentItems.push({
-                    type: "text",
-                    text: userMessage.content
-                });
+                // 基本テキストコンテンツ（後で追加されるファイル情報を含める場合のため変数に保存）
+                let textContent = userMessage.content;
+                let hasFileAttachments = false;
                 
-                // 添付ファイルを追加
+                // 画像添付ファイルと通常の添付ファイルを分けて処理
                 for (const attachment of attachments) {
                     if (attachment.type === 'image') {
+                        // 画像はimage_urlタイプとして個別に追加
                         contentItems.push({
                             type: "image_url",
                             image_url: {
@@ -56,13 +55,17 @@ window.API = {
                             }
                         });
                     } else if (attachment.type === 'file') {
-                        // ファイルタイプの添付ファイルをテキストとして処理
-                        contentItems.push({
-                            type: "text",
-                            text: `添付ファイル:\n[${attachment.name}](data:${attachment.mimeType};${attachment.data})`
-                        });
+                        // ファイルタイプの添付ファイルはテキストに統合
+                        hasFileAttachments = true;
+                        textContent += `\n\n添付ファイル:\n[${attachment.name}](data:${attachment.mimeType};${attachment.data})`;
                     }
                 }
+                
+                // テキストコンテンツを最初に追加（添付ファイル情報を含む）
+                contentItems.push({
+                    type: "text",
+                    text: textContent
+                });
                 
                 // メッセージを更新
                 messages[lastUserMessageIndex] = {
