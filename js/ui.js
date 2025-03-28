@@ -233,36 +233,7 @@ window.UI = {
         attachButton.addEventListener('click', () => {
             fileInput.click();
         });
-        
-        // ファイル選択時の処理
-        fileInput.addEventListener('change', async (event) => {
-            const file = event.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                try {
-                    // ファイルをbase64エンコード
-                    const base64Data = await window.API.encodeImageToBase64(file);
-                    
-                    // プレビュー表示
-                    this.showAttachmentPreview(attachmentPreviewArea, file, base64Data);
-                    
-                    // コールバック関数を実行
-                    if (onFileAttached) {
-                        onFileAttached({
-                            type: 'image',
-                            name: file.name,
-                            data: base64Data
-                        });
-                    }
-                } catch (error) {
-                    console.error('ファイルの処理中にエラーが発生しました:', error);
-                    alert('ファイルの処理中にエラーが発生しました');
-                }
-            }
-            
-            // input要素をリセット（同じファイルを連続で選択できるように）
-            fileInput.value = '';
-        });
-        
+                
         // 要素を追加
         chatInputContainer.appendChild(fileInput);
         
