@@ -235,13 +235,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // FileHandlerから現在の添付ファイルを取得
         const apiAttachments = await window.FileHandler.getAttachmentsForAPI();
         
+        // 添付ファイルの参照を保持
+        const attachmentsToSend = apiAttachments.length > 0 ? apiAttachments : currentAttachments;
+        
+        // 送信前に添付ファイルをクリア（ユーザーから見て即座に添付が消える）
+        currentAttachments = [];
+        window.FileHandler.clearSelectedFiles();
+        
         const result = await window.Chat.sendMessage(
             userInput, 
             chatMessages, 
             currentConversation, 
             apiSettings, 
             systemPrompt,
-            apiAttachments.length > 0 ? apiAttachments : currentAttachments // FileHandlerの添付ファイルを優先
+            attachmentsToSend // 保持した添付ファイルを送信
         );
         
         if (result.titleUpdated) {
@@ -251,10 +258,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // 会話を保存
             window.Storage.saveConversations(conversations);
         }
-        
-        // 送信後は添付ファイルをクリア
-        currentAttachments = [];
-        window.FileHandler.clearSelectedFiles();
     }
 
     // API設定を保存
