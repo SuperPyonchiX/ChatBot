@@ -35,6 +35,10 @@ window.FileHandler = {
                     const img = document.createElement('img');
                     img.src = e.target.result;
                     img.classList.add('image-preview');
+                    // 画像サイズの制限を追加
+                    img.style.maxWidth = '150px';
+                    img.style.maxHeight = '100px';
+                    img.style.objectFit = 'contain';
                     fileItem.appendChild(img);
                 };
                 reader.readAsDataURL(file);
