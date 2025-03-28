@@ -11,17 +11,20 @@ window.FileHandler = {
     // ファイル選択処理
     handleFileSelect: function(event) {
         const files = Array.from(event.target.files);
-        this.selectedFiles = files;
+        // ここで選択された新しいファイルを追加
+        this.selectedFiles = [...this.selectedFiles, ...files];
 
         // 入力エリアにプレビューを追加
         const inputWrapper = document.querySelector('.input-wrapper');
-        const existingPreview = inputWrapper.querySelector('.file-preview');
-        if (existingPreview) {
-            existingPreview.remove();
+        // 既存のプレビューを取得
+        let previewArea = inputWrapper.querySelector('.file-preview');
+        
+        // プレビューエリアがなければ新規作成
+        if (!previewArea) {
+            previewArea = document.createElement('div');
+            previewArea.classList.add('file-preview');
+            inputWrapper.insertBefore(previewArea, document.getElementById('userInput'));
         }
-
-        const previewArea = document.createElement('div');
-        previewArea.classList.add('file-preview');
 
         const self = this;
         files.forEach((file, index) => {
@@ -48,15 +51,16 @@ window.FileHandler = {
             fileInfo.classList.add('file-info');
             fileInfo.innerHTML = `
                 ${file.name}
-                <span class="remove-file" data-index="${index}">
+                <span class="remove-file" data-index="${this.selectedFiles.indexOf(file)}">
                     <i class="fas fa-times"></i>
                 </span>
             `;
             fileItem.appendChild(fileInfo);
 
             // ファイル削除イベント
-            fileItem.querySelector('.remove-file').addEventListener('click', () => {
-                self.selectedFiles = self.selectedFiles.filter((_, i) => i !== index);
+            fileItem.querySelector('.remove-file').addEventListener('click', (e) => {
+                const indexToRemove = parseInt(e.currentTarget.dataset.index);
+                self.selectedFiles = self.selectedFiles.filter((_, i) => i !== indexToRemove);
                 fileItem.remove();
                 if (self.selectedFiles.length === 0 && previewArea.parentNode) {
                     previewArea.remove();
@@ -65,16 +69,19 @@ window.FileHandler = {
                 // 添付ファイル削除イベントを発火
                 const removeEvent = new CustomEvent('attachment-removed');
                 document.dispatchEvent(removeEvent);
+                
+                // 残りのファイルがある場合は添付完了イベントを発火
+                if (self.selectedFiles.length > 0) {
+                    self.notifyAttachmentComplete(self.selectedFiles);
+                }
             });
 
             previewArea.appendChild(fileItem);
         });
 
         if (files.length > 0) {
-            inputWrapper.insertBefore(previewArea, document.getElementById('userInput'));
-            
             // 添付完了イベントを発火
-            this.notifyAttachmentComplete(files);
+            this.notifyAttachmentComplete(this.selectedFiles);
         }
     },
 

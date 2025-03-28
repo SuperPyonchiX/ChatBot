@@ -205,6 +205,58 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // チャットの名前を保存
+    function saveRenamedChat() {
+        const modal = document.getElementById('renameChatModal');
+        const titleInput = document.getElementById('chatTitleInput');
+        const conversationId = modal.dataset.conversationId;
+        const newTitle = titleInput.value.trim();
+        
+        // 新しいタイトルが空でないことを確認
+        if (newTitle) {
+            // 該当する会話のタイトルを更新
+            const conversation = getConversationById(conversationId);
+            if (conversation) {
+                conversation.title = newTitle;
+                window.Storage.saveConversations(conversations);
+                renderChatHistory();
+            }
+        }
+        
+        // モーダルを閉じる
+        window.UI.hideRenameChatModal();
+    }
+
+    // メッセージを送信する関数
+    async function sendMessage() {
+        const currentConversation = getConversationById(currentConversationId);
+        if (!currentConversation) return;
+        
+        // FileHandlerから現在の添付ファイルを取得
+        const apiAttachments = await window.FileHandler.getAttachmentsForAPI();
+        
+        const result = await window.Chat.sendMessage(
+            userInput, 
+            chatMessages, 
+            currentConversation, 
+            apiSettings, 
+            systemPrompt,
+            apiAttachments.length > 0 ? apiAttachments : currentAttachments // FileHandlerの添付ファイルを優先
+        );
+        
+        if (result.titleUpdated) {
+            renderChatHistory();
+        }
+        if (!result.error) {
+            // 会話を保存
+            window.Storage.saveConversations(conversations);
+        }
+        
+        // 送信後は添付ファイルをクリア
+        currentAttachments = [];
+        window.FileHandler.clearSelectedFiles();
+    }
+
     // API設定を保存
     function saveApiSettings() {
         if (openaiRadio.checked) {
@@ -368,54 +420,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // チャットの名前を保存
-    function saveRenamedChat() {
-        const modal = document.getElementById('renameChatModal');
-        const titleInput = document.getElementById('chatTitleInput');
-        const conversationId = modal.dataset.conversationId;
-        const newTitle = titleInput.value.trim();
-        
-        // 新しいタイトルが空でないことを確認
-        if (newTitle) {
-            // 該当する会話のタイトルを更新
-            const conversation = getConversationById(conversationId);
-            if (conversation) {
-                conversation.title = newTitle;
-                window.Storage.saveConversations(conversations);
-                renderChatHistory();
-            }
-        }
-        
-        // モーダルを閉じる
-        window.UI.hideRenameChatModal();
-    }
-
-    // メッセージを送信する関数
-    async function sendMessage() {
-        const currentConversation = getConversationById(currentConversationId);
-        if (!currentConversation) return;
-        
-        // FileHandlerから現在の添付ファイルを取得
-        const apiAttachments = await window.FileHandler.getAttachmentsForAPI();
-        
-        const result = await window.Chat.sendMessage(
-            userInput, 
-            chatMessages, 
-            currentConversation, 
-            apiSettings, 
-            systemPrompt,
-            apiAttachments.length > 0 ? apiAttachments : currentAttachments // FileHandlerの添付ファイルを優先
-        );
-        
-        if (result.titleUpdated) {
-            renderChatHistory();
-        } else if (!result.error) {
-            // 会話を保存
-            window.Storage.saveConversations(conversations);
-        }
-        
-        // 送信後は添付ファイルをクリア
-        currentAttachments = [];
-        window.FileHandler.clearSelectedFiles();
-    }
 });
