@@ -50,9 +50,10 @@
                 'prism-sql.min.js',
                 'prism-bash.min.js',
                 
-                // Visual Basic系言語 (clikeに依存するため後に配置)
-                'prism-visual-basic.min.js',
-                // 'prism-vbnet.min.js'   // VB.NET
+                // Visual Basic系言語 (依存関係の順序に注意)
+                'prism-basic.min.js',            // Basic言語の基本コンポーネント
+                'prism-visual-basic.min.js',     // Visual Basic
+                'prism-vbnet.min.js'             // VB.NET
             ];
             
             const loadComponent = (index) => {
