@@ -16,27 +16,6 @@ window.FileHandler = {
      * @type {Array<Object>}
      */
     savedAttachments: [],
-    
-    /**
-     * 最大ファイルサイズ (10MB)
-     * @type {number}
-     */
-    MAX_FILE_SIZE: 10 * 1024 * 1024,
-    
-    /**
-     * 許可されるファイルタイプ
-     * @type {Object}
-     */
-    ALLOWED_FILE_TYPES: {
-        // 画像ファイル
-        image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
-        // テキストファイル
-        text: ['text/plain', 'text/markdown', 'text/csv'],
-        // PDFファイル
-        pdf: ['application/pdf'],
-        // コード関連
-        code: ['text/javascript', 'text/html', 'text/css', 'application/json']
-    },
 
     /**
      * ファイル選択イベントの処理
@@ -93,12 +72,13 @@ window.FileHandler = {
         const errors = [];
         
         // 許可されるすべてのMIMEタイプのリスト
-        const allowedMimeTypes = Object.values(this.ALLOWED_FILE_TYPES).flat();
+        const allowedMimeTypes = Object.values(window.CONFIG.FILE.ALLOWED_FILE_TYPES).flat();
         
         files.forEach(file => {
             // ファイルサイズを確認
-            if (file.size > this.MAX_FILE_SIZE) {
-                errors.push(`"${file.name}"は大きすぎます（最大10MB）`);
+            if (file.size > window.CONFIG.FILE.MAX_FILE_SIZE) {
+                const maxSizeMB = window.CONFIG.FILE.MAX_FILE_SIZE / (1024 * 1024);
+                errors.push(`"${file.name}"は大きすぎます（最大${maxSizeMB}MB）`);
                 return;
             }
             
@@ -130,7 +110,7 @@ window.FileHandler = {
         if (!mimeType) return false;
         
         // すべての許可されたMIMEタイプのリスト
-        const allowedMimeTypes = Object.values(this.ALLOWED_FILE_TYPES).flat();
+        const allowedMimeTypes = Object.values(window.CONFIG.FILE.ALLOWED_FILE_TYPES).flat();
         
         // 完全一致を確認
         if (allowedMimeTypes.includes(mimeType)) {
@@ -553,7 +533,7 @@ window.FileHandler = {
             const timeoutId = setTimeout(() => {
                 reader.abort();
                 reject(new Error('ファイル読み込みがタイムアウトしました'));
-            }, 30000); // 30秒タイムアウト
+            }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
             
             reader.onload = function(e) {
                 clearTimeout(timeoutId);
@@ -588,7 +568,7 @@ window.FileHandler = {
             const timeoutId = setTimeout(() => {
                 reader.abort();
                 reject(new Error('ファイル読み込みがタイムアウトしました'));
-            }, 30000); // 30秒タイムアウト
+            }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
             
             reader.onload = function(e) {
                 clearTimeout(timeoutId);

@@ -6,19 +6,6 @@
 // グローバルスコープに関数を公開
 window.API = {
     /**
-     * デフォルト設定
-     * @private
-     * @type {Object}
-     */
-    _DEFAULTS: {
-        MAX_RETRIES: 2,
-        TIMEOUT_MS: 60000, // 60秒
-        TEMPERATURE: 0.7,
-        MAX_TOKENS: 2048,
-        OPENAI_ENDPOINT: 'https://api.openai.com/v1/chat/completions'
-    },
-    
-    /**
      * OpenAIまたはAzure OpenAI APIを呼び出して応答を得る
      * @param {Array} messages - 会話メッセージの配列
      * @param {string} model - 使用するモデル名
@@ -260,7 +247,7 @@ window.API = {
         
         if (window.apiSettings.apiType === 'openai') {
             // OpenAI API
-            endpoint = this._DEFAULTS.OPENAI_ENDPOINT;
+            endpoint = window.CONFIG.API.OPENAI_ENDPOINT;
             
             headers = {
                 'Authorization': `Bearer ${window.apiSettings.openaiApiKey}`,
@@ -270,8 +257,8 @@ window.API = {
             body = {
                 model: model,
                 messages: messages,
-                temperature: this._DEFAULTS.TEMPERATURE,
-                max_tokens: this._DEFAULTS.MAX_TOKENS
+                temperature: window.CONFIG.API.TEMPERATURE,
+                max_tokens: window.CONFIG.API.MAX_TOKENS
             };
         } else {
             // Azure OpenAI API
@@ -279,7 +266,7 @@ window.API = {
             
             // エンドポイントにクエリパラメータがない場合は追加
             if (endpoint && !endpoint.includes('?')) {
-                endpoint += '?api-version=2023-05-15';
+                endpoint += `?api-version=${window.CONFIG.API.AZURE_API_VERSION}`;
             }
             
             headers = {
@@ -289,8 +276,8 @@ window.API = {
             
             body = {
                 messages: messages,
-                temperature: this._DEFAULTS.TEMPERATURE,
-                max_tokens: this._DEFAULTS.MAX_TOKENS
+                temperature: window.CONFIG.API.TEMPERATURE,
+                max_tokens: window.CONFIG.API.MAX_TOKENS
             };
         }
         
@@ -327,7 +314,7 @@ window.API = {
         // リトライ時の待機時間を計算（指数バックオフ）
         const getRetryDelay = (retryCount) => Math.min(1000 * Math.pow(2, retryCount), 10000);
         
-        while (retryCount <= this._DEFAULTS.MAX_RETRIES) {
+        while (retryCount <= window.CONFIG.API.MAX_RETRIES) {
             try {
                 // タイムアウト付きでリクエストを実行
                 return await this._executeAPIRequest(endpoint, headers, body);
@@ -349,13 +336,13 @@ window.API = {
                 }
                 
                 // 最大リトライ回数に達した場合は失敗
-                if (retryCount >= this._DEFAULTS.MAX_RETRIES) {
+                if (retryCount >= window.CONFIG.API.MAX_RETRIES) {
                     break;
                 }
                 
                 // リトライ前に待機
                 const delay = getRetryDelay(retryCount);
-                console.warn(`APIリクエスト失敗 (${error.message})。${delay}ms後にリトライします (${retryCount + 1}/${this._DEFAULTS.MAX_RETRIES})`);
+                console.warn(`APIリクエスト失敗 (${error.message})。${delay}ms後にリトライします (${retryCount + 1}/${window.CONFIG.API.MAX_RETRIES})`);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 
                 retryCount++;
@@ -381,7 +368,7 @@ window.API = {
         try {
             // AbortControllerを使用してタイムアウトを設定
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), this._DEFAULTS.TIMEOUT_MS);
+            const timeoutId = setTimeout(() => controller.abort(), window.CONFIG.API.TIMEOUT_MS);
             
             const startTime = Date.now();
             
@@ -460,9 +447,8 @@ window.API = {
             }
             
             // サイズチェック
-            const maxFileSize = 10 * 1024 * 1024; // 10MB
-            if (file.size > maxFileSize) {
-                reject(new Error(`ファイルサイズが大きすぎます (${this._formatFileSize(file.size)}). 最大サイズは${this._formatFileSize(maxFileSize)}です。`));
+            if (file.size > window.CONFIG.FILE.MAX_FILE_SIZE) {
+                reject(new Error(`ファイルサイズが大きすぎます (${this._formatFileSize(file.size)}). 最大サイズは${this._formatFileSize(window.CONFIG.FILE.MAX_FILE_SIZE)}です。`));
                 return;
             }
             
@@ -478,7 +464,7 @@ window.API = {
             const timeoutId = setTimeout(() => {
                 reader.abort();
                 reject(new Error('ファイル読み込みがタイムアウトしました'));
-            }, 30000); // 30秒
+            }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
             
             reader.onload = () => {
                 clearTimeout(timeoutId);
