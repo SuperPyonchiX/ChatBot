@@ -57,8 +57,9 @@ window.Chat = {
      * @param {string} message - 表示するメッセージ
      * @param {HTMLElement} chatMessages - メッセージを追加する対象要素
      * @param {number} timestamp - メッセージのタイムスタンプ（任意）
+     * @param {boolean} animate - タイピングアニメーションを使用するか（デフォルト:true）
      */
-    addBotMessage: function(message, chatMessages, timestamp = null) {
+    addBotMessage: function(message, chatMessages, timestamp = null, animate = true) {
         if (!chatMessages) return;
         
         const messageDiv = document.createElement('div');
@@ -77,21 +78,125 @@ window.Chat = {
         const messageContent = document.createElement('div');
         messageContent.classList.add('markdown-content');
         
-        try {
-            messageContent.innerHTML = window.Markdown.renderMarkdown(message || '');
-        } catch (e) {
-            console.error('ボットメッセージのMarkdown解析エラー:', e);
-            messageContent.textContent = window.Markdown.formatMessage(message || '');
+        if (animate) {
+            // 初期状態では空にしておく
+            messageContent.innerHTML = '';
+            contentDiv.appendChild(copyButton);
+            contentDiv.appendChild(messageContent);
+            messageDiv.appendChild(contentDiv);
+            
+            // メッセージを追加して表示する
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // テキストを徐々に表示するアニメーション
+            this._animateTyping(message, messageContent);
+        } else {
+            // アニメーションなしの場合はすぐに表示
+            try {
+                messageContent.innerHTML = window.Markdown.renderMarkdown(message || '');
+            } catch (e) {
+                console.error('ボットメッセージのMarkdown解析エラー:', e);
+                messageContent.textContent = window.Markdown.formatMessage(message || '');
+            }
+            
+            contentDiv.appendChild(copyButton);
+            contentDiv.appendChild(messageContent);
+            messageDiv.appendChild(contentDiv);
+            
+            // コードブロックの処理とメッセージの表示
+            this._processMessageAndAppend(messageDiv, chatMessages);
+        }
+    },
+    
+    /**
+     * タイピングアニメーションを実行する
+     * @private
+     * @param {string} message - 表示するメッセージ
+     * @param {HTMLElement} container - メッセージを表示する要素
+     */
+    _animateTyping: function(message, container) {
+        if (!message || !container) return;
+        
+        // 設定から値を取得（存在しない場合はデフォルト値を使用）
+        const typingConfig = window.CONFIG?.UI?.TYPING_EFFECT || {};
+        const typingEnabled = typingConfig.ENABLED !== undefined ? typingConfig.ENABLED : true;
+        
+        // タイピングエフェクトが無効な場合は即座に表示して終了
+        if (!typingEnabled) {
+            try {
+                container.innerHTML = window.Markdown.renderMarkdown(message);
+                
+                // シンタックスハイライトを適用
+                if (typeof Prism !== 'undefined') {
+                    Prism.highlightAllUnder(container);
+                }
+                
+                // コピーボタンの追加
+                window.Markdown.addCodeBlockCopyButtons(container.closest('.message'));
+                
+                return;
+            } catch (e) {
+                console.error('メッセージレンダリング中にエラーが発生しました:', e);
+                container.textContent = message;
+                return;
+            }
         }
         
-        contentDiv.appendChild(copyButton);
-        contentDiv.appendChild(messageContent);
-        messageDiv.appendChild(contentDiv);
+        // 処理中のmarkdownテキスト
+        let markdownText = '';
         
-        // コードブロックの処理とメッセージの表示
-        this._processMessageAndAppend(messageDiv, chatMessages);
+        // markdownをレンダリングした結果
+        let renderedHTML = '';
+        
+        // 表示速度（ミリ秒）- 設定から取得またはデフォルト値を使用
+        const typingSpeed = typingConfig.SPEED !== undefined ? typingConfig.SPEED : 5;
+        
+        // バッファサイズ（一度に処理する文字数）- 設定から取得またはデフォルト値を使用
+        const bufferSize = typingConfig.BUFFER_SIZE !== undefined ? typingConfig.BUFFER_SIZE : 5;
+        
+        // テキストを一文字ずつ追加
+        let currentIndex = 0;
+        
+        const typeNextCharacters = () => {
+            if (currentIndex < message.length) {
+                // バッファサイズ分の文字を追加（ただし残りが少ない場合はその分だけ）
+                const charsToAdd = Math.min(bufferSize, message.length - currentIndex);
+                markdownText += message.substring(currentIndex, currentIndex + charsToAdd);
+                currentIndex += charsToAdd;
+                
+                // 現在のテキストをMarkdownとしてレンダリング
+                try {
+                    renderedHTML = window.Markdown.renderMarkdown(markdownText);
+                    container.innerHTML = renderedHTML;
+                    
+                    // シンタックスハイライトを適用
+                    if (typeof Prism !== 'undefined') {
+                        Prism.highlightAllUnder(container);
+                    }
+                    
+                    // コピーボタンの追加
+                    window.Markdown.addCodeBlockCopyButtons(container.closest('.message'));
+                    
+                    // 親要素のスクロール位置を更新
+                    const chatMessages = container.closest('.chat-messages');
+                    if (chatMessages) {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                } catch (e) {
+                    console.error('タイピング中のMarkdown解析エラー:', e);
+                    container.textContent = markdownText;
+                }
+                
+                // 次の文字を表示
+                setTimeout(typeNextCharacters, typingSpeed);
+            }
+        };
+        
+        // アニメーション開始
+        typeNextCharacters();
     },
-
+    
     /**
      * コピーボタンを作成する
      * @private
@@ -319,7 +424,8 @@ window.Chat = {
                 const content = typeof message.content === 'string' 
                     ? message.content 
                     : this._processContentArray(message.content);
-                this.addBotMessage(content, chatMessages, message.timestamp);
+                // チャット履歴の表示時はタイピングエフェクトを使わない(false)
+                this.addBotMessage(content, chatMessages, message.timestamp, false);
             }
         }
         
