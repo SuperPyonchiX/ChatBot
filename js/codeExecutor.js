@@ -112,51 +112,78 @@ window.CodeExecutor = {
             // 実行時間を計測
             const startTime = performance.now();
             
-            // Function コンストラクタを使用してコードを実行
-            // 引数に全てのサンドボックスの変数を渡し、with文でスコープに入れる
-            const sandboxKeys = Object.keys(sandbox);
-            const sandboxValues = sandboxKeys.map(key => sandbox[key]);
-            
-            // 戻り値を取得するためのラッパーコード
-            const wrappedCode = `
-                "use strict";
-                let __result;
-                try {
-                    __result = (function() {
-                        ${code}
-                    })();
-                } catch (e) {
-                    return { error: e.message, errorDetail: e.stack };
-                }
-                return { 
-                    result: __result, 
-                    consoleOutput: consoleOutput 
+            try {
+                // evalを直接使わずに実行する安全な方法
+                // JavaScriptコードを評価するために最も単純な方法を使用
+                
+                // 単純な即時実行関数パターンを使用
+                let result;
+                
+                // sandboxをthisに設定して実行する関数を作成
+                const execFunc = new Function(`
+                    with (this) {
+                        try {
+                            ${code}
+                        } catch (e) {
+                            console.error("実行エラー: " + e.message);
+                            throw e;
+                        }
+                    }
+                `);
+                
+                // サンドボックスのコンテキストで関数を実行
+                execFunc.call(sandbox);
+                
+                // 実行時間を計算
+                const endTime = performance.now();
+                const executionTime = (endTime - startTime).toFixed(2);
+                
+                // 最終結果を整形
+                const finalResult = {
+                    consoleOutput: consoleOutput,
+                    executionTime: `${executionTime}ms`
                 };
-            `;
-            
-            // サンドボックス内でコードを実行
-            const executor = new Function(...sandboxKeys, wrappedCode);
-            const result = executor(...sandboxValues);
-            
-            // 実行時間を計算
-            const endTime = performance.now();
-            const executionTime = (endTime - startTime).toFixed(2);
-            
-            const finalResult = {
-                result: this._formatOutput(result.result),
-                consoleOutput: result.consoleOutput || [],
-                executionTime: `${executionTime}ms`
-            };
-            
-            // 最終結果をコールバックに渡す
-            if (typeof outputCallback === 'function') {
-                outputCallback({
-                    type: 'result',
-                    content: finalResult
-                });
+                
+                // 最終結果をコールバックに渡す
+                if (typeof outputCallback === 'function') {
+                    outputCallback({
+                        type: 'result',
+                        content: finalResult
+                    });
+                }
+                
+                return finalResult;
+            } catch (evalError) {
+                // エラーをコンソール出力に追加
+                if (consoleOutput.length === 0 || !consoleOutput.some(output => output.type === 'error')) {
+                    consoleOutput.push({
+                        type: 'error',
+                        content: `実行エラー: ${evalError.message}`
+                    });
+                }
+                
+                // 実行時間を計算
+                const endTime = performance.now();
+                const executionTime = (endTime - startTime).toFixed(2);
+                
+                // エラー結果を返す
+                const errorResult = {
+                    error: `JavaScriptの実行エラー: ${evalError.message}`,
+                    errorDetail: evalError.stack,
+                    consoleOutput: consoleOutput,
+                    executionTime: `${executionTime}ms`
+                };
+                
+                // エラーをコールバックに渡す
+                if (typeof outputCallback === 'function') {
+                    outputCallback({
+                        type: 'error',
+                        content: errorResult
+                    });
+                }
+                
+                return errorResult;
             }
-            
-            return finalResult;
         } catch (error) {
             console.error('JavaScript実行中にエラーが発生しました:', error);
             const errorResult = { 
@@ -971,10 +998,11 @@ if stderr_content:
                 }
             }).join(' ');
             
-            return { type, content: formatted };
+            // 出力の最後に改行を追加
+            return { type, content: formatted + '\n' };
         } catch (error) {
             console.error('コンソール出力のフォーマット中にエラーが発生しました:', error);
-            return { type, content: '[出力フォーマットエラー]' };
+            return { type, content: '[出力フォーマットエラー]\n' };
         }
     },
     
