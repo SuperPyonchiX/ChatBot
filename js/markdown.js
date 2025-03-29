@@ -208,10 +208,17 @@ window.Markdown = {
                 statusElement.textContent = '実行準備中...';
                 resultElement.appendChild(statusElement);
                 
-                // リアルタイム出力表示用の要素
-                const outputElement = document.createElement('pre');
-                outputElement.classList.add('realtime-output');
-                resultElement.appendChild(outputElement);
+                // HTML言語の場合は特別なコンテナを用意
+                if (language === 'html') {
+                    const htmlContainer = document.createElement('div');
+                    htmlContainer.classList.add('html-result-container');
+                    resultElement.appendChild(htmlContainer);
+                } else {
+                    // 通常の言語の場合はリアルタイム出力表示用の要素
+                    const outputElement = document.createElement('pre');
+                    outputElement.classList.add('realtime-output');
+                    resultElement.appendChild(outputElement);
+                }
                 
                 parentBlock.appendChild(resultElement);
             }
@@ -225,8 +232,9 @@ window.Markdown = {
                 
                 const statusElement = resultElement.querySelector('.execution-status');
                 const outputElement = resultElement.querySelector('.realtime-output');
+                const htmlContainer = resultElement.querySelector('.html-result-container');
                 
-                if (!statusElement || !outputElement) return;
+                if (!statusElement) return;
                 
                 switch (data.type) {
                     case 'status':
@@ -236,48 +244,57 @@ window.Markdown = {
                         
                     case 'output':
                     case 'console':
-                        // 出力内容を追加
-                        const contentSpan = document.createElement('span');
-                        if (data.content && data.content.type) {
-                            contentSpan.classList.add(`console-${data.content.type}`);
-                            contentSpan.textContent = data.content.content;
-                        } else {
-                            contentSpan.textContent = data.content;
+                        // 出力内容を追加（HTML以外の言語）
+                        if (outputElement) {
+                            const contentSpan = document.createElement('span');
+                            if (data.content && data.content.type) {
+                                contentSpan.classList.add(`console-${data.content.type}`);
+                                contentSpan.textContent = data.content.content;
+                            } else {
+                                contentSpan.textContent = data.content;
+                            }
+                            outputElement.appendChild(contentSpan);
+                            
+                            // 自動スクロール（出力エリア内のみ）
+                            outputElement.scrollTop = outputElement.scrollHeight;
                         }
-                        outputElement.appendChild(contentSpan);
-                        
-                        // 自動スクロール（出力エリア内のみ）
-                        outputElement.scrollTop = outputElement.scrollHeight;
                         break;
                         
                     case 'error':
                         // エラーメッセージを表示
                         const errorContent = data.content;
                         
-                        if (typeof errorContent === 'string') {
-                            // 文字列の場合はそのまま表示
-                            outputElement.innerHTML += `<span class="console-error">${errorContent}</span>`;
-                            return;
-                        }
+                        // HTMLの場合はHTMLコンテナに、それ以外は通常の出力エリアに表示
+                        const targetElement = language === 'html' ? htmlContainer : outputElement;
                         
-                        // エラーオブジェクトの場合の処理
-                        if (errorContent.error) {
-                            // エラーメッセージを出力エリアに追加（既存のエリアを保持）
-                            const errorMessage = document.createElement('div');
-                            errorMessage.classList.add('console-error');
-                            errorMessage.textContent = errorContent.error || 'エラーが発生しました';
-                            outputElement.appendChild(errorMessage);
-                            
-                            // エラー詳細があれば追加
-                            if (errorContent.errorDetail) {
-                                const errorDetail = document.createElement('pre');
-                                errorDetail.classList.add('error-details');
-                                errorDetail.textContent = errorContent.errorDetail;
-                                outputElement.appendChild(errorDetail);
+                        if (targetElement) {
+                            if (typeof errorContent === 'string') {
+                                // 文字列の場合はそのまま表示
+                                const errorSpan = document.createElement('span');
+                                errorSpan.classList.add('console-error');
+                                errorSpan.textContent = errorContent;
+                                targetElement.appendChild(errorSpan);
+                            } else if (errorContent.error) {
+                                // エラーオブジェクトの場合の処理
+                                const errorMessage = document.createElement('div');
+                                errorMessage.classList.add('console-error');
+                                errorMessage.textContent = errorContent.error || 'エラーが発生しました';
+                                targetElement.appendChild(errorMessage);
+                                
+                                // エラー詳細があれば追加
+                                if (errorContent.errorDetail) {
+                                    const errorDetail = document.createElement('pre');
+                                    errorDetail.classList.add('error-details');
+                                    errorDetail.textContent = errorContent.errorDetail;
+                                    targetElement.appendChild(errorDetail);
+                                }
+                            } else {
+                                // 未知のエラー形式の場合
+                                const errorSpan = document.createElement('span');
+                                errorSpan.classList.add('console-error');
+                                errorSpan.textContent = 'エラーが発生しました';
+                                targetElement.appendChild(errorSpan);
                             }
-                        } else {
-                            // 未知のエラー形式の場合
-                            outputElement.innerHTML += '<span class="console-error">エラーが発生しました</span>';
                         }
                         
                         // エラー時はステータスを更新
@@ -287,12 +304,68 @@ window.Markdown = {
                         
                     case 'result':
                         // 最終結果が返ってきた場合
-                        // 一時的なリアルタイム表示を最終結果に置き換える
                         if (data.content.executionTime) {
                             const timeInfo = document.createElement('div');
                             timeInfo.classList.add('execution-time');
                             timeInfo.innerHTML = `<span>実行時間: ${data.content.executionTime}</span>`;
                             resultElement.prepend(timeInfo);
+                        }
+                        
+                        // HTML結果の特別処理
+                        if (language === 'html' && data.content.type === 'html' && data.content.html) {
+                            // HTMLコンテナを空にする
+                            if (htmlContainer) {
+                                htmlContainer.innerHTML = '';
+                                
+                                // iframeを作成
+                                const iframe = document.createElement('iframe');
+                                iframe.classList.add('html-result-frame');
+                                iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads'; 
+                                iframe.style.width = '100%';
+                                iframe.style.minHeight = '300px';
+                                iframe.style.border = '1px solid #ddd';
+                                iframe.style.borderRadius = '4px';
+                                htmlContainer.appendChild(iframe);
+                                
+                                // iframeのコンテンツを設定
+                                setTimeout(() => {
+                                    try {
+                                        const doc = iframe.contentDocument || iframe.contentWindow.document;
+                                        doc.open();
+                                        doc.write(data.content.html);
+                                        doc.close();
+                                        
+                                        // iframeの高さを調整
+                                        iframe.onload = function() {
+                                            try {
+                                                const height = Math.max(300, doc.body.scrollHeight + 30);
+                                                iframe.style.height = `${height}px`;
+                                                
+                                                // コンテンツの変更を監視して高さを再調整
+                                                if (window.ResizeObserver) {
+                                                    const resizeObserver = new ResizeObserver(() => {
+                                                        const newHeight = Math.max(300, doc.body.scrollHeight + 30);
+                                                        iframe.style.height = `${newHeight}px`;
+                                                    });
+                                                    
+                                                    if (doc.body) {
+                                                        resizeObserver.observe(doc.body);
+                                                    }
+                                                }
+                                            } catch (e) {
+                                                console.error('iframe高さ調整エラー:', e);
+                                            }
+                                        };
+                                        
+                                        // すぐに高さを調整してみる
+                                        iframe.style.height = `${Math.max(300, doc.body.scrollHeight + 30)}px`;
+                                        
+                                    } catch (error) {
+                                        console.error('iframeへのHTML読み込み中にエラーが発生しました:', error);
+                                        htmlContainer.innerHTML = '<p style="color: red;">HTMLの表示に失敗しました: ' + error.message + '</p>';
+                                    }
+                                }, 0);
+                            }
                         }
                         
                         // ステータス表示を削除するか成功メッセージに変更
@@ -302,20 +375,13 @@ window.Markdown = {
                         }
                         break;
                 }
-                
-                // 親要素のスクロール位置を自動更新しない
-                // 自動スクロールを削除
             };
             
             // CodeExecutorを使用してコードを実行
             const result = await window.CodeExecutor.executeCode(code, language, outputCallback);
             
-            // 結果はスクロールさせずに表示
-            if (resultElement && resultElement.querySelector('.realtime-output')) {
-                // 出力領域内だけをスクロール
-                resultElement.querySelector('.realtime-output').scrollTop = 
-                    resultElement.querySelector('.realtime-output').scrollHeight;
-            }
+            // スクロール位置は自動調整しない
+            
         } catch (error) {
             console.error('コード実行中にエラーが発生しました:', error);
             

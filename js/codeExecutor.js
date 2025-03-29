@@ -185,23 +185,77 @@ window.CodeExecutor = {
      */
     _executeHtml: function(code, outputCallback) {
         try {
-            // HTMLをサニタイズ（危険なスクリプトを除去）
-            const sanitizedHtml = this._sanitizeHtml(code);
+            // ステータス通知を出す
+            if (typeof outputCallback === 'function') {
+                outputCallback({
+                    type: 'status',
+                    content: 'HTMLを処理しています...'
+                });
+            }
+
+            // HTMLが不完全な場合は補完する（<html>, <head>, <body>タグがない場合）
+            let sanitizedHtml = code.trim();
             
+            // HTMLテンプレートを用意
+            if (!sanitizedHtml.match(/<html[\s>]/i)) {
+                // HTML文書構造を持たない場合、適切なHTML構造を持つように補完
+                const hasDoctype = sanitizedHtml.match(/<!DOCTYPE\s+html>/i);
+                const hasHead = sanitizedHtml.match(/<head[\s>]/i);
+                const hasBody = sanitizedHtml.match(/<body[\s>]/i);
+                
+                let resultHtml = '';
+                
+                if (!hasDoctype) {
+                    resultHtml += '<!DOCTYPE html>\n';
+                }
+                
+                if (!sanitizedHtml.match(/<html[\s>]/i)) {
+                    resultHtml += '<html>\n';
+                    
+                    if (!hasHead) {
+                        resultHtml += '<head>\n';
+                        resultHtml += '  <meta charset="UTF-8">\n';
+                        resultHtml += '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n';
+                        resultHtml += '  <title>HTML実行結果</title>\n';
+                        resultHtml += '</head>\n';
+                    }
+                    
+                    if (!hasBody) {
+                        resultHtml += '<body>\n';
+                        resultHtml += sanitizedHtml;
+                        resultHtml += '\n</body>\n';
+                    } else {
+                        resultHtml += sanitizedHtml;
+                    }
+                    
+                    resultHtml += '</html>';
+                } else {
+                    resultHtml = sanitizedHtml;
+                }
+                
+                sanitizedHtml = resultHtml;
+            }
+            
+            // HTMLをサニタイズ（危険なスクリプトを除去）
+            sanitizedHtml = this._sanitizeHtml(sanitizedHtml);
+            
+            // 結果オブジェクトを作成
             const result = {
                 html: sanitizedHtml,
-                type: 'html'
+                type: 'html',
+                executionTime: '0ms' // HTML実行の場合は実行時間は常に0
             };
             
             // 結果をコールバックに渡す
             if (typeof outputCallback === 'function') {
+                // 実行結果をコールバックで送信
                 outputCallback({
                     type: 'result',
                     content: result
                 });
             }
             
-            // HTML結果を返す（iframeで表示される）
+            // HTML結果を返す
             return result;
         } catch (error) {
             console.error('HTML実行中にエラーが発生しました:', error);
@@ -958,11 +1012,15 @@ if stderr_content:
      */
     _sanitizeHtml: function(html) {
         try {
-            // 簡易的なサニタイズ（実際の実装では、DOMPurifyなどのライブラリの使用を推奨）
+            // セキュリティ上の一般的な対策を維持しつつ、インタラクティブなコードを許可
             const sanitized = html
-                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '<!-- スクリプトは安全のため削除されました -->')
-                .replace(/on\w+="[^"]*"/g, '')  // インラインイベントハンドラを削除
-                .replace(/on\w+='[^']*'/g, ''); // インラインイベントハンドラを削除
+                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, (match) => {
+                    // スクリプトタグは維持するが、src属性が外部を参照している場合は削除
+                    if (match.match(/src\s*=\s*["']https?:\/\//i)) {
+                        return '<!-- 外部スクリプトは安全のため削除されました -->';
+                    }
+                    return match; // ローカルスクリプトは許可
+                });
             
             // base要素を挿入してリソースの相対パスを制限
             const hasBaseTag = /<base\b/i.test(sanitized);
@@ -1020,7 +1078,11 @@ if stderr_content:
         if (executionResult.type === 'html' && executionResult.html) {
             const iframe = document.createElement('iframe');
             iframe.classList.add('html-result-frame');
-            iframe.sandbox = 'allow-same-origin'; // 安全のためサンドボックス化
+            iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads'; // スクリプト実行と他の必要な機能を許可
+            iframe.style.width = '100%';
+            iframe.style.minHeight = '300px';
+            iframe.style.border = '1px solid #ddd';
+            iframe.style.borderRadius = '4px';
             resultContainer.appendChild(iframe);
             
             // iframeのコンテンツを設定
@@ -1032,10 +1094,35 @@ if stderr_content:
                     doc.close();
                     
                     // iframeの高さを調整
-                    iframe.style.height = `${doc.body.scrollHeight + 20}px`;
+                    iframe.onload = function() {
+                        try {
+                            const height = Math.max(300, doc.body.scrollHeight + 30);
+                            iframe.style.height = `${height}px`;
+                            
+                            // コンテンツの変更を監視して高さを再調整
+                            const resizeObserver = new ResizeObserver(() => {
+                                const newHeight = Math.max(300, doc.body.scrollHeight + 30);
+                                iframe.style.height = `${newHeight}px`;
+                            });
+                            
+                            if (doc.body) {
+                                resizeObserver.observe(doc.body);
+                            }
+                        } catch (e) {
+                            console.error('iframe高さ調整エラー:', e);
+                        }
+                    };
+                    
+                    // すぐに高さを調整してみる
+                    const height = Math.max(300, doc.body.scrollHeight + 30);
+                    iframe.style.height = `${height}px`;
+                    
                 } catch (error) {
                     console.error('iframeへのHTML読み込み中にエラーが発生しました:', error);
-                    resultContainer.innerHTML = '<p>HTMLの表示に失敗しました</p>';
+                    const errorElement = document.createElement('p');
+                    errorElement.textContent = 'HTMLの表示に失敗しました: ' + error.message;
+                    errorElement.style.color = 'red';
+                    resultContainer.appendChild(errorElement);
                 }
             }, 0);
             
