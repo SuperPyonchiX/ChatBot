@@ -397,22 +397,22 @@ window.UI = {
 
     /**
      * システムプロンプト設定モーダルを表示します
-     * システムプロンプトを編集するためのモーダルを表示します
+     * システムプロンプト編集モーダルを表示し、テンプレート一覧も更新します
      * 
      * @function showSystemPromptModal
      * @memberof UI
      * @param {string} systemPrompt - 現在のシステムプロンプト
-     * @param {Function} loadPromptTemplatesCallback - テンプレート読み込みコールバック関数
+     * @param {Object} promptTemplates - プロンプトテンプレート集
+     * @param {Function} onTemplateSelect - テンプレート選択時のコールバック
+     * @param {Function} onTemplateDelete - テンプレート削除時のコールバック
      * @returns {void}
      */
-    showSystemPromptModal: function(systemPrompt, loadPromptTemplatesCallback) {
+    showSystemPromptModal: function(systemPrompt, promptTemplates, onTemplateSelect, onTemplateDelete) {
         UIUtils.toggleModal('systemPromptModal', true);
         UICache.get('systemPromptInput').value = systemPrompt;
         
-        // テンプレートを非同期で読み込み
-        if (typeof loadPromptTemplatesCallback === 'function') {
-            setTimeout(loadPromptTemplatesCallback, 0);
-        }
+        // テンプレート一覧を表示
+        this.updateTemplateList(promptTemplates, onTemplateSelect, onTemplateDelete);
     },
 
     /**

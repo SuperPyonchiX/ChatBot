@@ -20,7 +20,8 @@ window.Storage = {
         PROMPT_TEMPLATES: 'promptTemplates',
         CATEGORY_STATES: 'categoryStates',
         CONVERSATIONS: 'conversations',
-        CURRENT_CONVERSATION_ID: 'currentConversationId'
+        CURRENT_CONVERSATION_ID: 'currentConversationId',
+        ATTACHMENTS_PREFIX: 'attachments_' // 添付ファイル用のプレフィックス
     },
 
     /**
@@ -30,11 +31,11 @@ window.Storage = {
      */
     _DEFAULTS: {
         API_TYPE: 'openai',
-        SYSTEM_PROMPT: 'あなたは知的で頼れる存在であり、熟練した開発者として、常に正確な回答を提供し、指示されたことのみを実行します。常に真実を述べ、事実に基づかない情報を作り出すことはありません。（以下のプロンプトに応答する際は、GitHub Flavored Markdown を適切に使用して回答をスタイリングしてください。見出し、リスト、色付きのテキスト、コードブロック、ハイライトなどにMarkdown構文を使用してください。ただし、Markdownやスタイリングについて言及しないようにしてください。）',
+        SYSTEM_PROMPT: 'あなたは親切で誠実なAIアシスタントです。ユーザーの要求に対して、簡潔かつ有益な回答を提供してください。',
         PROMPT_TEMPLATES: {
-            'default': 'あなたは知的で頼れる存在であり、熟練した開発者として、常に正確な回答を提供し、指示されたことのみを実行します。常に真実を述べ、事実に基づかない情報を作り出すことはありません。（以下のプロンプトに応答する際は、GitHub Flavored Markdown を適切に使用して回答をスタイリングしてください。見出し、リスト、色付きのテキスト、コードブロック、ハイライトなどにMarkdown構文を使用してください。ただし、Markdownやスタイリングについて言及しないようにしてください。）',
+            'general': 'あなたは親切で誠実なAIアシスタントです。ユーザーの要求に対して、簡潔かつ有益な回答を提供してください。',
             'creative': 'あなたはクリエイティブで革新的なアイデアを提案できるAIアシスタントです。ユーザーの要望に対して、独創的で実現可能なソリューションを提供してください。',
-            'technical': 'あなたは技術的な専門知識を持つエキスパートエンジニアです。コードの品質、セキュリティ、パフォーマンスを重視し、ベストプラクティスに基づいたアドバイスを提供してください。'
+            'technical': 'あなたは知的で頼れる存在であり、熟練した開発者として、常に正確な回答を提供し、指示されたことのみを実行します。常に真実を述べ、事実に基づかない情報を作り出すことはありません。（以下のプロンプトに応答する際は、GitHub Flavored Markdown を適切に使用して回答をスタイリングしてください。見出し、リスト、色付きのテキスト、コードブロック、ハイライトなどにMarkdown構文を使用してください。ただし、Markdownやスタイリングについて言及しないようにしてください。）'
         },
         SUPPORTED_MODELS: ['gpt-4o-mini', 'gpt-4o', 'o1-mini', 'o1']
     },
@@ -182,17 +183,18 @@ window.Storage = {
             openaiApiKey: this._getItem(this._KEYS.OPENAI_API_KEY, ''),
             azureApiKey: this._getItem(this._KEYS.AZURE_API_KEY, ''),
             apiType: this._getItem(this._KEYS.API_TYPE, this._DEFAULTS.API_TYPE),
-            azureEndpoints: azureEndpoints
+            azureEndpoints
         };
     },
-
+    
     /**
-     * API設定を保存
-     * @param {Object} apiSettings - 保存するAPI設定オブジェクト
+     * APIキー設定を保存
+     * @param {Object} apiSettings - API設定オブジェクト
      */
     saveApiSettings: function(apiSettings) {
         if (!apiSettings) return;
         
+        // 基本設定を保存
         this._setItem(this._KEYS.OPENAI_API_KEY, apiSettings.openaiApiKey || '');
         this._setItem(this._KEYS.AZURE_API_KEY, apiSettings.azureApiKey || '');
         this._setItem(this._KEYS.API_TYPE, apiSettings.apiType || this._DEFAULTS.API_TYPE);
@@ -222,7 +224,7 @@ window.Storage = {
      * @param {string} systemPrompt - 保存するシステムプロンプト
      */
     saveSystemPrompt: function(systemPrompt) {
-        if (typeof systemPrompt !== 'string') return;
+        if (systemPrompt === undefined || systemPrompt === null) return;
         this._setItem(this._KEYS.SYSTEM_PROMPT, systemPrompt);
     },
 
@@ -231,39 +233,54 @@ window.Storage = {
      * @returns {Object} プロンプトテンプレートのオブジェクト
      */
     loadPromptTemplates: function() {
-        const templates = this._getItem(
-            this._KEYS.PROMPT_TEMPLATES, 
-            this._DEFAULTS.PROMPT_TEMPLATES, 
-            true
-        );
-        
-        // デフォルトテンプレートが必ず存在するようにする
-        if (!templates.default) {
-            templates.default = this._DEFAULTS.PROMPT_TEMPLATES.default;
-        }
-        
-        return templates;
+        return this._getItem(this._KEYS.PROMPT_TEMPLATES, this._DEFAULTS.PROMPT_TEMPLATES, true);
     },
 
     /**
      * プロンプトテンプレートを保存
-     * @param {Object} promptTemplates - 保存するプロンプトテンプレート
+     * @param {Object} templates - プロンプトテンプレートのオブジェクト
      */
-    savePromptTemplates: function(promptTemplates) {
-        if (!promptTemplates || typeof promptTemplates !== 'object') return;
-        
-        // デフォルトテンプレートが必ず存在するようにする
-        if (!promptTemplates.default) {
-            promptTemplates.default = this._DEFAULTS.PROMPT_TEMPLATES.default;
-        }
-        
-        this._setItem(this._KEYS.PROMPT_TEMPLATES, promptTemplates);
+    savePromptTemplates: function(templates) {
+        if (!templates || typeof templates !== 'object') return;
+        this._setItem(this._KEYS.PROMPT_TEMPLATES, templates);
     },
 
     /**
-     * カテゴリー設定状態（展開/折りたたみ）を保存
-     * @param {string} categoryName - カテゴリー名
-     * @param {boolean} isExpanded - 展開状態かどうか
+     * テンプレートを追加
+     * @param {string} name - テンプレート名
+     * @param {string} prompt - プロンプト内容
+     * @returns {boolean} 保存成功時はtrue
+     */
+    addTemplate: function(name, prompt) {
+        if (!name || !prompt) return false;
+        
+        const templates = this.loadPromptTemplates();
+        templates[name] = prompt;
+        this.savePromptTemplates(templates);
+        return true;
+    },
+
+    /**
+     * テンプレートを削除
+     * @param {string} name - 削除するテンプレート名
+     * @returns {boolean} 削除成功時はtrue
+     */
+    removeTemplate: function(name) {
+        if (!name) return false;
+        
+        const templates = this.loadPromptTemplates();
+        if (templates[name]) {
+            delete templates[name];
+            this.savePromptTemplates(templates);
+            return true;
+        }
+        return false;
+    },
+
+    /**
+     * カテゴリの状態を保存
+     * @param {string} categoryName - カテゴリ名
+     * @param {boolean} isExpanded - カテゴリが展開されているか
      */
     saveCategoryState: function(categoryName, isExpanded) {
         if (!categoryName) return;
@@ -323,6 +340,87 @@ window.Storage = {
     saveCurrentConversationId: function(currentConversationId) {
         if (!currentConversationId) return;
         this._setItem(this._KEYS.CURRENT_CONVERSATION_ID, currentConversationId);
+    },
+
+    /**
+     * 添付ファイルをローカルストレージに保存
+     * @param {string} conversationId - 会話ID
+     * @param {Array<Object>} attachments - 添付ファイルの配列
+     */
+    saveAttachments: function(conversationId, attachments) {
+        if (!conversationId || !Array.isArray(attachments)) return;
+        
+        try {
+            // 保存前にデータサイズを最適化
+            const optimizedAttachments = this._optimizeAttachments(attachments);
+            
+            // 添付ファイルを保存
+            const key = this._KEYS.ATTACHMENTS_PREFIX + conversationId;
+            this._setItem(key, optimizedAttachments);
+        } catch (error) {
+            console.error('添付ファイルの保存中にエラーが発生しました:', error);
+        }
+    },
+    
+    /**
+     * 添付ファイルを最適化
+     * @private
+     * @param {Array<Object>} attachments - 添付ファイルの配列
+     * @returns {Array<Object>} 最適化された添付ファイルの配列
+     */
+    _optimizeAttachments: function(attachments) {
+        if (!Array.isArray(attachments)) return [];
+        
+        return attachments.map(attachment => {
+            if (!attachment) return null;
+            
+            // 基本的なメタデータのみを保持
+            const optimized = {
+                type: attachment.type,
+                name: attachment.name,
+                mimeType: attachment.mimeType,
+                size: attachment.size
+            };
+            
+            // データ部分は画像やファイルの種類によって最適化
+            if (attachment.data) {
+                optimized.data = attachment.data;
+            }
+            
+            return optimized;
+        }).filter(Boolean); // null/undefinedを除外
+    },
+    
+    /**
+     * 添付ファイルをローカルストレージから読み込む
+     * @param {string} conversationId - 会話ID
+     * @returns {Array<Object>} 添付ファイルの配列
+     */
+    loadAttachments: function(conversationId) {
+        if (!conversationId) return [];
+        
+        try {
+            const key = this._KEYS.ATTACHMENTS_PREFIX + conversationId;
+            return this._getItem(key, [], true);
+        } catch (error) {
+            console.error('添付ファイルの読み込み中にエラーが発生しました:', error);
+            return [];
+        }
+    },
+    
+    /**
+     * 添付ファイルをローカルストレージから削除
+     * @param {string} conversationId - 会話ID
+     */
+    removeAttachments: function(conversationId) {
+        if (!conversationId) return;
+        
+        try {
+            const key = this._KEYS.ATTACHMENTS_PREFIX + conversationId;
+            this.removeItem(key);
+        } catch (error) {
+            console.error('添付ファイルの削除中にエラーが発生しました:', error);
+        }
     },
 
     /**
