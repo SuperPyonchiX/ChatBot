@@ -318,3 +318,52 @@
     background-color: #10a37f;
     color: white;
 }
+
+/* タイピングアニメーション */
+.typing-dots span {
+    animation: typingDot 1.4s infinite;
+    display: inline-block;
+    opacity: 0;
+}
+
+.typing-dots span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typingDot {
+    0% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* カーソルの点滅アニメーション（テキストの最後で点滅するカーソル） */
+.markdown-content.typing::after {
+    content: "|";
+    display: inline-block;
+    animation: cursorBlink 0.8s infinite;
+    font-weight: normal;
+    color: #aaa;
+}
+
+@keyframes cursorBlink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+}

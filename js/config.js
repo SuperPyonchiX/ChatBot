@@ -123,6 +123,18 @@ window.CONFIG = {
         MOBILE_BREAKPOINT: 576,
         
         // テキストエリアの最大高さ比率（画面の高さに対する割合）
-        TEXTAREA_MAX_HEIGHT_RATIO: 0.4
+        TEXTAREA_MAX_HEIGHT_RATIO: 0.4,
+        
+        // タイピングエフェクト設定
+        TYPING_EFFECT: {
+            // 表示速度（ミリ秒）- 小さいほど速く表示
+            SPEED: 25,
+            
+            // バッファサイズ（一度に処理する文字数）
+            BUFFER_SIZE: 5,
+            
+            // タイピングエフェクトを有効にするかどうか
+            ENABLED: true
+        }
     }
 };
