@@ -22,9 +22,9 @@ window.Markdown = {
         // PrismJSのCDN URL
         PRISM_URL: 'https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js',
         // プリロードする言語
-        PRELOAD_LANGUAGES: ['javascript', 'typescript', 'html', 'css', 'python', 'json', 'markdown'],
+        PRELOAD_LANGUAGES: ['javascript', 'typescript', 'html', 'css', 'python', 'json', 'markdown', 'cpp'],
         // 実行可能な言語リスト
-        EXECUTABLE_LANGUAGES: ['javascript', 'js', 'python', 'py', 'html']
+        EXECUTABLE_LANGUAGES: ['javascript', 'js', 'python', 'py', 'html', 'cpp', 'c++']
     },
     
     /**
