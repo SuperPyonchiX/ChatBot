@@ -10,12 +10,17 @@ window.Chat = {
      * @param {string} message - 表示するメッセージ
      * @param {HTMLElement} chatMessages - メッセージを追加する対象要素
      * @param {Array} attachments - 添付ファイルの配列（任意）
+     * @param {number} timestamp - メッセージのタイムスタンプ（任意）
      */
-    addUserMessage: function(message, chatMessages, attachments = []) {
+    addUserMessage: function(message, chatMessages, attachments = [], timestamp = null) {
         if (!chatMessages) return;
         
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', 'user');
+        
+        // タイムスタンプを設定
+        const msgTimestamp = timestamp || Date.now();
+        messageDiv.dataset.timestamp = msgTimestamp;
         
         const contentDiv = document.createElement('div');
         contentDiv.classList.add('message-content');
@@ -51,12 +56,17 @@ window.Chat = {
      * ボットメッセージを追加する
      * @param {string} message - 表示するメッセージ
      * @param {HTMLElement} chatMessages - メッセージを追加する対象要素
+     * @param {number} timestamp - メッセージのタイムスタンプ（任意）
      */
-    addBotMessage: function(message, chatMessages) {
+    addBotMessage: function(message, chatMessages, timestamp = null) {
         if (!chatMessages) return;
         
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', 'bot');
+        
+        // タイムスタンプを設定
+        const msgTimestamp = timestamp || Date.now();
+        messageDiv.dataset.timestamp = msgTimestamp;
         
         const contentDiv = document.createElement('div');
         contentDiv.classList.add('message-content');
@@ -166,7 +176,7 @@ window.Chat = {
         const attachmentsDiv = document.createElement('div');
         attachmentsDiv.classList.add('message-attachments');
         
-        attachments.forEach(attachment => {
+        attachments.forEach((attachment) => {
             if (!attachment || !attachment.type) return;
             
             if (attachment.type === 'image' && attachment.data) {
@@ -202,6 +212,10 @@ window.Chat = {
                 attachmentsDiv.appendChild(fileContainer);
             }
         });
+        
+        if (attachmentsDiv.children.length === 0) {
+            return document.createElement('div');
+        }
         
         return attachmentsDiv;
     },
@@ -300,12 +314,12 @@ window.Chat = {
                 const content = typeof message.content === 'string' 
                     ? message.content 
                     : this._processContentArray(message.content);
-                this.addUserMessage(content, chatMessages);
+                this.addUserMessage(content, chatMessages, [], message.timestamp);
             } else if (message.role === 'assistant') {
                 const content = typeof message.content === 'string' 
                     ? message.content 
                     : this._processContentArray(message.content);
-                this.addBotMessage(content, chatMessages);
+                this.addBotMessage(content, chatMessages, message.timestamp);
             }
         }
         
@@ -319,6 +333,9 @@ window.Chat = {
                 console.error('モデル選択の設定中にエラーが発生しました:', error);
             }
         }
+        
+        // 添付ファイルを読み込んで表示（正しいメッセージに関連付け）
+        window.FileHandler.displaySavedAttachments(conversation.id, chatMessages);
         
         // シンタックスハイライトを再適用
         if (typeof Prism !== 'undefined') {
@@ -379,15 +396,19 @@ window.Chat = {
         }
         
         try {
+            // メッセージのタイムスタンプを生成
+            const timestamp = Date.now();
+            
             // ユーザーメッセージを表示（添付ファイル付き）
-            this.addUserMessage(message, chatMessages, attachments);
+            this.addUserMessage(message, chatMessages, attachments, timestamp);
             userInput.value = '';
             userInput.style.height = 'auto';
             
             // 現在の会話にユーザーメッセージを追加
             currentConversation.messages.push({
                 role: 'user',
-                content: message  // 純粋なテキストメッセージ
+                content: message,  // 純粋なテキストメッセージ
+                timestamp: timestamp  // タイムスタンプを追加
             });
             
             // チャットタイトルがデフォルトの場合、最初のメッセージをタイトルに設定
@@ -422,13 +443,17 @@ window.Chat = {
                 // Thinkingの表示を削除
                 this._safeRemoveChild(chatMessages, typingIndicator);
                 
+                // ボットの応答タイムスタンプ
+                const botTimestamp = Date.now();
+                
                 // ボットの応答を表示
-                this.addBotMessage(botResponse, chatMessages);
+                this.addBotMessage(botResponse, chatMessages, botTimestamp);
                 
                 // 応答をメッセージ履歴に追加
                 currentConversation.messages.push({
                     role: 'assistant',
-                    content: botResponse
+                    content: botResponse,
+                    timestamp: botTimestamp  // タイムスタンプを追加
                 });
                 
                 return { titleUpdated, response: botResponse };

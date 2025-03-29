@@ -310,18 +310,35 @@ window.Storage = {
     /**
      * 添付ファイルをローカルストレージに保存
      * @param {string} conversationId - 会話ID
-     * @param {Array<Object>} attachments - 添付ファイルの配列
+     * @param {Object} attachmentData - タイムスタンプと添付ファイルを含むオブジェクト
      */
-    saveAttachments: function(conversationId, attachments) {
-        if (!conversationId || !Array.isArray(attachments)) return;
+    saveAttachments: function(conversationId, attachmentData) {
+        if (!conversationId) return;
         
         try {
-            // 保存前にデータサイズを最適化
-            const optimizedAttachments = this._optimizeAttachments(attachments);
+            // 新しい構造に対応 - attachmentDataがオブジェクトか配列かを確認
+            let dataToSave;
+            
+            if (Array.isArray(attachmentData)) {
+                // 旧形式（配列のみ）の場合は新形式に変換
+                dataToSave = {
+                    timestamp: Date.now(),
+                    files: this._optimizeAttachments(attachmentData)
+                };
+            } else if (attachmentData && typeof attachmentData === 'object') {
+                // 新形式の場合はファイルだけを最適化
+                dataToSave = {
+                    timestamp: attachmentData.timestamp || Date.now(),
+                    files: this._optimizeAttachments(attachmentData.files || [])
+                };
+            } else {
+                console.error('無効な添付ファイルデータ形式です');
+                return;
+            }
             
             // 添付ファイルを保存
             const key = window.CONFIG.STORAGE.KEYS.ATTACHMENTS_PREFIX + conversationId;
-            this._setItem(key, optimizedAttachments);
+            this._setItem(key, dataToSave);
         } catch (error) {
             console.error('添付ファイルの保存中にエラーが発生しました:', error);
         }
@@ -359,17 +376,37 @@ window.Storage = {
     /**
      * 添付ファイルをローカルストレージから読み込む
      * @param {string} conversationId - 会話ID
-     * @returns {Array<Object>} 添付ファイルの配列
+     * @returns {Object} タイムスタンプとファイルを含むオブジェクト
      */
     loadAttachments: function(conversationId) {
-        if (!conversationId) return [];
+        if (!conversationId) return { timestamp: null, files: [] };
         
         try {
             const key = window.CONFIG.STORAGE.KEYS.ATTACHMENTS_PREFIX + conversationId;
-            return this._getItem(key, [], true);
+            const data = this._getItem(key, null, true);
+            
+            // データが存在しない場合
+            if (!data) {
+                return { timestamp: null, files: [] };
+            }
+            
+            // 新形式（オブジェクト）か旧形式（配列）かを判定
+            if (Array.isArray(data)) {
+                // 旧形式の場合は新形式に変換
+                return {
+                    timestamp: Date.now(),
+                    files: data
+                };
+            } else if (data && typeof data === 'object' && 'files' in data) {
+                // 既に新形式の場合
+                return data;
+            } else {
+                console.error(`不明な添付ファイル形式です（会話ID: ${conversationId}）`, data);
+                return { timestamp: null, files: [] };
+            }
         } catch (error) {
             console.error('添付ファイルの読み込み中にエラーが発生しました:', error);
-            return [];
+            return { timestamp: null, files: [] };
         }
     },
     
