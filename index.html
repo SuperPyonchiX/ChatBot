@@ -17,21 +17,25 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
     
     <!-- Prism.js スタイルシート -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" integrity="sha512-vswe+cgvic/XBoF1OcM/TeJ2FW0OofqAVdCZiEYkd6dwGXthvkSFWOoGGJgS2CW70VK5dQM5Oh+7ne47s74VTg==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" integrity="sha512-Qs7Xx52XDe/8FwFdxZ8lNvFRwglqc6s+ExRs9n5/O50eTi1J1vIjJ+FS5JbgKFGwLRZVXOVlQr9xXSCkR8Vdg==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" integrity="sha512-cbQXwDFK7lj2Fqfkuxbo5iD1dSbLlJGXGpfTDqbggqjHJeyzx88I3rfwjS38WJag/ihH7lzuGlGHpDBymLirZQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     
     <!-- マークダウンライブラリとPrism.jsコアを事前読み込み -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js" integrity="sha512-9khQRAUBYEJDCDVP2yw3LRUQvjJ0Pjx0EShmaQjcHa6AXiOv6qHQu9lCAIR8O+/D8FtaCoJ2c0Tf9Xo7hYH01Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     
     <!-- Prism.js ランタイム読み込み用スクリプト -->
     <script>
         // 必要なPrism.jsコンポーネントを動的に読み込む関数
         function loadPrismComponents() {
+            // コンポーネントを依存関係順に並べる
             const components = [
+                // 基本コンポーネント (他の言語の基本となるもの)
                 'prism-clike.min.js',
                 'prism-markup.min.js',
+                
+                // 一般的な言語
                 'prism-javascript.min.js',
                 'prism-css.min.js',
                 'prism-python.min.js',
@@ -45,8 +49,11 @@
                 'prism-rust.min.js',
                 'prism-sql.min.js',
                 'prism-bash.min.js',
-                'prism-basic.min.js',
-                'prism-vbnet.min.js'
+                
+                // Visual Basic系言語 (依存関係の順序に注意)
+                'prism-basic.min.js',            // Basic言語の基本コンポーネント
+                'prism-visual-basic.min.js',     // Visual Basic
+                'prism-vbnet.min.js'             // VB.NET
             ];
             
             const loadComponent = (index) => {
@@ -54,7 +61,6 @@
                     // すべてのコンポーネント読み込み完了後にプラグイン読み込み
                     const script = document.createElement('script');
                     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js';
-                    script.integrity = 'sha512-st608h+ZqzliahyzEpETxzU0f7z7a9acN6AFvYmHvpFhmcFuKT8a22TT5TpKpjDa3pt3Wv7Z3SdQBCBdDPhyWA==';
                     script.crossOrigin = 'anonymous';
                     script.referrerPolicy = 'no-referrer';
                     script.onload = () => {
@@ -68,7 +74,13 @@
                 
                 const script = document.createElement('script');
                 script.src = `https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/${components[index]}`;
+                script.crossOrigin = 'anonymous';
+                script.referrerPolicy = 'no-referrer';
                 script.onload = () => loadComponent(index + 1);
+                script.onerror = () => {
+                    console.warn(`Failed to load Prism component: ${components[index]}`);
+                    loadComponent(index + 1); // エラーが発生しても次のコンポーネントへ進む
+                };
                 document.head.appendChild(script);
             };
             
