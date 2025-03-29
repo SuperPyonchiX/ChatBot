@@ -339,8 +339,6 @@ window.Storage = {
             // 添付ファイルを保存
             const key = window.CONFIG.STORAGE.KEYS.ATTACHMENTS_PREFIX + conversationId;
             this._setItem(key, dataToSave);
-            
-            console.log(`添付ファイルを保存しました（会話ID: ${conversationId}）:`, dataToSave);
         } catch (error) {
             console.error('添付ファイルの保存中にエラーが発生しました:', error);
         }
@@ -395,14 +393,12 @@ window.Storage = {
             // 新形式（オブジェクト）か旧形式（配列）かを判定
             if (Array.isArray(data)) {
                 // 旧形式の場合は新形式に変換
-                console.log(`添付ファイルの古い形式を検出（会話ID: ${conversationId}）。新形式に変換します。`);
                 return {
                     timestamp: Date.now(),
                     files: data
                 };
             } else if (data && typeof data === 'object' && 'files' in data) {
                 // 既に新形式の場合
-                console.log(`添付ファイルを読み込みました（会話ID: ${conversationId}）:`, data);
                 return data;
             } else {
                 console.error(`不明な添付ファイル形式です（会話ID: ${conversationId}）`, data);

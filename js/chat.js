@@ -170,22 +170,14 @@ window.Chat = {
      */
     _createAttachmentsElement: function(attachments) {
         if (!attachments || !Array.isArray(attachments)) {
-            console.log('添付ファイルが無効です:', attachments);
             return document.createElement('div');
         }
-        
-        console.log('添付ファイル表示要素を作成します。ファイル数:', attachments.length);
         
         const attachmentsDiv = document.createElement('div');
         attachmentsDiv.classList.add('message-attachments');
         
-        attachments.forEach((attachment, index) => {
-            if (!attachment || !attachment.type) {
-                console.log(`添付ファイル ${index} は無効です:`, attachment);
-                return;
-            }
-            
-            console.log(`添付ファイル ${index} を処理: タイプ=${attachment.type}, 名前=${attachment.name || '名前なし'}`);
+        attachments.forEach((attachment) => {
+            if (!attachment || !attachment.type) return;
             
             if (attachment.type === 'image' && attachment.data) {
                 const imgContainer = document.createElement('div');
@@ -203,7 +195,6 @@ window.Chat = {
                 
                 imgContainer.appendChild(img);
                 attachmentsDiv.appendChild(imgContainer);
-                console.log(`画像添付ファイルを表示: ${attachment.name || '名前なし'}`);
             } else if (attachment.type === 'file' && attachment.name) {
                 // 画像以外のファイル添付表示
                 const fileContainer = document.createElement('div');
@@ -219,16 +210,13 @@ window.Chat = {
                 fileContainer.appendChild(fileIcon);
                 fileContainer.appendChild(fileName);
                 attachmentsDiv.appendChild(fileContainer);
-                console.log(`ファイル添付ファイルを表示: ${attachment.name}`);
             }
         });
         
         if (attachmentsDiv.children.length === 0) {
-            console.log('有効な添付ファイルがないため、空の要素を返します');
             return document.createElement('div');
         }
         
-        console.log(`添付ファイル表示要素を作成完了。子要素数: ${attachmentsDiv.children.length}`);
         return attachmentsDiv;
     },
     
