@@ -22,6 +22,60 @@ window.Storage = {
     },
 
     /**
+     * 保存前にセンシティブデータを暗号化する
+     * @private
+     * @param {string} key - 保存するキー
+     * @param {*} value - 保存する値
+     * @returns {*} 必要に応じて暗号化された値
+     */
+    _encryptSensitiveData: function(key, value) {
+        // 暗号化対象のキーかどうかを判断
+        const sensitiveKeys = [
+            window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY,
+            window.CONFIG.STORAGE.KEYS.AZURE_API_KEY
+        ];
+        
+        // Azureエンドポイント用のキーもチェック
+        if (key.startsWith(window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX)) {
+            sensitiveKeys.push(key);
+        }
+        
+        // センシティブなデータかつ値が存在する場合は暗号化
+        if (sensitiveKeys.includes(key) && value) {
+            return window.CryptoHelper.encrypt(value);
+        }
+        
+        return value;
+    },
+    
+    /**
+     * 読み込み後にセンシティブデータを復号化する
+     * @private
+     * @param {string} key - 読み込むキー
+     * @param {*} value - 読み込んだ値
+     * @returns {*} 必要に応じて復号化された値
+     */
+    _decryptSensitiveData: function(key, value) {
+        // 暗号化対象のキーかどうかを判断
+        const sensitiveKeys = [
+            window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY,
+            window.CONFIG.STORAGE.KEYS.AZURE_API_KEY
+        ];
+        
+        // Azureエンドポイント用のキーもチェック
+        if (key.startsWith(window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX)) {
+            sensitiveKeys.push(key);
+        }
+        
+        // センシティブなデータかつ暗号化されている場合は復号化
+        if (sensitiveKeys.includes(key) && window.CryptoHelper.isEncrypted(value)) {
+            return window.CryptoHelper.decrypt(value);
+        }
+        
+        return value;
+    },
+
+    /**
      * ローカルストレージにアイテムを保存
      * @private
      * @param {string} key - 保存するキー
@@ -34,10 +88,13 @@ window.Storage = {
         }
         
         try {
-            if (typeof value === 'object') {
-                localStorage.setItem(key, JSON.stringify(value));
+            // センシティブデータの場合は暗号化
+            const valueToStore = this._encryptSensitiveData(key, value);
+            
+            if (typeof valueToStore === 'object') {
+                localStorage.setItem(key, JSON.stringify(valueToStore));
             } else {
-                localStorage.setItem(key, String(value));
+                localStorage.setItem(key, String(valueToStore));
             }
         } catch (error) {
             // QuotaExceededErrorの場合、一部の古いデータを削除して再試行
@@ -45,10 +102,13 @@ window.Storage = {
                 console.warn('ストレージ容量が不足しています。古いデータを削除します');
                 this._cleanupOldData();
                 try {
-                    if (typeof value === 'object') {
-                        localStorage.setItem(key, JSON.stringify(value));
+                    // 再度暗号化処理を実行
+                    const valueToStore = this._encryptSensitiveData(key, value);
+                    
+                    if (typeof valueToStore === 'object') {
+                        localStorage.setItem(key, JSON.stringify(valueToStore));
                     } else {
-                        localStorage.setItem(key, String(value));
+                        localStorage.setItem(key, String(valueToStore));
                     }
                 } catch (retryError) {
                     console.error(`ストレージへの保存に失敗しました: ${key}`, retryError);
@@ -97,16 +157,19 @@ window.Storage = {
                 return defaultValue;
             }
             
+            // JSON形式の場合
             if (isJson) {
                 try {
-                    return JSON.parse(value);
+                    const parsedValue = JSON.parse(value);
+                    return parsedValue;
                 } catch (parseError) {
                     console.error(`JSONのパースに失敗しました: ${key}`, parseError);
                     return defaultValue;
                 }
             }
             
-            return value;
+            // センシティブデータの場合は復号化
+            return this._decryptSensitiveData(key, value);
         } catch (error) {
             console.error(`ストレージからの読み込みに失敗しました: ${key}`, error);
             return defaultValue;
