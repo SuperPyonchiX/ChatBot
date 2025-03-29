@@ -1,10 +1,21 @@
 /**
  * main.js
  * アプリケーションのエントリーポイントとなるファイルです
+ * 
+ * アプリケーションの初期化、イベントリスナー設定、状態管理を担当します。
+ * UI.js、API.js、Chat.js、Storage.jsなどの他のモジュールと連携して
+ * チャットアプリケーション全体の動作を制御します。
+ * 
+ * @module Main
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // アプリケーションの状態管理
+    /**
+     * アプリケーションの状態管理
+     * チャット会話、API設定、システムプロンプトなどのアプリケーション状態を管理します
+     * 
+     * @namespace AppState
+     */
     const AppState = {
         conversations: [],
         currentConversationId: null,
@@ -24,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         /**
          * グローバル設定を更新します
+         * window.apiSettingsにアプリケーション状態の設定を反映します
          */
         updateGlobalSettings() {
             window.apiSettings = this.apiSettings;
@@ -31,6 +43,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         /**
          * 現在のモデル名を取得します
+         * 選択されているAIモデルの名前を返します。選択がない場合はデフォルト値を返します
+         * 
          * @returns {string} 現在選択されているモデル名
          */
         getCurrentModel() {
@@ -38,11 +52,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // DOM要素のキャッシュ
+    /**
+     * DOM要素のキャッシュ
+     * 頻繁にアクセスするDOM要素への参照をキャッシュします
+     * 
+     * @namespace Elements
+     */
     const Elements = (() => {
         const cache = {};
         
-        // 一度に複数の要素を取得する関数
+        /**
+         * 一度に複数の要素を取得する関数
+         * 指定されたID配列から要素を取得してオブジェクトとして返します
+         * 
+         * @param {string[]} selectors - 取得する要素のID配列
+         * @returns {Object} ID名をキーとした要素オブジェクト
+         * @private
+         */
         function getElements(selectors) {
             const result = {};
             selectors.forEach(id => {
@@ -86,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.UI.createSidebarToggle();
 
     // 初期化
-    init();
+    _init();
 
     // 外部ライブラリの読み込み - Markdown用
     window.Markdown.loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js')
@@ -98,67 +124,84 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * アプリケーションを初期化します
+     * API設定の確認、会話履歴の読み込み、イベントリスナーの設定を行います
+     * 
+     * @function _init
+     * @private
      */
-    function init() {
+    function _init() {
         // API設定がなければモーダルを表示
         if (!AppState.apiSettings.openaiApiKey && !AppState.apiSettings.azureApiKey) {
             window.UI.showApiKeyModal(AppState.apiSettings);
         }
 
         // 会話の履歴を読み込む
-        loadConversations();
+        _loadConversations();
 
         // イベントリスナーのセットアップ
-        setupEventListeners();
+        _setupEventListeners();
     }
 
     /**
      * 会話履歴を読み込みます
+     * 保存されている会話をロードし、現在の会話を設定します
+     * 
+     * @function _loadConversations
+     * @private
      */
-    function loadConversations() {
+    function _loadConversations() {
         const savedConversations = window.Storage.loadConversations();
         if (savedConversations && savedConversations.length > 0) {
             AppState.conversations = savedConversations;
-            renderChatHistory();
+            _renderChatHistory();
         }
 
         AppState.currentConversationId = window.Storage.loadCurrentConversationId();
 
         // 新しい会話を作成または既存の会話を読み込む
         if (AppState.conversations.length === 0) {
-            createNewConversation();
+            _createNewConversation();
         } else {
-            loadCurrentConversation();
+            _loadCurrentConversation();
         }
     }
 
     /**
      * イベントリスナーをセットアップします
+     * アプリケーションで使用する全てのイベントリスナーを初期化します
+     * 
+     * @function _setupEventListeners
+     * @private
      */
-    function setupEventListeners() {
+    function _setupEventListeners() {
         // サブ関数に分けてセットアップ
-        setupChatEvents();
-        setupSettingsEvents();
-        setupFileEvents();
-        setupModalEvents();
-        setupGlobalEvents();
+        _setupChatEvents();
+        _setupSettingsEvents();
+        _setupFileEvents();
+        _setupModalEvents();
+        _setupGlobalEvents();
     }
 
     /**
      * チャット関連のイベントをセットアップします
+     * メッセージ送信、テキストエリア操作、新規チャット作成などの
+     * チャット機能に関するイベントリスナーを設定します
+     * 
+     * @function _setupChatEvents
+     * @private
      */
-    function setupChatEvents() {
+    function _setupChatEvents() {
         if (!Elements.sendButton || !Elements.userInput || 
             !Elements.newChatButton || !Elements.clearHistoryButton) return;
         
         // 送信ボタンのクリックイベント
-        Elements.sendButton.addEventListener('click', sendMessage);
+        Elements.sendButton.addEventListener('click', _sendMessage);
 
         // テキストエリアのEnterキーイベント（Shift+Enterで改行）
         Elements.userInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                sendMessage();
+                _sendMessage();
             }
         });
 
@@ -166,16 +209,21 @@ document.addEventListener('DOMContentLoaded', function() {
         Elements.userInput.addEventListener('input', () => window.UI.autoResizeTextarea(Elements.userInput));
 
         // 新しいチャットボタン
-        Elements.newChatButton.addEventListener('click', createNewConversation);
+        Elements.newChatButton.addEventListener('click', _createNewConversation);
 
         // 履歴クリアボタン
-        Elements.clearHistoryButton.addEventListener('click', clearAllHistory);
+        Elements.clearHistoryButton.addEventListener('click', _clearAllHistory);
     }
 
     /**
      * 設定関連のイベントをセットアップします
+     * 設定メニュー、システムプロンプト設定、API設定などの
+     * 設定機能に関するイベントリスナーを設定します
+     * 
+     * @function _setupSettingsEvents
+     * @private
      */
-    function setupSettingsEvents() {
+    function _setupSettingsEvents() {
         if (!Elements.settingsButton || !Elements.settingsMenu ||
             !Elements.openSystemPromptSettings || !Elements.openApiSettings) return;
             
@@ -188,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // システムプロンプト設定を開く
         Elements.openSystemPromptSettings.addEventListener('click', () => {
             Elements.settingsMenu.classList.remove('show');
-            window.UI.showSystemPromptModal(AppState.systemPrompt, loadPromptTemplates);
+            window.UI.showSystemPromptModal(AppState.systemPrompt, _loadPromptTemplates);
         });
 
         // API設定を開く
@@ -200,8 +248,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * ファイル関連のイベントをセットアップします
+     * ファイル選択、添付ファイル処理などのイベントリスナーを設定します
+     * 
+     * @function _setupFileEvents
+     * @private
      */
-    function setupFileEvents() {
+    function _setupFileEvents() {
         if (!Elements.fileInput) return;
         
         // ファイル選択イベント
@@ -214,8 +266,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * モーダル関連のイベントをセットアップします
+     * APIキー設定、システムプロンプト設定、名前変更モーダルなどの
+     * 各種モーダルダイアログのイベントリスナーを設定します
+     * 
+     * @function _setupModalEvents
+     * @private
      */
-    function setupModalEvents() {
+    function _setupModalEvents() {
         // APIキー関連
         if (Elements.openaiRadio && Elements.azureRadio) {
             Elements.openaiRadio.addEventListener('change', window.UI.toggleAzureSettings);
@@ -223,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (Elements.saveApiKey) {
-            Elements.saveApiKey.addEventListener('click', saveApiSettings);
+            Elements.saveApiKey.addEventListener('click', _saveApiSettings);
         }
         
         if (Elements.cancelApiKey) {
@@ -250,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (name) {
                     AppState.promptTemplates[name] = Elements.systemPromptInput.value;
                     window.Storage.savePromptTemplates(AppState.promptTemplates);
-                    loadPromptTemplates();
+                    _loadPromptTemplates();
                     Elements.newTemplateName.value = '';
                 }
             });
@@ -258,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 名前変更モーダル関連
         if (Elements.saveRenameChat) {
-            Elements.saveRenameChat.addEventListener('click', saveRenamedChat);
+            Elements.saveRenameChat.addEventListener('click', _saveRenamedChat);
         }
         
         if (Elements.cancelRenameChat) {
@@ -268,8 +325,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * グローバルなイベントをセットアップします
+     * 全体に関わるイベントや、イベント委任パターンを使用したイベントリスナーを設定します
+     * 
+     * @function _setupGlobalEvents
+     * @private
      */
-    function setupGlobalEvents() {
+    function _setupGlobalEvents() {
         // 画面のどこかをクリックしたらメニューを閉じる
         document.addEventListener('click', (e) => {
             if (Elements.settingsMenu && Elements.settingsButton && 
@@ -289,8 +350,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * チャットの名前を保存します
+     * 名前変更モーダルで設定された新しいチャット名を保存します
+     * 
+     * @function _saveRenamedChat
+     * @private
      */
-    function saveRenamedChat() {
+    function _saveRenamedChat() {
         if (!Elements.renameChatModal || !Elements.chatTitleInput) return;
         
         const conversationId = Elements.renameChatModal.dataset.conversationId;
@@ -302,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (conversation) {
                 conversation.title = newTitle;
                 window.Storage.saveConversations(AppState.conversations);
-                renderChatHistory();
+                _renderChatHistory();
             }
         }
         
@@ -312,8 +377,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * メッセージを送信します
+     * ユーザー入力を処理し、APIを通じてメッセージを送信します
+     * 添付ファイルがある場合はそれも含めて送信します
+     * 
+     * @function _sendMessage
+     * @private
+     * @async
      */
-    async function sendMessage() {
+    async function _sendMessage() {
         const currentConversation = AppState.getConversationById(AppState.currentConversationId);
         if (!currentConversation || !Elements.userInput || !Elements.chatMessages) return;
         
@@ -338,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
             );
             
             if (result.titleUpdated) {
-                renderChatHistory();
+                _renderChatHistory();
             }
             
             if (!result.error) {
@@ -357,8 +428,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * API設定を保存します
+     * APIキーモーダルで設定されたAPI設定を保存します
+     * OpenAIまたはAzureの設定に対応します
+     * 
+     * @function _saveApiSettings
+     * @private
      */
-    function saveApiSettings() {
+    function _saveApiSettings() {
         if (!Elements.openaiRadio || !Elements.apiKeyInput || 
             !Elements.azureApiKeyInput) return;
         
@@ -395,8 +471,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * 現在の会話を読み込みます
+     * 現在選択されている会話をUIに表示します
+     * 
+     * @function _loadCurrentConversation
+     * @private
      */
-    function loadCurrentConversation() {
+    function _loadCurrentConversation() {
         if (!AppState.currentConversationId || !AppState.getConversationById(AppState.currentConversationId)) {
             AppState.currentConversationId = AppState.conversations[0].id;
         }
@@ -416,8 +496,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * プロンプトテンプレートを読み込みます
+     * システムプロンプトのテンプレート一覧を表示します
+     * 
+     * @function _loadPromptTemplates
+     * @private
      */
-    function loadPromptTemplates() {
+    function _loadPromptTemplates() {
         // テンプレート一覧を更新
         window.UI.updateTemplateList(
             AppState.promptTemplates, 
@@ -427,16 +511,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             },
             (templateName) => {
-                deletePromptTemplate(templateName);
+                _deletePromptTemplate(templateName);
             }
         );
     }
 
     /**
      * テンプレートを削除します
+     * システムプロンプトのテンプレートを削除します
+     * デフォルトテンプレートは削除できません
+     * 
+     * @function _deletePromptTemplate
      * @param {string} templateName - 削除するテンプレートの名前
+     * @private
      */
-    function deletePromptTemplate(templateName) {
+    function _deletePromptTemplate(templateName) {
         // デフォルトテンプレートは削除不可
         const defaultTemplates = ['default', 'creative', 'technical'];
         if (defaultTemplates.includes(templateName)) {
@@ -457,15 +546,19 @@ document.addEventListener('DOMContentLoaded', function() {
             window.Storage.savePromptTemplates(AppState.promptTemplates);
             
             // テンプレート一覧を更新
-            loadPromptTemplates();
+            _loadPromptTemplates();
         }
     }
 
     /**
      * 会話を切り替えます
+     * 指定されたIDの会話に切り替え、UIを更新します
+     * 
+     * @function _switchConversation
      * @param {string} conversationId - 切り替える会話のID
+     * @private
      */
-    function switchConversation(conversationId) {
+    function _switchConversation(conversationId) {
         if (!conversationId) return;
         
         AppState.currentConversationId = conversationId;
@@ -484,8 +577,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * 新しい会話を作成します
+     * 新しいチャット会話を初期化し、UIに表示します
+     * 
+     * @function _createNewConversation
+     * @private
      */
-    function createNewConversation() {
+    function _createNewConversation() {
         const newConversation = {
             id: Date.now().toString(),
             title: '新しいチャット',
@@ -504,7 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
         AppState.currentConversationId = newConversation.id;
         window.Storage.saveCurrentConversationId(AppState.currentConversationId);
         
-        renderChatHistory();
+        _renderChatHistory();
         
         if (Elements.chatMessages && Elements.modelSelect) {
             window.Chat.displayConversation(newConversation, Elements.chatMessages, Elements.modelSelect);
@@ -513,25 +610,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * 会話履歴を表示します
+     * サイドバーに会話履歴の一覧を表示します
+     * 
+     * @function _renderChatHistory
+     * @private
      */
-    function renderChatHistory() {
+    function _renderChatHistory() {
         if (!Elements.chatHistory) return;
         
         window.Chat.renderChatHistory(
             AppState.conversations, 
             AppState.currentConversationId, 
             Elements.chatHistory, 
-            switchConversation, 
+            _switchConversation, 
             window.UI.showRenameChatModal, 
-            deleteConversation
+            _deleteConversation
         );
     }
 
     /**
      * 個別のチャットを削除します
+     * 指定されたIDの会話を削除し、必要に応じて別の会話に切り替えます
+     * 
+     * @function _deleteConversation
      * @param {string} conversationId - 削除する会話のID
+     * @private
      */
-    function deleteConversation(conversationId) {
+    function _deleteConversation(conversationId) {
         // 確認ダイアログを表示
         if (!confirm('このチャットを削除してもよろしいですか？')) return;
             
@@ -558,23 +663,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } else {
                 // チャットがなくなった場合は新しいチャットを作成
-                createNewConversation();
+                _createNewConversation();
                 return; // createNewConversation内でrenderChatHistoryを呼ぶので、ここでは不要
             }
         }
         
         // チャット履歴の表示を更新
-        renderChatHistory();
+        _renderChatHistory();
     }
 
     /**
      * すべての履歴をクリアします
+     * ユーザーの確認後、すべての会話履歴を削除します
+     * 
+     * @function _clearAllHistory
+     * @private
      */
-    function clearAllHistory() {
+    function _clearAllHistory() {
         if (confirm('すべての会話履歴を削除してもよろしいですか？')) {
             AppState.conversations = [];
             window.Storage.saveConversations(AppState.conversations);
-            createNewConversation();
+            _createNewConversation();
         }
     }
 });
