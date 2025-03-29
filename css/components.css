@@ -557,3 +557,49 @@
     border-radius: 3px;
     background-color: #fff;
 }
+
+/* リアルタイム出力表示用のスタイル */
+.realtime-output {
+    background-color: #333;
+    border-radius: 3px;
+    padding: 8px;
+    margin: 10px 0;
+    max-height: 200px;
+    overflow: auto;
+    color: #e0e0e0;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.execution-status {
+    color: #aaa;
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+    padding: 5px 8px;
+    background-color: #2d2d2d;
+    border-radius: 3px;
+    border-left: 3px solid #3498db;
+}
+
+.execution-complete {
+    color: #2ecc71;
+    border-left-color: #2ecc71;
+}
+
+/* 実行中のスピナーアニメーション */
+.executing-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

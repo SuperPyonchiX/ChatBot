@@ -8,9 +8,10 @@ window.CodeExecutor = {
      * コードを実行する
      * @param {string} code - 実行するコード
      * @param {string} language - コードの言語
+     * @param {Function} [outputCallback] - リアルタイム出力用コールバック関数
      * @returns {Promise<Object>} 実行結果
      */
-    executeCode: async function(code, language) {
+    executeCode: async function(code, language, outputCallback) {
         if (!code || !language) {
             return { error: '実行するコードまたは言語が指定されていません' };
         }
@@ -22,15 +23,15 @@ window.CodeExecutor = {
             switch (language) {
                 case 'javascript':
                 case 'js':
-                    return this._executeJavaScript(code);
+                    return this._executeJavaScript(code, outputCallback);
                 case 'html':
-                    return this._executeHtml(code);
+                    return this._executeHtml(code, outputCallback);
                 case 'python':
                 case 'py':
-                    return this._executePython(code);
+                    return this._executePython(code, outputCallback);
                 case 'cpp':
                 case 'c++':
-                    return this._executeCPP(code);
+                    return this._executeCPP(code, outputCallback);
                 default:
                     return { error: `${language}の実行は現在サポートされていません` };
             }
@@ -47,9 +48,10 @@ window.CodeExecutor = {
      * JavaScriptコードを実行する
      * @private
      * @param {string} code - 実行するJavaScriptコード
+     * @param {Function} [outputCallback] - リアルタイム出力用コールバック関数
      * @returns {Object} 実行結果
      */
-    _executeJavaScript: function(code) {
+    _executeJavaScript: function(code, outputCallback) {
         try {
             // 安全な実行環境を作成（サンドボックス）
             const sandbox = this._createSandbox();
@@ -58,16 +60,52 @@ window.CodeExecutor = {
             const consoleOutput = [];
             sandbox.console = {
                 log: (...args) => {
-                    consoleOutput.push(this._formatConsoleArgs(args, 'log'));
+                    const formattedOutput = this._formatConsoleArgs(args, 'log');
+                    consoleOutput.push(formattedOutput);
+                    
+                    // リアルタイム出力
+                    if (typeof outputCallback === 'function') {
+                        outputCallback({
+                            type: 'console',
+                            content: formattedOutput
+                        });
+                    }
                 },
                 error: (...args) => {
-                    consoleOutput.push(this._formatConsoleArgs(args, 'error'));
+                    const formattedOutput = this._formatConsoleArgs(args, 'error');
+                    consoleOutput.push(formattedOutput);
+                    
+                    // リアルタイム出力
+                    if (typeof outputCallback === 'function') {
+                        outputCallback({
+                            type: 'console',
+                            content: formattedOutput
+                        });
+                    }
                 },
                 warn: (...args) => {
-                    consoleOutput.push(this._formatConsoleArgs(args, 'warn'));
+                    const formattedOutput = this._formatConsoleArgs(args, 'warn');
+                    consoleOutput.push(formattedOutput);
+                    
+                    // リアルタイム出力
+                    if (typeof outputCallback === 'function') {
+                        outputCallback({
+                            type: 'console',
+                            content: formattedOutput
+                        });
+                    }
                 },
                 info: (...args) => {
-                    consoleOutput.push(this._formatConsoleArgs(args, 'info'));
+                    const formattedOutput = this._formatConsoleArgs(args, 'info');
+                    consoleOutput.push(formattedOutput);
+                    
+                    // リアルタイム出力
+                    if (typeof outputCallback === 'function') {
+                        outputCallback({
+                            type: 'console',
+                            content: formattedOutput
+                        });
+                    }
                 }
             };
             
@@ -104,17 +142,37 @@ window.CodeExecutor = {
             const endTime = performance.now();
             const executionTime = (endTime - startTime).toFixed(2);
             
-            return {
+            const finalResult = {
                 result: this._formatOutput(result.result),
                 consoleOutput: result.consoleOutput || [],
                 executionTime: `${executionTime}ms`
             };
+            
+            // 最終結果をコールバックに渡す
+            if (typeof outputCallback === 'function') {
+                outputCallback({
+                    type: 'result',
+                    content: finalResult
+                });
+            }
+            
+            return finalResult;
         } catch (error) {
             console.error('JavaScript実行中にエラーが発生しました:', error);
-            return { 
+            const errorResult = { 
                 error: `JavaScriptの実行エラー: ${error.message || '不明なエラー'}`, 
                 errorDetail: error.stack 
             };
+            
+            // エラーをコールバックに渡す
+            if (typeof outputCallback === 'function') {
+                outputCallback({
+                    type: 'error',
+                    content: errorResult
+                });
+            }
+            
+            return errorResult;
         }
     },
     
@@ -122,24 +180,45 @@ window.CodeExecutor = {
      * HTMLコードを実行する
      * @private
      * @param {string} code - 実行するHTMLコード
+     * @param {Function} [outputCallback] - リアルタイム出力用コールバック関数
      * @returns {Object} 実行結果（iframeのHTMLとして表示される）
      */
-    _executeHtml: function(code) {
+    _executeHtml: function(code, outputCallback) {
         try {
             // HTMLをサニタイズ（危険なスクリプトを除去）
             const sanitizedHtml = this._sanitizeHtml(code);
             
-            // HTML結果を返す（iframeで表示される）
-            return {
+            const result = {
                 html: sanitizedHtml,
                 type: 'html'
             };
+            
+            // 結果をコールバックに渡す
+            if (typeof outputCallback === 'function') {
+                outputCallback({
+                    type: 'result',
+                    content: result
+                });
+            }
+            
+            // HTML結果を返す（iframeで表示される）
+            return result;
         } catch (error) {
             console.error('HTML実行中にエラーが発生しました:', error);
-            return { 
+            const errorResult = { 
                 error: `HTMLの実行エラー: ${error.message || '不明なエラー'}`, 
                 errorDetail: error.stack 
             };
+            
+            // エラーをコールバックに渡す
+            if (typeof outputCallback === 'function') {
+                outputCallback({
+                    type: 'error',
+                    content: errorResult
+                });
+            }
+            
+            return errorResult;
         }
     },
     
@@ -147,13 +226,20 @@ window.CodeExecutor = {
      * Pythonコードを実行する (PyodideまたはSkulptを使用)
      * @private
      * @param {string} code - 実行するPythonコード
+     * @param {Function} [outputCallback] - リアルタイム出力用コールバック関数
      * @returns {Promise<Object>} 実行結果
      */
-    _executePython: async function(code) {
+    _executePython: async function(code, outputCallback) {
         try {
             // PyodideがCDNから読み込まれているか確認
             if (typeof loadPyodide === 'undefined') {
                 // 初回実行時にPyodideを読み込む
+                if (typeof outputCallback === 'function') {
+                    outputCallback({
+                        type: 'status',
+                        content: 'Pythonランタイムを読み込んでいます...'
+                    });
+                }
                 await this._loadPyodideRuntime();
             }
             
@@ -163,6 +249,14 @@ window.CodeExecutor = {
             console.log = (msg) => {
                 output += msg + '\n';
                 originalConsoleLog.apply(console, arguments);
+                
+                // リアルタイム出力
+                if (typeof outputCallback === 'function') {
+                    outputCallback({
+                        type: 'output',
+                        content: msg + '\n'
+                    });
+                }
             };
             
             // 実行時間を計測
@@ -170,8 +264,13 @@ window.CodeExecutor = {
             
             // Pyodideインスタンスが存在するか確認
             if (!window.pyodideInstance) {
+                if (typeof outputCallback === 'function') {
+                    outputCallback({
+                        type: 'status',
+                        content: 'Pythonインタプリタを初期化しています...'
+                    });
+                }
                 window.pyodideInstance = await loadPyodide();
-                
             }
             
             // コード内のimport文を抽出
@@ -204,6 +303,13 @@ window.CodeExecutor = {
             // 必要なモジュールをインストール
             if (modules.length > 0) {
                 // マイクロパッケージをインストール
+                if (typeof outputCallback === 'function') {
+                    outputCallback({
+                        type: 'status',
+                        content: 'パッケージマネージャを準備しています...'
+                    });
+                }
+                
                 await window.pyodideInstance.loadPackagesFromImports(`
                     import micropip
                 `);
@@ -212,42 +318,113 @@ window.CodeExecutor = {
                 );
                 
                 if (packagesToInstall.length > 0) {
-                    output += `必要なパッケージをインストールしています: ${packagesToInstall.join(', ')}...\n`;
+                    const installMsg = `必要なパッケージをインストールしています: ${packagesToInstall.join(', ')}...`;
+                    output += installMsg + '\n';
+                    
+                    if (typeof outputCallback === 'function') {
+                        outputCallback({
+                            type: 'status',
+                            content: installMsg
+                        });
+                    }
                     
                     try {
                         const micropip = window.pyodideInstance.pyimport('micropip');
                         for (const pkg of packagesToInstall) {
                             try {
+                                if (typeof outputCallback === 'function') {
+                                    outputCallback({
+                                        type: 'status',
+                                        content: `${pkg} をインストール中...`
+                                    });
+                                }
+                                
                                 await micropip.install(pkg);
-                                output += `パッケージ ${pkg} をインストールしました\n`;
+                                const successMsg = `パッケージ ${pkg} をインストールしました`;
+                                output += successMsg + '\n';
+                                
+                                if (typeof outputCallback === 'function') {
+                                    outputCallback({
+                                        type: 'output',
+                                        content: successMsg + '\n'
+                                    });
+                                }
                             } catch (err) {
-                                output += `パッケージ ${pkg} のインストールに失敗しました: ${err.message}\n`;
+                                const errorMsg = `パッケージ ${pkg} のインストールに失敗しました: ${err.message}`;
+                                output += errorMsg + '\n';
+                                
+                                if (typeof outputCallback === 'function') {
+                                    outputCallback({
+                                        type: 'error',
+                                        content: errorMsg + '\n'
+                                    });
+                                }
                             }
                         }
                     } catch (err) {
-                        output += `パッケージインストーラの初期化に失敗しました: ${err.message}\n`;
+                        const errorMsg = `パッケージインストーラの初期化に失敗しました: ${err.message}`;
+                        output += errorMsg + '\n';
+                        
+                        if (typeof outputCallback === 'function') {
+                            outputCallback({
+                                type: 'error',
+                                content: errorMsg + '\n'
+                            });
+                        }
                     }
                 }
             }
             
+            // 実行開始通知
+            if (typeof outputCallback === 'function') {
+                outputCallback({
+                    type: 'status',
+                    content: 'Pythonコードを実行しています...'
+                });
+            }
+            
+            // リアルタイム出力用のパイプ関数
+            const realtimeOutput = (text) => {
+                if (typeof outputCallback === 'function') {
+                    outputCallback({
+                        type: 'output',
+                        content: text
+                    });
+                }
+            };
+            
             // Pythonコードを実行
-            // インデント問題を避けるために、実行コードとtry-exceptブロックを分離
-            await window.pyodideInstance.runPythonAsync(`
+            try {
+                // Pyodideのネームスペースにリアルタイム出力関数を設定
+                // 修正：グローバルレベルではなくPyodideのグローバルスコープに直接関数を公開
+                window.pyodideInstance.globals.set("realtimeOutput", realtimeOutput);
+                
+                // 標準出力キャプチャとユーザーコード実行のPythonスクリプト
+                const pythonCode = `
 import sys
 from io import StringIO
 
+# 標準出力をキャプチャするクラス（リアルタイム出力対応版）
+class RealtimeStringIO(StringIO):
+    def write(self, text):
+        # Python側からJavaScript関数を直接呼び出す（修正済み）
+        # Pyodideのグローバルスコープに登録された関数を使用
+        realtimeOutput(text)
+        return super().write(text)
+
 # 標準出力をキャプチャ
-sys.stdout = StringIO()
-sys.stderr = StringIO()
+sys.stdout = RealtimeStringIO()
+sys.stderr = RealtimeStringIO()
 
-def run_user_code():
-${code.split('\n').map(line => '    ' + line).join('\n')}
-
+# ユーザーコードを実行
 try:
-    run_user_code()
+${code.split('\n').map(line => '    ' + line).join('\n')}
 except Exception as e:
     print(f"エラー: {str(e)}")
+    import traceback
+    traceback.print_exc()
 
+# 標準出力の内容を取得
 stdout_content = sys.stdout.getvalue()
 stderr_content = sys.stderr.getvalue()
 
@@ -255,11 +432,29 @@ stderr_content = sys.stderr.getvalue()
 sys.stdout = sys.__stdout__
 sys.stderr = sys.__stderr__
 
-print(stdout_content)
+# エラー出力があれば表示
 if stderr_content:
     print("エラー出力:")
     print(stderr_content)
-`);
+`;
+
+                // Pyodideでコードを実行
+                await window.pyodideInstance.runPythonAsync(pythonCode);
+                
+            } catch (pythonError) {
+                console.error('Pythonスクリプト実行エラー:', pythonError);
+                
+                // エラーメッセージを出力に追加
+                const errorMsg = `Pythonの実行に失敗しました: ${pythonError.message || '不明なエラー'}`;
+                output += errorMsg + '\n';
+                
+                if (typeof outputCallback === 'function') {
+                    outputCallback({
+                        type: 'error',
+                        content: errorMsg + '\n'
+                    });
+                }
+            }
 
             // コンソール出力を元に戻す
             console.log = originalConsoleLog;
@@ -268,16 +463,36 @@ if stderr_content:
             const endTime = performance.now();
             const executionTime = (endTime - startTime).toFixed(2);
             
-            return {
+            const finalResult = {
                 result: output,
                 executionTime: `${executionTime}ms`
             };
+            
+            // 最終結果をコールバックに渡す
+            if (typeof outputCallback === 'function') {
+                outputCallback({
+                    type: 'result',
+                    content: finalResult
+                });
+            }
+            
+            return finalResult;
         } catch (error) {
             console.error('Python実行中にエラーが発生しました:', error);
-            return { 
+            const errorResult = { 
                 error: `Pythonの実行エラー: ${error.message || '不明なエラー'}`, 
                 errorDetail: error.stack 
             };
+            
+            // エラーをコールバックに渡す
+            if (typeof outputCallback === 'function') {
+                outputCallback({
+                    type: 'error',
+                    content: errorResult
+                });
+            }
+            
+            return errorResult;
         }
     },
 
@@ -307,13 +522,20 @@ if stderr_content:
      * C++コードを実行する
      * @private
      * @param {string} code - 実行するC++コード
+     * @param {Function} [outputCallback] - リアルタイム出力用コールバック関数
      * @returns {Promise<Object>} 実行結果
      */
-    _executeCPP: async function(code) {
+    _executeCPP: async function(code, outputCallback) {
         try {
             // JSCPPライブラリが読み込まれているか確認
             if (typeof JSCPP === 'undefined') {
                 // 初回実行時にJSCPPを読み込む
+                if (typeof outputCallback === 'function') {
+                    outputCallback({
+                        type: 'status',
+                        content: 'C++ランタイムを読み込んでいます...'
+                    });
+                }
                 await this._loadJSCPPRuntime();
             }
             
@@ -330,9 +552,24 @@ if stderr_content:
                 stdio: {
                     write: function(s) {
                         outputText += s;
+                        
+                        // リアルタイム出力
+                        if (typeof outputCallback === 'function') {
+                            outputCallback({
+                                type: 'output',
+                                content: s
+                            });
+                        }
                     }
                 }
             };
+            
+            if (typeof outputCallback === 'function') {
+                outputCallback({
+                    type: 'status',
+                    content: 'C++コードを実行しています...'
+                });
+            }
             
             try {
                 // JSCPPを使用してコードを実行
@@ -342,24 +579,54 @@ if stderr_content:
                 const endTime = performance.now();
                 const executionTime = (endTime - startTime).toFixed(2);
                 
-                return {
+                const finalResult = {
                     result: outputText || '(出力なし)',
                     exitCode: exitCode,
                     executionTime: `${executionTime}ms`
                 };
+                
+                // 最終結果をコールバックに渡す
+                if (typeof outputCallback === 'function') {
+                    outputCallback({
+                        type: 'result',
+                        content: finalResult
+                    });
+                }
+                
+                return finalResult;
             } catch (runtimeError) {
-                return {
+                const errorResult = {
                     error: `C++の実行エラー: ${runtimeError.message || '不明なエラー'}`,
                     errorDetail: runtimeError.stack,
                     executionTime: `${(performance.now() - startTime).toFixed(2)}ms`
                 };
+                
+                // エラーをコールバックに渡す
+                if (typeof outputCallback === 'function') {
+                    outputCallback({
+                        type: 'error',
+                        content: errorResult
+                    });
+                }
+                
+                return errorResult;
             }
         } catch (error) {
             console.error('C++実行中にエラーが発生しました:', error);
-            return { 
+            const errorResult = { 
                 error: `C++の実行エラー: ${error.message || '不明なエラー'}`, 
                 errorDetail: error.stack 
             };
+            
+            // エラーをコールバックに渡す
+            if (typeof outputCallback === 'function') {
+                outputCallback({
+                    type: 'error',
+                    content: errorResult
+                });
+            }
+            
+            return errorResult;
         }
     },
     
@@ -378,9 +645,9 @@ if stderr_content:
             }
             
             // まずJSCPPの代わりにBiwaschemeを読み込む（C++コードをScheme経由で実行するアプローチ）
-            const useBiwaScheme = true;
+//             const useBiwaScheme = true;
             
-            if (useBiwaScheme) {
+//             if (useBiwaScheme) {
                 // BiwaSchemeを使用したC++ライクな実行環境
                 const script = document.createElement('script');
                 script.src = 'https://www.biwascheme.org/release/biwascheme-0.7.5.js';
@@ -427,40 +694,40 @@ if stderr_content:
                     resolve();
                 };
                 document.head.appendChild(script);
-            } else {
-                // オリジナルのJSCPPを使用する場合（現在は機能しない可能性あり）
-                const script = document.createElement('script');
-                // バージョンとCDNを更新
-                script.src = 'https://unpkg.com/jscpp@2.0.0/dist/JSCPP.es5.min.js';
-                script.crossOrigin = 'anonymous';
-                script.integrity = 'sha384-7mBA7Hi65m/AGuO9re8RB1rUb63+7/fOTe5BXOfiXZ0MQ/KA8/4t4IKQvbXdVlXW';
-                script.onload = () => {
-                    console.log('JSCPPの読み込みが完了しました');
-                    resolve();
-                };
-                script.onerror = (e) => {
-                    console.error('JSCPPの読み込みに失敗しました:', e);
-                    
-                    // フォールバック：別のCDNを試す
-                    const fallbackScript = document.createElement('script');
-                    fallbackScript.src = 'https://cdn.jsdelivr.net/npm/jscpp@2.0.0/dist/JSCPP.es5.min.js';
-                    fallbackScript.crossOrigin = 'anonymous';
-                    
-                    fallbackScript.onload = () => {
-                        console.log('JSCPPの読み込みが完了しました (フォールバック)');
-                        resolve();
-                    };
-                    
-                    fallbackScript.onerror = (err) => {
-                        console.error('代替JSCPPの読み込みにも失敗しました:', err);
-                        this._provideFallbackCppImplementation();
-                        resolve();
-                    };
-                    
-                    document.head.appendChild(fallbackScript);
-                };
-                document.head.appendChild(script);
-            }
+//             } else {
+//                 // オリジナルのJSCPPを使用する場合（現在は機能しない可能性あり）
+//                 const script = document.createElement('script');
+//                 // バージョンとCDNを更新
+//                 script.src = 'https://unpkg.com/jscpp@2.0.0/dist/JSCPP.es5.min.js';
+//                 script.crossOrigin = 'anonymous';
+//                 script.integrity = 'sha384-7mBA7Hi65m/AGuO9re8RB1rUb63+7/fOTe5BXOfiXZ0MQ/KA8/4t4IKQvbXdVlXW';
+//                 script.onload = () => {
+//                     console.log('JSCPPの読み込みが完了しました');
+//                     resolve();
+//                 };
+//                 script.onerror = (e) => {
+//                     console.error('JSCPPの読み込みに失敗しました:', e);
+//                     
+//                     // フォールバック：別のCDNを試す
+//                     const fallbackScript = document.createElement('script');
+//                     fallbackScript.src = 'https://cdn.jsdelivr.net/npm/jscpp@2.0.0/dist/JSCPP.es5.min.js';
+//                     fallbackScript.crossOrigin = 'anonymous';
+//                     
+//                     fallbackScript.onload = () => {
+//                         console.log('JSCPPの読み込みが完了しました (フォールバック)');
+//                         resolve();
+//                     };
+//                     
+//                     fallbackScript.onerror = (err) => {
+//                         console.error('代替JSCPPの読み込みにも失敗しました:', err);
+//                         this._provideFallbackCppImplementation();
+//                         resolve();
+//                     };
+//                     
+//                     document.head.appendChild(fallbackScript);
+//                 };
+//                 document.head.appendChild(script);
+//             }
         });
     },
     

@@ -196,19 +196,125 @@ window.Markdown = {
                 }
             }
             
+            // リアルタイム出力用の要素を作成
+            let resultElement = null;
+            if (parentBlock) {
+                resultElement = document.createElement('div');
+                resultElement.classList.add('code-execution-result');
+                
+                // ステータス表示用の要素
+                const statusElement = document.createElement('div');
+                statusElement.classList.add('execution-status');
+                statusElement.textContent = '実行準備中...';
+                resultElement.appendChild(statusElement);
+                
+                // リアルタイム出力表示用の要素
+                const outputElement = document.createElement('pre');
+                outputElement.classList.add('realtime-output');
+                resultElement.appendChild(outputElement);
+                
+                parentBlock.appendChild(resultElement);
+            }
+            
             // コードを取得して実行
             const code = this._cleanCodeForCopy(codeBlock.textContent);
             
-            // CodeExecutorを使用してコードを実行
-            const result = await window.CodeExecutor.executeCode(code, language);
-            
-            // 実行結果を表示
-            if (parentBlock) {
-                const resultElement = window.CodeExecutor.createResultElement(result);
-                parentBlock.appendChild(resultElement);
+            // リアルタイム出力を処理するコールバック
+            const outputCallback = function(data) {
+                if (!resultElement) return;
                 
-                // スクロールして結果を表示
-                resultElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                const statusElement = resultElement.querySelector('.execution-status');
+                const outputElement = resultElement.querySelector('.realtime-output');
+                
+                if (!statusElement || !outputElement) return;
+                
+                switch (data.type) {
+                    case 'status':
+                        // ステータスメッセージを更新
+                        statusElement.textContent = data.content;
+                        break;
+                        
+                    case 'output':
+                    case 'console':
+                        // 出力内容を追加
+                        const contentSpan = document.createElement('span');
+                        if (data.content && data.content.type) {
+                            contentSpan.classList.add(`console-${data.content.type}`);
+                            contentSpan.textContent = data.content.content;
+                        } else {
+                            contentSpan.textContent = data.content;
+                        }
+                        outputElement.appendChild(contentSpan);
+                        
+                        // 自動スクロール（出力エリア内のみ）
+                        outputElement.scrollTop = outputElement.scrollHeight;
+                        break;
+                        
+                    case 'error':
+                        // エラーメッセージを表示
+                        const errorContent = data.content;
+                        
+                        if (typeof errorContent === 'string') {
+                            // 文字列の場合はそのまま表示
+                            outputElement.innerHTML += `<span class="console-error">${errorContent}</span>`;
+                            return;
+                        }
+                        
+                        // エラーオブジェクトの場合の処理
+                        if (errorContent.error) {
+                            // エラーメッセージを出力エリアに追加（既存のエリアを保持）
+                            const errorMessage = document.createElement('div');
+                            errorMessage.classList.add('console-error');
+                            errorMessage.textContent = errorContent.error || 'エラーが発生しました';
+                            outputElement.appendChild(errorMessage);
+                            
+                            // エラー詳細があれば追加
+                            if (errorContent.errorDetail) {
+                                const errorDetail = document.createElement('pre');
+                                errorDetail.classList.add('error-details');
+                                errorDetail.textContent = errorContent.errorDetail;
+                                outputElement.appendChild(errorDetail);
+                            }
+                        } else {
+                            // 未知のエラー形式の場合
+                            outputElement.innerHTML += '<span class="console-error">エラーが発生しました</span>';
+                        }
+                        
+                        // エラー時はステータスを更新
+                        statusElement.textContent = 'エラーが発生しました';
+                        statusElement.classList.add('execution-error');
+                        break;
+                        
+                    case 'result':
+                        // 最終結果が返ってきた場合
+                        // 一時的なリアルタイム表示を最終結果に置き換える
+                        if (data.content.executionTime) {
+                            const timeInfo = document.createElement('div');
+                            timeInfo.classList.add('execution-time');
+                            timeInfo.innerHTML = `<span>実行時間: ${data.content.executionTime}</span>`;
+                            resultElement.prepend(timeInfo);
+                        }
+                        
+                        // ステータス表示を削除するか成功メッセージに変更
+                        if (statusElement) {
+                            statusElement.textContent = '実行完了';
+                            statusElement.classList.add('execution-complete');
+                        }
+                        break;
+                }
+                
+                // 親要素のスクロール位置を自動更新しない
+                // 自動スクロールを削除
+            };
+            
+            // CodeExecutorを使用してコードを実行
+            const result = await window.CodeExecutor.executeCode(code, language, outputCallback);
+            
+            // 結果はスクロールさせずに表示
+            if (resultElement && resultElement.querySelector('.realtime-output')) {
+                // 出力領域内だけをスクロール
+                resultElement.querySelector('.realtime-output').scrollTop = 
+                    resultElement.querySelector('.realtime-output').scrollHeight;
             }
         } catch (error) {
             console.error('コード実行中にエラーが発生しました:', error);
@@ -221,7 +327,21 @@ window.Markdown = {
             
             const parentBlock = codeBlock.closest('.code-block');
             if (parentBlock) {
-                const errorElement = window.CodeExecutor.createResultElement(errorMsg);
+                const errorElement = document.createElement('div');
+                errorElement.classList.add('code-execution-result');
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.classList.add('execution-error');
+                errorDiv.textContent = errorMsg.error;
+                
+                if (errorMsg.errorDetail) {
+                    const errorDetail = document.createElement('pre');
+                    errorDetail.classList.add('error-details');
+                    errorDetail.textContent = errorMsg.errorDetail;
+                    errorDiv.appendChild(errorDetail);
+                }
+                
+                errorElement.appendChild(errorDiv);
                 parentBlock.appendChild(errorElement);
             }
         } finally {
