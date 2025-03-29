@@ -171,6 +171,7 @@ window.CodeExecutor = {
             }
             
             // Pythonコードを実行
+            // インデント問題を避けるために、実行コードとtry-exceptブロックを分離
             await window.pyodideInstance.runPythonAsync(`
 import sys
 from io import StringIO
@@ -179,8 +180,11 @@ from io import StringIO
 sys.stdout = StringIO()
 sys.stderr = StringIO()
 
+def run_user_code():
+${code.split('\n').map(line => '    ' + line).join('\n')}
+
 try:
-    ${code}
+    run_user_code()
 except Exception as e:
     print(f"エラー: {str(e)}")
 
