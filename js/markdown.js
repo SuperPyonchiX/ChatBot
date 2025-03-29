@@ -22,7 +22,9 @@ window.Markdown = {
         // PrismJSのCDN URL
         PRISM_URL: 'https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js',
         // プリロードする言語
-        PRELOAD_LANGUAGES: ['javascript', 'typescript', 'html', 'css', 'python', 'json', 'markdown']
+        PRELOAD_LANGUAGES: ['javascript', 'typescript', 'html', 'css', 'python', 'json', 'markdown'],
+        // 実行可能な言語リスト
+        EXECUTABLE_LANGUAGES: ['javascript', 'js', 'python', 'py', 'html']
     },
     
     /**
@@ -65,7 +67,7 @@ window.Markdown = {
     },
     
     /**
-     * コードブロックにコピーボタンを追加します
+     * コードブロックにコピーボタンと実行ボタンを追加します
      * @param {HTMLElement} messageElement - コードブロックを含むメッセージ要素
      */
     addCodeBlockCopyButtons: function(messageElement) {
@@ -105,12 +107,128 @@ window.Markdown = {
                 pre.parentNode.insertBefore(wrapper, pre);
                 wrapper.appendChild(pre);
                 
+                // ツールバーを作成
+                const toolbar = document.createElement('div');
+                toolbar.classList.add('code-block-toolbar');
+                
                 // コピーボタンを追加
                 const copyButton = this._createCopyButton(index, codeBlock);
-                wrapper.appendChild(copyButton);
+                toolbar.appendChild(copyButton);
+                
+                // 実行可能言語の場合は実行ボタンを追加
+                if (this._isExecutableLanguage(language)) {
+                    const executeButton = this._createExecuteButton(index, codeBlock, language);
+                    toolbar.appendChild(executeButton);
+                }
+                
+                wrapper.appendChild(toolbar);
             });
         } catch (error) {
             console.error('コードブロックボタン追加エラー:', error);
+        }
+    },
+    
+    /**
+     * 言語が実行可能かどうかを判定します
+     * @private
+     * @param {string} language - 判定する言語
+     * @returns {boolean} 実行可能な場合はtrue
+     */
+    _isExecutableLanguage: function(language) {
+        if (!language) return false;
+        return this._CONFIG.EXECUTABLE_LANGUAGES.includes(language.toLowerCase());
+    },
+    
+    /**
+     * コード実行ボタンを作成します
+     * @private
+     * @param {number} index - コードブロックのインデックス
+     * @param {HTMLElement} codeBlock - 対象のコードブロック要素
+     * @param {string} language - コードの言語
+     * @returns {HTMLElement} 作成された実行ボタン要素
+     */
+    _createExecuteButton: function(index, codeBlock, language) {
+        if (!codeBlock || !language) return document.createElement('button');
+        
+        const executeButton = document.createElement('button');
+        executeButton.classList.add('code-execute-button');
+        executeButton.innerHTML = '<i class="fas fa-play"></i>';
+        executeButton.title = 'コードを実行';
+        executeButton.setAttribute('data-code-index', index);
+        executeButton.setAttribute('data-language', language);
+        executeButton.setAttribute('aria-label', 'コードを実行');
+        
+        // 実行ボタンのクリックイベント
+        executeButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // イベント伝播を停止
+            this._handleExecuteButtonClick(executeButton, codeBlock, language);
+        });
+        
+        return executeButton;
+    },
+    
+    /**
+     * 実行ボタンのクリックイベントを処理します
+     * @private
+     * @param {HTMLElement} button - クリックされたボタン
+     * @param {HTMLElement} codeBlock - 実行対象のコードブロック
+     * @param {string} language - コードの言語
+     */
+    _handleExecuteButtonClick: async function(button, codeBlock, language) {
+        if (!button || !codeBlock || !language || !window.CodeExecutor) {
+            console.error('コード実行に必要な要素が見つかりません');
+            return;
+        }
+        
+        try {
+            // ボタンの状態を実行中に変更
+            button.disabled = true;
+            button.classList.add('code-executing');
+            const originalButtonHtml = button.innerHTML;
+            button.innerHTML = '<span class="executing-spinner"></span>';
+            
+            // 既存の実行結果を削除
+            const parentBlock = codeBlock.closest('.code-block');
+            if (parentBlock) {
+                const existingResult = parentBlock.querySelector('.code-execution-result');
+                if (existingResult) {
+                    parentBlock.removeChild(existingResult);
+                }
+            }
+            
+            // コードを取得して実行
+            const code = this._cleanCodeForCopy(codeBlock.textContent);
+            
+            // CodeExecutorを使用してコードを実行
+            const result = await window.CodeExecutor.executeCode(code, language);
+            
+            // 実行結果を表示
+            if (parentBlock) {
+                const resultElement = window.CodeExecutor.createResultElement(result);
+                parentBlock.appendChild(resultElement);
+                
+                // スクロールして結果を表示
+                resultElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        } catch (error) {
+            console.error('コード実行中にエラーが発生しました:', error);
+            
+            // エラーメッセージを表示
+            const errorMsg = {
+                error: `実行エラー: ${error.message || '不明なエラー'}`,
+                errorDetail: error.stack
+            };
+            
+            const parentBlock = codeBlock.closest('.code-block');
+            if (parentBlock) {
+                const errorElement = window.CodeExecutor.createResultElement(errorMsg);
+                parentBlock.appendChild(errorElement);
+            }
+        } finally {
+            // ボタンを元の状態に戻す
+            button.disabled = false;
+            button.classList.remove('code-executing');
+            button.innerHTML = originalButtonHtml;
         }
     },
     

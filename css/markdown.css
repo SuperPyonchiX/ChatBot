@@ -139,10 +139,34 @@
     position: relative;
 }
 
-.code-copy-button {
+.code-language {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 4px;
+    left: 8px;
+    font-size: 0.75em;
+    color: #9e9e9e;
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+/* コードブロックのツールバー */
+.code-block-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.code-block:hover .code-block-toolbar {
+    opacity: 1;
+}
+
+.code-copy-button {
     width: 28px;
     height: 28px;
     padding: 4px;
@@ -151,15 +175,11 @@
     border-radius: 4px;
     color: #e0e0e0;
     font-size: 0.9em;
-    opacity: 0;
-    transition: opacity 0.2s ease, background-color 0.2s ease;
+    transition: background-color 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.code-block:hover .code-copy-button {
-    opacity: 1;
+    margin-right: 4px;
 }
 
 .code-copy-button:hover {
