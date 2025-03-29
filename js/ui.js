@@ -4,9 +4,17 @@
  * 
  * サイドバー、モーダル、テンプレート、添付ファイルなどのUI要素と
  * 関連するインタラクションを管理します。
+ *
+ * @module UI
  */
 
 // DOM要素をキャッシュするためのヘルパーオブジェクト
+/**
+ * DOM要素をキャッシュするためのヘルパーオブジェクト
+ * 同じ要素への参照を複数回取得する際のパフォーマンスを向上させます
+ * 
+ * @namespace UICache
+ */
 const UICache = {
     elements: {},
     
@@ -33,7 +41,12 @@ const UICache = {
     }
 };
 
-// 共通ユーティリティ関数
+/**
+ * 共通ユーティリティ関数
+ * UI操作に関する汎用メソッドを提供します
+ * 
+ * @namespace UIUtils
+ */
 const UIUtils = {
     /**
      * 要素の表示/非表示を切り替えます
@@ -97,11 +110,19 @@ const UIUtils = {
     }
 };
 
-// グローバルスコープに関数を公開
+/**
+ * UI操作のための機能を提供するグローバルオブジェクト
+ * サイドバー、モーダル、テンプレート、添付ファイル機能を含みます
+ * 
+ * @namespace UI
+ */
 window.UI = {
     /**
      * モバイル用のサイドバートグルボタンを作成します
+     * 画面サイズに応じてサイドバーの表示/非表示を切り替えるボタンを配置します
      * 
+     * @function createSidebarToggle
+     * @memberof UI
      * @returns {void}
      */
     createSidebarToggle: function() {
@@ -144,8 +165,11 @@ window.UI = {
     },
 
     /**
-     * サイドバーの状態をトグルします (プライベート関数)
+     * サイドバーの状態をトグルします
+     * サイドバーの表示/非表示状態を切り替え、その状態を保存します
      * 
+     * @function _toggleSidebarState
+     * @memberof UI
      * @param {HTMLElement} sidebar - サイドバー要素
      * @param {HTMLElement} toggleButton - トグルボタン要素
      * @returns {void}
@@ -160,7 +184,10 @@ window.UI = {
 
     /**
      * テキストエリアの高さを自動調整します
+     * 入力内容に応じてテキストエリアの高さを動的に変更します
      * 
+     * @function autoResizeTextarea
+     * @memberof UI
      * @param {HTMLTextAreaElement} textarea - 対象のテキストエリア要素
      * @returns {void}
      */
@@ -172,7 +199,10 @@ window.UI = {
 
     /**
      * APIキーモーダルを表示します
+     * API設定を編集するためのモーダルダイアログを表示します
      * 
+     * @function showApiKeyModal
+     * @memberof UI
      * @param {Object} apiSettings - API設定オブジェクト
      * @param {string} apiSettings.apiType - API種別 ('openai' または 'azure')
      * @param {string} apiSettings.openaiApiKey - OpenAI APIキー
@@ -219,7 +249,10 @@ window.UI = {
 
     /**
      * APIキーモーダルを非表示にします
+     * API設定モーダルを閉じます
      * 
+     * @function hideApiKeyModal
+     * @memberof UI
      * @returns {void}
      */
     hideApiKeyModal: function() {
@@ -228,7 +261,10 @@ window.UI = {
 
     /**
      * Azure設定の表示/非表示を切り替えます
+     * API設定画面でOpenAI/Azure切り替え時に適切な設定フィールドを表示します
      * 
+     * @function toggleAzureSettings
+     * @memberof UI
      * @returns {void}
      */
     toggleAzureSettings: function() {
@@ -242,7 +278,10 @@ window.UI = {
 
     /**
      * チャットの名前変更モーダルを表示します
+     * 会話のタイトルを変更するためのモーダルを表示します
      * 
+     * @function showRenameChatModal
+     * @memberof UI
      * @param {Object} conversation - 会話オブジェクト
      * @param {string} conversation.id - 会話ID
      * @param {string} conversation.title - 会話タイトル
@@ -270,7 +309,10 @@ window.UI = {
 
     /**
      * チャットの名前変更モーダルを非表示にします
+     * 会話名変更モーダルを閉じます
      * 
+     * @function hideRenameChatModal
+     * @memberof UI
      * @returns {void}
      */
     hideRenameChatModal: function() {
@@ -279,7 +321,10 @@ window.UI = {
 
     /**
      * システムプロンプト設定モーダルを表示します
+     * システムプロンプトを編集するためのモーダルを表示します
      * 
+     * @function showSystemPromptModal
+     * @memberof UI
      * @param {string} systemPrompt - 現在のシステムプロンプト
      * @param {Function} loadPromptTemplatesCallback - テンプレート読み込みコールバック関数
      * @returns {void}
@@ -296,7 +341,10 @@ window.UI = {
 
     /**
      * システムプロンプト設定モーダルを非表示にします
+     * システムプロンプト編集モーダルを閉じます
      * 
+     * @function hideSystemPromptModal
+     * @memberof UI
      * @returns {void}
      */
     hideSystemPromptModal: function() {
@@ -305,7 +353,10 @@ window.UI = {
 
     /**
      * テンプレート一覧を表示します
+     * システムプロンプトテンプレートの一覧を表示し、選択/削除機能を提供します
      * 
+     * @function updateTemplateList
+     * @memberof UI
      * @param {Object} promptTemplates - プロンプトテンプレート集
      * @param {Function} onTemplateSelect - テンプレート選択時のコールバック関数
      * @param {Function} onTemplateDelete - テンプレート削除時のコールバック関数
@@ -336,8 +387,11 @@ window.UI = {
     },
 
     /**
-     * テンプレート項目要素を作成します (プライベート関数)
+     * テンプレート項目要素を作成します
+     * テンプレート一覧の個々の項目要素を生成します
      * 
+     * @function _createTemplateItem
+     * @memberof UI
      * @param {string} templateName - テンプレート名
      * @param {boolean} isDefault - デフォルトテンプレートかどうか
      * @param {Function} onTemplateSelect - テンプレート選択時のコールバック関数
@@ -380,7 +434,10 @@ window.UI = {
 
     /**
      * ファイル添付ボタンと添付ファイル表示エリアを作成します
+     * チャット入力エリアにファイル添付機能を追加します
      * 
+     * @function createFileAttachmentUI
+     * @memberof UI
      * @param {HTMLElement} chatInputContainer - チャット入力コンテナ要素
      * @param {Function} onFileAttached - ファイル添付時のコールバック関数
      * @returns {Object} 作成した要素のオブジェクト
@@ -440,7 +497,10 @@ window.UI = {
 
     /**
      * 添付ファイルのプレビューを表示します
+     * 添付されたファイルのプレビューと削除ボタンを表示します
      * 
+     * @function showAttachmentPreview
+     * @memberof UI
      * @param {HTMLElement} previewArea - プレビュー表示エリア
      * @param {File} file - 添付ファイル
      * @param {string} base64Data - Base64エンコードされたファイルデータ
@@ -497,7 +557,10 @@ window.UI = {
 
     /**
      * 添付ファイルをクリアします
+     * 添付ファイルのプレビュー表示を削除します
      * 
+     * @function clearAttachments
+     * @memberof UI
      * @param {HTMLElement} previewArea - プレビュー表示エリア
      * @returns {void}
      */
