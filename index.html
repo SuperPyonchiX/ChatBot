@@ -3,60 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AIを活用したチャットボットアプリケーション">
+    <meta name="theme-color" content="#ffffff">
     <title>ChatBot</title>
     <link rel="icon" href="icon/ChatBot.png" type="image/png">
-    <!-- CSS -->
+    <!-- CSS ファイル -->
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/chat.css">
     <link rel="stylesheet" href="css/markdown.css">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- マークダウンライブラリを先に読み込み -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    
+    <!-- Prism.js スタイルシート -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" integrity="sha512-vswe+cgvic/XBoF1OcM/TeJ2FW0OofqAVdCZiEYkd6dwGXthvkSFWOoGGJgS2CW70VK5dQM5Oh+7ne47s74VTg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" integrity="sha512-Qs7Xx52XDe/8FwFdxZ8lNvFRwglqc6s+ExRs9n5/O50eTi1J1vIjJ+FS5JbgKFGwLRZVXOVlQr9xXSCkR8Vdg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" integrity="sha512-cbQXwDFK7lj2Fqfkuxbo5iD1dSbLlJGXGpfTDqbggqjHJeyzx88I3rfwjS38WJag/ihH7lzuGlGHpDBymLirZQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    
+    <!-- マークダウンライブラリとPrism.jsコアを事前読み込み -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js" integrity="sha512-9khQRAUBYEJDCDVP2yw3LRUQvjJ0Pjx0EShmaQjcHa6AXiOv6qHQu9lCAIR8O+/D8FtaCoJ2c0Tf9Xo7hYH01Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     
-    <!-- Prism.jsのスタイルシート -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/show-language/prism-show-language.min.css">
-
-    <!-- Prism.jsスクリプトを正しい順序で読み込み -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
-    <!-- C系言語の読み込み順序を調整 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
-    <!-- Basic/VB.NETの読み込み順序を調整 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-basic.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-vbnet.min.js"></script>
-    <!-- その他の言語 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
-    <!-- プラグイン -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
-    
+    <!-- Prism.js ランタイム読み込み用スクリプト -->
     <script>
-        // Prism.jsの読み込み状態を確認
+        // 必要なPrism.jsコンポーネントを動的に読み込む関数
+        function loadPrismComponents() {
+            const components = [
+                'prism-clike.min.js',
+                'prism-markup.min.js',
+                'prism-javascript.min.js',
+                'prism-css.min.js',
+                'prism-python.min.js',
+                'prism-json.min.js',
+                'prism-typescript.min.js',
+                'prism-c.min.js',
+                'prism-cpp.min.js',
+                'prism-csharp.min.js',
+                'prism-java.min.js',
+                'prism-go.min.js',
+                'prism-rust.min.js',
+                'prism-sql.min.js',
+                'prism-bash.min.js',
+                'prism-basic.min.js',
+                'prism-vbnet.min.js'
+            ];
+            
+            const loadComponent = (index) => {
+                if (index >= components.length) {
+                    // すべてのコンポーネント読み込み完了後にプラグイン読み込み
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js';
+                    script.integrity = 'sha512-st608h+ZqzliahyzEpETxzU0f7z7a9acN6AFvYmHvpFhmcFuKT8a22TT5TpKpjDa3pt3Wv7Z3SdQBCBdDPhyWA==';
+                    script.crossOrigin = 'anonymous';
+                    script.referrerPolicy = 'no-referrer';
+                    script.onload = () => {
+                        if (typeof Prism !== 'undefined') {
+                            Prism.highlightAll();
+                        }
+                    };
+                    document.head.appendChild(script);
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = `https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/${components[index]}`;
+                script.onload = () => loadComponent(index + 1);
+                document.head.appendChild(script);
+            };
+            
+            // 最初のコンポーネント読み込み開始
+            loadComponent(0);
+        }
+        
+        // DOM読み込み完了後に実行
         document.addEventListener('DOMContentLoaded', function() {
+            // Prism.jsコンポーネント読み込み
+            loadPrismComponents();
+            
+            // ライブラリ読み込み状態ログ
             if (typeof Prism !== 'undefined') {
-                console.log('Prism.js読み込み完了:', {
-                    '利用可能な言語': Object.keys(Prism.languages),
-                    'VB.NET対応確認': !!Prism.languages.vbnet,
-                    'C++対応確認': !!Prism.languages.cpp,
-                    'Basic対応確認': !!Prism.languages.basic
-                });
+                console.log('Prism.js初期化完了');
             }
             
             if (typeof marked !== 'undefined') {
@@ -106,9 +133,8 @@
                     </select>
                 </div>
             </div>
-            <div class="chat-messages" id="chatMessages">
-            </div>
-            <div class="chat-input-container">
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-container" id="chatInputContainer">
                 <div class="input-wrapper">
                     <textarea id="userInput" placeholder="メッセージを入力..." rows="1"></textarea>
                     <label class="file-upload-label" title="ファイルを添付する">
@@ -123,6 +149,7 @@
         </div>
     </div>
 
+    <!-- モーダル -->
     <!-- APIキー設定モーダル -->
     <div id="apiKeyModal" class="modal">
         <div class="modal-content">
@@ -210,10 +237,7 @@
         </div>
     </div>
 
-    <!-- モーダル -->
-    </div>
     <!-- JSファイルを読み込む -->
-    <!-- 各モジュールを個別に通常のスクリプトとして読み込む -->
     <script src="js/ui.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/storage.js"></script>
