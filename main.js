@@ -466,6 +466,17 @@ document.addEventListener('DOMContentLoaded', function() {
             AppState.currentAttachments = [];
             window.FileHandler.clearSelectedFiles();
             
+            // 添付ファイルのプレビュー表示をクリア
+            const filePreviewArea = document.querySelector('.file-preview');
+            if (filePreviewArea) {
+                filePreviewArea.remove();
+            }
+            
+            const attachmentPreviewArea = document.querySelector('.attachment-preview-area');
+            if (attachmentPreviewArea) {
+                window.UI.clearAttachments(attachmentPreviewArea);
+            }
+            
             const result = await window.Chat.sendMessage(
                 Elements.userInput, 
                 Elements.chatMessages, 

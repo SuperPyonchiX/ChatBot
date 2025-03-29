@@ -671,7 +671,7 @@ const UIPerfMonitor = {
                 return fn.apply(this, args);
             } finally {
                 const duration = performance.now() - start;
-                if (duration > 50) { // 50ms以上かかった処理をログに記録
+                if (duration > window.CONFIG.UI.PERFORMANCE_WARNING_THRESHOLD) {
                     console.log(`⚠️ ${name || 'UI操作'} の実行に ${duration.toFixed(2)}ms かかりました`);
                 }
             }
@@ -1091,7 +1091,7 @@ Object.assign(window.UI, {
                 } else if (e.target.closest('.sidebar')) {
                     if (distX < 0) {
                         // 左スワイプ → サイドバーを非表示（モバイル時）
-                        if (window.innerWidth <= 576) {
+                        if (window.innerWidth <= window.CONFIG.UI.MOBILE_BREAKPOINT) {
                             sidebar.classList.remove('show');
                         }
                     }
@@ -1277,7 +1277,7 @@ Object.assign(window.UI, {
         if (!textarea) return;
         
         // 最大高さの設定
-        const maxHeight = window.innerHeight * 0.4;
+        const maxHeight = window.innerHeight * window.CONFIG.UI.TEXTAREA_MAX_HEIGHT_RATIO;
         
         // 自動リサイズの設定
         const resize = () => {
@@ -1321,7 +1321,7 @@ Object.assign(window.UI, {
         if (!textarea) return;
         
         // デバイスに応じてプレースホルダーを変更
-        const isMobile = window.innerWidth <= 576;
+        const isMobile = window.innerWidth <= window.CONFIG.UI.MOBILE_BREAKPOINT;
         const defaultPlaceholder = 'メッセージを入力...';
         const mobilePlaceholder = '入力...';
         
@@ -1329,7 +1329,7 @@ Object.assign(window.UI, {
         
         // 画面サイズ変更時にプレースホルダーを更新
         window.addEventListener('resize', () => {
-            const isCurrentlyMobile = window.innerWidth <= 576;
+            const isCurrentlyMobile = window.innerWidth <= window.CONFIG.UI.MOBILE_BREAKPOINT;
             if (isCurrentlyMobile !== isMobile) {
                 textarea.placeholder = isCurrentlyMobile ? mobilePlaceholder : defaultPlaceholder;
             }

@@ -6,41 +6,6 @@
 // グローバルスコープに関数を公開
 window.Storage = {
     /**
-     * ストレージキーの定数
-     * @private
-     * @type {Object}
-     */
-    _KEYS: {
-        SIDEBAR: 'sidebarCollapsed',
-        OPENAI_API_KEY: 'openaiApiKey',
-        AZURE_API_KEY: 'azureApiKey',
-        API_TYPE: 'apiType',
-        AZURE_ENDPOINT_PREFIX: 'azureEndpoint_',
-        SYSTEM_PROMPT: 'systemPrompt',
-        PROMPT_TEMPLATES: 'promptTemplates',
-        CATEGORY_STATES: 'categoryStates',
-        CONVERSATIONS: 'conversations',
-        CURRENT_CONVERSATION_ID: 'currentConversationId',
-        ATTACHMENTS_PREFIX: 'attachments_' // 添付ファイル用のプレフィックス
-    },
-
-    /**
-     * デフォルト値の定数
-     * @private
-     * @type {Object}
-     */
-    _DEFAULTS: {
-        API_TYPE: 'openai',
-        SYSTEM_PROMPT: 'あなたは親切で誠実なAIアシスタントです。ユーザーの要求に対して、簡潔かつ有益な回答を提供してください。',
-        PROMPT_TEMPLATES: {
-            'general': 'あなたは親切で誠実なAIアシスタントです。ユーザーの要求に対して、簡潔かつ有益な回答を提供してください。',
-            'creative': 'あなたはクリエイティブで革新的なアイデアを提案できるAIアシスタントです。ユーザーの要望に対して、独創的で実現可能なソリューションを提供してください。',
-            'technical': 'あなたは知的で頼れる存在であり、熟練した開発者として、常に正確な回答を提供し、指示されたことのみを実行します。常に真実を述べ、事実に基づかない情報を作り出すことはありません。（以下のプロンプトに応答する際は、GitHub Flavored Markdown を適切に使用して回答をスタイリングしてください。見出し、リスト、色付きのテキスト、コードブロック、ハイライトなどにMarkdown構文を使用してください。ただし、Markdownやスタイリングについて言及しないようにしてください。）'
-        },
-        SUPPORTED_MODELS: ['gpt-4o-mini', 'gpt-4o', 'o1-mini', 'o1']
-    },
-
-    /**
      * LocalStorageが利用可能かどうかを確認
      * @private
      * @returns {boolean} LocalStorageが利用可能な場合はtrue
@@ -153,7 +118,7 @@ window.Storage = {
      * @param {boolean} isCollapsed - サイドバーが折りたたまれているかどうか
      */
     saveSidebarState: function(isCollapsed) {
-        this._setItem(this._KEYS.SIDEBAR, !!isCollapsed);
+        this._setItem(window.CONFIG.STORAGE.KEYS.SIDEBAR, !!isCollapsed);
     },
 
     /**
@@ -161,7 +126,7 @@ window.Storage = {
      * @returns {boolean} サイドバーが折りたたまれているかどうか
      */
     loadSidebarState: function() {
-        return this._getItem(this._KEYS.SIDEBAR) === 'true';
+        return this._getItem(window.CONFIG.STORAGE.KEYS.SIDEBAR) === 'true';
     },
 
     /**
@@ -172,17 +137,17 @@ window.Storage = {
         const azureEndpoints = {};
         
         // サポートされているモデルのエンドポイント設定を読み込む
-        this._DEFAULTS.SUPPORTED_MODELS.forEach(model => {
+        window.CONFIG.MODELS.SUPPORTED.forEach(model => {
             if (!model) return;
             
-            const endpointKey = this._KEYS.AZURE_ENDPOINT_PREFIX + model;
+            const endpointKey = window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX + model;
             azureEndpoints[model] = this._getItem(endpointKey, '');
         });
         
         return {
-            openaiApiKey: this._getItem(this._KEYS.OPENAI_API_KEY, ''),
-            azureApiKey: this._getItem(this._KEYS.AZURE_API_KEY, ''),
-            apiType: this._getItem(this._KEYS.API_TYPE, this._DEFAULTS.API_TYPE),
+            openaiApiKey: this._getItem(window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY, ''),
+            azureApiKey: this._getItem(window.CONFIG.STORAGE.KEYS.AZURE_API_KEY, ''),
+            apiType: this._getItem(window.CONFIG.STORAGE.KEYS.API_TYPE, window.CONFIG.STORAGE.DEFAULT_API_TYPE),
             azureEndpoints
         };
     },
@@ -195,16 +160,16 @@ window.Storage = {
         if (!apiSettings) return;
         
         // 基本設定を保存
-        this._setItem(this._KEYS.OPENAI_API_KEY, apiSettings.openaiApiKey || '');
-        this._setItem(this._KEYS.AZURE_API_KEY, apiSettings.azureApiKey || '');
-        this._setItem(this._KEYS.API_TYPE, apiSettings.apiType || this._DEFAULTS.API_TYPE);
+        this._setItem(window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY, apiSettings.openaiApiKey || '');
+        this._setItem(window.CONFIG.STORAGE.KEYS.AZURE_API_KEY, apiSettings.azureApiKey || '');
+        this._setItem(window.CONFIG.STORAGE.KEYS.API_TYPE, apiSettings.apiType || window.CONFIG.STORAGE.DEFAULT_API_TYPE);
         
         // Azureエンドポイント設定を保存
         if (apiSettings.azureEndpoints) {
-            this._DEFAULTS.SUPPORTED_MODELS.forEach(model => {
+            window.CONFIG.MODELS.SUPPORTED.forEach(model => {
                 if (!model) return;
                 
-                const endpointKey = this._KEYS.AZURE_ENDPOINT_PREFIX + model;
+                const endpointKey = window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX + model;
                 const endpoint = apiSettings.azureEndpoints[model] || '';
                 this._setItem(endpointKey, endpoint);
             });
@@ -216,7 +181,7 @@ window.Storage = {
      * @returns {string} システムプロンプト
      */
     loadSystemPrompt: function() {
-        return this._getItem(this._KEYS.SYSTEM_PROMPT, this._DEFAULTS.SYSTEM_PROMPT);
+        return this._getItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT, window.CONFIG.PROMPTS.DEFAULT_SYSTEM_PROMPT);
     },
 
     /**
@@ -225,7 +190,7 @@ window.Storage = {
      */
     saveSystemPrompt: function(systemPrompt) {
         if (systemPrompt === undefined || systemPrompt === null) return;
-        this._setItem(this._KEYS.SYSTEM_PROMPT, systemPrompt);
+        this._setItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT, systemPrompt);
     },
 
     /**
@@ -233,7 +198,7 @@ window.Storage = {
      * @returns {Object} プロンプトテンプレートのオブジェクト
      */
     loadPromptTemplates: function() {
-        return this._getItem(this._KEYS.PROMPT_TEMPLATES, this._DEFAULTS.PROMPT_TEMPLATES, true);
+        return this._getItem(window.CONFIG.STORAGE.KEYS.PROMPT_TEMPLATES, window.CONFIG.PROMPTS.TEMPLATES, true);
     },
 
     /**
@@ -242,7 +207,7 @@ window.Storage = {
      */
     savePromptTemplates: function(templates) {
         if (!templates || typeof templates !== 'object') return;
-        this._setItem(this._KEYS.PROMPT_TEMPLATES, templates);
+        this._setItem(window.CONFIG.STORAGE.KEYS.PROMPT_TEMPLATES, templates);
     },
 
     /**
@@ -287,7 +252,7 @@ window.Storage = {
         
         const categoryStates = this.loadCategoryStates();
         categoryStates[categoryName] = !!isExpanded;
-        this._setItem(this._KEYS.CATEGORY_STATES, categoryStates);
+        this._setItem(window.CONFIG.STORAGE.KEYS.CATEGORY_STATES, categoryStates);
     },
 
     /**
@@ -295,7 +260,7 @@ window.Storage = {
      * @returns {Object} カテゴリーの状態オブジェクト
      */
     loadCategoryStates: function() {
-        return this._getItem(this._KEYS.CATEGORY_STATES, {}, true);
+        return this._getItem(window.CONFIG.STORAGE.KEYS.CATEGORY_STATES, {}, true);
     },
 
     /**
@@ -303,7 +268,7 @@ window.Storage = {
      * @returns {Array} 会話オブジェクトの配列
      */
     loadConversations: function() {
-        const conversations = this._getItem(this._KEYS.CONVERSATIONS, [], true);
+        const conversations = this._getItem(window.CONFIG.STORAGE.KEYS.CONVERSATIONS, [], true);
         
         // 無効なデータがあれば修正する
         return Array.isArray(conversations) ? conversations : [];
@@ -322,7 +287,7 @@ window.Storage = {
             conversations = conversations.slice(0, 100);
         }
         
-        this._setItem(this._KEYS.CONVERSATIONS, conversations);
+        this._setItem(window.CONFIG.STORAGE.KEYS.CONVERSATIONS, conversations);
     },
 
     /**
@@ -330,7 +295,7 @@ window.Storage = {
      * @returns {string|null} 現在の会話ID
      */
     loadCurrentConversationId: function() {
-        return this._getItem(this._KEYS.CURRENT_CONVERSATION_ID, null);
+        return this._getItem(window.CONFIG.STORAGE.KEYS.CURRENT_CONVERSATION_ID, null);
     },
 
     /**
@@ -339,7 +304,7 @@ window.Storage = {
      */
     saveCurrentConversationId: function(currentConversationId) {
         if (!currentConversationId) return;
-        this._setItem(this._KEYS.CURRENT_CONVERSATION_ID, currentConversationId);
+        this._setItem(window.CONFIG.STORAGE.KEYS.CURRENT_CONVERSATION_ID, currentConversationId);
     },
 
     /**
@@ -355,7 +320,7 @@ window.Storage = {
             const optimizedAttachments = this._optimizeAttachments(attachments);
             
             // 添付ファイルを保存
-            const key = this._KEYS.ATTACHMENTS_PREFIX + conversationId;
+            const key = window.CONFIG.STORAGE.KEYS.ATTACHMENTS_PREFIX + conversationId;
             this._setItem(key, optimizedAttachments);
         } catch (error) {
             console.error('添付ファイルの保存中にエラーが発生しました:', error);
@@ -400,7 +365,7 @@ window.Storage = {
         if (!conversationId) return [];
         
         try {
-            const key = this._KEYS.ATTACHMENTS_PREFIX + conversationId;
+            const key = window.CONFIG.STORAGE.KEYS.ATTACHMENTS_PREFIX + conversationId;
             return this._getItem(key, [], true);
         } catch (error) {
             console.error('添付ファイルの読み込み中にエラーが発生しました:', error);
@@ -416,7 +381,7 @@ window.Storage = {
         if (!conversationId) return;
         
         try {
-            const key = this._KEYS.ATTACHMENTS_PREFIX + conversationId;
+            const key = window.CONFIG.STORAGE.KEYS.ATTACHMENTS_PREFIX + conversationId;
             this.removeItem(key);
         } catch (error) {
             console.error('添付ファイルの削除中にエラーが発生しました:', error);

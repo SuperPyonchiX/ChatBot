@@ -16,27 +16,6 @@ window.FileHandler = {
      * @type {Array<Object>}
      */
     savedAttachments: [],
-    
-    /**
-     * 最大ファイルサイズ (10MB)
-     * @type {number}
-     */
-    MAX_FILE_SIZE: 10 * 1024 * 1024,
-    
-    /**
-     * 許可されるファイルタイプ
-     * @type {Object}
-     */
-    ALLOWED_FILE_TYPES: {
-        // 画像ファイル
-        image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
-        // テキストファイル
-        text: ['text/plain', 'text/markdown', 'text/csv'],
-        // PDFファイル
-        pdf: ['application/pdf'],
-        // コード関連
-        code: ['text/javascript', 'text/html', 'text/css', 'application/json']
-    },
 
     /**
      * ファイル選択イベントの処理
@@ -93,12 +72,13 @@ window.FileHandler = {
         const errors = [];
         
         // 許可されるすべてのMIMEタイプのリスト
-        const allowedMimeTypes = Object.values(this.ALLOWED_FILE_TYPES).flat();
+        const allowedMimeTypes = Object.values(window.CONFIG.FILE.ALLOWED_FILE_TYPES).flat();
         
         files.forEach(file => {
             // ファイルサイズを確認
-            if (file.size > this.MAX_FILE_SIZE) {
-                errors.push(`"${file.name}"は大きすぎます（最大10MB）`);
+            if (file.size > window.CONFIG.FILE.MAX_FILE_SIZE) {
+                const maxSizeMB = window.CONFIG.FILE.MAX_FILE_SIZE / (1024 * 1024);
+                errors.push(`"${file.name}"は大きすぎます（最大${maxSizeMB}MB）`);
                 return;
             }
             
@@ -130,7 +110,7 @@ window.FileHandler = {
         if (!mimeType) return false;
         
         // すべての許可されたMIMEタイプのリスト
-        const allowedMimeTypes = Object.values(this.ALLOWED_FILE_TYPES).flat();
+        const allowedMimeTypes = Object.values(window.CONFIG.FILE.ALLOWED_FILE_TYPES).flat();
         
         // 完全一致を確認
         if (allowedMimeTypes.includes(mimeType)) {
@@ -553,7 +533,7 @@ window.FileHandler = {
             const timeoutId = setTimeout(() => {
                 reader.abort();
                 reject(new Error('ファイル読み込みがタイムアウトしました'));
-            }, 30000); // 30秒タイムアウト
+            }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
             
             reader.onload = function(e) {
                 clearTimeout(timeoutId);
@@ -588,7 +568,7 @@ window.FileHandler = {
             const timeoutId = setTimeout(() => {
                 reader.abort();
                 reject(new Error('ファイル読み込みがタイムアウトしました'));
-            }, 30000); // 30秒タイムアウト
+            }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
             
             reader.onload = function(e) {
                 clearTimeout(timeoutId);
@@ -625,15 +605,29 @@ window.FileHandler = {
     clearSelectedFiles: function() {
         this.selectedFiles = [];
         
-        // プレビューをクリア
+        // プレビューをクリア - 全ての関連要素を確実に削除
         try {
+            // FileHandler側のプレビュー
             const inputWrapper = document.querySelector('.input-wrapper');
             if (inputWrapper) {
-                const previewArea = inputWrapper.querySelector('.file-preview');
-                if (previewArea) {
-                    previewArea.remove();
+                const filePreview = inputWrapper.querySelector('.file-preview');
+                if (filePreview) {
+                    filePreview.remove();
                 }
             }
+            
+            // UI側のプレビュー
+            const attachmentPreviewArea = document.querySelector('.attachment-preview-area');
+            if (attachmentPreviewArea) {
+                attachmentPreviewArea.innerHTML = '';
+                attachmentPreviewArea.style.display = 'none';
+            }
+            
+            // 保存済み添付ファイルをクリア
+            this.savedAttachments = [];
+            
+            // 添付ファイル削除イベントを発火
+            document.dispatchEvent(new CustomEvent('attachment-removed'));
         } catch (error) {
             console.error('ファイルプレビュークリアエラー:', error);
         }
@@ -714,22 +708,26 @@ window.FileHandler = {
             const messages = chatMessages.querySelectorAll('.message');
             if (!messages || messages.length === 0) return;
             
-            // TODO: メッセージに対応する添付ファイルを表示する実装
-            // 現状はユーザーメッセージの最後に添付を表示
-            const userMessages = Array.from(messages).filter(msg => msg.classList.contains('user'));
+            // ユーザーメッセージを抽出（最新のものから）
+            const userMessages = Array.from(messages)
+                .filter(msg => msg.classList.contains('user'))
+                .reverse(); // 新しいメッセージから処理
+
+            // 添付ファイルは最新のユーザーメッセージにのみ表示
             if (userMessages.length > 0) {
-                const lastUserMessage = userMessages[userMessages.length - 1];
+                const lastUserMessage = userMessages[0];
                 const messageContent = lastUserMessage.querySelector('.message-content');
                 if (messageContent) {
-                    // 既存の添付ファイル要素があれば削除
+                    // 一度だけ添付ファイルを表示
                     const existingAttachments = messageContent.querySelector('.message-attachments');
-                    if (existingAttachments) {
-                        existingAttachments.remove();
+                    if (!existingAttachments) {
+                        const attachmentsElement = window.Chat._createAttachmentsElement(attachments);
+                        if (attachmentsElement) {
+                            messageContent.appendChild(attachmentsElement);
+                            // 添付ファイルを表示したら保存済み添付ファイルをクリア
+                            this.savedAttachments = [];
+                        }
                     }
-                    
-                    // 添付ファイル要素を作成
-                    const attachmentsElement = window.Chat._createAttachmentsElement(attachments);
-                    messageContent.appendChild(attachmentsElement);
                 }
             }
         } catch (error) {
