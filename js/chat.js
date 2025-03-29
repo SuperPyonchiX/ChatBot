@@ -12,6 +12,8 @@ window.Chat = {
      * @param {Array} attachments - 添付ファイルの配列（任意）
      */
     addUserMessage: function(message, chatMessages, attachments = []) {
+        if (!chatMessages) return;
+        
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', 'user');
         
@@ -19,11 +21,17 @@ window.Chat = {
         contentDiv.classList.add('message-content');
         
         // コピーボタンを追加
-        const copyButton = this._createCopyButton(message);
+        const copyButton = this._createCopyButton(message || '');
         
         const markdownContent = document.createElement('div');
         markdownContent.classList.add('markdown-content');
-        markdownContent.innerHTML = window.Markdown.renderMarkdown(message);
+        
+        try {
+            markdownContent.innerHTML = window.Markdown.renderMarkdown(message || '');
+        } catch (e) {
+            console.error('ユーザーメッセージのMarkdown解析エラー:', e);
+            markdownContent.textContent = message || '';
+        }
         
         contentDiv.appendChild(copyButton);
         contentDiv.appendChild(markdownContent);
@@ -45,6 +53,8 @@ window.Chat = {
      * @param {HTMLElement} chatMessages - メッセージを追加する対象要素
      */
     addBotMessage: function(message, chatMessages) {
+        if (!chatMessages) return;
+        
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', 'bot');
         
@@ -52,16 +62,16 @@ window.Chat = {
         contentDiv.classList.add('message-content');
         
         // コピーボタンを追加
-        const copyButton = this._createCopyButton(message);
+        const copyButton = this._createCopyButton(message || '');
         
         const messageContent = document.createElement('div');
         messageContent.classList.add('markdown-content');
         
         try {
-            messageContent.innerHTML = window.Markdown.renderMarkdown(message);
+            messageContent.innerHTML = window.Markdown.renderMarkdown(message || '');
         } catch (e) {
-            console.error('Markdown parsing error:', e);
-            messageContent.innerHTML = window.Markdown.formatMessage(message);
+            console.error('ボットメッセージのMarkdown解析エラー:', e);
+            messageContent.textContent = window.Markdown.formatMessage(message || '');
         }
         
         contentDiv.appendChild(copyButton);
@@ -86,12 +96,18 @@ window.Chat = {
         
         // コピーボタンのクリックイベント
         copyButton.addEventListener('click', () => {
+            if (!textToCopy) {
+                console.warn('コピーするテキストが空です');
+                return;
+            }
+            
             navigator.clipboard.writeText(textToCopy)
                 .then(() => {
                     this._showCopySuccess(copyButton);
                 })
                 .catch(err => {
                     console.error('クリップボードへのコピーに失敗しました:', err);
+                    this._showCopyError(copyButton);
                 });
         });
         
@@ -104,11 +120,35 @@ window.Chat = {
      * @param {HTMLElement} button - 更新するボタン
      */
     _showCopySuccess: function(button) {
+        if (!button) return;
+        
         button.classList.add('copied');
         button.innerHTML = '<i class="fas fa-check"></i>';
+        
         setTimeout(() => {
-            button.classList.remove('copied');
-            button.innerHTML = '<i class="fas fa-copy"></i>';
+            if (button) {
+                button.classList.remove('copied');
+                button.innerHTML = '<i class="fas fa-copy"></i>';
+            }
+        }, 1500);
+    },
+    
+    /**
+     * コピー失敗時の表示を更新
+     * @private
+     * @param {HTMLElement} button - 更新するボタン
+     */
+    _showCopyError: function(button) {
+        if (!button) return;
+        
+        button.classList.add('error');
+        button.innerHTML = '<i class="fas fa-times"></i>';
+        
+        setTimeout(() => {
+            if (button) {
+                button.classList.remove('error');
+                button.innerHTML = '<i class="fas fa-copy"></i>';
+            }
         }, 1500);
     },
     
@@ -119,11 +159,17 @@ window.Chat = {
      * @returns {HTMLElement} 添付ファイル表示要素
      */
     _createAttachmentsElement: function(attachments) {
+        if (!attachments || !Array.isArray(attachments)) {
+            return document.createElement('div');
+        }
+        
         const attachmentsDiv = document.createElement('div');
         attachmentsDiv.classList.add('message-attachments');
         
         attachments.forEach(attachment => {
-            if (attachment.type === 'image') {
+            if (!attachment || !attachment.type) return;
+            
+            if (attachment.type === 'image' && attachment.data) {
                 const imgContainer = document.createElement('div');
                 imgContainer.classList.add('attachment-image-container');
                 
@@ -132,9 +178,14 @@ window.Chat = {
                 img.alt = attachment.name || '添付画像';
                 img.classList.add('attachment-image');
                 
+                // 画像クリックで拡大表示
+                img.addEventListener('click', () => {
+                    this._showFullSizeImage(attachment.data, attachment.name);
+                });
+                
                 imgContainer.appendChild(img);
                 attachmentsDiv.appendChild(imgContainer);
-            } else if (attachment.type === 'file') {
+            } else if (attachment.type === 'file' && attachment.name) {
                 // 画像以外のファイル添付表示
                 const fileContainer = document.createElement('div');
                 fileContainer.classList.add('attachment-file-container');
@@ -156,16 +207,72 @@ window.Chat = {
     },
     
     /**
+     * 画像を全画面表示する
+     * @private
+     * @param {string} src - 画像のソースURL
+     * @param {string} alt - 画像の代替テキスト
+     */
+    _showFullSizeImage: function(src, alt) {
+        if (!src) return;
+        
+        // すでに表示されている場合は削除
+        const existingOverlay = document.querySelector('.image-overlay');
+        if (existingOverlay) {
+            document.body.removeChild(existingOverlay);
+            return;
+        }
+        
+        // オーバーレイを作成
+        const overlay = document.createElement('div');
+        overlay.classList.add('image-overlay');
+        
+        // 画像を作成
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = alt || '添付画像';
+        
+        // 閉じるボタン
+        const closeBtn = document.createElement('button');
+        closeBtn.classList.add('overlay-close-btn');
+        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        
+        // 閉じるボタンのクリックイベント
+        closeBtn.addEventListener('click', () => {
+            document.body.removeChild(overlay);
+        });
+        
+        // オーバーレイのクリックでも閉じる
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                document.body.removeChild(overlay);
+            }
+        });
+        
+        // 要素を追加
+        overlay.appendChild(img);
+        overlay.appendChild(closeBtn);
+        document.body.appendChild(overlay);
+    },
+    
+    /**
      * メッセージを処理して表示する
      * @private
      * @param {HTMLElement} messageDiv - メッセージ要素
      * @param {HTMLElement} chatMessages - メッセージを追加する対象要素
      */
     _processMessageAndAppend: function(messageDiv, chatMessages) {
+        if (!messageDiv || !chatMessages) return;
+        
         // コードブロックにコピーボタンを追加とシンタックスハイライトの適用
         setTimeout(() => {
-            window.Markdown.addCodeBlockCopyButtons(messageDiv);
-            Prism.highlightAllUnder(messageDiv);
+            try {
+                window.Markdown.addCodeBlockCopyButtons(messageDiv);
+                if (typeof Prism !== 'undefined') {
+                    Prism.highlightAllUnder(messageDiv);
+                }
+            } catch (error) {
+                console.error('コードハイライト処理中にエラーが発生しました:', error);
+            }
         }, 10);
         
         chatMessages.appendChild(messageDiv);
@@ -179,25 +286,73 @@ window.Chat = {
      * @param {HTMLSelectElement} modelSelect - モデル選択要素
      */
     displayConversation: function(conversation, chatMessages, modelSelect) {
-        if (!conversation) return;
+        if (!conversation || !chatMessages) return;
         
         chatMessages.innerHTML = '';
         
         // システムメッセージ以外を表示
-        conversation.messages.forEach(message => {
-            if (message.role === 'system') return;
+        for (const message of conversation.messages) {
+            if (!message || !message.role) continue;
+            
+            if (message.role === 'system') continue;
             
             if (message.role === 'user') {
-                this.addUserMessage(message.content, chatMessages);
+                const content = typeof message.content === 'string' 
+                    ? message.content 
+                    : this._processContentArray(message.content);
+                this.addUserMessage(content, chatMessages);
             } else if (message.role === 'assistant') {
-                this.addBotMessage(message.content, chatMessages);
+                const content = typeof message.content === 'string' 
+                    ? message.content 
+                    : this._processContentArray(message.content);
+                this.addBotMessage(content, chatMessages);
             }
-        });
+        }
         
-        // モデルを設定
-        modelSelect.value = conversation.model || 'gpt-4o-mini';
+        // モデルを設定（存在する場合のみ）
+        if (modelSelect) {
+            try {
+                const model = conversation.model || 'gpt-4o-mini';
+                const modelExists = Array.from(modelSelect.options).some(option => option.value === model);
+                modelSelect.value = modelExists ? model : modelSelect.options[0].value;
+            } catch (error) {
+                console.error('モデル選択の設定中にエラーが発生しました:', error);
+            }
+        }
+        
         // シンタックスハイライトを再適用
-        Prism.highlightAll();
+        if (typeof Prism !== 'undefined') {
+            try {
+                Prism.highlightAll();
+            } catch (error) {
+                console.error('シンタックスハイライトの適用中にエラーが発生しました:', error);
+            }
+        }
+    },
+    
+    /**
+     * 配列型のコンテンツを処理する
+     * @private
+     * @param {Array|string} content - 処理するコンテンツ
+     * @returns {string} 処理された文字列
+     */
+    _processContentArray: function(content) {
+        if (typeof content === 'string') return content;
+        if (!Array.isArray(content)) return '';
+        
+        let result = '';
+        
+        for (const item of content) {
+            if (!item || !item.type) continue;
+            
+            if (item.type === 'text' && item.text) {
+                result += item.text;
+            } else if (item.type === 'image_url' && item.image_url && item.image_url.url) {
+                result += `\n![画像](${item.image_url.url})\n`;
+            }
+        }
+        
+        return result;
     },
 
     /**
@@ -211,10 +366,19 @@ window.Chat = {
      * @returns {Promise<Object>} 処理結果
      */
     sendMessage: async function(userInput, chatMessages, currentConversation, apiSettings, systemPrompt, attachments = []) {
-        const message = userInput.value.trim();
+        if (!userInput || !chatMessages || !currentConversation) {
+            return { error: '必要なパラメータが不足しています' };
+        }
+        
+        const message = userInput.value?.trim() || '';
         let titleUpdated = false;
         
-        if (message || attachments.length > 0) {
+        // メッセージか添付ファイルのいずれかが必要
+        if (!message && (!attachments || attachments.length === 0)) {
+            return { titleUpdated: false, response: null };
+        }
+        
+        try {
             // ユーザーメッセージを表示（添付ファイル付き）
             this.addUserMessage(message, chatMessages, attachments);
             userInput.value = '';
@@ -227,7 +391,8 @@ window.Chat = {
             });
             
             // チャットタイトルがデフォルトの場合、最初のメッセージをタイトルに設定
-            if (currentConversation.title === '新しいチャット' && currentConversation.messages.filter(m => m.role === 'user').length === 1) {
+            if (currentConversation.title === '新しいチャット' && 
+                currentConversation.messages.filter(m => m.role === 'user').length === 1) {
                 currentConversation.title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
                 titleUpdated = true;
             }
@@ -238,9 +403,12 @@ window.Chat = {
             chatMessages.scrollTop = chatMessages.scrollHeight;
             
             try {
+                // システムプロンプトが空の場合はデフォルト値を使用
+                const effectiveSystemPrompt = systemPrompt || window.Storage._DEFAULTS.SYSTEM_PROMPT;
+                
                 // APIに送信するメッセージにシステムプロンプトを追加
                 const messagesWithSystem = [
-                    { role: 'system', content: systemPrompt },
+                    { role: 'system', content: effectiveSystemPrompt },
                     ...currentConversation.messages.filter(m => m.role !== 'system')
                 ];
                 
@@ -252,7 +420,7 @@ window.Chat = {
                 );
                 
                 // Thinkingの表示を削除
-                chatMessages.removeChild(typingIndicator);
+                this._safeRemoveChild(chatMessages, typingIndicator);
                 
                 // ボットの応答を表示
                 this.addBotMessage(botResponse, chatMessages);
@@ -266,17 +434,37 @@ window.Chat = {
                 return { titleUpdated, response: botResponse };
             } catch (error) {
                 // Thinkingの表示を削除
-                chatMessages.removeChild(typingIndicator);
+                this._safeRemoveChild(chatMessages, typingIndicator);
                 
                 // エラーメッセージを表示
-                this._showErrorMessage(error.message, chatMessages);
+                const errorMessage = error.message || 'APIリクエスト中にエラーが発生しました';
+                this._showErrorMessage(errorMessage, chatMessages);
                 
                 // エラーを返す
-                return { titleUpdated, error: error.message };
+                return { titleUpdated, error: errorMessage };
             }
+        } catch (error) {
+            console.error('メッセージ送信処理中にエラーが発生しました:', error);
+            return { titleUpdated: false, error: '内部エラーが発生しました' };
         }
+    },
+    
+    /**
+     * 安全に子要素を削除する
+     * @private
+     * @param {HTMLElement} parent - 親要素
+     * @param {HTMLElement} child - 削除する子要素
+     */
+    _safeRemoveChild: function(parent, child) {
+        if (!parent || !child) return;
         
-        return { titleUpdated, response: null };
+        try {
+            if (parent.contains(child)) {
+                parent.removeChild(child);
+            }
+        } catch (error) {
+            console.error('子要素の削除中にエラーが発生しました:', error);
+        }
     },
 
     /**
@@ -302,24 +490,18 @@ window.Chat = {
      * @param {HTMLElement} chatMessages - メッセージ表示要素
      */
     _showErrorMessage: function(errorMessage, chatMessages) {
+        if (!chatMessages) return;
+        
         const errorMessageDiv = document.createElement('div');
         errorMessageDiv.classList.add('message', 'bot', 'error');
         errorMessageDiv.innerHTML = `
             <div class="message-content">
-                <p>エラーが発生しました: ${errorMessage}</p>
+                <p>エラーが発生しました: ${errorMessage || '不明なエラー'}</p>
                 <button id="showApiSettings" class="error-action">API設定を確認する</button>
             </div>
         `;
         chatMessages.appendChild(errorMessageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        // API設定ボタンのイベントリスナーを追加
-        const settingsButton = errorMessageDiv.querySelector('#showApiSettings');
-        if (settingsButton) {
-            settingsButton.addEventListener('click', () => {
-                window.UI.showSettingsModal();
-            });
-        }
     },
 
     /**
@@ -332,13 +514,29 @@ window.Chat = {
      * @param {Function} onDeleteConversation - 会話削除時のコールバック
      */
     renderChatHistory: function(conversations, currentConversationId, chatHistory, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
+        if (!chatHistory || !Array.isArray(conversations)) return;
+        
         chatHistory.innerHTML = '';
+        
+        // 会話がない場合は空状態を表示
+        if (conversations.length === 0) {
+            const emptyState = document.createElement('div');
+            emptyState.classList.add('empty-history');
+            emptyState.innerHTML = `
+                <p>会話履歴がありません</p>
+                <p>新しいチャットを開始してください</p>
+            `;
+            chatHistory.appendChild(emptyState);
+            return;
+        }
         
         // プロンプトごとにグループ化するための処理
         const promptGroups = this.groupConversationsByPrompt(conversations);
         
         // 各プロンプトグループごとにセクションを作成
         Object.entries(promptGroups).forEach(([promptKey, groupConversations]) => {
+            if (!Array.isArray(groupConversations) || groupConversations.length === 0) return;
+            
             // カテゴリーの状態を取得（展開/折りたたみ）
             const categoryStates = window.Storage.loadCategoryStates();
             const isExpanded = categoryStates[promptKey] !== false; // デフォルトは展開状態
@@ -372,8 +570,13 @@ window.Chat = {
      * @returns {HTMLElement} 作成されたカテゴリーセクション
      */
     _createCategorySection: function(promptKey, groupConversations, isExpanded, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
+        if (!promptKey || !Array.isArray(groupConversations)) {
+            return document.createElement('div');
+        }
+        
         const categorySection = document.createElement('div');
         categorySection.classList.add('chat-category');
+        categorySection.dataset.category = promptKey;
         
         // カテゴリーヘッダーを作成
         const categoryHeader = document.createElement('div');
@@ -405,12 +608,15 @@ window.Chat = {
         }
         
         // ヘッダークリックで展開/折りたたみ
-        categoryHeader.addEventListener('click', () => {
+        categoryHeader.addEventListener('click', (e) => {
+            e.stopPropagation();
             this._toggleCategoryExpansion(toggleIcon, conversationList, promptKey);
         });
         
         // カテゴリー内の会話を表示
         groupConversations.forEach(conversation => {
+            if (!conversation) return;
+            
             const historyItem = this._createHistoryItem(
                 conversation, 
                 onSwitchConversation, 
@@ -435,7 +641,10 @@ window.Chat = {
      * @param {string} promptKey - プロンプトカテゴリーキー
      */
     _toggleCategoryExpansion: function(toggleIcon, conversationList, promptKey) {
+        if (!toggleIcon || !conversationList || !promptKey) return;
+        
         const isNowExpanded = toggleIcon.classList.contains('fa-chevron-down');
+        
         if (isNowExpanded) {
             toggleIcon.classList.replace('fa-chevron-down', 'fa-chevron-right');
             conversationList.style.display = 'none';
@@ -443,6 +652,7 @@ window.Chat = {
             toggleIcon.classList.replace('fa-chevron-right', 'fa-chevron-down');
             conversationList.style.display = 'block';
         }
+        
         // 状態を保存
         window.Storage.saveCategoryState(promptKey, !isNowExpanded);
     },
@@ -457,6 +667,10 @@ window.Chat = {
      * @returns {HTMLElement} 作成された履歴アイテム
      */
     _createHistoryItem: function(conversation, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
+        if (!conversation || !conversation.id) {
+            return document.createElement('div');
+        }
+        
         const historyItem = document.createElement('div');
         historyItem.classList.add('history-item');
         historyItem.dataset.id = conversation.id;
@@ -480,7 +694,9 @@ window.Chat = {
         editButton.title = 'チャットの名前を変更';
         editButton.addEventListener('click', (e) => {
             e.stopPropagation();  // クリックイベントの伝播を止める
-            onShowRenameModal(conversation);
+            if (typeof onShowRenameModal === 'function') {
+                onShowRenameModal(conversation);
+            }
         });
         
         // 削除ボタン
@@ -490,7 +706,9 @@ window.Chat = {
         deleteButton.title = 'チャットを削除';
         deleteButton.addEventListener('click', (e) => {
             e.stopPropagation();  // クリックイベントの伝播を止める
-            onDeleteConversation(conversation.id);
+            if (typeof onDeleteConversation === 'function') {
+                onDeleteConversation(conversation.id);
+            }
         });
         
         // ボタンをアクションコンテナに追加
@@ -503,7 +721,9 @@ window.Chat = {
         
         // チャットアイテムのクリックイベント（チャット切り替え）
         itemContent.addEventListener('click', () => {
-            onSwitchConversation(conversation.id);
+            if (typeof onSwitchConversation === 'function') {
+                onSwitchConversation(conversation.id);
+            }
         });
         
         return historyItem;
@@ -515,14 +735,20 @@ window.Chat = {
      * @returns {Object} プロンプトカテゴリごとにグループ化された会話
      */
     groupConversationsByPrompt: function(conversations) {
+        if (!Array.isArray(conversations)) {
+            return { '未分類': [] };
+        }
+        
         const groups = {};
         
         conversations.forEach(conversation => {
+            if (!conversation) return;
+            
             // システムプロンプトを取得
             let systemPrompt = '未分類';
             
             // システムメッセージからプロンプトを取得
-            const systemMessage = conversation.messages.find(m => m.role === 'system');
+            const systemMessage = conversation.messages?.find(m => m?.role === 'system');
             if (systemMessage && systemMessage.content) {
                 systemPrompt = this.getPromptCategory(systemMessage.content);
             }
@@ -536,6 +762,11 @@ window.Chat = {
             groups[systemPrompt].push(conversation);
         });
         
+        // 未分類グループがない場合は作成
+        if (!groups['未分類']) {
+            groups['未分類'] = [];
+        }
+        
         return groups;
     },
     
@@ -545,6 +776,8 @@ window.Chat = {
      * @returns {string} カテゴリーキー
      */
     getPromptCategory: function(promptText) {
+        if (!promptText) return '未分類';
+        
         // プロンプトテンプレートを取得
         const templates = window.Storage.loadPromptTemplates();
         
@@ -574,6 +807,8 @@ window.Chat = {
      * @returns {string} 表示用カテゴリー名
      */
     getPromptNiceName: function(categoryKey) {
+        if (!categoryKey) return '未分類';
+        
         const displayNames = {
             'default': 'デフォルト',
             'creative': 'クリエイティブ',
@@ -590,13 +825,31 @@ window.Chat = {
      * @param {string} currentConversationId - 現在の会話ID
      */
     updateActiveChatInHistory: function(currentConversationId) {
-        const historyItems = document.querySelectorAll('.history-item');
-        historyItems.forEach(item => {
-            if (item.dataset.id === currentConversationId) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
-        });
+        if (!currentConversationId) return;
+        
+        try {
+            const historyItems = document.querySelectorAll('.history-item');
+            historyItems.forEach(item => {
+                if (item.dataset.id === currentConversationId) {
+                    item.classList.add('active');
+                    
+                    // アクティブな項目が含まれるカテゴリを見つけて展開
+                    const categorySection = item.closest('.chat-category');
+                    if (categorySection) {
+                        const conversationList = categorySection.querySelector('.category-conversations');
+                        const toggleIcon = categorySection.querySelector('.category-header .fas');
+                        const promptKey = categorySection.dataset.category;
+                        
+                        if (conversationList && toggleIcon && promptKey && conversationList.style.display === 'none') {
+                            this._toggleCategoryExpansion(toggleIcon, conversationList, promptKey);
+                        }
+                    }
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        } catch (error) {
+            console.error('アクティブチャットの更新中にエラーが発生しました:', error);
+        }
     }
 };
