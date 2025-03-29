@@ -496,6 +496,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // 添付ファイルを保存（正常送信時のみ）
                 if (attachmentsToSend && attachmentsToSend.length > 0) {
+                    // 最新のユーザーメッセージのタイムスタンプを取得
+                    const latestUserMessage = currentConversation.messages
+                        .filter(m => m.role === 'user')
+                        .pop();
+                    
+                    // FileHandlerのタイムスタンプを優先
+                    const timestamp = window.FileHandler.attachmentTimestamp || 
+                                    (latestUserMessage ? latestUserMessage.timestamp : Date.now());
+                    
                     window.FileHandler.saveAttachmentsForConversation(
                         currentConversation.id, 
                         attachmentsToSend

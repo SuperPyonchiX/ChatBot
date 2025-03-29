@@ -16,6 +16,12 @@ window.FileHandler = {
      * @type {Array<Object>}
      */
     savedAttachments: [],
+    
+    /**
+     * 添付ファイルを送信した時のタイムスタンプ
+     * @type {number|null}
+     */
+    attachmentTimestamp: null,
 
     /**
      * ファイル選択イベントの処理
@@ -445,6 +451,9 @@ window.FileHandler = {
     notifyAttachmentComplete: function(files) {
         if (!files || files.length === 0) return;
         
+        // 現在のタイムスタンプを記録
+        this.attachmentTimestamp = Date.now();
+        
         // ファイルをAPI用形式に変換
         this._convertFilesToAttachments(files)
             .then(attachments => {
@@ -665,8 +674,23 @@ window.FileHandler = {
         if (!conversationId || !attachments || !Array.isArray(attachments)) return;
         
         try {
+            // タイムスタンプを含めた添付ファイル情報を作成
+            const attachmentData = {
+                timestamp: this.attachmentTimestamp || Date.now(),
+                files: attachments
+            };
+            
+            console.log('添付ファイルを保存します:', {
+                conversationId,
+                timestamp: attachmentData.timestamp,
+                filesCount: attachments.length
+            });
+            
             // 添付ファイルをローカルストレージに保存
-            window.Storage.saveAttachments(conversationId, attachments);
+            window.Storage.saveAttachments(conversationId, attachmentData);
+            
+            // タイムスタンプをリセット
+            this.attachmentTimestamp = null;
         } catch (error) {
             console.error('添付ファイルの保存中にエラーが発生しました:', error);
         }
@@ -675,19 +699,30 @@ window.FileHandler = {
     /**
      * 会話の添付ファイルを読み込む
      * @param {string} conversationId - 会話ID
-     * @returns {Array<Object>} 添付ファイルの配列
+     * @returns {Object} タイムスタンプと添付ファイルの配列を含むオブジェクト
      */
     loadAttachmentsForConversation: function(conversationId) {
-        if (!conversationId) return [];
+        if (!conversationId) return { timestamp: null, files: [] };
         
         try {
             // ローカルストレージから添付ファイルを読み込む
-            const attachments = window.Storage.loadAttachments(conversationId) || [];
-            this.savedAttachments = attachments;
-            return attachments;
+            const attachmentData = window.Storage.loadAttachments(conversationId) || { timestamp: null, files: [] };
+            
+            // 古い形式のデータを新しい形式に変換（互換性のため）
+            if (Array.isArray(attachmentData)) {
+                const newFormat = {
+                    timestamp: Date.now(),
+                    files: attachmentData
+                };
+                this.savedAttachments = newFormat;
+                return newFormat;
+            }
+            
+            this.savedAttachments = attachmentData;
+            return attachmentData;
         } catch (error) {
             console.error('添付ファイルの読み込み中にエラーが発生しました:', error);
-            return [];
+            return { timestamp: null, files: [] };
         }
     },
 
@@ -701,34 +736,87 @@ window.FileHandler = {
         
         try {
             // 保存されている添付ファイルを読み込む
-            const attachments = this.loadAttachmentsForConversation(conversationId);
-            if (!attachments || attachments.length === 0) return;
+            const attachmentData = this.loadAttachmentsForConversation(conversationId);
+            
+            // attachmentDataが存在しない、または有効なファイルがない場合は処理をスキップ
+            if (!attachmentData || !attachmentData.files || attachmentData.files.length === 0) {
+                console.log('表示する添付ファイルが存在しません');
+                return;
+            }
+            
+            // タイムスタンプが存在しない場合は現在時刻を使用
+            const timestamp = attachmentData.timestamp || Date.now();
             
             // 各メッセージに添付ファイルを表示
             const messages = chatMessages.querySelectorAll('.message');
-            if (!messages || messages.length === 0) return;
+            if (!messages || messages.length === 0) {
+                console.log('表示可能なメッセージが存在しません');
+                return;
+            }
             
-            // ユーザーメッセージを抽出（最新のものから）
-            const userMessages = Array.from(messages)
-                .filter(msg => msg.classList.contains('user'))
-                .reverse(); // 新しいメッセージから処理
-
-            // 添付ファイルは最新のユーザーメッセージにのみ表示
-            if (userMessages.length > 0) {
-                const lastUserMessage = userMessages[0];
-                const messageContent = lastUserMessage.querySelector('.message-content');
+            // ユーザーメッセージを抽出
+            const userMessages = Array.from(messages).filter(msg => msg.classList.contains('user'));
+            if (userMessages.length === 0) {
+                console.log('ユーザーメッセージが存在しません');
+                return;
+            }
+            
+            console.log('添付ファイルのタイムスタンプ:', timestamp);
+            console.log('添付ファイル数:', attachmentData.files.length);
+            
+            // 添付ファイルのタイムスタンプに最も近いメッセージを見つける
+            let closestMessage = null;
+            let minTimeDifference = Number.MAX_SAFE_INTEGER;
+            
+            userMessages.forEach((message, index) => {
+                // メッセージのタイムスタンプを取得
+                const messageTimestamp = parseInt(message.dataset.timestamp || '0', 10);
+                if (!messageTimestamp) {
+                    console.log(`メッセージ ${index} にタイムスタンプがありません`);
+                    return;
+                }
+                
+                console.log(`メッセージ ${index} タイムスタンプ:`, messageTimestamp);
+                
+                // タイムスタンプの差分を計算（添付ファイルの送信タイミングに最も近いメッセージを選択）
+                const timeDiff = Math.abs(timestamp - messageTimestamp);
+                
+                if (timeDiff < minTimeDifference) {
+                    minTimeDifference = timeDiff;
+                    closestMessage = message;
+                    console.log(`最も近いメッセージを更新: ${index}, 差分:`, timeDiff);
+                }
+            });
+            
+            // 最も近いメッセージが見つからない場合は最新のユーザーメッセージを使用
+            if (!closestMessage && userMessages.length > 0) {
+                closestMessage = userMessages[userMessages.length - 1];
+                console.log('最も近いメッセージが見つからなかったため、最新のメッセージを使用');
+            }
+            
+            if (closestMessage) {
+                console.log('添付ファイルを表示するメッセージを特定:', closestMessage.dataset.timestamp);
+                const messageContent = closestMessage.querySelector('.message-content');
                 if (messageContent) {
-                    // 一度だけ添付ファイルを表示
+                    // すでに添付ファイルが表示されていない場合のみ表示
                     const existingAttachments = messageContent.querySelector('.message-attachments');
                     if (!existingAttachments) {
-                        const attachmentsElement = window.Chat._createAttachmentsElement(attachments);
+                        console.log('添付ファイルを表示します');
+                        // ファイルだけを渡す
+                        const attachmentsElement = window.Chat._createAttachmentsElement(attachmentData.files);
                         if (attachmentsElement) {
                             messageContent.appendChild(attachmentsElement);
-                            // 添付ファイルを表示したら保存済み添付ファイルをクリア
-                            this.savedAttachments = [];
+                        } else {
+                            console.log('添付ファイル要素の作成に失敗しました');
                         }
+                    } else {
+                        console.log('このメッセージにはすでに添付ファイルが表示されています');
                     }
+                } else {
+                    console.log('メッセージコンテンツ要素が見つかりません');
                 }
+            } else {
+                console.log('添付ファイルを表示するメッセージが見つかりませんでした');
             }
         } catch (error) {
             console.error('保存された添付ファイルの表示中にエラーが発生しました:', error);
