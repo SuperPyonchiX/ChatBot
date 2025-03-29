@@ -1,266 +1,473 @@
 /**
  * ui.js
- * UI関連の機能を提供します
+ * UI関連の機能を提供するモジュール
+ * 
+ * サイドバー、モーダル、テンプレート、添付ファイルなどのUI要素と
+ * 関連するインタラクションを管理します。
+ *
+ * @module UI
  */
 
-// グローバルスコープに関数を公開
+// DOM要素をキャッシュするためのヘルパーオブジェクト
+/**
+ * DOM要素をキャッシュするためのヘルパーオブジェクト
+ * 同じ要素への参照を複数回取得する際のパフォーマンスを向上させます
+ * 
+ * @namespace UICache
+ */
+const UICache = {
+    elements: {},
+    
+    /**
+     * 要素を取得またはキャッシュから返します
+     * @param {string} selector - CSS セレクタ
+     * @param {boolean} useQuerySelector - true: querySelector, false: getElementById
+     * @returns {HTMLElement} 取得した要素
+     */
+    get(selector, useQuerySelector = false) {
+        if (!this.elements[selector]) {
+            this.elements[selector] = useQuerySelector 
+                ? document.querySelector(selector) 
+                : document.getElementById(selector);
+        }
+        return this.elements[selector];
+    },
+    
+    /**
+     * キャッシュをクリアします
+     */
+    clear() {
+        this.elements = {};
+    }
+};
+
+/**
+ * 共通ユーティリティ関数
+ * UI操作に関する汎用メソッドを提供します
+ * 
+ * @namespace UIUtils
+ */
+const UIUtils = {
+    /**
+     * 要素の表示/非表示を切り替えます
+     * @param {HTMLElement} element - 対象要素
+     * @param {boolean} show - 表示するかどうか
+     */
+    toggleVisibility(element, show) {
+        if (show) {
+            element.classList.remove('hidden');
+        } else {
+            element.classList.add('hidden');
+        }
+    },
+    
+    /**
+     * モーダルの表示/非表示を切り替えます
+     * @param {string} modalId - モーダル要素のID
+     * @param {boolean} show - 表示するかどうか
+     */
+    toggleModal(modalId, show) {
+        const modal = UICache.get(modalId);
+        if (show) {
+            modal.classList.add('show');
+        } else {
+            modal.classList.remove('show');
+        }
+    },
+    
+    /**
+     * 要素を作成して属性を設定します
+     * @param {string} tag - HTML要素タグ名
+     * @param {Object} props - 属性オブジェクト
+     * @returns {HTMLElement} 作成された要素
+     */
+    createElement(tag, props = {}) {
+        const element = document.createElement(tag);
+        
+        Object.entries(props).forEach(([key, value]) => {
+            if (key === 'classList' && Array.isArray(value)) {
+                value.forEach(cls => element.classList.add(cls));
+            } else if (key === 'textContent') {
+                element.textContent = value;
+            } else if (key === 'innerHTML') {
+                element.innerHTML = value;
+            } else if (key === 'style' && typeof value === 'object') {
+                Object.assign(element.style, value);
+            } else if (key === 'events' && typeof value === 'object') {
+                Object.entries(value).forEach(([event, handler]) => {
+                    element.addEventListener(event, handler);
+                });
+            } else if (key === 'children' && Array.isArray(value)) {
+                value.forEach(child => {
+                    if (child) element.appendChild(child);
+                });
+            } else {
+                element[key] = value;
+            }
+        });
+        
+        return element;
+    }
+};
+
+/**
+ * UI操作のための機能を提供するグローバルオブジェクト
+ * サイドバー、モーダル、テンプレート、添付ファイル機能を含みます
+ * 
+ * @namespace UI
+ */
 window.UI = {
-    // モバイル用のサイドバートグルボタンを作成
+    /**
+     * モバイル用のサイドバートグルボタンを作成します
+     * 画面サイズに応じてサイドバーの表示/非表示を切り替えるボタンを配置します
+     * 
+     * @function createSidebarToggle
+     * @memberof UI
+     * @returns {void}
+     */
     createSidebarToggle: function() {
-        const sidebar = document.querySelector('.sidebar');
-        const appContainer = document.querySelector('.app-container');
+        const sidebarEl = UICache.get('.sidebar', true);
+        const appContainer = UICache.get('.app-container', true);
         
-        // トグルボタンの表示エリアを作成
-        const toggleArea = document.createElement('div');
-        toggleArea.classList.add('sidebar-toggle-area');
-        
-        // トグルボタンを作成
-        const toggleButton = document.createElement('button');
-        toggleButton.classList.add('sidebar-toggle');
-        toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
+        // トグルボタンの表示エリアと、トグルボタンを作成
+        const toggleArea = UIUtils.createElement('div', { classList: ['sidebar-toggle-area'] });
+        const toggleButton = UIUtils.createElement('button', { 
+            classList: ['sidebar-toggle'],
+            innerHTML: '<i class="fas fa-bars"></i>'
+        });
 
         // 保存された状態を復元
         const isCollapsed = window.Storage.loadSidebarState();
         if (isCollapsed) {
-            sidebar.classList.add('collapsed');
+            sidebarEl.classList.add('collapsed');
         } else {
             toggleButton.classList.add('sidebar-visible');
         }
         
-        toggleButton.addEventListener('click', function() {
-            const isNowCollapsed = sidebar.classList.contains('collapsed');
-            if (isNowCollapsed) {
-                sidebar.classList.remove('collapsed');
-                toggleButton.classList.add('sidebar-visible');
-                window.Storage.saveSidebarState(false);
-            } else {
-                sidebar.classList.add('collapsed');
-                toggleButton.classList.remove('sidebar-visible');
-                window.Storage.saveSidebarState(true);
+        // イベントリスナーをまとめて設定
+        toggleButton.addEventListener('click', () => this._toggleSidebarState(sidebarEl, toggleButton));
+        
+        UICache.get('.chat-container', true).addEventListener('click', () => {
+            if (window.innerWidth <= 576 && sidebarEl.classList.contains('show')) {
+                sidebarEl.classList.remove('show');
             }
         });
         
-        // チャットエリアのクリックでサイドバーを閉じる（モバイルのみ）
-        document.querySelector('.chat-container').addEventListener('click', function() {
-            if (window.innerWidth <= 576 && sidebar.classList.contains('show')) {
-                sidebar.classList.remove('show');
-            }
-        });
-        
-        // ウィンドウサイズ変更時の処理
-        window.addEventListener('resize', function() {
+        window.addEventListener('resize', () => {
             if (window.innerWidth > 576) {
-                sidebar.classList.remove('show');
+                sidebarEl.classList.remove('show');
             }
         });
         
-        // トグルボタンを表示エリアに追加
+        // 要素を追加
         toggleArea.appendChild(toggleButton);
         appContainer.appendChild(toggleArea);
     },
 
-    // テキストエリアの高さを自動調整する関数
+    /**
+     * サイドバーの状態をトグルします
+     * サイドバーの表示/非表示状態を切り替え、その状態を保存します
+     * 
+     * @function _toggleSidebarState
+     * @memberof UI
+     * @param {HTMLElement} sidebar - サイドバー要素
+     * @param {HTMLElement} toggleButton - トグルボタン要素
+     * @returns {void}
+     * @private
+     */
+    _toggleSidebarState: function(sidebar, toggleButton) {
+        const isNowCollapsed = sidebar.classList.contains('collapsed');
+        sidebar.classList.toggle('collapsed');
+        toggleButton.classList.toggle('sidebar-visible');
+        window.Storage.saveSidebarState(!isNowCollapsed);
+    },
+
+    /**
+     * テキストエリアの高さを自動調整します
+     * 入力内容に応じてテキストエリアの高さを動的に変更します
+     * 
+     * @function autoResizeTextarea
+     * @memberof UI
+     * @param {HTMLTextAreaElement} textarea - 対象のテキストエリア要素
+     * @returns {void}
+     */
     autoResizeTextarea: function(textarea) {
+        if (!textarea) return;
         textarea.style.height = 'auto';
-        textarea.style.height = (textarea.scrollHeight) + 'px';
+        textarea.style.height = `${textarea.scrollHeight}px`;
     },
 
-    // APIキーモーダルを表示
+    /**
+     * APIキーモーダルを表示します
+     * API設定を編集するためのモーダルダイアログを表示します
+     * 
+     * @function showApiKeyModal
+     * @memberof UI
+     * @param {Object} apiSettings - API設定オブジェクト
+     * @param {string} apiSettings.apiType - API種別 ('openai' または 'azure')
+     * @param {string} apiSettings.openaiApiKey - OpenAI APIキー
+     * @param {string} apiSettings.azureApiKey - Azure APIキー
+     * @param {Object} apiSettings.azureEndpoints - Azureエンドポイント設定
+     * @returns {void}
+     */
     showApiKeyModal: function(apiSettings) {
-        const apiKeyModal = document.getElementById('apiKeyModal');
-        apiKeyModal.classList.add('show');
-        const azureApiKeyInput = document.getElementById('azureApiKeyInput');
-        const openaiRadio = document.getElementById('openaiRadio');
-        const azureRadio = document.getElementById('azureRadio');
-        const apiKeyInput = document.getElementById('apiKeyInput');
-        const azureSettings = document.getElementById('azureSettings');
-        const azureEndpointGpt4oMini = document.getElementById('azureEndpointGpt4oMini');
-        const azureEndpointGpt4o = document.getElementById('azureEndpointGpt4o');
-        const azureEndpointO1Mini = document.getElementById('azureEndpointO1Mini');
-        const azureEndpointO1 = document.getElementById('azureEndpointO1');
+        UIUtils.toggleModal('apiKeyModal', true);
         
-        // OpenAIまたはAzureのAPIキーを表示
+        // 必要な要素を一度に取得
+        const elements = {
+            azureApiKeyInput: UICache.get('azureApiKeyInput'),
+            openaiRadio: UICache.get('openaiRadio'),
+            azureRadio: UICache.get('azureRadio'),
+            apiKeyInput: UICache.get('apiKeyInput'),
+            openaiSettings: UICache.get('openaiSettings'),
+            azureSettings: UICache.get('azureSettings'),
+            azureEndpointGpt4oMini: UICache.get('azureEndpointGpt4oMini'),
+            azureEndpointGpt4o: UICache.get('azureEndpointGpt4o'),
+            azureEndpointO1Mini: UICache.get('azureEndpointO1Mini'),
+            azureEndpointO1: UICache.get('azureEndpointO1')
+        };
+        
+        // APIタイプに応じて設定を表示
         if (apiSettings.apiType === 'azure') {
-            azureRadio.checked = true;
-            azureApiKeyInput.value = apiSettings.azureApiKey;
-            document.getElementById('openaiSettings').classList.add('hidden');
-            azureSettings.classList.remove('hidden');
-            azureEndpointGpt4oMini.value = apiSettings.azureEndpoints['gpt-4o-mini'];
-            azureEndpointGpt4o.value = apiSettings.azureEndpoints['gpt-4o'];
-            azureEndpointO1Mini.value = apiSettings.azureEndpoints['o1-mini'];
-            azureEndpointO1.value = apiSettings.azureEndpoints['o1'];
+            elements.azureRadio.checked = true;
+            elements.azureApiKeyInput.value = apiSettings.azureApiKey;
+            UIUtils.toggleVisibility(elements.openaiSettings, false);
+            UIUtils.toggleVisibility(elements.azureSettings, true);
+            
+            // Azureエンドポイント設定を適用
+            elements.azureEndpointGpt4oMini.value = apiSettings.azureEndpoints['gpt-4o-mini'];
+            elements.azureEndpointGpt4o.value = apiSettings.azureEndpoints['gpt-4o'];
+            elements.azureEndpointO1Mini.value = apiSettings.azureEndpoints['o1-mini'];
+            elements.azureEndpointO1.value = apiSettings.azureEndpoints['o1'];
         } else {
-            openaiRadio.checked = true;
-            apiKeyInput.value = apiSettings.openaiApiKey;
-            document.getElementById('openaiSettings').classList.remove('hidden');
-            azureSettings.classList.add('hidden');
+            elements.openaiRadio.checked = true;
+            elements.apiKeyInput.value = apiSettings.openaiApiKey;
+            UIUtils.toggleVisibility(elements.openaiSettings, true);
+            UIUtils.toggleVisibility(elements.azureSettings, false);
         }
     },
 
-    // APIキーモーダルを非表示
+    /**
+     * APIキーモーダルを非表示にします
+     * API設定モーダルを閉じます
+     * 
+     * @function hideApiKeyModal
+     * @memberof UI
+     * @returns {void}
+     */
     hideApiKeyModal: function() {
-        const apiKeyModal = document.getElementById('apiKeyModal');
-        apiKeyModal.classList.remove('show');
+        UIUtils.toggleModal('apiKeyModal', false);
     },
 
-    // Azure設定の表示/非表示を切り替え
+    /**
+     * Azure設定の表示/非表示を切り替えます
+     * API設定画面でOpenAI/Azure切り替え時に適切な設定フィールドを表示します
+     * 
+     * @function toggleAzureSettings
+     * @memberof UI
+     * @returns {void}
+     */
     toggleAzureSettings: function() {
-        const openaiSettings = document.getElementById('openaiSettings');
-        const azureSettings = document.getElementById('azureSettings');
-        const azureRadio = document.getElementById('azureRadio');
+        const openaiSettings = UICache.get('openaiSettings');
+        const azureSettings = UICache.get('azureSettings');
+        const azureRadio = UICache.get('azureRadio');
         
-        if (azureRadio.checked) {
-            openaiSettings.classList.add('hidden');
-            azureSettings.classList.remove('hidden');
-        } else {
-            openaiSettings.classList.remove('hidden');
-            azureSettings.classList.add('hidden');
-        }
+        UIUtils.toggleVisibility(openaiSettings, !azureRadio.checked);
+        UIUtils.toggleVisibility(azureSettings, azureRadio.checked);
     },
 
-    // チャットの名前変更モーダルを表示
+    /**
+     * チャットの名前変更モーダルを表示します
+     * 会話のタイトルを変更するためのモーダルを表示します
+     * 
+     * @function showRenameChatModal
+     * @memberof UI
+     * @param {Object} conversation - 会話オブジェクト
+     * @param {string} conversation.id - 会話ID
+     * @param {string} conversation.title - 会話タイトル
+     * @returns {void}
+     */
     showRenameChatModal: function(conversation) {
-        const modal = document.getElementById('renameChatModal');
-        const titleInput = document.getElementById('chatTitleInput');
+        const modalEl = UICache.get('renameChatModal');
+        const titleInput = UICache.get('chatTitleInput');
         
         // 現在のタイトルをセット
         titleInput.value = conversation.title || '新しいチャット';
         
-        // 会話IDをモーダルに保存（データ属性を使用）
-        modal.dataset.conversationId = conversation.id;
+        // 会話IDをモーダルに保存
+        modalEl.dataset.conversationId = conversation.id;
         
         // モーダルを表示
-        modal.classList.add('show');
+        UIUtils.toggleModal('renameChatModal', true);
         
-        // フォーカスを入力フィールドに設定
-        titleInput.focus();
-        titleInput.select();
+        // フォーカスを設定
+        setTimeout(() => {
+            titleInput.focus();
+            titleInput.select();
+        }, 10);
     },
 
-    // チャットの名前変更モーダルを非表示
+    /**
+     * チャットの名前変更モーダルを非表示にします
+     * 会話名変更モーダルを閉じます
+     * 
+     * @function hideRenameChatModal
+     * @memberof UI
+     * @returns {void}
+     */
     hideRenameChatModal: function() {
-        const modal = document.getElementById('renameChatModal');
-        modal.classList.remove('show');
+        UIUtils.toggleModal('renameChatModal', false);
     },
 
-    // システムプロンプト設定モーダルを表示
+    /**
+     * システムプロンプト設定モーダルを表示します
+     * システムプロンプトを編集するためのモーダルを表示します
+     * 
+     * @function showSystemPromptModal
+     * @memberof UI
+     * @param {string} systemPrompt - 現在のシステムプロンプト
+     * @param {Function} loadPromptTemplatesCallback - テンプレート読み込みコールバック関数
+     * @returns {void}
+     */
     showSystemPromptModal: function(systemPrompt, loadPromptTemplatesCallback) {
-        const systemPromptModal = document.getElementById('systemPromptModal');
-        const systemPromptInput = document.getElementById('systemPromptInput');
+        UIUtils.toggleModal('systemPromptModal', true);
+        UICache.get('systemPromptInput').value = systemPrompt;
         
-        systemPromptModal.classList.add('show');
-        systemPromptInput.value = systemPrompt;
-        loadPromptTemplatesCallback();
+        // テンプレートを非同期で読み込み
+        if (typeof loadPromptTemplatesCallback === 'function') {
+            setTimeout(loadPromptTemplatesCallback, 0);
+        }
     },
 
-    // システムプロンプト設定モーダルを非表示
+    /**
+     * システムプロンプト設定モーダルを非表示にします
+     * システムプロンプト編集モーダルを閉じます
+     * 
+     * @function hideSystemPromptModal
+     * @memberof UI
+     * @returns {void}
+     */
     hideSystemPromptModal: function() {
-        const systemPromptModal = document.getElementById('systemPromptModal');
-        systemPromptModal.classList.remove('show');
+        UIUtils.toggleModal('systemPromptModal', false);
     },
 
-    // テンプレート一覧を表示する関数
+    /**
+     * テンプレート一覧を表示します
+     * システムプロンプトテンプレートの一覧を表示し、選択/削除機能を提供します
+     * 
+     * @function updateTemplateList
+     * @memberof UI
+     * @param {Object} promptTemplates - プロンプトテンプレート集
+     * @param {Function} onTemplateSelect - テンプレート選択時のコールバック関数
+     * @param {Function} onTemplateDelete - テンプレート削除時のコールバック関数
+     * @returns {void}
+     */
     updateTemplateList: function(promptTemplates, onTemplateSelect, onTemplateDelete) {
-        // 既存のテンプレート一覧エリアを取得
-        const templateListArea = document.getElementById('templateListArea');
+        const templateListArea = UICache.get('templateListArea');
+        if (!templateListArea) return;
         
         // テンプレート一覧をクリア
         templateListArea.innerHTML = '';
         
-        // デフォルトテンプレートは削除不可
+        // デフォルトテンプレート
         const defaultTemplates = ['default', 'creative', 'technical'];
         
-        // テンプレート一覧を表示
+        // DocumentFragmentを使用してDOM操作を最適化
+        const fragment = document.createDocumentFragment();
+        
+        // テンプレート項目を作成して追加
         Object.keys(promptTemplates).forEach(templateName => {
-            const templateItem = document.createElement('div');
-            templateItem.classList.add('template-item');
-            
-            const templateNameSpan = document.createElement('span');
-            templateNameSpan.textContent = templateName;
-            templateNameSpan.classList.add('template-name');
-            templateItem.appendChild(templateNameSpan);
-            
-            // デフォルトテンプレート以外には削除ボタンを追加
-            if (!defaultTemplates.includes(templateName)) {
-                const deleteButton = document.createElement('button');
-                deleteButton.classList.add('template-delete-button');
-                deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
-                deleteButton.title = 'テンプレートを削除';
-                
-                deleteButton.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    onTemplateDelete(templateName);
-                });
-                
-                templateItem.appendChild(deleteButton);
+            const isDefault = defaultTemplates.includes(templateName);
+            const item = this._createTemplateItem(templateName, isDefault, onTemplateSelect, onTemplateDelete);
+            fragment.appendChild(item);
+        });
+        
+        // 一度のDOM操作でフラグメントを追加
+        templateListArea.appendChild(fragment);
+    },
+
+    /**
+     * テンプレート項目要素を作成します
+     * テンプレート一覧の個々の項目要素を生成します
+     * 
+     * @function _createTemplateItem
+     * @memberof UI
+     * @param {string} templateName - テンプレート名
+     * @param {boolean} isDefault - デフォルトテンプレートかどうか
+     * @param {Function} onTemplateSelect - テンプレート選択時のコールバック関数
+     * @param {Function} onTemplateDelete - テンプレート削除時のコールバック関数
+     * @returns {HTMLElement} テンプレート項目要素
+     * @private
+     */
+    _createTemplateItem: function(templateName, isDefault, onTemplateSelect, onTemplateDelete) {
+        // 削除ボタン（デフォルトテンプレート以外のみ）
+        const children = [
+            UIUtils.createElement('span', {
+                textContent: templateName,
+                classList: ['template-name']
+            })
+        ];
+        
+        if (!isDefault) {
+            children.push(UIUtils.createElement('button', {
+                classList: ['template-delete-button'],
+                innerHTML: '<i class="fas fa-trash"></i>',
+                title: 'テンプレートを削除',
+                events: {
+                    click: (e) => {
+                        e.stopPropagation();
+                        onTemplateDelete(templateName);
+                    }
+                }
+            }));
+        }
+        
+        // テンプレート項目
+        return UIUtils.createElement('div', {
+            classList: ['template-item'],
+            children,
+            events: {
+                click: () => onTemplateSelect(templateName)
             }
-            
-            // テンプレートをクリックすると選択される
-            templateItem.addEventListener('click', () => {
-                onTemplateSelect(templateName);
-            });
-            
-            templateListArea.appendChild(templateItem);
         });
     },
-    
+
     /**
-     * ファイル添付ボタンと添付ファイル表示エリアを作成
+     * ファイル添付ボタンと添付ファイル表示エリアを作成します
+     * チャット入力エリアにファイル添付機能を追加します
+     * 
+     * @function createFileAttachmentUI
+     * @memberof UI
      * @param {HTMLElement} chatInputContainer - チャット入力コンテナ要素
      * @param {Function} onFileAttached - ファイル添付時のコールバック関数
+     * @returns {Object} 作成した要素のオブジェクト
      */
     createFileAttachmentUI: function(chatInputContainer, onFileAttached) {
-        // ファイル入力要素を作成（非表示）
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.id = 'fileAttachment';
-        fileInput.accept = 'image/*';  // 画像ファイルのみ許可
-        fileInput.style.display = 'none';
-        fileInput.multiple = false;    // 1つのファイルのみ
+        if (!chatInputContainer) return {};
         
-        // ファイル添付ボタンを作成
-        const attachButton = document.createElement('button');
-        attachButton.classList.add('attachment-button');
-        attachButton.innerHTML = '<i class="fas fa-paperclip"></i>';
-        attachButton.title = '画像を添付';
-        
-        // 添付ファイル表示エリアを作成
-        const attachmentPreviewArea = document.createElement('div');
-        attachmentPreviewArea.classList.add('attachment-preview-area');
-        attachmentPreviewArea.style.display = 'none';
-        
-        // ファイル選択ダイアログを表示
-        attachButton.addEventListener('click', () => {
-            fileInput.click();
+        // ファイル入力要素（非表示）
+        const fileInput = UIUtils.createElement('input', {
+            type: 'file',
+            id: 'fileAttachment',
+            accept: 'image/*',
+            style: { display: 'none' },
+            multiple: false
         });
         
-        // ファイル選択時の処理
-        fileInput.addEventListener('change', async (event) => {
-            const file = event.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                try {
-                    // ファイルをbase64エンコード
-                    const base64Data = await window.API.encodeImageToBase64(file);
-                    
-                    // プレビュー表示
-                    this.showAttachmentPreview(attachmentPreviewArea, file, base64Data);
-                    
-                    // コールバック関数を実行
-                    if (onFileAttached) {
-                        onFileAttached({
-                            type: 'image',
-                            name: file.name,
-                            data: base64Data
-                        });
-                    }
-                } catch (error) {
-                    console.error('ファイルの処理中にエラーが発生しました:', error);
-                    alert('ファイルの処理中にエラーが発生しました');
-                }
+        // ファイル添付ボタン
+        const attachButton = UIUtils.createElement('button', {
+            classList: ['attachment-button'],
+            innerHTML: '<i class="fas fa-paperclip"></i>',
+            title: '画像を添付',
+            events: {
+                click: () => fileInput.click()
             }
-            
-            // input要素をリセット（同じファイルを連続で選択できるように）
-            fileInput.value = '';
+        });
+        
+        // 添付ファイル表示エリア
+        const attachmentPreviewArea = UIUtils.createElement('div', {
+            classList: ['attachment-preview-area'],
+            style: { display: 'none' }
         });
         
         // 要素を追加
@@ -269,7 +476,6 @@ window.UI = {
         // 入力ボタングループに添付ボタンを追加
         const inputButtonGroup = chatInputContainer.querySelector('.input-button-group');
         if (inputButtonGroup) {
-            // 送信ボタンの前に挿入
             const sendButton = inputButtonGroup.querySelector('.send-button');
             if (sendButton) {
                 inputButtonGroup.insertBefore(attachButton, sendButton);
@@ -281,66 +487,82 @@ window.UI = {
         }
         
         // 添付ファイル表示エリアを追加
-        chatInputContainer.insertBefore(attachmentPreviewArea, inputButtonGroup || chatInputContainer.firstChild);
+        chatInputContainer.insertBefore(
+            attachmentPreviewArea, 
+            inputButtonGroup || chatInputContainer.firstChild
+        );
         
-        return {
-            fileInput,
-            attachButton,
-            attachmentPreviewArea
-        };
+        return { fileInput, attachButton, attachmentPreviewArea };
     },
-    
+
     /**
-     * 添付ファイルのプレビューを表示
+     * 添付ファイルのプレビューを表示します
+     * 添付されたファイルのプレビューと削除ボタンを表示します
+     * 
+     * @function showAttachmentPreview
+     * @memberof UI
      * @param {HTMLElement} previewArea - プレビュー表示エリア
      * @param {File} file - 添付ファイル
      * @param {string} base64Data - Base64エンコードされたファイルデータ
+     * @returns {void}
      */
     showAttachmentPreview: function(previewArea, file, base64Data) {
+        if (!previewArea || !file) return;
+        
         previewArea.innerHTML = '';
         previewArea.style.display = 'flex';
         
-        // プレビュー要素を作成
-        const previewItem = document.createElement('div');
-        previewItem.classList.add('attachment-preview-item');
+        // プレビュー要素の構築
+        const children = [];
         
-        // 画像プレビュー
+        // 画像プレビュー（画像ファイルの場合）
         if (file.type.startsWith('image/')) {
-            const img = document.createElement('img');
-            img.src = base64Data;
-            img.alt = file.name;
-            img.classList.add('attachment-preview-image');
-            previewItem.appendChild(img);
+            children.push(UIUtils.createElement('img', {
+                src: base64Data,
+                alt: file.name,
+                classList: ['attachment-preview-image']
+            }));
         }
         
         // ファイル情報
-        const fileInfo = document.createElement('div');
-        fileInfo.classList.add('attachment-file-info');
-        fileInfo.textContent = file.name;
-        previewItem.appendChild(fileInfo);
+        children.push(UIUtils.createElement('div', {
+            classList: ['attachment-file-info'],
+            textContent: file.name
+        }));
         
         // 削除ボタン
-        const removeButton = document.createElement('button');
-        removeButton.classList.add('attachment-remove-button');
-        removeButton.innerHTML = '<i class="fas fa-times"></i>';
-        removeButton.title = '添付を削除';
+        children.push(UIUtils.createElement('button', {
+            classList: ['attachment-remove-button'],
+            innerHTML: '<i class="fas fa-times"></i>',
+            title: '添付を削除',
+            events: {
+                click: () => {
+                    previewArea.innerHTML = '';
+                    previewArea.style.display = 'none';
+                    
+                    // 添付ファイル削除イベントを発火
+                    previewArea.dispatchEvent(new CustomEvent('attachment-removed'));
+                }
+            }
+        }));
         
-        removeButton.addEventListener('click', () => {
-            previewArea.innerHTML = '';
-            previewArea.style.display = 'none';
-            
-            // 添付ファイル削除イベントを発火
-            const removeEvent = new CustomEvent('attachment-removed');
-            previewArea.dispatchEvent(removeEvent);
+        // プレビュー項目を追加
+        const previewItem = UIUtils.createElement('div', {
+            classList: ['attachment-preview-item'],
+            children
         });
         
-        previewItem.appendChild(removeButton);
         previewArea.appendChild(previewItem);
     },
-    
+
     /**
-     * 添付ファイルをクリア
+     * 添付ファイルをクリアします
+     * 添付ファイルのプレビュー表示を削除します
+     * 
+     * @function clearAttachments
+     * @memberof UI
      * @param {HTMLElement} previewArea - プレビュー表示エリア
+     * @returns {void}
      */
     clearAttachments: function(previewArea) {
         if (previewArea) {
