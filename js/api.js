@@ -247,7 +247,7 @@ window.API = {
         
         if (window.apiSettings.apiType === 'openai') {
             // OpenAI API
-            endpoint = window.CONFIG.API.OPENAI_ENDPOINT;
+            endpoint = window.CONFIG.API.ENDPOINTS.OPENAI;
             
             headers = {
                 'Authorization': `Bearer ${window.apiSettings.openaiApiKey}`,
@@ -257,8 +257,8 @@ window.API = {
             body = {
                 model: model,
                 messages: messages,
-                temperature: window.CONFIG.API.TEMPERATURE,
-                max_tokens: window.CONFIG.API.MAX_TOKENS
+                temperature: window.CONFIG.API.DEFAULT_PARAMS.temperature,
+                max_tokens: window.CONFIG.API.DEFAULT_PARAMS.max_tokens
             };
         } else {
             // Azure OpenAI API
@@ -276,8 +276,8 @@ window.API = {
             
             body = {
                 messages: messages,
-                temperature: window.CONFIG.API.TEMPERATURE,
-                max_tokens: window.CONFIG.API.MAX_TOKENS
+                temperature: window.CONFIG.API.DEFAULT_PARAMS.temperature,
+                max_tokens: window.CONFIG.API.DEFAULT_PARAMS.max_tokens
             };
         }
         
@@ -372,6 +372,8 @@ window.API = {
             
             const startTime = Date.now();
             
+            console.log(`APIリクエスト送信: ${endpoint}`);
+            
             response = await fetch(endpoint, {
                 method: 'POST',
                 headers: headers,
@@ -384,9 +386,7 @@ window.API = {
             const responseTime = Date.now() - startTime;
             
             // 非本番環境の場合はレスポンスタイムを出力
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                console.log(`APIレスポンス: ${response.status} (${responseTime}ms)`);
-            }
+            console.log(`APIレスポンス: ${response.status} (${responseTime}ms)`);
             
             if (!response.ok) {
                 let errorMessage = `API Error: ${response.status} ${response.statusText}`;
@@ -397,8 +397,10 @@ window.API = {
                     if (errorData.error) {
                         errorMessage = errorData.error.message || errorMessage;
                     }
+                    console.error('APIエラーの詳細:', errorData);
                 } catch (jsonError) {
                     // JSONパースに失敗しても元のエラーメッセージを使用
+                    console.error('APIエラーの詳細を取得できませんでした:', jsonError);
                 }
                 
                 throw new Error(errorMessage);

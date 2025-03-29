@@ -605,15 +605,29 @@ window.FileHandler = {
     clearSelectedFiles: function() {
         this.selectedFiles = [];
         
-        // プレビューをクリア
+        // プレビューをクリア - 全ての関連要素を確実に削除
         try {
+            // FileHandler側のプレビュー
             const inputWrapper = document.querySelector('.input-wrapper');
             if (inputWrapper) {
-                const previewArea = inputWrapper.querySelector('.file-preview');
-                if (previewArea) {
-                    previewArea.remove();
+                const filePreview = inputWrapper.querySelector('.file-preview');
+                if (filePreview) {
+                    filePreview.remove();
                 }
             }
+            
+            // UI側のプレビュー
+            const attachmentPreviewArea = document.querySelector('.attachment-preview-area');
+            if (attachmentPreviewArea) {
+                attachmentPreviewArea.innerHTML = '';
+                attachmentPreviewArea.style.display = 'none';
+            }
+            
+            // 保存済み添付ファイルをクリア
+            this.savedAttachments = [];
+            
+            // 添付ファイル削除イベントを発火
+            document.dispatchEvent(new CustomEvent('attachment-removed'));
         } catch (error) {
             console.error('ファイルプレビュークリアエラー:', error);
         }

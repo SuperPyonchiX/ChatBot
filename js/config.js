@@ -13,7 +13,10 @@ window.CONFIG = {
         MAX_RETRIES: 3,
         
         // タイムアウト時間（ミリ秒）
-        TIMEOUT: 60000,
+        TIMEOUT_MS: 60000,
+        
+        // Azure OpenAI API バージョン
+        AZURE_API_VERSION: '2023-05-15',
         
         // デフォルトのAPIリクエスト設定
         DEFAULT_PARAMS: {
