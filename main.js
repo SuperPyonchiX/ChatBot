@@ -43,36 +43,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
         /**
          * 現在のモデル名を取得します
-         * 選択されているAIモデルの名前を返します。選択がない場合はデフォルト値を返します
-         * 
          * @returns {string} 現在選択されているモデル名
          */
         getCurrentModel() {
-            return Elements.modelSelect ? Elements.modelSelect.value : 'gpt-4o';
+            const modelSelect = document.getElementById('modelSelect');
+            return modelSelect ? modelSelect.value : 'gpt-4o-mini';
         }
     };
 
     /**
-     * DOM要素のキャッシュ
-     * 頻繁にアクセスするDOM要素への参照をキャッシュします
+     * UIで使用する主要なDOM要素
+     * IDをキーとしたDOM要素のマッピングを提供します
      * 
      * @namespace Elements
+     * @private
      */
-    const Elements = (() => {
+    const Elements = (function() {
         /**
-         * 一度に複数の要素を取得する関数
-         * 指定されたID配列から要素を取得してオブジェクトとして返します
-         * 
-         * @param {string[]} selectors - 取得する要素のID配列
+         * 指定したIDのDOM要素を取得します
+         * @param {Array<string>} selectors - 取得するDOM要素のID
          * @returns {Object} ID名をキーとした要素オブジェクト
          * @private
          */
         function getElements(selectors) {
-            const result = {};
+            const elements = {};
+            
             selectors.forEach(id => {
-                result[id] = document.getElementById(id);
+                elements[id] = document.getElementById(id);
+                
+                if (!elements[id]) {
+                    console.warn(`Element with id "${id}" not found.`);
+                }
             });
-            return result;
+            
+            return elements;
         }
         
         // 主要な要素をキャッシュ
@@ -128,15 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
      * @private
      */
     function _init() {
-        // API設定がなければモーダルを表示
-        if (!AppState.apiSettings.openaiApiKey && !AppState.apiSettings.azureApiKey) {
-            window.UI.showApiKeyModal(AppState.apiSettings);
-        }
-
-        // 会話の履歴を読み込む
         _loadConversations();
-
-        // イベントリスナーのセットアップ
         _setupEventListeners();
     }
 
@@ -172,7 +168,6 @@ document.addEventListener('DOMContentLoaded', function() {
      * @private
      */
     function _setupEventListeners() {
-        // サブ関数に分けてセットアップ
         _setupChatEvents();
         _setupSettingsEvents();
         _setupFileEvents();
@@ -202,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 _sendMessage();
             }
         });
-
+        
         // テキストエリアの入力イベント（自動リサイズ）
         Elements.userInput.addEventListener('input', () => window.UI.autoResizeTextarea(Elements.userInput));
 
@@ -222,24 +217,38 @@ document.addEventListener('DOMContentLoaded', function() {
      * @private
      */
     function _setupSettingsEvents() {
-        if (!Elements.settingsButton || !Elements.settingsMenu ||
+        if (!Elements.settingsButton || !Elements.settingsMenu || 
             !Elements.openSystemPromptSettings || !Elements.openApiSettings) return;
-            
-        // 設定メニューのトグル
-        Elements.settingsButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            Elements.settingsMenu.classList.toggle('show');
+        
+        // 設定ボタンのクリックでメニュー表示
+        Elements.settingsButton.addEventListener('click', () => {
+            Elements.settingsMenu.style.display = 
+                Elements.settingsMenu.style.display === 'block' ? 'none' : 'block';
         });
-
-        // システムプロンプト設定を開く
+        
+        // ドキュメント内のクリックでメニューを閉じる
+        document.addEventListener('click', e => {
+            if (Elements.settingsMenu.style.display === 'block' && 
+                !Elements.settingsButton.contains(e.target) && 
+                !Elements.settingsMenu.contains(e.target)) {
+                Elements.settingsMenu.style.display = 'none';
+            }
+        });
+        
+        // システムプロンプト設定
         Elements.openSystemPromptSettings.addEventListener('click', () => {
-            Elements.settingsMenu.classList.remove('show');
-            window.UI.showSystemPromptModal(AppState.systemPrompt, _loadPromptTemplates);
+            Elements.settingsMenu.style.display = 'none';
+            window.UI.showSystemPromptModal(
+                AppState.systemPrompt, 
+                AppState.promptTemplates, 
+                onTemplateSelect, 
+                onTemplateDelete
+            );
         });
-
-        // API設定を開く
+        
+        // API設定
         Elements.openApiSettings.addEventListener('click', () => {
-            Elements.settingsMenu.classList.remove('show');
+            Elements.settingsMenu.style.display = 'none';
             window.UI.showApiKeyModal(AppState.apiSettings);
         });
     }
@@ -271,54 +280,112 @@ document.addEventListener('DOMContentLoaded', function() {
      * @private
      */
     function _setupModalEvents() {
-        // APIキー関連
-        if (Elements.openaiRadio && Elements.azureRadio) {
-            Elements.openaiRadio.addEventListener('change', window.UI.toggleAzureSettings);
-            Elements.azureRadio.addEventListener('change', window.UI.toggleAzureSettings);
-        }
+        _setupSystemPromptModal();
+        _setupApiKeyModal();
+        _setupRenameChatModal();
+    }
+
+    /**
+     * システムプロンプトモーダルのイベントをセットアップします
+     * システムプロンプト設定モーダルのボタンイベントなどを設定します
+     * 
+     * @function _setupSystemPromptModal
+     * @private
+     */
+    function _setupSystemPromptModal() {
+        if (!Elements.saveSystemPrompt || !Elements.cancelSystemPrompt || 
+            !Elements.saveNewTemplate || !Elements.newTemplateName) return;
         
-        if (Elements.saveApiKey) {
-            Elements.saveApiKey.addEventListener('click', _saveApiSettings);
-        }
+        // システムプロンプト保存
+        Elements.saveSystemPrompt.addEventListener('click', () => {
+            if (!Elements.systemPromptInput) return;
+            
+            AppState.systemPrompt = Elements.systemPromptInput.value.trim();
+            window.Storage.saveSystemPrompt(AppState.systemPrompt);
+            window.UI.hideSystemPromptModal();
+        });
         
-        if (Elements.cancelApiKey) {
-            Elements.cancelApiKey.addEventListener('click', window.UI.hideApiKeyModal);
-        }
-
-        // システムプロンプト関連
-        if (Elements.saveSystemPrompt) {
-            Elements.saveSystemPrompt.addEventListener('click', () => {
-                AppState.systemPrompt = Elements.systemPromptInput.value;
-                window.Storage.saveSystemPrompt(AppState.systemPrompt);
-                window.UI.hideSystemPromptModal();
-            });
-        }
-
-        if (Elements.cancelSystemPrompt) {
-            Elements.cancelSystemPrompt.addEventListener('click', window.UI.hideSystemPromptModal);
-        }
-
-        // 新規テンプレートとして保存
-        if (Elements.saveNewTemplate && Elements.newTemplateName) {
-            Elements.saveNewTemplate.addEventListener('click', () => {
-                const name = Elements.newTemplateName.value.trim();
-                if (name) {
-                    AppState.promptTemplates[name] = Elements.systemPromptInput.value;
-                    window.Storage.savePromptTemplates(AppState.promptTemplates);
-                    _loadPromptTemplates();
-                    Elements.newTemplateName.value = '';
-                }
-            });
-        }
-
-        // 名前変更モーダル関連
-        if (Elements.saveRenameChat) {
-            Elements.saveRenameChat.addEventListener('click', _saveRenamedChat);
-        }
+        // システムプロンプトキャンセル
+        Elements.cancelSystemPrompt.addEventListener('click', window.UI.hideSystemPromptModal);
         
-        if (Elements.cancelRenameChat) {
-            Elements.cancelRenameChat.addEventListener('click', window.UI.hideRenameChatModal);
+        // 新しいテンプレート保存
+        Elements.saveNewTemplate.addEventListener('click', () => {
+            if (!Elements.systemPromptInput || !Elements.newTemplateName) return;
+            
+            const name = Elements.newTemplateName.value.trim();
+            const prompt = Elements.systemPromptInput.value.trim();
+            
+            if (name && prompt) {
+                AppState.promptTemplates[name] = prompt;
+                window.Storage.savePromptTemplates(AppState.promptTemplates);
+                window.UI.updateTemplateList(AppState.promptTemplates, onTemplateSelect, onTemplateDelete);
+                Elements.newTemplateName.value = '';
+            }
+        });
+    }
+
+    /**
+     * テンプレート選択イベントハンドラー
+     * @param {string} templateName - 選択されたテンプレート名
+     */
+    function onTemplateSelect(templateName) {
+        if (!Elements.systemPromptInput) return;
+        
+        const template = AppState.promptTemplates[templateName];
+        if (template) {
+            Elements.systemPromptInput.value = template;
         }
+    }
+
+    /**
+     * テンプレート削除イベントハンドラー
+     * @param {string} templateName - 削除するテンプレート名
+     */
+    function onTemplateDelete(templateName) {
+        if (confirm(`テンプレート "${templateName}" を削除してもよろしいですか？`)) {
+            delete AppState.promptTemplates[templateName];
+            window.Storage.savePromptTemplates(AppState.promptTemplates);
+            window.UI.updateTemplateList(AppState.promptTemplates, onTemplateSelect, onTemplateDelete);
+        }
+    }
+
+    /**
+     * APIキー設定モーダルのイベントをセットアップします
+     * APIキー設定モーダルのボタンイベントなどを設定します
+     * 
+     * @function _setupApiKeyModal
+     * @private
+     */
+    function _setupApiKeyModal() {
+        if (!Elements.saveApiKey || !Elements.cancelApiKey || 
+            !Elements.openaiRadio || !Elements.azureRadio) return;
+        
+        // APIキー保存
+        Elements.saveApiKey.addEventListener('click', _saveApiSettings);
+        
+        // APIキーキャンセル
+        Elements.cancelApiKey.addEventListener('click', window.UI.hideApiKeyModal);
+        
+        // APIタイプ切り替え
+        Elements.openaiRadio.addEventListener('change', window.UI.toggleAzureSettings);
+        Elements.azureRadio.addEventListener('change', window.UI.toggleAzureSettings);
+    }
+
+    /**
+     * チャット名変更モーダルのイベントをセットアップします
+     * チャット名変更モーダルのボタンイベントなどを設定します
+     * 
+     * @function _setupRenameChatModal
+     * @private
+     */
+    function _setupRenameChatModal() {
+        if (!Elements.saveRenameChat || !Elements.cancelRenameChat) return;
+        
+        // 保存ボタン
+        Elements.saveRenameChat.addEventListener('click', _saveRenamedChat);
+        
+        // キャンセルボタン
+        Elements.cancelRenameChat.addEventListener('click', window.UI.hideRenameChatModal);
     }
 
     /**
@@ -329,21 +396,23 @@ document.addEventListener('DOMContentLoaded', function() {
      * @private
      */
     function _setupGlobalEvents() {
-        // 画面のどこかをクリックしたらメニューを閉じる
-        document.addEventListener('click', (e) => {
-            if (Elements.settingsMenu && Elements.settingsButton && 
-                !Elements.settingsButton.contains(e.target) && 
-                !Elements.settingsMenu.contains(e.target)) {
-                Elements.settingsMenu.classList.remove('show');
-            }
-        });
-
-        // エラー時のAPIキー設定ボタンイベント処理（イベント委任パターン）
-        document.addEventListener('click', (e) => {
+        // エラーアクションのイベント委任
+        document.addEventListener('click', function(e) {
             if (e.target && e.target.id === 'showApiSettings') {
                 window.UI.showApiKeyModal(AppState.apiSettings);
             }
         });
+        
+        // モデル選択変更イベント
+        if (Elements.modelSelect) {
+            Elements.modelSelect.addEventListener('change', function() {
+                const currentConversation = AppState.getConversationById(AppState.currentConversationId);
+                if (currentConversation) {
+                    currentConversation.model = Elements.modelSelect.value;
+                    window.Storage.saveConversations(AppState.conversations);
+                }
+            });
+        }
     }
 
     /**
@@ -413,6 +482,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!result?.error) {
                 // 会話を保存
                 window.Storage.saveConversations(AppState.conversations);
+                
+                // 添付ファイルを保存（正常送信時のみ）
+                if (attachmentsToSend && attachmentsToSend.length > 0) {
+                    window.FileHandler.saveAttachmentsForConversation(
+                        currentConversation.id, 
+                        attachmentsToSend
+                    );
+                }
             }
         } catch (error) {
             console.error('メッセージ送信中にエラーが発生しました:', error);
@@ -433,17 +510,23 @@ document.addEventListener('DOMContentLoaded', function() {
      * @private
      */
     function _saveApiSettings() {
-        if (!Elements.openaiRadio || !Elements.apiKeyInput || 
-            !Elements.azureApiKeyInput) return;
+        if (!Elements.apiKeyInput || !Elements.openaiRadio || !Elements.azureRadio) return;
         
-        if (Elements.openaiRadio.checked) {
+        // API種別を設定
+        AppState.apiSettings.apiType = Elements.openaiRadio.checked ? 'openai' : 'azure';
+        
+        // OpenAI APIキーを設定
+        if (Elements.apiKeyInput) {
             AppState.apiSettings.openaiApiKey = Elements.apiKeyInput.value.trim();
-            AppState.apiSettings.apiType = 'openai';
-        } else {
-            AppState.apiSettings.azureApiKey = Elements.azureApiKeyInput.value.trim();
-            AppState.apiSettings.apiType = 'azure';
+        }
+        
+        // Azure OpenAI APIキーとエンドポイントを設定
+        if (AppState.apiSettings.apiType === 'azure') {
+            if (Elements.azureApiKeyInput) {
+                AppState.apiSettings.azureApiKey = Elements.azureApiKeyInput.value.trim();
+            }
             
-            // Azureエンドポイント情報の保存
+            // モデルごとのエンドポイントを設定
             const endpoints = {
                 'gpt-4o-mini': Elements.azureEndpointGpt4oMini,
                 'gpt-4o': Elements.azureEndpointGpt4o,
@@ -494,63 +577,58 @@ document.addEventListener('DOMContentLoaded', function() {
                 Elements.chatMessages,
                 Elements.modelSelect
             );
+            
+            // 添付ファイルを表示
+            window.FileHandler.displaySavedAttachments(AppState.currentConversationId, Elements.chatMessages);
         }
     }
 
     /**
-     * プロンプトテンプレートを読み込みます
-     * システムプロンプトのテンプレート一覧を表示します
+     * モーダルエスケープキーイベントをセットアップします
+     * Escapeキーでモーダルを閉じる機能を提供します
+     * イベント委任パターンで実装します
      * 
-     * @function _loadPromptTemplates
+     * @function _setupModalEscapeEvents
      * @private
      */
-    function _loadPromptTemplates() {
-        // テンプレート一覧を更新
-        window.UI.updateTemplateList(
-            AppState.promptTemplates, 
-            (templateName) => {
-                if (Elements.systemPromptInput) {
-                    Elements.systemPromptInput.value = AppState.promptTemplates[templateName];
-                }
-            },
-            (templateName) => {
-                _deletePromptTemplate(templateName);
+    function _setupModalEscapeEvents() {
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                // 開いているモーダルを閉じる
+                const modals = [
+                    { id: 'systemPromptModal', hide: window.UI.hideSystemPromptModal },
+                    { id: 'apiKeyModal', hide: window.UI.hideApiKeyModal },
+                    { id: 'renameChatModal', hide: window.UI.hideRenameChatModal }
+                ];
+                
+                modals.forEach(modal => {
+                    const element = document.getElementById(modal.id);
+                    if (element && element.style.display === 'block' && typeof modal.hide === 'function') {
+                        modal.hide();
+                    }
+                });
             }
-        );
+        });
     }
 
     /**
-     * テンプレートを削除します
-     * システムプロンプトのテンプレートを削除します
-     * デフォルトテンプレートは削除できません
+     * 会話履歴を表示します
+     * サイドバーに会話履歴の一覧を表示します
      * 
-     * @function _deletePromptTemplate
-     * @param {string} templateName - 削除するテンプレートの名前
+     * @function _renderChatHistory
      * @private
      */
-    function _deletePromptTemplate(templateName) {
-        // デフォルトテンプレートは削除不可
-        const defaultTemplates = ['default', 'creative', 'technical'];
-        if (defaultTemplates.includes(templateName)) {
-            alert('デフォルトテンプレートは削除できません');
-            return;
-        }
+    function _renderChatHistory() {
+        if (!Elements.chatHistory) return;
         
-        // 削除確認
-        if (confirm(`テンプレート「${templateName}」を削除してもよろしいですか？`)) {
-            // 選択中のテンプレートが削除対象の場合はデフォルトに変更
-            if (Elements.systemPromptInput && 
-                Elements.systemPromptInput.value === AppState.promptTemplates[templateName]) {
-                Elements.systemPromptInput.value = AppState.promptTemplates['default'] || '';
-            }
-            
-            // テンプレートを削除
-            delete AppState.promptTemplates[templateName];
-            window.Storage.savePromptTemplates(AppState.promptTemplates);
-            
-            // テンプレート一覧を更新
-            _loadPromptTemplates();
-        }
+        window.Chat.renderChatHistory(
+            AppState.conversations, 
+            AppState.currentConversationId, 
+            Elements.chatHistory, 
+            _switchConversation, 
+            window.UI.showRenameChatModal, 
+            _deleteConversation
+        );
     }
 
     /**
@@ -575,6 +653,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 Elements.chatMessages,
                 Elements.modelSelect
             );
+            
+            // 添付ファイルを表示
+            window.FileHandler.displaySavedAttachments(AppState.currentConversationId, Elements.chatMessages);
         }
     }
 
@@ -612,26 +693,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     /**
-     * 会話履歴を表示します
-     * サイドバーに会話履歴の一覧を表示します
-     * 
-     * @function _renderChatHistory
-     * @private
-     */
-    function _renderChatHistory() {
-        if (!Elements.chatHistory) return;
-        
-        window.Chat.renderChatHistory(
-            AppState.conversations, 
-            AppState.currentConversationId, 
-            Elements.chatHistory, 
-            _switchConversation, 
-            window.UI.showRenameChatModal, 
-            _deleteConversation
-        );
-    }
-
-    /**
      * 個別のチャットを削除します
      * 指定されたIDの会話を削除し、必要に応じて別の会話に切り替えます
      * 
@@ -649,6 +710,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // チャットを削除
         AppState.conversations = AppState.conversations.filter(conv => conv.id !== conversationId);
         window.Storage.saveConversations(AppState.conversations);
+        
+        // 添付ファイルも削除
+        window.Storage.removeAttachments(conversationId);
         
         // 削除したチャットが現在表示中だった場合、別のチャットに切り替える
         if (isCurrentChat) {
@@ -684,6 +748,13 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function _clearAllHistory() {
         if (confirm('すべての会話履歴を削除してもよろしいですか？')) {
+            // すべての添付ファイルを削除
+            AppState.conversations.forEach(conversation => {
+                if (conversation.id) {
+                    window.Storage.removeAttachments(conversation.id);
+                }
+            });
+            
             AppState.conversations = [];
             window.Storage.saveConversations(AppState.conversations);
             _createNewConversation();

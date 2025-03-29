@@ -12,6 +12,12 @@ window.FileHandler = {
     selectedFiles: [],
     
     /**
+     * 保存された添付ファイルのメタデータ
+     * @type {Array<Object>}
+     */
+    savedAttachments: [],
+    
+    /**
      * 最大ファイルサイズ (10MB)
      * @type {number}
      */
@@ -639,6 +645,10 @@ window.FileHandler = {
      */
     getAttachmentsForAPI: async function() {
         if (!this.selectedFiles || this.selectedFiles.length === 0) {
+            // 保存された添付ファイルがある場合はそれを返す
+            if (this.savedAttachments && this.savedAttachments.length > 0) {
+                return this.savedAttachments;
+            }
             return [];
         }
         
@@ -649,6 +659,81 @@ window.FileHandler = {
         } catch (error) {
             console.error('API用添付ファイル変換エラー:', error);
             return [];
+        }
+    },
+
+    /**
+     * 会話用の添付ファイルを保存する
+     * @param {string} conversationId - 会話ID
+     * @param {Array<Object>} attachments - 添付ファイルの配列
+     */
+    saveAttachmentsForConversation: function(conversationId, attachments) {
+        if (!conversationId || !attachments || !Array.isArray(attachments)) return;
+        
+        try {
+            // 添付ファイルをローカルストレージに保存
+            window.Storage.saveAttachments(conversationId, attachments);
+        } catch (error) {
+            console.error('添付ファイルの保存中にエラーが発生しました:', error);
+        }
+    },
+
+    /**
+     * 会話の添付ファイルを読み込む
+     * @param {string} conversationId - 会話ID
+     * @returns {Array<Object>} 添付ファイルの配列
+     */
+    loadAttachmentsForConversation: function(conversationId) {
+        if (!conversationId) return [];
+        
+        try {
+            // ローカルストレージから添付ファイルを読み込む
+            const attachments = window.Storage.loadAttachments(conversationId) || [];
+            this.savedAttachments = attachments;
+            return attachments;
+        } catch (error) {
+            console.error('添付ファイルの読み込み中にエラーが発生しました:', error);
+            return [];
+        }
+    },
+
+    /**
+     * メッセージごとに添付ファイルを表示
+     * @param {string} conversationId - 会話ID
+     * @param {HTMLElement} chatMessages - チャットメッセージ表示エリア
+     */
+    displaySavedAttachments: function(conversationId, chatMessages) {
+        if (!conversationId || !chatMessages) return;
+        
+        try {
+            // 保存されている添付ファイルを読み込む
+            const attachments = this.loadAttachmentsForConversation(conversationId);
+            if (!attachments || attachments.length === 0) return;
+            
+            // 各メッセージに添付ファイルを表示
+            const messages = chatMessages.querySelectorAll('.message');
+            if (!messages || messages.length === 0) return;
+            
+            // TODO: メッセージに対応する添付ファイルを表示する実装
+            // 現状はユーザーメッセージの最後に添付を表示
+            const userMessages = Array.from(messages).filter(msg => msg.classList.contains('user'));
+            if (userMessages.length > 0) {
+                const lastUserMessage = userMessages[userMessages.length - 1];
+                const messageContent = lastUserMessage.querySelector('.message-content');
+                if (messageContent) {
+                    // 既存の添付ファイル要素があれば削除
+                    const existingAttachments = messageContent.querySelector('.message-attachments');
+                    if (existingAttachments) {
+                        existingAttachments.remove();
+                    }
+                    
+                    // 添付ファイル要素を作成
+                    const attachmentsElement = window.Chat._createAttachmentsElement(attachments);
+                    messageContent.appendChild(attachmentsElement);
+                }
+            }
+        } catch (error) {
+            console.error('保存された添付ファイルの表示中にエラーが発生しました:', error);
         }
     }
 };
