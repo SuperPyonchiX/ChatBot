@@ -426,3 +426,191 @@
     font-size: 0.95rem;
     margin: 0;
 }
+
+/* コードスニペット実行機能用スタイル */
+.code-block-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.code-block:hover .code-block-toolbar {
+    opacity: 1;
+}
+
+.code-execute-button {
+    width: 28px;
+    height: 28px;
+    background-color: rgba(46, 204, 113, 0.2);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.code-execute-button:hover {
+    background-color: rgba(46, 204, 113, 0.5);
+}
+
+.code-execution-result {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    border-left: 3px solid #3498db;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+    overflow: auto;
+}
+
+.dark-mode .code-execution-result {
+    background-color: #2a2a2a;
+    border-left: 3px solid #3498db;
+    color: #f0f0f0;
+}
+
+.execution-time {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 8px;
+    text-align: right;
+}
+
+.dark-mode .execution-time {
+    color: #aaa;
+}
+
+.execution-error {
+    color: #e74c3c;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.error-details {
+    margin: 5px 0;
+    padding: 8px;
+    background-color: #ffecec;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    color: #e74c3c;
+    white-space: pre-wrap;
+}
+
+.dark-mode .error-details {
+    background-color: #462a2a;
+}
+
+.execution-result-value,
+.console-output {
+    margin-top: 8px;
+}
+
+.result-title,
+.console-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.dark-mode .result-title,
+.dark-mode .console-title {
+    color: #ddd;
+}
+
+.result-content {
+    white-space: pre-wrap;
+    background-color: #fff;
+    border-radius: 3px;
+    padding: 8px;
+    margin: 0;
+    overflow: auto;
+}
+
+.dark-mode .result-content {
+    background-color: #333;
+}
+
+.console-content {
+    background-color: #fff;
+    padding: 8px;
+    border-radius: 3px;
+    max-height: 200px;
+    overflow: auto;
+}
+
+.dark-mode .console-content {
+    background-color: #333;
+}
+
+.console-line {
+    padding: 2px 0;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.console-log {
+    color: #333;
+}
+
+.console-error {
+    color: #e74c3c;
+}
+
+.console-warn {
+    color: #f39c12;
+}
+
+.console-info {
+    color: #3498db;
+}
+
+.dark-mode .console-log {
+    color: #ddd;
+}
+
+/* HTMLプレビュー用iframe */
+.html-result-frame {
+    width: 100%;
+    min-height: 100px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background-color: white;
+}
+
+.dark-mode .html-result-frame {
+    border-color: #444;
+}
+
+/* コード実行中ローディング表示 */
+.code-executing {
+    opacity: 0.7;
+}
+
+.executing-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-left-color: #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.dark-mode .executing-spinner {
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-left-color: #3498db;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
