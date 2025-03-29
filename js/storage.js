@@ -40,20 +40,74 @@ window.Storage = {
     },
 
     /**
+     * LocalStorageが利用可能かどうかを確認
+     * @private
+     * @returns {boolean} LocalStorageが利用可能な場合はtrue
+     */
+    _isLocalStorageAvailable: function() {
+        try {
+            const test = '__storage_test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    },
+
+    /**
      * ローカルストレージにアイテムを保存
      * @private
      * @param {string} key - 保存するキー
      * @param {*} value - 保存する値
      */
     _setItem: function(key, value) {
+        if (!this._isLocalStorageAvailable()) {
+            console.warn('LocalStorageが利用できないため、データを保存できません');
+            return;
+        }
+        
         try {
             if (typeof value === 'object') {
                 localStorage.setItem(key, JSON.stringify(value));
             } else {
-                localStorage.setItem(key, value);
+                localStorage.setItem(key, String(value));
             }
         } catch (error) {
-            console.error(`ストレージへの保存に失敗しました: ${key}`, error);
+            // QuotaExceededErrorの場合、一部の古いデータを削除して再試行
+            if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                console.warn('ストレージ容量が不足しています。古いデータを削除します');
+                this._cleanupOldData();
+                try {
+                    if (typeof value === 'object') {
+                        localStorage.setItem(key, JSON.stringify(value));
+                    } else {
+                        localStorage.setItem(key, String(value));
+                    }
+                } catch (retryError) {
+                    console.error(`ストレージへの保存に失敗しました: ${key}`, retryError);
+                }
+            } else {
+                console.error(`ストレージへの保存に失敗しました: ${key}`, error);
+            }
+        }
+    },
+
+    /**
+     * ストレージ容量不足時に古いデータを削除
+     * @private
+     */
+    _cleanupOldData: function() {
+        try {
+            // 会話履歴を取得
+            const conversations = this.loadConversations();
+            if (conversations.length > 10) {
+                // 古い会話を削除（最新の10件を残す）
+                const newConversations = conversations.slice(0, 10);
+                this.saveConversations(newConversations);
+            }
+        } catch (error) {
+            console.error('古いデータのクリーンアップに失敗しました', error);
         }
     },
 
@@ -66,13 +120,27 @@ window.Storage = {
      * @returns {*} 取得した値、またはデフォルト値
      */
     _getItem: function(key, defaultValue = '', isJson = false) {
+        if (!this._isLocalStorageAvailable()) {
+            console.warn('LocalStorageが利用できないため、データを読み込めません');
+            return defaultValue;
+        }
+        
         try {
             const value = localStorage.getItem(key);
             if (value === null) {
                 return defaultValue;
             }
             
-            return isJson ? JSON.parse(value) : value;
+            if (isJson) {
+                try {
+                    return JSON.parse(value);
+                } catch (parseError) {
+                    console.error(`JSONのパースに失敗しました: ${key}`, parseError);
+                    return defaultValue;
+                }
+            }
+            
+            return value;
         } catch (error) {
             console.error(`ストレージからの読み込みに失敗しました: ${key}`, error);
             return defaultValue;
@@ -84,7 +152,7 @@ window.Storage = {
      * @param {boolean} isCollapsed - サイドバーが折りたたまれているかどうか
      */
     saveSidebarState: function(isCollapsed) {
-        this._setItem(this._KEYS.SIDEBAR, isCollapsed);
+        this._setItem(this._KEYS.SIDEBAR, !!isCollapsed);
     },
 
     /**
@@ -104,6 +172,8 @@ window.Storage = {
         
         // サポートされているモデルのエンドポイント設定を読み込む
         this._DEFAULTS.SUPPORTED_MODELS.forEach(model => {
+            if (!model) return;
+            
             const endpointKey = this._KEYS.AZURE_ENDPOINT_PREFIX + model;
             azureEndpoints[model] = this._getItem(endpointKey, '');
         });
@@ -130,8 +200,11 @@ window.Storage = {
         // Azureエンドポイント設定を保存
         if (apiSettings.azureEndpoints) {
             this._DEFAULTS.SUPPORTED_MODELS.forEach(model => {
+                if (!model) return;
+                
                 const endpointKey = this._KEYS.AZURE_ENDPOINT_PREFIX + model;
-                this._setItem(endpointKey, apiSettings.azureEndpoints[model] || '');
+                const endpoint = apiSettings.azureEndpoints[model] || '';
+                this._setItem(endpointKey, endpoint);
             });
         }
     },
@@ -158,11 +231,18 @@ window.Storage = {
      * @returns {Object} プロンプトテンプレートのオブジェクト
      */
     loadPromptTemplates: function() {
-        return this._getItem(
+        const templates = this._getItem(
             this._KEYS.PROMPT_TEMPLATES, 
             this._DEFAULTS.PROMPT_TEMPLATES, 
             true
         );
+        
+        // デフォルトテンプレートが必ず存在するようにする
+        if (!templates.default) {
+            templates.default = this._DEFAULTS.PROMPT_TEMPLATES.default;
+        }
+        
+        return templates;
     },
 
     /**
@@ -171,6 +251,12 @@ window.Storage = {
      */
     savePromptTemplates: function(promptTemplates) {
         if (!promptTemplates || typeof promptTemplates !== 'object') return;
+        
+        // デフォルトテンプレートが必ず存在するようにする
+        if (!promptTemplates.default) {
+            promptTemplates.default = this._DEFAULTS.PROMPT_TEMPLATES.default;
+        }
+        
         this._setItem(this._KEYS.PROMPT_TEMPLATES, promptTemplates);
     },
 
@@ -183,7 +269,7 @@ window.Storage = {
         if (!categoryName) return;
         
         const categoryStates = this.loadCategoryStates();
-        categoryStates[categoryName] = isExpanded;
+        categoryStates[categoryName] = !!isExpanded;
         this._setItem(this._KEYS.CATEGORY_STATES, categoryStates);
     },
 
@@ -200,7 +286,10 @@ window.Storage = {
      * @returns {Array} 会話オブジェクトの配列
      */
     loadConversations: function() {
-        return this._getItem(this._KEYS.CONVERSATIONS, [], true);
+        const conversations = this._getItem(this._KEYS.CONVERSATIONS, [], true);
+        
+        // 無効なデータがあれば修正する
+        return Array.isArray(conversations) ? conversations : [];
     },
 
     /**
@@ -209,6 +298,13 @@ window.Storage = {
      */
     saveConversations: function(conversations) {
         if (!Array.isArray(conversations)) return;
+        
+        // 保存前に会話データの大きさをチェック
+        if (conversations.length > 100) {
+            // 最新の100件のみ保持
+            conversations = conversations.slice(0, 100);
+        }
+        
         this._setItem(this._KEYS.CONVERSATIONS, conversations);
     },
 
@@ -234,6 +330,11 @@ window.Storage = {
      * @param {string} key - 削除するキー
      */
     removeItem: function(key) {
+        if (!this._isLocalStorageAvailable()) {
+            console.warn('LocalStorageが利用できないため、データを削除できません');
+            return;
+        }
+        
         try {
             localStorage.removeItem(key);
         } catch (error) {
@@ -245,11 +346,46 @@ window.Storage = {
      * すべてのデータをクリアする
      */
     clearAll: function() {
+        if (!this._isLocalStorageAvailable()) {
+            console.warn('LocalStorageが利用できないため、データをクリアできません');
+            return;
+        }
+        
         try {
             localStorage.clear();
             console.log('ストレージの全データをクリアしました');
         } catch (error) {
             console.error('ストレージのクリアに失敗しました', error);
+        }
+    },
+    
+    /**
+     * ストレージの使用状況を取得
+     * @returns {Object} 使用容量と合計容量を含むオブジェクト
+     */
+    getStorageUsage: function() {
+        if (!this._isLocalStorageAvailable()) {
+            return { used: 0, total: 0, percentage: 0 };
+        }
+        
+        let totalSize = 0;
+        let storageSize = 5 * 1024 * 1024; // デフォルトは5MB (ブラウザによって異なる)
+        
+        try {
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                totalSize += (key.length + value.length) * 2; // UTF-16のため2倍
+            }
+            
+            return {
+                used: totalSize,
+                total: storageSize,
+                percentage: Math.floor((totalSize / storageSize) * 100)
+            };
+        } catch (error) {
+            console.error('ストレージ使用状況の取得に失敗しました', error);
+            return { used: 0, total: 0, percentage: 0 };
         }
     }
 };

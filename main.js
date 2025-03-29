@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
          * @returns {Object|null} - 会話オブジェクトまたはnull
          */
         getConversationById(id) {
-            return this.conversations.find(conv => conv.id === id);
+            return this.conversations.find(conv => conv.id === id) || null;
         },
 
         /**
@@ -59,8 +59,6 @@ document.addEventListener('DOMContentLoaded', function() {
      * @namespace Elements
      */
     const Elements = (() => {
-        const cache = {};
-        
         /**
          * 一度に複数の要素を取得する関数
          * 指定されたID配列から要素を取得してオブジェクトとして返します
@@ -408,11 +406,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 attachmentsToSend
             );
             
-            if (result.titleUpdated) {
+            if (result?.titleUpdated) {
                 _renderChatHistory();
             }
             
-            if (!result.error) {
+            if (!result?.error) {
                 // 会話を保存
                 window.Storage.saveConversations(AppState.conversations);
             }
@@ -456,6 +454,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // 各エンドポイントを保存
             Object.entries(endpoints).forEach(([model, element]) => {
                 if (element) {
+                    AppState.apiSettings.azureEndpoints = AppState.apiSettings.azureEndpoints || {};
                     AppState.apiSettings.azureEndpoints[model] = element.value.trim();
                 }
             });
@@ -478,7 +477,11 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function _loadCurrentConversation() {
         if (!AppState.currentConversationId || !AppState.getConversationById(AppState.currentConversationId)) {
-            AppState.currentConversationId = AppState.conversations[0].id;
+            AppState.currentConversationId = AppState.conversations[0]?.id;
+            if (!AppState.currentConversationId) {
+                _createNewConversation();
+                return;
+            }
         }
 
         // 会話履歴から現在の会話を選択状態にする
@@ -538,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // 選択中のテンプレートが削除対象の場合はデフォルトに変更
             if (Elements.systemPromptInput && 
                 Elements.systemPromptInput.value === AppState.promptTemplates[templateName]) {
-                Elements.systemPromptInput.value = AppState.promptTemplates['default'];
+                Elements.systemPromptInput.value = AppState.promptTemplates['default'] || '';
             }
             
             // テンプレートを削除
@@ -589,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function() {
             messages: [
                 {
                     role: 'system',
-                    content: AppState.systemPrompt
+                    content: AppState.systemPrompt || ''
                 }
             ],
             model: AppState.getCurrentModel()
