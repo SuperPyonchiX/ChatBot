@@ -168,6 +168,63 @@ window.CodeExecutor = {
             // Pyodideインスタンスが存在するか確認
             if (!window.pyodideInstance) {
                 window.pyodideInstance = await loadPyodide();
+                
+                // マイクロパッケージをインストール
+                await window.pyodideInstance.loadPackagesFromImports(`
+                    import micropip
+                `);
+            }
+            
+            // コード内のimport文を抽出
+            const importMatches = code.matchAll(/^\s*import\s+([a-zA-Z0-9_]+)(?:\s*as\s+[a-zA-Z0-9_]+)?\s*$/gm);
+            const fromImportMatches = code.matchAll(/^\s*from\s+([a-zA-Z0-9_]+)(?:\.[a-zA-Z0-9_]+)?\s+import/gm);
+            
+            // インストール可能なパッケージのリスト
+            const installablePackages = [
+                'flask', 'django', 'numpy', 'pandas', 'matplotlib', 'scikit-learn', 
+                'requests', 'beautifulsoup4', 'sqlalchemy', 'pillow', 'tensorflow'
+            ];
+            
+            // 抽出したモジュール名を格納する配列
+            const modules = [];
+            
+            // import文からモジュール名を抽出
+            for (const match of importMatches) {
+                if (match[1] && !['sys', 'io', 'json', 'os', 'time', 'random', 'math', 're'].includes(match[1])) {
+                    modules.push(match[1]);
+                }
+            }
+            
+            // from import文からモジュール名を抽出
+            for (const match of fromImportMatches) {
+                if (match[1] && !['sys', 'io', 'json', 'os', 'time', 'random', 'math', 're'].includes(match[1])) {
+                    modules.push(match[1]);
+                }
+            }
+            
+            // 必要なモジュールをインストール
+            if (modules.length > 0) {
+                const packagesToInstall = modules.filter(module => 
+                    installablePackages.includes(module.toLowerCase())
+                );
+                
+                if (packagesToInstall.length > 0) {
+                    output += `必要なパッケージをインストールしています: ${packagesToInstall.join(', ')}...\n`;
+                    
+                    try {
+                        const micropip = window.pyodideInstance.pyimport('micropip');
+                        for (const pkg of packagesToInstall) {
+                            try {
+                                await micropip.install(pkg);
+                                output += `パッケージ ${pkg} をインストールしました\n`;
+                            } catch (err) {
+                                output += `パッケージ ${pkg} のインストールに失敗しました: ${err.message}\n`;
+                            }
+                        }
+                    } catch (err) {
+                        output += `パッケージインストーラの初期化に失敗しました: ${err.message}\n`;
+                    }
+                }
             }
             
             // Pythonコードを実行
