@@ -725,90 +725,49 @@ if stderr_content:
                 return;
             }
             
-            // まずJSCPPの代わりにBiwaschemeを読み込む（C++コードをScheme経由で実行するアプローチ）
-//             const useBiwaScheme = true;
-            
-//             if (useBiwaScheme) {
-                // BiwaSchemeを使用したC++ライクな実行環境
-                const script = document.createElement('script');
-                script.src = 'https://www.biwascheme.org/release/biwascheme-0.7.5.js';
-                script.crossOrigin = 'anonymous';
-                script.onload = () => {
-                    console.log('BiwaSchemeの読み込みが完了しました');
-                    
-                    // JSCPP代替の簡易実装をグローバルに定義
-                    window.JSCPP = {
-                        run: (code, config) => {
-                            try {
-                                // C++コードの簡易パース
-                                const processedCode = this._preprocessCppCode(code);
+            // BiwaSchemeを使用したC++ライクな実行環境
+            const script = document.createElement('script');
+            script.src = 'https://www.biwascheme.org/release/biwascheme-0.7.5.js';
+            script.crossOrigin = 'anonymous';
+            script.onload = () => {
+                console.log('BiwaSchemeの読み込みが完了しました');
+                
+                // JSCPP代替の簡易実装をグローバルに定義
+                window.JSCPP = {
+                    run: (code, config) => {
+                        try {
+                            // C++コードの簡易パース
+                            const processedCode = this._preprocessCppCode(code);
+                            
+                            // メイン関数からの値と標準出力を取得
+                            let output = '';
+                            if (config && config.stdio && typeof config.stdio.write === 'function') {
+                                const outputHandler = (str) => {
+                                    output += str;
+                                    config.stdio.write(str);
+                                };
                                 
-                                // メイン関数からの値と標準出力を取得
-                                let output = '';
-                                if (config && config.stdio && typeof config.stdio.write === 'function') {
-                                    const outputHandler = (str) => {
-                                        output += str;
-                                        config.stdio.write(str);
-                                    };
-                                    
-                                    // 標準出力のシミュレーション
-                                    this._simulateCppExecution(processedCode, outputHandler);
-                                }
-                                
-                                return 0; // 正常終了コード
-                            } catch (e) {
-                                if (config && config.stdio && typeof config.stdio.write === 'function') {
-                                    config.stdio.write(`実行エラー: ${e.message}`);
-                                }
-                                throw e;
+                                // 標準出力のシミュレーション
+                                this._simulateCppExecution(processedCode, outputHandler);
                             }
+                            
+                            return 0; // 正常終了コード
+                        } catch (e) {
+                            if (config && config.stdio && typeof config.stdio.write === 'function') {
+                                config.stdio.write(`実行エラー: ${e.message}`);
+                            }
+                            throw e;
                         }
-                    };
-                    
-                    resolve();
+                    }
                 };
-                script.onerror = (e) => {
-                    console.error('BiwaSchemeの読み込みに失敗しました:', e);
-                    
-                    // 代替手段としてインライン実装を提供
-                    this._provideFallbackCppImplementation();
-                    resolve();
-                };
-                document.head.appendChild(script);
-//             } else {
-//                 // オリジナルのJSCPPを使用する場合（現在は機能しない可能性あり）
-//                 const script = document.createElement('script');
-//                 // バージョンとCDNを更新
-//                 script.src = 'https://unpkg.com/jscpp@2.0.0/dist/JSCPP.es5.min.js';
-//                 script.crossOrigin = 'anonymous';
-//                 script.integrity = 'sha384-7mBA7Hi65m/AGuO9re8RB1rUb63+7/fOTe5BXOfiXZ0MQ/KA8/4t4IKQvbXdVlXW';
-//                 script.onload = () => {
-//                     console.log('JSCPPの読み込みが完了しました');
-//                     resolve();
-//                 };
-//                 script.onerror = (e) => {
-//                     console.error('JSCPPの読み込みに失敗しました:', e);
-//                     
-//                     // フォールバック：別のCDNを試す
-//                     const fallbackScript = document.createElement('script');
-//                     fallbackScript.src = 'https://cdn.jsdelivr.net/npm/jscpp@2.0.0/dist/JSCPP.es5.min.js';
-//                     fallbackScript.crossOrigin = 'anonymous';
-//                     
-//                     fallbackScript.onload = () => {
-//                         console.log('JSCPPの読み込みが完了しました (フォールバック)');
-//                         resolve();
-//                     };
-//                     
-//                     fallbackScript.onerror = (err) => {
-//                         console.error('代替JSCPPの読み込みにも失敗しました:', err);
-//                         this._provideFallbackCppImplementation();
-//                         resolve();
-//                     };
-//                     
-//                     document.head.appendChild(fallbackScript);
-//                 };
-//                 document.head.appendChild(script);
-//             }
+                
+                resolve();
+            };
+            script.onerror = (e) => {
+                console.error('BiwaSchemeの読み込みに失敗しました:', e);
+                reject(new Error('C++ランタイムの読み込みに失敗しました'));
+            };
+            document.head.appendChild(script);
         });
     },
     
@@ -862,52 +821,6 @@ if stderr_content:
             // デフォルトの出力
             outputHandler("Hello, World!\n");
         }
-    },
-    
-    /**
-     * フォールバックのC++実装を提供する
-     * @private
-     */
-    _provideFallbackCppImplementation: function() {
-        // 外部ライブラリが読み込めない場合の最小限の実装
-        window.JSCPP = {
-            run: (code, config) => {
-                try {
-                    let output = '';
-                    
-                    // 基本的なHello Worldと簡易なコード解析
-                    if (code.includes('std::cout') || code.includes('cout')) {
-                        // 簡易的なパターンマッチングでcout文を検出
-                        const lines = code.split('\n');
-                        for (const line of lines) {
-                            if (line.includes('cout') || line.includes('std::cout')) {
-                                const quoteMatch = line.match(/["']([^"']+)["']/);
-                                if (quoteMatch) {
-                                    output += quoteMatch[1] + '\n';
-                                }
-                            }
-                        }
-                    }
-                    
-                    if (!output) {
-                        output = "Hello, World!\n";
-                    }
-                    
-                    if (config && config.stdio && typeof config.stdio.write === 'function') {
-                        config.stdio.write(output);
-                    }
-                    
-                    return 0;
-                } catch (e) {
-                    if (config && config.stdio && typeof config.stdio.write === 'function') {
-                        config.stdio.write(`実行エラー: ${e.message}`);
-                    }
-                    throw e;
-                }
-            }
-        };
-        
-        console.log('C++用フォールバック実装を提供しました');
     },
     
     /**

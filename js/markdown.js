@@ -180,11 +180,13 @@ window.Markdown = {
             return;
         }
         
+        // ボタンの元の状態を保存（スコープ問題を防ぐために関数の上部に移動）
+        const originalButtonHtml = button.innerHTML || '<i class="fas fa-play"></i>';
+        
         try {
             // ボタンの状態を実行中に変更
             button.disabled = true;
             button.classList.add('code-executing');
-            const originalButtonHtml = button.innerHTML;
             button.innerHTML = '<span class="executing-spinner"></span>';
             
             // 既存の実行結果を削除
