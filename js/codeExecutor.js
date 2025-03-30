@@ -576,7 +576,7 @@ if stderr_content:
             return errorResult;
         }
     },
-
+    
     /**
      * Pyodideランタイムを読み込む
      * @private
@@ -610,25 +610,54 @@ if stderr_content:
         try {
             // JSCPPライブラリが読み込まれているか確認
             if (typeof JSCPP === 'undefined') {
-                // 初回実行時にJSCPPを読み込む
+                // JSCPPが読み込まれていない場合は読み込む
                 if (typeof outputCallback === 'function') {
                     outputCallback({
                         type: 'status',
-                        content: 'C++ランタイムを読み込んでいます...'
+                        content: 'C++ランタイム(JSCPP)を読み込んでいます...'
                     });
                 }
-                await this._loadJSCPPRuntime();
+                
+                // _loadJSCPPRuntimeを呼び出してJSCPPを読み込む
+                try {
+                    await this._loadJSCPPRuntime();
+                } catch (loadError) {
+                    const errorMsg = `C++ランタイムの読み込みに失敗しました: ${loadError.message}`;
+                    console.error(errorMsg);
+                    
+                    if (typeof outputCallback === 'function') {
+                        outputCallback({
+                            type: 'error',
+                            content: errorMsg
+                        });
+                    }
+                    
+                    return { error: errorMsg };
+                }
             }
             
             // 出力をキャプチャするための準備
             let outputText = '';
-            const exitCode = 0;
             
             // 実行時間を計測
             const startTime = performance.now();
             
-            // C++コードを実行
-            // 標準入力をシミュレート (必要に応じてカスタマイズ可能)
+            // 入力コードを前処理して、JSCPPが処理しやすい形式に変換
+            let preprocessedCode = this._preprocessCPPCode(code);
+            
+            // // 処理前後のコードをデバッグ表示（開発中のみ）
+            // console.log("元のコード:", code);
+            // console.log("前処理後のコード:", preprocessedCode);
+            
+            // ステータス通知
+            if (typeof outputCallback === 'function') {
+                outputCallback({
+                    type: 'status',
+                    content: 'C++コードを実行しています...'
+                });
+            }
+            
+            // 標準入出力設定 - JSCPPの公式サンプルに基づく正しい実装
             const config = {
                 stdio: {
                     write: function(s) {
@@ -642,19 +671,14 @@ if stderr_content:
                             });
                         }
                     }
-                }
+                },
+                // オプション設定
+                unsigned_overflow: "warn" // "error"(デフォルト), "warn", "ignore"のいずれか
             };
             
-            if (typeof outputCallback === 'function') {
-                outputCallback({
-                    type: 'status',
-                    content: 'C++コードを実行しています...'
-                });
-            }
-            
             try {
-                // JSCPPを使用してコードを実行
-                const exitCode = JSCPP.run(code, config);
+                // JSCPPを使用してコードを実行 (C++の標準入力は空文字列で初期化)
+                const exitCode = JSCPP.run(preprocessedCode, "", config);
                 
                 // 実行時間を計算
                 const endTime = performance.now();
@@ -676,6 +700,9 @@ if stderr_content:
                 
                 return finalResult;
             } catch (runtimeError) {
+                console.error('C++実行中にエラーが発生しました:', runtimeError);
+                
+                // エラー結果を返す
                 const errorResult = {
                     error: `C++の実行エラー: ${runtimeError.message || '不明なエラー'}`,
                     errorDetail: runtimeError.stack,
@@ -692,6 +719,7 @@ if stderr_content:
                 
                 return errorResult;
             }
+            
         } catch (error) {
             console.error('C++実行中にエラーが発生しました:', error);
             const errorResult = { 
@@ -718,109 +746,60 @@ if stderr_content:
      */
     _loadJSCPPRuntime: function() {
         return new Promise((resolve, reject) => {
-            // JSCPP CDNからのスクリプト読み込み
+            // すでに読み込まれているかチェック
             if (typeof JSCPP !== 'undefined') {
                 console.log('JSCPPはすでに読み込まれています');
                 resolve();
                 return;
             }
-            
-            // BiwaSchemeを使用したC++ライクな実行環境
-            const script = document.createElement('script');
-            script.src = 'https://www.biwascheme.org/release/biwascheme-0.7.5.js';
-            script.crossOrigin = 'anonymous';
-            script.onload = () => {
-                console.log('BiwaSchemeの読み込みが完了しました');
-                
-                // JSCPP代替の簡易実装をグローバルに定義
-                window.JSCPP = {
-                    run: (code, config) => {
-                        try {
-                            // C++コードの簡易パース
-                            const processedCode = this._preprocessCppCode(code);
-                            
-                            // メイン関数からの値と標準出力を取得
-                            let output = '';
-                            if (config && config.stdio && typeof config.stdio.write === 'function') {
-                                const outputHandler = (str) => {
-                                    output += str;
-                                    config.stdio.write(str);
-                                };
-                                
-                                // 標準出力のシミュレーション
-                                this._simulateCppExecution(processedCode, outputHandler);
-                            }
-                            
-                            return 0; // 正常終了コード
-                        } catch (e) {
-                            if (config && config.stdio && typeof config.stdio.write === 'function') {
-                                config.stdio.write(`実行エラー: ${e.message}`);
-                            }
-                            throw e;
-                        }
-                    }
+
+            try {
+                // ローカルのJSCPPスクリプトを読み込む
+                const script = document.createElement('script');
+                script.src = 'js/JSCPP.es5.min.js';
+                script.onload = () => {
+                    console.log('JSCPPの読み込みが完了しました');
+                    resolve();
                 };
-                
-                resolve();
-            };
-            script.onerror = (e) => {
-                console.error('BiwaSchemeの読み込みに失敗しました:', e);
-                reject(new Error('C++ランタイムの読み込みに失敗しました'));
-            };
-            document.head.appendChild(script);
+                script.onerror = (e) => {
+                    console.error('JSCPPの読み込みに失敗しました:', e);
+                    reject(new Error('C++ランタイム(JSCPP)の読み込みに失敗しました'));
+                };
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('JSCPPローディングエラー:', error);
+                reject(error);
+            }
         });
     },
     
     /**
-     * C++コードを前処理する
+     * C++コードをJSCPPで実行できるように前処理する
      * @private
-     * @param {string} code - 処理するC++コード
-     * @returns {object} 前処理されたコード情報
+     * @param {string} code - 元のC++コード
+     * @returns {string} 前処理後のコード
      */
-    _preprocessCppCode: function(code) {
-        // includeの検出
-        const includeRegex = /#include\s*<([^>]+)>/g;
-        const includes = [];
-        let match;
-        while ((match = includeRegex.exec(code)) !== null) {
-            includes.push(match[1]);
+    _preprocessCPPCode: function(code) {
+        // 基本的なコード正規化
+        let processedCode = code
+            .replace(/[\u200B-\u200D\uFEFF]/g, '') // ゼロ幅スペースなどの非表示文字を削除
+            .replace(/\r\n/g, '\n')  // CRLF → LF
+            .replace(/[^\x00-\x7F]/g, '') // ASCII以外の文字を削除
+            .trim(); // 前後の空白を削除
+        
+        // using namespace std; がない場合は追加
+        if (!processedCode.includes('using namespace std;')) {
+            // #includeの後に追加
+            processedCode = processedCode.replace(
+                /(#include\s*<[^>]+>)/,
+                '$1\nusing namespace std;'
+            );
         }
         
-        // main関数の検出
-        const mainRegex = /int\s+main\s*\(([^)]*)\)/;
-        const mainMatch = code.match(mainRegex);
-        const hasMain = mainMatch !== null;
+        // std::を削除
+        processedCode = processedCode.replace(/std::/g, '');
         
-        // cout検出
-        const hasCout = code.includes('std::cout') || code.includes('cout');
-        
-        return {
-            includes,
-            hasMain,
-            hasCout,
-            originalCode: code
-        };
-    },
-    
-    /**
-     * C++実行をシミュレーションする
-     * @private
-     * @param {object} processedCode - 前処理されたコード情報
-     * @param {function} outputHandler - 出力ハンドラ関数
-     */
-    _simulateCppExecution: function(processedCode, outputHandler) {
-        // 簡易的なC++実行シミュレーション
-        if (processedCode.hasCout) {
-            // coutステートメントを検出して出力
-            const coutRegex = /(?:std::)?cout\s*<<\s*["']([^"']+)["']\s*(?:<<\s*(?:std::)?endl)?/g;
-            let coutMatch;
-            while ((coutMatch = coutRegex.exec(processedCode.originalCode)) !== null) {
-                outputHandler(coutMatch[1] + '\n');
-            }
-        } else {
-            // デフォルトの出力
-            outputHandler("Hello, World!\n");
-        }
+        return processedCode;
     },
     
     /**
