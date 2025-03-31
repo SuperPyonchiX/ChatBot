@@ -134,8 +134,8 @@ window.Chat = {
         const messageContent = document.createElement('div');
         messageContent.classList.add('markdown-content');
         
-        // 初期状態は空
-        messageContent.innerHTML = '';
+        // 初期状態にThinking表示を追加
+        messageContent.innerHTML = '<p>Thinking<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>';
         
         contentDiv.appendChild(messageContent);
         messageDiv.appendChild(contentDiv);
@@ -155,8 +155,9 @@ window.Chat = {
      * @param {HTMLElement} container - 更新するコンテンツコンテナ
      * @param {string} chunk - 追加するチャンクテキスト
      * @param {string} currentFullText - 現在の完全なテキスト
+     * @param {boolean} isFirstChunk - 最初のチャンクかどうか
      */
-    updateStreamingBotMessage: function(container, chunk, currentFullText) {
+    updateStreamingBotMessage: function(container, chunk, currentFullText, isFirstChunk = false) {
         if (!container) return;
         
         try {
@@ -642,11 +643,6 @@ window.Chat = {
                 titleUpdated = true;
             }
             
-            // // 「Thinking...」の表示
-            // const typingIndicator = this._createTypingIndicator();
-            // chatMessages.appendChild(typingIndicator);
-            // chatMessages.scrollTop = chatMessages.scrollHeight;
-            
             try {
                 // システムプロンプトが空の場合はデフォルト値を使用
                 const effectiveSystemPrompt = systemPrompt || window.CONFIG.PROMPTS.DEFAULT_SYSTEM_PROMPT;
@@ -657,17 +653,15 @@ window.Chat = {
                     ...currentConversation.messages.filter(m => m.role !== 'system')
                 ];
                 
-                // // Thinkingの表示を削除
-                // this._safeRemoveChild(chatMessages, typingIndicator);
-                
                 // ボットの応答タイムスタンプ
                 const botTimestamp = Date.now();
                 
-                // ストリーミング用のボットメッセージを作成
+                // ストリーミング用のボットメッセージを作成（初期状態はThinking...）
                 const { messageDiv, contentContainer } = this.addStreamingBotMessage(chatMessages, botTimestamp);
                 
                 // 応答テキストを保持する変数
                 let fullResponseText = '';
+                let isFirstChunk = true;
                 
                 // ストリーミングAPI呼び出し
                 await window.API.callOpenAIAPI(
@@ -679,7 +673,8 @@ window.Chat = {
                         // チャンク受信時のコールバック
                         onChunk: (chunk) => {
                             fullResponseText += chunk;
-                            this.updateStreamingBotMessage(contentContainer, chunk, fullResponseText);
+                            this.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
+                            isFirstChunk = false;
                         },
                         // ストリーミング完了時のコールバック
                         onComplete: (fullText) => {
@@ -700,9 +695,6 @@ window.Chat = {
                 
                 return { titleUpdated, response: fullResponseText };
             } catch (error) {
-                // Thinkingの表示を削除
-                this._safeRemoveChild(chatMessages, typingIndicator);
-                
                 // エラーメッセージを表示
                 const errorMessage = error.message || 'APIリクエスト中にエラーが発生しました';
                 this._showErrorMessage(errorMessage, chatMessages);
