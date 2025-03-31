@@ -446,6 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
      * メッセージを送信します
      * ユーザー入力を処理し、APIを通じてメッセージを送信します
      * 添付ファイルがある場合はそれも含めて送信します
+     * ストリーミングAPIを使用してリアルタイムでレスポンスを表示します
      * 
      * @function _sendMessage
      * @private
@@ -456,6 +457,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!currentConversation || !Elements.userInput || !Elements.chatMessages) return;
         
         try {
+            // 送信ボタンを無効化
+            if (Elements.sendButton) {
+                Elements.sendButton.disabled = true;
+            }
+            
             // FileHandlerから現在の添付ファイルを取得
             const apiAttachments = await window.FileHandler.getAttachmentsForAPI();
             
@@ -477,6 +483,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.UI.clearAttachments(attachmentPreviewArea);
             }
             
+            // ストリーミングメソッドを使用してメッセージを送信
             const result = await window.Chat.sendMessage(
                 Elements.userInput, 
                 Elements.chatMessages, 
@@ -518,6 +525,11 @@ document.addEventListener('DOMContentLoaded', function() {
             errorMsg.classList.add('error-message');
             errorMsg.textContent = 'メッセージ送信中にエラーが発生しました。';
             Elements.chatMessages.appendChild(errorMsg);
+        } finally {
+            // 送信ボタンを再有効化
+            if (Elements.sendButton) {
+                Elements.sendButton.disabled = false;
+            }
         }
     }
 

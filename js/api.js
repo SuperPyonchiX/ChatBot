@@ -10,10 +10,14 @@ window.API = {
      * @param {Array} messages - 会話メッセージの配列
      * @param {string} model - 使用するモデル名
      * @param {Array} attachments - 添付ファイルの配列（任意）
-     * @returns {Promise<string>} APIからの応答テキスト
+     * @param {Object} options - 追加オプション
+     * @param {boolean} options.stream - ストリーミングを使用するかどうか
+     * @param {Function} options.onChunk - ストリーミング時のチャンク受信コールバック関数
+     * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
+     * @returns {Promise<string>} APIからの応答テキスト（ストリーミングの場合は空文字列）
      * @throws {Error} API設定やリクエストに問題があった場合
      */
-    callOpenAIAPI: async function(messages, model, attachments = []) {
+    callOpenAIAPI: async function(messages, model, attachments = [], options = {}) {
         try {
             // API設定を確認
             this._validateAPISettings();
@@ -23,10 +27,22 @@ window.API = {
             const processedMessages = this._processAttachments(messages, attachments);
             
             // APIリクエストの準備
-            const { endpoint, headers, body } = this._prepareAPIRequest(processedMessages, model);
+            const { endpoint, headers, body, useStream } = this._prepareAPIRequest(processedMessages, model, options.stream);
             
-            // リトライロジックでAPIリクエストを実行
-            return await this._executeAPIRequestWithRetry(endpoint, headers, body);
+            // ストリーミングモードの場合
+            if (useStream) {
+                // ストリーミングモードでAPIリクエストを実行
+                return await this._executeStreamAPIRequest(
+                    endpoint, 
+                    headers, 
+                    body, 
+                    options.onChunk, 
+                    options.onComplete
+                );
+            } else {
+                // 通常モードでAPIリクエストを実行（リトライロジック付き）
+                return await this._executeAPIRequestWithRetry(endpoint, headers, body);
+            }
         } catch (error) {
             console.error('API呼び出しエラー:', error);
             
@@ -240,9 +256,10 @@ window.API = {
      * @private
      * @param {Array} messages - 処理済みメッセージ配列
      * @param {string} model - 使用するモデル名
+     * @param {boolean} useStream - ストリーミングを使用するかどうか
      * @returns {Object} エンドポイント、ヘッダー、ボディを含むオブジェクト
      */
-    _prepareAPIRequest: function(messages, model) {
+    _prepareAPIRequest: function(messages, model, useStream) {
         let endpoint, headers = {}, body = {};
         
         if (window.apiSettings.apiType === 'openai') {
@@ -294,7 +311,8 @@ window.API = {
         return { 
             endpoint, 
             headers, 
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
+            useStream
         };
     },
 
@@ -481,5 +499,130 @@ window.API = {
             
             reader.readAsDataURL(file);
         });
-    }
+    },
+
+    /**
+     * ストリーミングモードでAPIリクエストを実行
+     * @private
+     * @param {string} endpoint - APIエンドポイントURL
+     * @param {Object} headers - リクエストヘッダー
+     * @param {string} bodyStr - リクエストボディ（JSON文字列）
+     * @param {Function} onChunk - 各チャンク受信時のコールバック関数
+     * @param {Function} onComplete - ストリーミング完了時のコールバック関数
+     * @returns {Promise<string>} 常に空文字を返す（実際の結果はコールバックで処理）
+     * @throws {Error} リクエストに失敗した場合
+     */
+    _executeStreamAPIRequest: async function(endpoint, headers, bodyStr, onChunk, onComplete) {
+        if (typeof onChunk !== 'function') {
+            throw new Error('ストリーミングモードでは onChunk コールバック関数が必要です');
+        }
+        
+        if (typeof onComplete !== 'function') {
+            throw new Error('ストリーミングモードでは onComplete コールバック関数が必要です');
+        }
+        
+        try {
+            // ストリーミングフラグをリクエストに追加
+            const body = JSON.parse(bodyStr);
+            body.stream = true;
+            
+            // AbortControllerを使用してタイムアウトを設定
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), window.CONFIG.API.TIMEOUT_MS);
+            
+            const startTime = Date.now();
+            
+            console.log(`ストリーミングAPIリクエスト送信: ${endpoint}`);
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(body),
+                signal: controller.signal
+            });
+            
+            // リクエスト自体のタイムアウトを解除
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+                
+                // レスポンスのJSONを取得して詳細なエラーメッセージを取得
+                try {
+                    const errorData = await response.json();
+                    if (errorData.error) {
+                        errorMessage = errorData.error.message || errorMessage;
+                    }
+                } catch (jsonError) {
+                    // JSONパースに失敗した場合は元のエラーメッセージを使用
+                }
+                
+                throw new Error(errorMessage);
+            }
+            
+            if (!response.body) {
+                throw new Error('このブラウザはストリーミングレスポンスをサポートしていません');
+            }
+            
+            // ReadableStreamに変換
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let fullText = '';
+            
+            // 受信したデータを順次処理
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                // バイナリデータを文字列に変換
+                const chunk = decoder.decode(value, { stream: true });
+                
+                // Server-Sent Eventsの形式でデータを処理
+                // 'data: '行を処理
+                const lines = chunk.split('\n');
+                
+                for (const line of lines) {
+                    // 空行または'data: [DONE]'は無視
+                    if (!line || line === 'data: [DONE]') continue;
+                    
+                    if (line.startsWith('data: ')) {
+                        try {
+                            // 'data: ' 接頭辞を削除してJSONをパース
+                            const jsonData = JSON.parse(line.substring(6));
+                            
+                            // チャンクからデルタコンテンツを抽出
+                            if (jsonData.choices && jsonData.choices.length > 0) {
+                                const delta = jsonData.choices[0].delta;
+                                
+                                // content属性がある場合のみ処理
+                                if (delta && delta.content) {
+                                    // コールバックでデルタコンテンツを処理
+                                    onChunk(delta.content);
+                                    fullText += delta.content;
+                                }
+                            }
+                        } catch (parseError) {
+                            console.warn('JSON解析エラー:', parseError, line);
+                        }
+                    }
+                }
+            }
+            
+            const responseTime = Date.now() - startTime;
+            console.log(`ストリーミングAPIレスポンス完了 (${responseTime}ms)`);
+            
+            // すべてのデータを受信した後、完了コールバックを呼び出す
+            onComplete(fullText);
+            
+            // ストリーミングではPromiseの戻り値は使用されないが、
+            // 一貫性のために空文字列を返す
+            return '';
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                throw new Error('APIリクエストがタイムアウトしました');
+            }
+            
+            throw error;
+        }
+    },
 };

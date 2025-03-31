@@ -110,6 +110,124 @@ window.Chat = {
     },
     
     /**
+     * ストリーミング用のボットメッセージを追加する
+     * @param {HTMLElement} chatMessages - メッセージを追加する対象要素
+     * @param {number} timestamp - メッセージのタイムスタンプ（任意）
+     * @returns {Object} 作成されたメッセージ要素とコンテナ
+     */
+    addStreamingBotMessage: function(chatMessages, timestamp = null) {
+        if (!chatMessages) return null;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', 'bot');
+        
+        // タイムスタンプを設定
+        const msgTimestamp = timestamp || Date.now();
+        messageDiv.dataset.timestamp = msgTimestamp;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.classList.add('message-content');
+        
+        // この時点ではコピーボタンは追加しない（完全なテキストがないため）
+        // ストリーミング完了後に追加する
+        
+        const messageContent = document.createElement('div');
+        messageContent.classList.add('markdown-content');
+        
+        // 初期状態は空
+        messageContent.innerHTML = '';
+        
+        contentDiv.appendChild(messageContent);
+        messageDiv.appendChild(contentDiv);
+        
+        // メッセージを追加して表示
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        return {
+            messageDiv: messageDiv,
+            contentContainer: messageContent
+        };
+    },
+    
+    /**
+     * ストリーミング中にボットメッセージを更新する
+     * @param {HTMLElement} container - 更新するコンテンツコンテナ
+     * @param {string} chunk - 追加するチャンクテキスト
+     * @param {string} currentFullText - 現在の完全なテキスト
+     */
+    updateStreamingBotMessage: function(container, chunk, currentFullText) {
+        if (!container) return;
+        
+        try {
+            // 最新の完全なテキストをMarkdownとしてレンダリング
+            const renderedHTML = window.Markdown.renderMarkdown(currentFullText);
+            container.innerHTML = renderedHTML;
+            
+            // シンタックスハイライトを適用
+            if (typeof Prism !== 'undefined') {
+                Prism.highlightAllUnder(container);
+            }
+            
+            // スクロール位置を更新
+            const chatMessages = container.closest('.chat-messages');
+            if (chatMessages) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        } catch (e) {
+            console.error('ストリーミング中のMarkdown解析エラー:', e);
+            // エラーが発生した場合は単純テキストとして表示
+            container.textContent = currentFullText;
+        }
+    },
+    
+    /**
+     * ストリーミングが完了したらボットメッセージを完成させる
+     * @param {HTMLElement} messageDiv - メッセージDIV要素
+     * @param {HTMLElement} container - コンテンツコンテナ
+     * @param {string} fullText - 完全なレスポンステキスト
+     */
+    finalizeStreamingBotMessage: function(messageDiv, container, fullText) {
+        if (!messageDiv || !container) return;
+        
+        try {
+            // 最終的なテキストを設定
+            const renderedHTML = window.Markdown.renderMarkdown(fullText);
+            container.innerHTML = renderedHTML;
+            
+            // コピーボタンを親のmessage-contentに追加
+            const contentDiv = messageDiv.querySelector('.message-content');
+            if (contentDiv) {
+                // 既存のコピーボタンがあれば削除
+                const existingButton = contentDiv.querySelector('.copy-button');
+                if (existingButton) {
+                    contentDiv.removeChild(existingButton);
+                }
+                
+                // 新しいコピーボタンを作成して最初に挿入
+                const copyButton = this._createCopyButton(fullText);
+                if (contentDiv.firstChild) {
+                    contentDiv.insertBefore(copyButton, contentDiv.firstChild);
+                } else {
+                    contentDiv.appendChild(copyButton);
+                }
+            }
+            
+            // シンタックスハイライトを適用
+            if (typeof Prism !== 'undefined') {
+                Prism.highlightAllUnder(messageDiv);
+            }
+            
+            // コードブロックのコピーボタンを追加
+            window.Markdown.addCodeBlockCopyButtons(messageDiv);
+            
+        } catch (e) {
+            console.error('ストリーミング完了時のMarkdown解析エラー:', e);
+            container.textContent = fullText;
+        }
+    },
+    
+    /**
      * タイピングアニメーションを実行する
      * @private
      * @param {string} message - 表示するメッセージ
@@ -524,14 +642,14 @@ window.Chat = {
                 titleUpdated = true;
             }
             
-            // 「Thinking...」の表示
-            const typingIndicator = this._createTypingIndicator();
-            chatMessages.appendChild(typingIndicator);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            // // 「Thinking...」の表示
+            // const typingIndicator = this._createTypingIndicator();
+            // chatMessages.appendChild(typingIndicator);
+            // chatMessages.scrollTop = chatMessages.scrollHeight;
             
             try {
                 // システムプロンプトが空の場合はデフォルト値を使用
-                const effectiveSystemPrompt = systemPrompt || window.Storage._DEFAULTS.SYSTEM_PROMPT;
+                const effectiveSystemPrompt = systemPrompt || window.CONFIG.PROMPTS.DEFAULT_SYSTEM_PROMPT;
                 
                 // APIに送信するメッセージにシステムプロンプトを追加
                 const messagesWithSystem = [
@@ -539,30 +657,48 @@ window.Chat = {
                     ...currentConversation.messages.filter(m => m.role !== 'system')
                 ];
                 
-                // API呼び出し
-                const botResponse = await window.API.callOpenAIAPI(
-                    messagesWithSystem, 
-                    currentConversation.model,
-                    attachments
-                );
-                
-                // Thinkingの表示を削除
-                this._safeRemoveChild(chatMessages, typingIndicator);
+                // // Thinkingの表示を削除
+                // this._safeRemoveChild(chatMessages, typingIndicator);
                 
                 // ボットの応答タイムスタンプ
                 const botTimestamp = Date.now();
                 
-                // ボットの応答を表示
-                this.addBotMessage(botResponse, chatMessages, botTimestamp);
+                // ストリーミング用のボットメッセージを作成
+                const { messageDiv, contentContainer } = this.addStreamingBotMessage(chatMessages, botTimestamp);
+                
+                // 応答テキストを保持する変数
+                let fullResponseText = '';
+                
+                // ストリーミングAPI呼び出し
+                await window.API.callOpenAIAPI(
+                    messagesWithSystem, 
+                    currentConversation.model,
+                    attachments,
+                    {
+                        stream: true,
+                        // チャンク受信時のコールバック
+                        onChunk: (chunk) => {
+                            fullResponseText += chunk;
+                            this.updateStreamingBotMessage(contentContainer, chunk, fullResponseText);
+                        },
+                        // ストリーミング完了時のコールバック
+                        onComplete: (fullText) => {
+                            this.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
+                            
+                            // 履歴に保存用の応答テキストを確定
+                            fullResponseText = fullText;
+                        }
+                    }
+                );
                 
                 // 応答をメッセージ履歴に追加
                 currentConversation.messages.push({
                     role: 'assistant',
-                    content: botResponse,
+                    content: fullResponseText,
                     timestamp: botTimestamp  // タイムスタンプを追加
                 });
                 
-                return { titleUpdated, response: botResponse };
+                return { titleUpdated, response: fullResponseText };
             } catch (error) {
                 // Thinkingの表示を削除
                 this._safeRemoveChild(chatMessages, typingIndicator);
