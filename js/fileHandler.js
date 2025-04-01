@@ -571,6 +571,7 @@ window.FileHandler = {
                 throw new Error('有効なファイルが指定されていません');
             }
             
+            // 画像ファイルの場合
             if (file.type.startsWith('image/')) {
                 const dataUrl = await this.readFileAsDataURL(file);
                 return {
@@ -580,8 +581,33 @@ window.FileHandler = {
                     size: file.size,
                     data: dataUrl
                 };
-            } else {
-                // 非画像ファイルの場合
+            } 
+            // PDFファイルの場合
+            else if (file.type === 'application/pdf') {
+                try {
+                    const extractedText = await this.extractTextFromPDF(file);
+                    return {
+                        type: 'pdf',
+                        name: file.name,
+                        mimeType: file.type,
+                        size: file.size,
+                        content: extractedText
+                    };
+                } catch (pdfError) {
+                    console.error('PDFテキスト抽出エラー:', pdfError);
+                    // エラーの場合は通常のファイルとして処理
+                    const base64 = await this.readFileAsBase64(file);
+                    return {
+                        type: 'file',
+                        name: file.name,
+                        mimeType: file.type,
+                        size: file.size,
+                        data: `data:${file.type};base64,${base64}`
+                    };
+                }
+            }
+            // その他のファイルの場合
+            else {
                 const base64 = await this.readFileAsBase64(file);
                 return {
                     type: 'file',
@@ -872,5 +898,79 @@ window.FileHandler = {
         } catch (error) {
             console.error('保存された添付ファイルの表示中にエラーが発生しました:', error);
         }
-    }
+    },
+
+    /**
+     * PDFファイルからテキストを抽出する
+     * @param {File} file - PDFファイル
+     * @returns {Promise<string>} 抽出されたテキスト
+     */
+    extractTextFromPDF: async function(file) {
+        if (!file || file.type !== 'application/pdf') {
+            return Promise.reject(new Error('有効なPDFファイルではありません'));
+        }
+        
+        try {
+            // ファイルをArrayBufferとして読み込む
+            const arrayBuffer = await this._readFileAsArrayBuffer(file);
+            
+            // PDF.jsを使用してPDFを読み込む
+            const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+            
+            let extractedText = `=== PDFファイル「${file.name}」の内容 ===\n\n`;
+            
+            // 各ページからテキストを抽出
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                
+                extractedText += `--- ページ ${i} ---\n`;
+                
+                // テキストアイテムを連結
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                extractedText += pageText + '\n\n';
+            }
+            
+            return extractedText;
+        } catch (error) {
+            console.error('PDFテキスト抽出エラー:', error);
+            return `PDFファイル「${file.name}」からテキストを抽出できませんでした。`;
+        }
+    },
+    
+    /**
+     * ファイルをArrayBufferとして読み込む
+     * @private
+     * @param {File} file - 読み込むファイル
+     * @returns {Promise<ArrayBuffer>} ArrayBuffer形式のファイルデータ
+     */
+    _readFileAsArrayBuffer: function(file) {
+        return new Promise((resolve, reject) => {
+            if (!file) {
+                reject(new Error('有効なファイルが指定されていません'));
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            // タイムアウト設定
+            const timeoutId = setTimeout(() => {
+                reader.abort();
+                reject(new Error('ファイル読み込みがタイムアウトしました'));
+            }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
+            
+            reader.onload = function(e) {
+                clearTimeout(timeoutId);
+                resolve(e.target.result);
+            };
+            
+            reader.onerror = function(e) {
+                clearTimeout(timeoutId);
+                console.error('ファイルの読み込みに失敗しました:', e);
+                reject(new Error('ファイルの読み込みに失敗しました'));
+            };
+            
+            reader.readAsArrayBuffer(file);
+        });
+    },
 };

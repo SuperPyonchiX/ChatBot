@@ -600,47 +600,64 @@ window.Chat = {
     /**
      * メッセージを送信する
      * @param {HTMLElement} userInput - ユーザー入力要素
-     * @param {HTMLElement} chatMessages - メッセージ表示要素
-     * @param {Object} currentConversation - 現在の会話オブジェクト
+     * @param {HTMLElement} chatMessages - チャットメッセージ表示エリア
+     * @param {Object} conversation - 会話オブジェクト
      * @param {Object} apiSettings - API設定
      * @param {string} systemPrompt - システムプロンプト
      * @param {Array} attachments - 添付ファイル配列
-     * @returns {Promise<Object>} 処理結果
+     * @returns {Promise<Object>} 送信結果
      */
-    sendMessage: async function(userInput, chatMessages, currentConversation, apiSettings, systemPrompt, attachments = []) {
-        if (!userInput || !chatMessages || !currentConversation) {
-            return { error: '必要なパラメータが不足しています' };
-        }
-        
-        const message = userInput.value?.trim() || '';
-        let titleUpdated = false;
-        
-        // メッセージか添付ファイルのいずれかが必要
-        if (!message && (!attachments || attachments.length === 0)) {
-            return { titleUpdated: false, response: null };
-        }
-        
+    sendMessage: async function(userInput, chatMessages, conversation, apiSettings, systemPrompt, attachments = []) {
         try {
-            // メッセージのタイムスタンプを生成
-            const timestamp = Date.now();
+            const userText = userInput.value.trim();
+            if (!userText && (!attachments || attachments.length === 0)) {
+                return;
+            }
             
-            // ユーザーメッセージを表示（添付ファイル付き）
-            this.addUserMessage(message, chatMessages, attachments, timestamp);
+            // ユーザー入力をクリア
             userInput.value = '';
-            userInput.style.height = 'auto';
+            this._adjustTextareaHeight(userInput);
+            
+            // 添付ファイルの処理
+            let attachmentContent = '';
+            if (attachments && attachments.length > 0) {
+                for (const attachment of attachments) {
+                    // PDFの場合は抽出されたテキストを使用
+                    if (attachment.type === 'pdf' && attachment.content) {
+                        attachmentContent += `\n${attachment.content}\n`;
+                    }
+                    // その他のテキストベースのファイル
+                    else if (attachment.type === 'file' && 
+                            (attachment.mimeType.startsWith('text/') || 
+                             attachment.mimeType.includes('javascript') || 
+                             attachment.mimeType.includes('json'))) {
+                        try {
+                            const text = atob(attachment.data.split(',')[1]);
+                            attachmentContent += `\n=== ${attachment.name} の内容 ===\n${text}\n`;
+                        } catch (error) {
+                            console.error('ファイル内容の変換エラー:', error);
+                        }
+                    }
+                }
+            }
+            
+            // ユーザーメッセージを作成（添付ファイルの内容を含む）
+            const userMessage = {
+                role: 'user',
+                content: attachmentContent ? `${userText}\n\n${attachmentContent}` : userText,
+                timestamp: Date.now()
+            };
+            
+            // メッセージを追加する
+            this.addUserMessage(userMessage.content, chatMessages, attachments, userMessage.timestamp);
             
             // 現在の会話にユーザーメッセージを追加
-            currentConversation.messages.push({
-                role: 'user',
-                content: message,  // 純粋なテキストメッセージ
-                timestamp: timestamp  // タイムスタンプを追加
-            });
+            conversation.messages.push(userMessage);
             
             // チャットタイトルがデフォルトの場合、最初のメッセージをタイトルに設定
-            if (currentConversation.title === '新しいチャット' && 
-                currentConversation.messages.filter(m => m.role === 'user').length === 1) {
-                currentConversation.title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
-                titleUpdated = true;
+            if (conversation.title === '新しいチャット' && 
+                conversation.messages.filter(m => m.role === 'user').length === 1) {
+                conversation.title = userText.substring(0, 30) + (userText.length > 30 ? '...' : '');
             }
             
             try {
@@ -650,7 +667,7 @@ window.Chat = {
                 // APIに送信するメッセージにシステムプロンプトを追加
                 const messagesWithSystem = [
                     { role: 'system', content: effectiveSystemPrompt },
-                    ...currentConversation.messages.filter(m => m.role !== 'system')
+                    ...conversation.messages.filter(m => m.role !== 'system')
                 ];
                 
                 // ボットの応答タイムスタンプ
@@ -666,7 +683,7 @@ window.Chat = {
                 // ストリーミングAPI呼び出し
                 await window.API.callOpenAIAPI(
                     messagesWithSystem, 
-                    currentConversation.model,
+                    conversation.model,
                     attachments,
                     {
                         stream: true,
@@ -687,7 +704,7 @@ window.Chat = {
                 );
                 
                 // 応答をメッセージ履歴に追加
-                currentConversation.messages.push({
+                conversation.messages.push({
                     role: 'assistant',
                     content: fullResponseText,
                     timestamp: botTimestamp  // タイムスタンプを追加
