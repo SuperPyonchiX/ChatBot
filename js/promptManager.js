@@ -9,6 +9,11 @@
 window.PromptManager = (function() {
     // プロンプトカテゴリのデフォルト設定
     const DEFAULT_CATEGORIES = {
+        'all': {
+            name: '全体',
+            description: 'すべてのプロンプト',
+            order: -1  // 最上部に表示
+        },
         'general': {
             name: '一般',
             description: '一般的な会話や質問用のプロンプト',
@@ -287,34 +292,30 @@ window.PromptManager = (function() {
 
     /**
      * プロンプトを検索する
-     * @public
-     * @param {Object} criteria - 検索条件
-     * @returns {Array} 検索結果の配列
+     * @param {Object} filter - フィルタリング条件
+     * @returns {Array} フィルタリングされたプロンプト配列
      */
-    function searchPrompts(criteria = {}) {
-        const library = loadPromptLibrary();
+    function searchPrompts(filter = {}) {
+        const prompts = loadPromptLibrary();
+        console.log('検索フィルター:', filter, '全プロンプト数:', prompts.length);
         
-        return library.filter(prompt => {
-            // カテゴリでフィルタリング
-            if (criteria.category && prompt.category !== criteria.category) {
-                return false;
+        return prompts.filter(prompt => {
+            // カテゴリフィルタリング
+            if (filter.category && filter.category !== 'all') {
+                if (prompt.category !== filter.category) {
+                    return false;
+                }
             }
             
-            // タグでフィルタリング
-            if (criteria.tag && !prompt.tags.includes(criteria.tag)) {
-                return false;
-            }
-            
-            // テキスト検索（queryまたはsearchTextを使用）
-            const searchQuery = criteria.query || criteria.searchText;
-            if (searchQuery) {
-                const query = searchQuery.toLowerCase();
-                return (
-                    prompt.name.toLowerCase().includes(query) ||
-                    prompt.description.toLowerCase().includes(query) ||
-                    prompt.content.toLowerCase().includes(query) ||
-                    prompt.tags.some(tag => tag.toLowerCase().includes(query))
-                );
+            // テキスト検索
+            if (filter.searchText) {
+                const searchText = filter.searchText.toLowerCase();
+                const matchesName = prompt.name.toLowerCase().includes(searchText);
+                const matchesDescription = prompt.description?.toLowerCase().includes(searchText);
+                const matchesContent = prompt.content.toLowerCase().includes(searchText);
+                const matchesTags = prompt.tags?.some(tag => tag.toLowerCase().includes(searchText));
+                
+                return matchesName || matchesDescription || matchesContent || matchesTags;
             }
             
             return true;

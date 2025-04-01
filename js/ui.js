@@ -1434,6 +1434,9 @@ Object.assign(window.UI, {
             // カテゴリ項目
             const categoryItem = document.createElement('div');
             categoryItem.className = 'category-item';
+            if (key === 'all') {
+                categoryItem.classList.add('active'); // 「全体」カテゴリを初期選択状態に
+            }
             categoryItem.dataset.category = key;
             
             // カテゴリ名とカウントを含むコンテナ
@@ -1448,7 +1451,7 @@ Object.assign(window.UI, {
             const actionsContainer = document.createElement('div');
             actionsContainer.className = 'category-actions';
             
-            if (key !== 'general') { // 「一般」カテゴリは編集・削除不可
+            if (key !== 'all' && key !== 'general') {
                 const editButton = document.createElement('button');
                 editButton.className = 'category-edit-button';
                 editButton.innerHTML = '<i class="fas fa-edit"></i>';
@@ -1482,23 +1485,17 @@ Object.assign(window.UI, {
                 });
                 
                 categoryItem.classList.add('active');
+                // カテゴリをクリックしたときにカウントを更新し、プロンプト一覧も更新
+                this._updateCategoryCounts();
                 this.updatePromptsList({ category: key });
             });
             
-            categoriesList.appendChild(categoryItem);            
+            categoriesList.appendChild(categoryItem);
         });
-        
-        // 最初のカテゴリを選択状態にする
-        const firstCategory = categoriesList.querySelector('.category-item');
-        if (firstCategory) {
-            firstCategory.classList.add('active');
-        }
-        
-        // カテゴリごとのプロンプト数を更新
+
+        // 初期表示時のカウントとプロンプト一覧を更新
         this._updateCategoryCounts();
-        
-        // プロンプト一覧も更新
-        this.updatePromptsList();
+        this.updatePromptsList({ category: 'all' });
         
         console.log('カテゴリ一覧の更新が完了しました');
     };
@@ -1922,13 +1919,14 @@ Object.assign(window.UI, {
         console.log('プロンプトライブラリを読み込みました:', prompts.length, '件');
         
         // カテゴリごとのカウントを集計
-        const counts = {};
+        const counts = {
+            'all': prompts.length // 「全体」カテゴリのカウントを追加
+        };
+        
+        // 各カテゴリのカウントを計算
         prompts.forEach(prompt => {
             if (!prompt.category) return;
-            
-            // カテゴリのカウント
             counts[prompt.category] = (counts[prompt.category] || 0) + 1;
-            
         });
         
         // カテゴリ要素のカウンタを更新
@@ -1971,7 +1969,7 @@ Object.assign(window.UI, {
             .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
         
         // カテゴリオプションを作成
-        sortedCategories.forEach(([key, category]) => {
+        sortedCategories.forEach(([key,category]) => {
             const option = document.createElement('option');
             option.value = key;
             option.textContent = category.name;
