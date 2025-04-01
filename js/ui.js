@@ -1966,10 +1966,10 @@ Object.assign(window.UI, {
         
         // カテゴリを並び替え
         const sortedCategories = Object.entries(categories)
-            .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
-        
+            .sort((a, b) => (a[1].order || 0) - (b[1].order || 0))
+            .filter(([key]) => key !== 'all'); // 「全体」カテゴリを除外        
         // カテゴリオプションを作成
-        sortedCategories.forEach(([key,category]) => {
+        sortedCategories.forEach(([key, category]) => {
             const option = document.createElement('option');
             option.value = key;
             option.textContent = category.name;
