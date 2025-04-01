@@ -616,8 +616,11 @@ window.Chat = {
             
             // ユーザー入力をクリア
             userInput.value = '';
-            this._adjustTextareaHeight(userInput);
+            window.UI.autoResizeTextarea(userInput);
             
+            // タイトルが更新されたかどうかを追跡
+            let titleUpdated = false;
+
             // 添付ファイルの処理
             let attachmentContent = '';
             if (attachments && attachments.length > 0) {
@@ -658,8 +661,9 @@ window.Chat = {
             if (conversation.title === '新しいチャット' && 
                 conversation.messages.filter(m => m.role === 'user').length === 1) {
                 conversation.title = userText.substring(0, 30) + (userText.length > 30 ? '...' : '');
+                titleUpdated = true;  // タイトルが更新されたのでフラグを設定
             }
-            
+
             try {
                 // システムプロンプトが空の場合はデフォルト値を使用
                 const effectiveSystemPrompt = systemPrompt || window.CONFIG.PROMPTS.DEFAULT_SYSTEM_PROMPT;
