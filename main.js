@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'promptManagerModal', 'closePromptManager', 'addCategoryButton',
             'addPromptButton', 'promptSearchInput', 'promptEditModal',
             'savePromptEdit', 'cancelPromptEdit', 'promptNameInput',
-            'promptCategorySelect', 'promptSubcategorySelect', 'promptTagsInput',
+            'promptCategorySelect', 'promptTagsInput',
             'promptDescriptionInput', 'promptContentInput'
         ];
         
@@ -116,9 +116,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // グローバルなapiSettingsを設定
     AppState.updateGlobalSettings();
-
-    // モバイル用のサイドバートグルボタンを追加
-    window.UI.createSidebarToggle();
 
     // 初期化
     _init();
@@ -139,6 +136,17 @@ document.addEventListener('DOMContentLoaded', function() {
      * @private
      */
     function _init() {
+        // UI初期化
+        if (window.UI && window.UI.initialize) {
+            window.UI.initialize();
+        } else {
+            console.warn('UI.initializeが見つかりません');
+            // フォールバック: サイドバートグルボタンを個別に作成
+            if (window.UI && window.UI.createSidebarToggle) {
+                window.UI.createSidebarToggle();
+            }
+        }
+        
         // プロンプトマネージャーの初期化
         if (window.PromptManager) {
             window.PromptManager.init();
@@ -190,6 +198,11 @@ document.addEventListener('DOMContentLoaded', function() {
         _setupFileEvents();
         _setupModalEvents();
         _setupGlobalEvents();
+        
+        // プロンプト候補表示機能を初期化
+        if (window.UI && window.UI.initPromptSuggestions) {
+            window.UI.initPromptSuggestions();
+        }
     }
 
     /**
@@ -351,6 +364,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 Elements.newTemplateName.value = '';
             }
         });
+
+        // 高度なプロンプト管理へ切り替え
+        const switchToPromptManagerBtn = document.getElementById('switchToPromptManager');
+        if (switchToPromptManagerBtn) {
+            switchToPromptManagerBtn.addEventListener('click', () => {
+                window.UI.hideSystemPromptModal();
+                window.UI.showPromptManagerModal();
+            });
+        }
     }
 
     /**

@@ -1446,50 +1446,12 @@ Object.assign(window.UI, {
                 document.querySelectorAll('.category-item.active').forEach(item => {
                     item.classList.remove('active');
                 });
-                document.querySelectorAll('.subcategory-item.active').forEach(item => {
-                    item.classList.remove('active');
-                });
                 
                 categoryItem.classList.add('active');
                 this.updatePromptsList({ category: key });
             });
             
-            categoriesList.appendChild(categoryItem);
-            
-            // サブカテゴリがある場合は表示
-            if (category.subcategories && Object.keys(category.subcategories).length > 0) {
-                const subcategoriesContainer = document.createElement('div');
-                subcategoriesContainer.className = 'subcategories-container';
-                
-                // サブカテゴリを並び替え
-                const sortedSubcategories = Object.entries(category.subcategories)
-                    .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
-                
-                // サブカテゴリごとに項目を作成
-                sortedSubcategories.forEach(([subKey, subcategory]) => {
-                    const subcategoryItem = document.createElement('div');
-                    subcategoryItem.className = 'subcategory-item';
-                    subcategoryItem.dataset.category = key;
-                    subcategoryItem.dataset.subcategory = subKey;
-                    subcategoryItem.textContent = subcategory.name;
-                    
-                    // クリックイベント
-                    subcategoryItem.addEventListener('click', () => {
-                        console.log('サブカテゴリがクリックされました:', key, subKey);
-                        document.querySelectorAll('.category-item.active, .subcategory-item.active').forEach(item => {
-                            item.classList.remove('active');
-                        });
-                        
-                        categoryItem.classList.add('active');
-                        subcategoryItem.classList.add('active');
-                        this.updatePromptsList({ category: key, subcategory: subKey });
-                    });
-                    
-                    subcategoriesContainer.appendChild(subcategoryItem);
-                });
-                
-                categoriesList.appendChild(subcategoriesContainer);
-            }
+            categoriesList.appendChild(categoryItem);            
         });
         
         // 最初のカテゴリを選択状態にする
@@ -1661,14 +1623,10 @@ Object.assign(window.UI, {
                     
                     // プロンプト一覧を更新
                     const activeCategory = document.querySelector('.category-item.active');
-                    const activeSubcategory = document.querySelector('.subcategory-item.active');
                     
                     const filter = {};
                     if (activeCategory) {
                         filter.category = activeCategory.dataset.category;
-                    }
-                    if (activeSubcategory) {
-                        filter.subcategory = activeSubcategory.dataset.subcategory;
                     }
                     
                     this.updatePromptsList(filter);
@@ -1698,14 +1656,11 @@ Object.assign(window.UI, {
         const modalTitle = document.getElementById('promptEditTitle');
         const nameInput = document.getElementById('promptNameInput');
         const categorySelect = document.getElementById('promptCategorySelect');
-        const subcategoryContainer = document.getElementById('promptSubcategoryContainer');
-        const subcategorySelect = document.getElementById('promptSubcategorySelect');
         const tagsInput = document.getElementById('promptTagsInput');
         const descriptionInput = document.getElementById('promptDescriptionInput');
         const contentInput = document.getElementById('promptContentInput');
         
         if (!modal || !modalTitle || !nameInput || !categorySelect || 
-            !subcategoryContainer || !subcategorySelect || 
             !tagsInput || !descriptionInput || !contentInput) {
             console.error('プロンプト編集モーダルの要素が見つかりません');
             return;
@@ -1715,13 +1670,12 @@ Object.assign(window.UI, {
         modalTitle.textContent = isNewPrompt ? '新規プロンプト作成' : 'プロンプト編集';
         
         // カテゴリオプションを設定
-        this._updateCategoryOptions(categorySelect, subcategorySelect);
+        this._updateCategoryOptions(categorySelect);
         
         if (isNewPrompt) {
             // 新規プロンプトの場合はフォームをクリア
             nameInput.value = '';
             categorySelect.value = 'general';
-            this._updateSubcategoryVisibility(categorySelect.value, subcategoryContainer, subcategorySelect);
             tagsInput.value = '';
             descriptionInput.value = '';
             contentInput.value = '';
@@ -1732,12 +1686,7 @@ Object.assign(window.UI, {
             // 既存プロンプトの場合はフォームに値をセット
             nameInput.value = prompt.name || '';
             categorySelect.value = prompt.category || 'general';
-            this._updateSubcategoryVisibility(categorySelect.value, subcategoryContainer, subcategorySelect);
-            
-            if (prompt.subcategory) {
-                subcategorySelect.value = prompt.subcategory;
-            }
-            
+                        
             tagsInput.value = prompt.tags ? prompt.tags.join(', ') : '';
             descriptionInput.value = prompt.description || '';
             contentInput.value = prompt.content || '';
@@ -1748,7 +1697,7 @@ Object.assign(window.UI, {
         
         // カテゴリ変更時のイベントリスナー
         categorySelect.onchange = () => {
-            this._updateSubcategoryVisibility(categorySelect.value, subcategoryContainer, subcategorySelect);
+
         };
         
         // モーダルを表示
@@ -1781,12 +1730,11 @@ Object.assign(window.UI, {
         const modal = document.getElementById('promptEditModal');
         const nameInput = document.getElementById('promptNameInput');
         const categorySelect = document.getElementById('promptCategorySelect');
-        const subcategorySelect = document.getElementById('promptSubcategorySelect');
         const tagsInput = document.getElementById('promptTagsInput');
         const descriptionInput = document.getElementById('promptDescriptionInput');
         const contentInput = document.getElementById('promptContentInput');
         
-        if (!modal || !nameInput || !categorySelect || !subcategorySelect || 
+        if (!modal || !nameInput || !categorySelect || 
             !tagsInput || !descriptionInput || !contentInput) {
             console.error('プロンプト編集モーダルの要素が見つかりません');
             return;
@@ -1795,7 +1743,6 @@ Object.assign(window.UI, {
         // 入力値を取得
         const name = nameInput.value.trim();
         const category = categorySelect.value;
-        const subcategory = subcategoryContainer.style.display !== 'none' ? subcategorySelect.value : '';
         const tags = tagsInput.value.split(',').map(tag => tag.trim()).filter(Boolean);
         const description = descriptionInput.value.trim();
         const content = contentInput.value.trim();
@@ -1815,7 +1762,6 @@ Object.assign(window.UI, {
                 const result = window.PromptManager.updatePrompt(promptId, {
                     name,
                     category,
-                    subcategory,
                     tags,
                     description,
                     content
@@ -1832,7 +1778,6 @@ Object.assign(window.UI, {
                 const newPromptId = window.PromptManager.addPrompt({
                     name,
                     category,
-                    subcategory,
                     tags,
                     description,
                     content
@@ -1850,14 +1795,10 @@ Object.assign(window.UI, {
             
             // プロンプト一覧を更新
             const activeCategory = document.querySelector('.category-item.active');
-            const activeSubcategory = document.querySelector('.subcategory-item.active');
             
             const filter = {};
             if (activeCategory) {
                 filter.category = activeCategory.dataset.category;
-            }
-            if (activeSubcategory) {
-                filter.subcategory = activeSubcategory.dataset.subcategory;
             }
             
             this.updatePromptsList(filter);
@@ -1891,12 +1832,11 @@ Object.assign(window.UI, {
         const modal = document.getElementById('promptEditModal');
         const nameInput = document.getElementById('promptNameInput');
         const categorySelect = document.getElementById('promptCategorySelect');
-        const subcategorySelect = document.getElementById('promptSubcategorySelect');
         const tagsInput = document.getElementById('promptTagsInput');
         const descriptionInput = document.getElementById('promptDescriptionInput');
         const contentInput = document.getElementById('promptContentInput');
         
-        if (!modal || !nameInput || !categorySelect || !subcategorySelect || 
+        if (!modal || !nameInput || !categorySelect || 
             !tagsInput || !descriptionInput || !contentInput) {
             console.error('プロンプト編集モーダルの要素が見つかりません');
             return;
@@ -1905,7 +1845,6 @@ Object.assign(window.UI, {
         // フォームをクリア
         nameInput.value = '';
         categorySelect.value = 'general';
-        subcategorySelect.value = '';
         tagsInput.value = '';
         descriptionInput.value = '';
         contentInput.value = '';
@@ -1940,11 +1879,6 @@ Object.assign(window.UI, {
             // カテゴリのカウント
             counts[prompt.category] = (counts[prompt.category] || 0) + 1;
             
-            // サブカテゴリがある場合
-            if (prompt.subcategory) {
-                const subKey = `${prompt.category}_${prompt.subcategory}`;
-                counts[subKey] = (counts[subKey] || 0) + 1;
-            }
         });
         
         // カテゴリ要素のカウンタを更新
@@ -1958,41 +1892,25 @@ Object.assign(window.UI, {
             }
         });
         
-        // サブカテゴリのカウンタを更新
-        const subcategories = document.querySelectorAll('.subcategory-item');
-        subcategories.forEach(subcategoryEl => {
-            const categoryKey = subcategoryEl.datasetcategory;
-            const subcategoryKey = subcategoryEl.dataset.subcategory;
-            if (!categoryKey || !subcategoryKey) return;
-            
-            const subKey = `${categoryKey}_${subcategoryKey}`;
-            const count = counts[subKey] || 0;
-            
-            // サブカテゴリ名の後にカウントを表示
-            subcategoryEl.textContent = `${subcategoryEl.textContent.split('(')[0].trim()} (${count})`;
-        });
-        
         console.log('カテゴリカウントを更新しました', counts);
     };
     
     /**
-     * カテゴリとサブカテゴリの選択肢を更新する
+     * カテゴリとの選択肢を更新する
      * @function _updateCategoryOptions
      * @memberof UI
      * @param {HTMLSelectElement} categorySelect - カテゴリ選択要素
-     * @param {HTMLSelectElement} subcategorySelect - サブカテゴリ選択要素
      * @private
      */
-    ui._updateCategoryOptions = function(categorySelect, subcategorySelect) {
+    ui._updateCategoryOptions = function(categorySelect) {
         console.log('カテゴリオプションを更新します');
-        if (!categorySelect || !subcategorySelect) {
+        if (!categorySelect) {
             console.error('カテゴリ選択要素が見つかりません');
             return;
         }
         
         // カテゴリ選択肢をクリア
         categorySelect.innerHTML = '';
-        subcategorySelect.innerHTML = '';
         
         // カテゴリを取得
         const categories = window.PromptManager.loadCategories();
@@ -2009,96 +1927,10 @@ Object.assign(window.UI, {
             option.textContent = category.name;
             categorySelect.appendChild(option);
         });
-        
-        // 最初のカテゴリに対応するサブカテゴリを表示
-        const firstCategoryKey = sortedCategories[0]?.[0];
-        if (firstCategoryKey) {
-            this._updateSubcategoryOptions(firstCategoryKey, subcategorySelect);
-        }
-        
+                
         console.log('カテゴリオプションの更新が完了しました');
     };
-    
-    /**
-     * サブカテゴリの選択肢を更新する
-     * @function _updateSubcategoryOptions
-     * @memberof UI
-     * @param {string} categoryKey - カテゴリキー
-     * @param {HTMLSelectElement} subcategorySelect - サブカテゴリ選択要素
-     * @private
-     */
-    ui._updateSubcategoryOptions = function(categoryKey, subcategorySelect) {
-        console.log('サブカテゴリオプションを更新します:', categoryKey);
-        if (!categoryKey || !subcategorySelect) {
-            console.error('サブカテゴリ更新に必要なパラメータが不足しています');
-            return;
-        }
-        
-        // サブカテゴリ選択肢をクリア
-        subcategorySelect.innerHTML = '';
-        
-        // 空のオプションを追加
-        const emptyOption = document.createElement('option');
-        emptyOption.value = '';
-        emptyOption.textContent = '-- サブカテゴリなし --';
-        subcategorySelect.appendChild(emptyOption);
-        
-        // カテゴリを取得
-        const categories = window.PromptManager.loadCategories();
-        const category = categories[categoryKey];
-        
-        if (!category || !category.subcategories) {
-            console.log('このカテゴリにはサブカテゴリがありません:', categoryKey);
-            return;
-        }
-        
-        // サブカテゴリを並び替え
-        const sortedSubcategories = Object.entries(category.subcategories)
-            .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
-        
-        // サブカテゴリオプションを作成
-        sortedSubcategories.forEach(([key, subcategory]) => {
-            const option = document.createElement('option');
-            option.value = key;
-            option.textContent = subcategory.name;
-            subcategorySelect.appendChild(option);
-        });
-        
-        console.log('サブカテゴリオプションの更新が完了しました:', sortedSubcategories.length, '件');
-    };
-    
-    /**
-     * サブカテゴリ選択要素の表示/非表示を切り替える
-     * @function _updateSubcategoryVisibility
-     * @memberof UI
-     * @param {string} categoryKey - カテゴリキー
-     * @param {HTMLElement} subcategoryContainer - サブカテゴリコンテナ要素
-     * @param {HTMLSelectElement} subcategorySelect - サブカテゴリ選択要素
-     * @private
-     */
-    ui._updateSubcategoryVisibility = function(categoryKey, subcategoryContainer, subcategorySelect) {
-        console.log('サブカテゴリの表示状態を更新します:', categoryKey);
-        if (!categoryKey || !subcategoryContainer || !subcategorySelect) {
-            console.error('サブカテゴリ表示更新に必要なパラメータが不足しています');
-            return;
-        }
-        
-        // カテゴリを取得
-        const categories = window.PromptManager.loadCategories();
-        const category = categories[categoryKey];
-        
-        // サブカテゴリの有無によって表示/非表示を切り替え
-        if (category && category.subcategories && Object.keys(category.subcategories).length > 0) {
-            subcategoryContainer.style.display = 'block';
-            this._updateSubcategoryOptions(categoryKey, subcategorySelect);
-        } else {
-            subcategoryContainer.style.display = 'none';
-            subcategorySelect.value = '';
-        }
-        
-        console.log('サブカテゴリの表示状態を更新しました:', subcategoryContainer.style.display);
-    };
-    
+            
     /**
      * プロンプトをシステムプロンプトとして設定する
      * @function _setAsSystemPrompt
@@ -2174,6 +2006,59 @@ Object.assign(window.UI, {
             });
         }
         
+        // システムプロンプト設定へ切り替えボタン
+        const switchToSystemPromptBtn = document.getElementById('switchToSystemPrompt');
+        if (switchToSystemPromptBtn) {
+            switchToSystemPromptBtn.addEventListener('click', () => {
+                console.log('システムプロンプト設定へボタンがクリックされました');
+                this.hidePromptManagerModal();
+                
+                // AppStateからシステムプロンプトとテンプレートを取得
+                const systemPrompt = window.Storage.loadSystemPrompt();
+                const promptTemplates = window.Storage.loadPromptTemplates();
+                
+                // システムプロンプトモーダルを表示
+                this.showSystemPromptModal(
+                    systemPrompt,
+                    promptTemplates,
+                    // テンプレート選択と削除のコールバック関数
+                    (templateName) => {
+                        const template = promptTemplates[templateName];
+                        if (template) {
+                            const systemPromptInput = document.getElementById('systemPromptInput');
+                            if (systemPromptInput) {
+                                systemPromptInput.value = template;
+                            }
+                        }
+                    },
+                    (templateName) => {
+                        if (confirm(`テンプレート "${templateName}" を削除してもよろしいですか？`)) {
+                            delete promptTemplates[templateName];
+                            window.Storage.savePromptTemplates(promptTemplates);
+                            this.updateTemplateList(promptTemplates, 
+                                (tName) => {
+                                    const template = promptTemplates[tName];
+                                    if (template) {
+                                        const systemPromptInput = document.getElementById('systemPromptInput');
+                                        if (systemPromptInput) {
+                                            systemPromptInput.value = template;
+                                        }
+                                    }
+                                }, 
+                                (tName) => {
+                                    if (confirm(`テンプレート "${tName}" を削除してもよろしいですか？`)) {
+                                        delete promptTemplates[tName];
+                                        window.Storage.savePromptTemplates(promptTemplates);
+                                        this.updateTemplateList(promptTemplates, null, null);
+                                    }
+                                }
+                            );
+                        }
+                    }
+                );
+            });
+        }
+        
         // 新規プロンプトボタン
         const addPromptButton = document.getElementById('addPromptButton');
         if (addPromptButton) {
@@ -2206,29 +2091,25 @@ Object.assign(window.UI, {
             });
         }
         
-        // プロンプト検索入力
+        // プロンプト検索入力欄
         const promptSearchInput = document.getElementById('promptSearchInput');
         if (promptSearchInput) {
             promptSearchInput.addEventListener('input', () => {
-                console.log('検索入力:', promptSearchInput.value);
-                const searchTerm = promptSearchInput.value.trim();
-                if (searchTerm) {
-                    this.updatePromptsList({ searchTerm });
-                } else {
-                    // 検索テキストが空の場合は、選択されているカテゴリでフィルタ
-                    const activeCategory = document.querySelector('.category-item.active');
-                    const activeSubcategory = document.querySelector('.subcategory-item.active');
-                    
-                    const filter = {};
-                    if (activeCategory) {
-                        filter.category = activeCategory.dataset.category;
-                    }
-                    if (activeSubcategory) {
-                        filter.subcategory = activeSubcategory.dataset.subcategory;
-                    }
-                    
-                    this.updatePromptsList(filter);
+                console.log('プロンプト検索入力:', promptSearchInput.value);
+                const searchText = promptSearchInput.value.trim();
+                
+                // カテゴリによるフィルタリング条件を取得
+                const activeCategory = document.querySelector('.category-item.active');
+                
+                const filter = {
+                    searchText: searchText
+                };
+                
+                if (activeCategory) {
+                    filter.category = activeCategory.dataset.category;
                 }
+                                
+                this.updatePromptsList(filter);
             });
         }
         
@@ -2251,5 +2132,30 @@ Object.assign(window.UI, {
         }
         
         console.log('プロンプトマネージャーのイベントセットアップが完了しました');
+    };
+    
+    /**
+     * プロンプト候補表示機能を初期化します
+     * テキストエリアにスラッシュ(/)入力時の候補表示機能を追加します
+     * 
+     * @function initPromptSuggestions
+     * @memberof UI
+     */
+    ui.initPromptSuggestions = function() {
+        console.log('プロンプト候補表示機能を初期化します');
+        const userInput = document.getElementById('userInput');
+        const promptSuggestions = document.getElementById('promptSuggestions');
+        
+        if (!userInput || !promptSuggestions) {
+            console.error('プロンプト候補表示に必要な要素が見つかりません');
+            return;
+        }
+        
+        // プロンプト候補表示機能を初期化
+        if (window.PromptSuggestions) {
+            window.PromptSuggestions.init(userInput, promptSuggestions);
+        } else {
+            console.error('PromptSuggestionsモジュールが読み込まれていません');
+        }
     };
 })();

@@ -684,23 +684,6 @@
     color: white;
 }
 
-.subcategory-item {
-    padding: 6px 10px 6px 20px;
-    cursor: pointer;
-    border-radius: 4px;
-    margin-bottom: 3px;
-    font-size: 0.9em;
-}
-
-.subcategory-item:hover {
-    background-color: var(--hover-color);
-}
-
-.subcategory-item.active {
-    background-color: var(--secondary-color);
-    color: white;
-}
-
 .category-actions {
     margin-top: 10px;
     display: flex;
@@ -807,4 +790,64 @@
     .prompt-manager-modal {
         padding: 10px;
     }
+}
+
+/* プロンプト候補表示用スタイル */
+.prompt-suggestions {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+    background-color: #2d2d2d;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    display: none;
+}
+
+.prompt-suggestions.show {
+    display: block;
+}
+
+.prompt-suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #404040;
+    transition: background-color 0.2s;
+}
+
+.prompt-suggestion-item:hover,
+.prompt-suggestion-item.selected {
+    background-color: #404040;
+}
+
+.prompt-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.prompt-suggestion-name {
+    font-weight: 600;
+    margin-bottom: 2px;
+    color: #e0e0e0; /* 明示的に明るい色を設定 */
+}
+
+.prompt-suggestion-description {
+    font-size: 0.85em;
+    color: #b0b0b0; /* 明示的に明るい灰色を設定 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.prompt-category-label {
+    display: inline-block;
+    font-size: 0.75em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 5px;
+    background-color: #505050;
+    color: #e0e0e0; /* 明示的に明るい色を設定 */
 }

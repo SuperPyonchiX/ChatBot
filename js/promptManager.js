@@ -17,12 +17,7 @@ window.PromptManager = (function() {
         'programming': {
             name: 'プログラミング',
             description: 'コード生成や技術的な質問用のプロンプト',
-            order: 1,
-            subcategories: {
-                'javascript': { name: 'JavaScript', order: 0 },
-                'python': { name: 'Python', order: 1 },
-                'other': { name: 'その他言語', order: 2 }
-            }
+            order: 1
         },
         'writing': {
             name: '文章作成',
@@ -57,6 +52,66 @@ window.PromptManager = (function() {
         PROMPT_VARIABLES: 'promptVariables'
     };
 
+    // デフォルトのプロンプトテンプレート
+    const DEFAULT_PROMPTS = [
+        {
+            name: '詳細な説明要求',
+            content: 'この{{topic}}について、初心者にもわかりやすく詳細に説明してください。具体例を交えて説明し、重要なポイントを箇条書きでまとめてください。',
+            description: 'トピックについて詳細な説明を求めるプロンプト',
+            category: 'general',
+            tags: ['説明', '初心者向け']
+        },
+        {
+            name: '比較分析',
+            content: '{{option1}}と{{option2}}を以下の観点から比較してください：\n1. メリット\n2. デメリット\n3. 使用シーン\n4. コスト\n5. 将来性',
+            description: '2つの選択肢を複数の観点から比較するプロンプト',
+            category: 'general',
+            tags: ['比較', '分析']
+        },
+        {
+            name: 'コード生成',
+            content: '以下の要件を満たす{{language}}のコードを書いてください。\n\n【機能要件】\n{{requirements}}\n\n【追加条件】\n- コードは読みやすく、メンテナンスしやすいものにしてください\n- エラーハンドリングを適切に実装してください\n- コードの説明をコメントとして含めてください',
+            description: '指定された言語でコードを生成するプロンプト',
+            category: 'programming',
+            tags: ['コード生成', 'プログラミング']
+        },
+        {
+            name: 'バグ修正',
+            content: '以下の{{language}}コードにバグがあります。問題を特定して修正してください：\n\n```{{language}}\n{{code}}\n```\n\n【エラー内容】\n{{error_message}}\n\n修正したコードと、何が問題だったのかの説明を提供してください。',
+            description: 'コードのバグを修正するプロンプト',
+            category: 'programming',
+            tags: ['デバッグ', 'バグ修正']
+        },
+        {
+            name: 'リファクタリング提案',
+            content: '以下の{{language}}コードをリファクタリングしてください：\n\n```{{language}}\n{{code}}\n```\n\n以下の点を改善してください：\n- コードの読みやすさ\n- パフォーマンス\n- ベストプラクティスの適用\n- 重複コードの削除\n\n改善点と理由を説明してください。',
+            description: 'コードのリファクタリング提案をするプロンプト',
+            category: 'programming',
+            tags: ['リファクタリング', 'コード改善']
+        },
+        {
+            name: 'メール文章作成',
+            content: '{{recipient}}宛てのビジネスメールを作成してください。\n\n【目的】\n{{purpose}}\n\n【トーン】\n{% if formal %}フォーマル{% else %}カジュアル{% endif %}\n\n【追加情報】\n{{additional_info}}',
+            description: 'ビジネスメールを作成するプロンプト',
+            category: 'writing',
+            tags: ['メール', 'ビジネス文書']
+        },
+        {
+            name: 'ブログ記事作成',
+            content: '{{topic}}に関するブログ記事を作成してください。\n\n【対象読者】\n{{audience}}\n\n【記事の長さ】\n約{{length}}文字\n\n【キーポイント】\n{{key_points}}\n\n【記事のトーン】\n{{tone}}\n\nSEOに最適化し、読者の興味を引く見出しと導入部から始めてください。適切な小見出しを使い、読みやすく構成してください。',
+            description: 'ブログ記事を作成するプロンプト',
+            category: 'writing',
+            tags: ['ブログ', 'コンテンツ作成']
+        },
+        {
+            name: '要約',
+            content: '以下のテキストを要約してください。重要なポイントが含まれるように、約{{summary_length}}文字でまとめてください。\n\n{{text_to_summarize}}',
+            description: 'テキストを要約するプロンプト',
+            category: 'writing',
+            tags: ['要約', 'テキスト処理']
+        }
+    ];
+
     /**
      * 初期化
      * @public
@@ -74,6 +129,15 @@ window.PromptManager = (function() {
             saveVariables({
                 'current_date': new Date().toISOString().split('T')[0],
                 'user_name': 'ユーザー'
+            });
+        }
+
+        // デフォルトプロンプトテンプレートを追加（既存のプロンプトが無い場合のみ）
+        const library = loadPromptLibrary();
+        if (library.length === 0) {
+            console.log('デフォルトプロンプトテンプレートを追加します');
+            DEFAULT_PROMPTS.forEach(prompt => {
+                addPrompt(prompt);
             });
         }
     }
@@ -155,7 +219,6 @@ window.PromptManager = (function() {
             content: prompt.content,
             description: prompt.description || '',
             category: prompt.category || 'general',
-            subcategory: prompt.subcategory || '',
             tags: Array.isArray(prompt.tags) ? prompt.tags : [],
             variables: extractVariables(prompt.content),
             createdAt: Date.now(),
@@ -184,7 +247,7 @@ window.PromptManager = (function() {
         if (index === -1) return false;
         
         // 更新可能なフィールドを更新
-        const validFields = ['name', 'content', 'description', 'category', 'subcategory', 'tags'];
+        const validFields = ['name', 'content', 'description', 'category', 'tags'];
         validFields.forEach(field => {
             if (updatedData[field] !== undefined) {
                 library[index][field] = updatedData[field];
@@ -237,11 +300,6 @@ window.PromptManager = (function() {
                 return false;
             }
             
-            // サブカテゴリでフィルタリング
-            if (criteria.subcategory && prompt.subcategory !== criteria.subcategory) {
-                return false;
-            }
-            
             // タグでフィルタリング
             if (criteria.tag && !prompt.tags.includes(criteria.tag)) {
                 return false;
@@ -283,8 +341,7 @@ window.PromptManager = (function() {
         categories[categoryKey] = {
             name: categoryData.name,
             description: categoryData.description || '',
-            order: categoryData.order !== undefined ? categoryData.order : Object.keys(categories).length,
-            subcategories: categoryData.subcategories || {}
+            order: categoryData.order !== undefined ? categoryData.order : Object.keys(categories).length
         };
         
         saveCategories(categories);
@@ -317,46 +374,6 @@ window.PromptManager = (function() {
                 categories[categoryKey][field] = categoryData[field];
             }
         });
-        
-        saveCategories(categories);
-        return true;
-    }
-
-    /**
-     * サブカテゴリを追加
-     * @public
-     * @param {string} categoryKey - 親カテゴリキー
-     * @param {string} subcategoryKey - サブカテゴリキー
-     * @param {Object} subcategoryData - サブカテゴリデータ
-     * @returns {boolean} 追加成功時true
-     */
-    function addSubcategory(categoryKey, subcategoryKey, subcategoryData) {
-        if (!categoryKey || !subcategoryKey || !subcategoryData || !subcategoryData.name) {
-            return false;
-        }
-        
-        const categories = loadCategories();
-        
-        // 親カテゴリが存在しない場合は失敗
-        if (!categories[categoryKey]) {
-            return false;
-        }
-        
-        // サブカテゴリの初期化
-        if (!categories[categoryKey].subcategories) {
-            categories[categoryKey].subcategories = {};
-        }
-        
-        // 既に存在する場合は失敗
-        if (categories[categoryKey].subcategories[subcategoryKey]) {
-            return false;
-        }
-        
-        categories[categoryKey].subcategories[subcategoryKey] = {
-            name: subcategoryData.name,
-            order: subcategoryData.order !== undefined ? subcategoryData.order : 
-                   Object.keys(categories[categoryKey].subcategories).length
-        };
         
         saveCategories(categories);
         return true;
@@ -651,7 +668,6 @@ window.PromptManager = (function() {
         searchPrompts,
         createCategory,
         updateCategory,
-        addSubcategory,
         setVariable,
         buildPrompt,
         combinePrompts,
