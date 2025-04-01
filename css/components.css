@@ -690,6 +690,50 @@
     justify-content: center;
 }
 
+/* カテゴリ追加ボタンのスタイル調整 */
+.small-button {
+    background-color: #404040;
+    color: #e0e0e0;
+    border: 1px solid #505050;
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 0.9rem;
+}
+
+.small-button:hover {
+    background-color: #505050;
+}
+
+/* 新規プロンプトボタンのスタイル調整 */
+.primary-button {
+    background-color: #404040;
+    color: #e0e0e0;
+    border: 1px solid #505050;
+    border-radius: 4px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.primary-button:hover {
+    background-color: #505050;
+}
+
+/* プロンプトマネージャーの閉じるボタンのスタイル */
+#closePromptManager {
+    background-color: #404040;
+    color: #e0e0e0;
+    border: 1px solid #505050;
+    border-radius: 4px;
+    padding: 8px 15px;
+}
+
+#closePromptManager:hover {
+    background-color: #505050;
+}
+
 .prompt-item {
     padding: 12px;
     border: 1px solid var(--border-color);
