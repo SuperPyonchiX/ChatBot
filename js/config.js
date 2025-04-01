@@ -62,7 +62,16 @@ window.CONFIG = {
             // PDFファイル
             pdf: ['application/pdf'],
             // コード関連
-            code: ['text/javascript', 'text/html', 'text/css', 'application/json']
+            code: ['text/javascript', 'text/html', 'text/css', 'application/json'],
+            // Office関連
+            office: [
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/vnd.ms-powerpoint',
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+            ]
         }
     },
     

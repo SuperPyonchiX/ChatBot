@@ -24,6 +24,84 @@ window.FileHandler = {
     attachmentTimestamp: null,
 
     /**
+     * 初期化関数 - ページ読み込み時に呼び出し
+     */
+    init: function() {
+        // file input要素のaccept属性を動的に設定
+        this.updateAcceptedFileTypes();
+    },
+    
+    /**
+     * 許可されたファイル拡張子をfile input要素に反映
+     */
+    updateAcceptedFileTypes: function() {
+        try {
+            const fileInput = document.getElementById('fileInput');
+            if (!fileInput) return;
+            
+            const acceptedExtensions = this.getAllowedFileExtensions();
+            if (acceptedExtensions && acceptedExtensions.length > 0) {
+                fileInput.setAttribute('accept', acceptedExtensions.join(','));
+            }
+        } catch (error) {
+            console.error('ファイル拡張子設定エラー:', error);
+        }
+    },
+    
+    /**
+     * 許可されたファイル拡張子リストを生成
+     * @returns {Array<string>} 許可された拡張子のリスト (.jpg など)
+     */
+    getAllowedFileExtensions: function() {
+        try {
+            const extensions = [];
+            const allowedTypes = window.CONFIG.FILE.ALLOWED_FILE_TYPES;
+            
+            // MIMEタイプから拡張子への変換マップ
+            const mimeToExtMap = {
+                'image/jpeg': ['.jpg', '.jpeg'],
+                'image/png': ['.png'],
+                'image/gif': ['.gif'],
+                'image/webp': ['.webp'],
+                'image/svg+xml': ['.svg'],
+                'text/plain': ['.txt'],
+                'text/markdown': ['.md'],
+                'text/csv': ['.csv'],
+                'application/pdf': ['.pdf'],
+                'text/javascript': ['.js'],
+                'text/html': ['.html', '.htm'],
+                'text/css': ['.css'],
+                'application/json': ['.json'],
+                // Office形式を追加
+                'application/vnd.ms-excel': ['.xls'],
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+                'application/msword': ['.doc'],
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+                'application/vnd.ms-powerpoint': ['.ppt'],
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx']
+            };
+            
+            // 各カテゴリから拡張子を抽出
+            for (const category in allowedTypes) {
+                if (!Object.prototype.hasOwnProperty.call(allowedTypes, category)) continue;
+                
+                for (const mimeType of allowedTypes[category]) {
+                    if (mimeToExtMap[mimeType]) {
+                        extensions.push(...mimeToExtMap[mimeType]);
+                    }
+                }
+            }
+            
+            // 重複を排除して返す
+            return [...new Set(extensions)];
+        } catch (error) {
+            console.error('拡張子リスト生成エラー:', error);
+            // エラー時はデフォルトの拡張子リストを返す
+            return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.txt', '.md', '.csv', '.pdf', '.js', '.html', '.css', '.json'];
+        }
+    },
+
+    /**
      * ファイル選択イベントの処理
      * @param {Event} event - ファイル入力イベント
      */

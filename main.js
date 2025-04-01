@@ -301,6 +301,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function _setupFileEvents() {
         if (!Elements.fileInput) return;
         
+        // FileHandlerの初期化を行う
+        if (window.FileHandler && window.FileHandler.init) {
+            window.FileHandler.init();
+        }
+        
         // ファイル選択イベント
         Elements.fileInput.addEventListener('change', window.FileHandler.handleFileSelect.bind(window.FileHandler));
 
