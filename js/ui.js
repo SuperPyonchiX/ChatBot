@@ -1540,12 +1540,12 @@ Object.assign(window.UI, {
             // プロンプト項目のHTMLを構築
             promptItem.innerHTML = `
                 <div class="prompt-item-header">
-                    <div class="prompt-item-name">${prompt.name}</div>
+                    <span class="prompt-item-name">${prompt.name}</span>
                     <div class="prompt-item-actions">
                         <button class="edit-prompt-button" title="編集">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="use-prompt-button" title="使用">
+                        <button class="use-prompt-button" title="プロンプトを使用">
                             <i class="fas fa-arrow-right"></i>
                         </button>
                         <button class="system-prompt-button" title="システムプロンプトとして設定">
@@ -1565,51 +1565,64 @@ Object.assign(window.UI, {
                 </div>
             `;
             
-            // 編集ボタンのイベント
-            promptItem.querySelector('.edit-prompt-button').addEventListener('click', (e) => {
-                e.stopPropagation();
-                console.log('編集ボタンがクリックされました:', prompt.id);
-                this.showPromptEditModal(prompt);
-            });
-            
-            // 使用ボタンのイベント
-            promptItem.querySelector('.use-prompt-button').addEventListener('click', (e) => {
-                e.stopPropagation();
-                console.log('使用ボタンがクリックされました:', prompt.id);
-                this._usePrompt(prompt.id);
-            });
-            
-            // システムプロンプトとして設定するボタンのイベント
-            promptItem.querySelector('.system-prompt-button').addEventListener('click', (e) => {
-                e.stopPropagation();
-                console.log('システムプロンプト設定ボタンがクリックされました:', prompt.id);
-                this._setAsSystemPrompt(prompt.id);
-            });
-            
-            // テンプレートとして保存ボタンのイベント
-            promptItem.querySelector('.template-save-button').addEventListener('click', (e) => {
-                e.stopPropagation();
-                console.log('テンプレート保存ボタンがクリックされました:', prompt.id);
-                this._saveAsTemplate(prompt.id);
-            });
-            
-            // 削除ボタンのイベント
-            promptItem.querySelector('.delete-prompt-button').addEventListener('click', (e) => {
-                e.stopPropagation();
-                console.log('削除ボタンがクリックされました:', prompt.id);
-                this._deletePrompt(prompt.id);
-            });
-            
-            // 項目クリック時に編集モーダルを表示
-            promptItem.addEventListener('click', () => {
-                console.log('プロンプト項目がクリックされました:', prompt.id);
-                this.showPromptEditModal(prompt);
-            });
+            // イベントリスナーの設定
+            this._setupPromptItemEventListeners(promptItem, prompt);
             
             promptsList.appendChild(promptItem);
         });
         
         console.log('プロンプト一覧の更新が完了しました');
+    };
+    
+    /**
+     * プロンプト項目のイベントリスナーを設定する
+     * @function _setupPromptItemEventListeners
+     * @memberof UI
+     * @param {HTMLElement} promptItem - プロンプト項目要素
+     * @param {Object} prompt - プロンプトデータ
+     * @private
+     */
+    ui._setupPromptItemEventListeners = function(promptItem, prompt) {
+        // 編集ボタンのイベント
+        promptItem.querySelector('.edit-prompt-button').addEventListener('click', (e) => {
+            e.stopPropagation();
+            console.log('編集ボタンがクリックされました:', prompt.id);
+            this.showPromptEditModal(prompt);
+        });
+        
+        // 使用ボタンのイベント
+        promptItem.querySelector('.use-prompt-button').addEventListener('click', (e) => {
+            e.stopPropagation();
+            console.log('使用ボタンがクリックされました:', prompt.id);
+            this._usePrompt(prompt.id);
+        });
+        
+        // システムプロンプトとして設定するボタンのイベント
+        promptItem.querySelector('.system-prompt-button').addEventListener('click', (e) => {
+            e.stopPropagation();
+            console.log('システムプロンプト設定ボタンがクリックされました:', prompt.id);
+            this._setAsSystemPrompt(prompt.id);
+        });
+        
+        // テンプレートとして保存ボタンのイベント
+        promptItem.querySelector('.template-save-button').addEventListener('click', (e) => {
+            e.stopPropagation();
+            console.log('テンプレート保存ボタンがクリックされました:', prompt.id);
+            this._saveAsTemplate(prompt.id);
+        });
+        
+        // 削除ボタンのイベント
+        promptItem.querySelector('.delete-prompt-button').addEventListener('click', (e) => {
+            e.stopPropagation();
+            console.log('削除ボタンがクリックされました:', prompt.id);
+            this._deletePrompt(prompt.id);
+        });
+        
+        // 項目クリック時に編集モーダルを表示
+        promptItem.addEventListener('click', () => {
+            console.log('プロンプト項目がクリックされました:', prompt.id);
+            this.showPromptEditModal(prompt);
+        });
     };
     
     /**

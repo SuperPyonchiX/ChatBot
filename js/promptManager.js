@@ -305,13 +305,15 @@ window.PromptManager = (function() {
                 return false;
             }
             
-            // テキスト検索
-            if (criteria.query) {
-                const query = criteria.query.toLowerCase();
+            // テキスト検索（queryまたはsearchTextを使用）
+            const searchQuery = criteria.query || criteria.searchText;
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
                 return (
                     prompt.name.toLowerCase().includes(query) ||
                     prompt.description.toLowerCase().includes(query) ||
-                    prompt.content.toLowerCase().includes(query)
+                    prompt.content.toLowerCase().includes(query) ||
+                    prompt.tags.some(tag => tag.toLowerCase().includes(query))
                 );
             }
             
