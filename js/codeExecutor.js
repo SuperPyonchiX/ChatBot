@@ -756,7 +756,7 @@ if stderr_content:
             try {
                 // ローカルのJSCPPスクリプトを読み込む
                 const script = document.createElement('script');
-                script.src = 'js/JSCPP.es5.min.js';
+                script.src = 'js/lib/JSCPP.es5.min.js';
                 script.onload = () => {
                     console.log('JSCPPの読み込みが完了しました');
                     resolve();
