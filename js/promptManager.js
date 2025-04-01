@@ -349,34 +349,98 @@ window.PromptManager = (function() {
     }
 
     /**
-     * カテゴリを更新
-     * @public
-     * @param {string} categoryKey - カテゴリキー
-     * @param {Object} categoryData - カテゴリデータ
-     * @returns {boolean} 更新成功時true
+     * カテゴリを更新する
+     * @private
+     * @param {string} categoryKey - 更新するカテゴリのキー
+     * @param {Object} updateData - 更新データ
+     * @param {string} updateData.name - 新しいカテゴリ名
+     * @returns {boolean} 更新の成否
      */
-    function updateCategory(categoryKey, categoryData) {
-        if (!categoryKey) {
+    function updateCategory(categoryKey, updateData) {
+        if (!categoryKey || !updateData || !updateData.name) {
+            console.error('カテゴリ更新に必要なデータが不足しています');
             return false;
         }
-        
-        const categories = loadCategories();
-        
-        // 存在しない場合は失敗
-        if (!categories[categoryKey]) {
-            return false;
-        }
-        
-        // 更新可能なフィールドを更新
-        const validFields = ['name', 'description', 'order'];
-        validFields.forEach(field => {
-            if (categoryData[field] !== undefined) {
-                categories[categoryKey][field] = categoryData[field];
+
+        try {
+            // カテゴリ一覧を取得
+            const categories = loadCategories();
+            
+            // カテゴリの存在確認
+            if (!categories[categoryKey]) {
+                console.error('指定されたカテゴリが見つかりません:', categoryKey);
+                return false;
             }
-        });
-        
-        saveCategories(categories);
-        return true;
+            
+            // generalカテゴリは編集不可
+            if (categoryKey === 'general') {
+                console.error('一般カテゴリは編集できません');
+                return false;
+            }
+            
+            // カテゴリを更新
+            categories[categoryKey].name = updateData.name.trim();
+            
+            // 保存
+            saveCategories(categories);
+            
+            return true;
+        } catch (error) {
+            console.error('カテゴリの更新中にエラーが発生しました:', error);
+            return false;
+        }
+    }
+
+    /**
+     * カテゴリを削除する
+     * @private
+     * @param {string} categoryKey - 削除するカテゴリのキー
+     * @returns {boolean} 削除の成否
+     */
+    function deleteCategory(categoryKey) {
+        if (!categoryKey) {
+            console.error('カテゴリキーが指定されていません');
+            return false;
+        }
+
+        try {
+            // カテゴリ一覧を取得
+            const categories = loadCategories();
+            
+            // カテゴリの存在確認
+            if (!categories[categoryKey]) {
+                console.error('指定されたカテゴリが見つかりません:', categoryKey);
+                return false;
+            }
+            
+            // generalカテゴリは削除不可
+            if (categoryKey === 'general') {
+                console.error('一般カテゴリは削除できません');
+                return false;
+            }
+            
+            // プロンプト一覧を取得
+            const prompts = loadPromptLibrary();
+            
+            // カテゴリ内のプロンプトを「一般」カテゴリに移動
+            prompts.forEach(prompt => {
+                if (prompt.category === categoryKey) {
+                    prompt.category = 'general';
+                }
+            });
+            
+            // カテゴリを削除
+            delete categories[categoryKey];
+            
+            // 変更を保存
+            saveCategories(categories);
+            savePromptLibrary(prompts);
+            
+            return true;
+        } catch (error) {
+            console.error('カテゴリの削除中にエラーが発生しました:', error);
+            return false;
+        }
     }
 
     /**
@@ -735,7 +799,8 @@ window.PromptManager = (function() {
         deletePrompt,
         searchPrompts,
         createCategory,
-        updateCategory,
+        updateCategory,  // updateCategoryを公開APIに追加
+        deleteCategory,  // deleteCategoryを公開APIに追加
         setVariable,
         buildPrompt,
         combinePrompts,

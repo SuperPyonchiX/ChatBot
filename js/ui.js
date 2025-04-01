@@ -1435,13 +1435,47 @@ Object.assign(window.UI, {
             const categoryItem = document.createElement('div');
             categoryItem.className = 'category-item';
             categoryItem.dataset.category = key;
-            categoryItem.innerHTML = `
+            
+            // カテゴリ名とカウントを含むコンテナ
+            const nameContainer = document.createElement('div');
+            nameContainer.className = 'category-name-container';
+            nameContainer.innerHTML = `
                 <span>${category.name}</span>
                 <span class="category-count">0</span>
             `;
             
-            // クリックイベント
-            categoryItem.addEventListener('click', () => {
+            // アクションボタン
+            const actionsContainer = document.createElement('div');
+            actionsContainer.className = 'category-actions';
+            
+            if (key !== 'general') { // 「一般」カテゴリは編集・削除不可
+                const editButton = document.createElement('button');
+                editButton.className = 'category-edit-button';
+                editButton.innerHTML = '<i class="fas fa-edit"></i>';
+                editButton.title = 'カテゴリを編集';
+                editButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._editCategory(key, category.name);
+                });
+                
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'category-delete-button';
+                deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteButton.title = 'カテゴリを削除';
+                deleteButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._deleteCategory(key);
+                });
+                
+                actionsContainer.appendChild(editButton);
+                actionsContainer.appendChild(deleteButton);
+            }
+            
+            categoryItem.appendChild(nameContainer);
+            categoryItem.appendChild(actionsContainer);
+            
+            // クリックイベント（カテゴリの選択）
+            nameContainer.addEventListener('click', () => {
                 console.log('カテゴリがクリックされました:', key);
                 document.querySelectorAll('.category-item.active').forEach(item => {
                     item.classList.remove('active');
@@ -1468,7 +1502,6 @@ Object.assign(window.UI, {
         
         console.log('カテゴリ一覧の更新が完了しました');
     };
-    
     /**
      * プロンプト一覧を更新する
      * @function updatePromptsList
@@ -2163,5 +2196,73 @@ Object.assign(window.UI, {
         } else {
             console.error('PromptSuggestionsモジュールが読み込まれていません');
         }
+    };
+    
+    /**
+     * カテゴリを編集する
+     * @function _editCategory
+     * @memberof UI
+     * @param {string} categoryKey - カテゴリのキー
+     * @param {string} currentName - 現在のカテゴリ名
+     * @private
+     */
+    ui._editCategory = function(categoryKey, currentName) {
+        console.log('カテゴリ編集を開始します:', categoryKey);
+        const newName = prompt('新しいカテゴリ名を入力してください:', currentName);
+        
+        if (newName && newName.trim() && newName !== currentName) {
+            try {
+                const success = window.PromptManager.updateCategory(categoryKey, {
+                    name: newName.trim()
+                });
+                
+                if (success) {
+                    this.notify('カテゴリ名を更新しました', 'success');
+                    this.updatePromptCategories();
+                } else {
+                    this.notify('カテゴリの更新に失敗しました', 'error');
+                }
+            } catch (error) {
+                console.error('カテゴリ更新中にエラーが発生しました:', error);
+                this.notify('エラー: ' + error.message, 'error');
+            }
+        }
+    };
+    
+    /**
+     * カテゴリを削除する
+     * @function _deleteCategory
+     * @memberof UI
+     * @param {string} categoryKey - 削除するカテゴリのキー
+     * @private
+     */
+    ui._deleteCategory = function(categoryKey) {
+        console.log('カテゴリ削除を開始します:', categoryKey);
+        
+        // 削除前の確認
+        this.confirm(
+            'このカテゴリを削除してもよろしいですか？\nこのカテゴリ内のプロンプトは「一般」カテゴリに移動されます。',
+            {
+                title: 'カテゴリの削除',
+                confirmText: '削除',
+                cancelText: 'キャンセル'
+            }
+        ).then(confirmed => {
+            if (confirmed) {
+                try {
+                    const success = window.PromptManager.deleteCategory(categoryKey);
+                    
+                    if (success) {
+                        this.notify('カテゴリを削除しました', 'success');
+                        this.updatePromptCategories();
+                    } else {
+                        this.notify('カテゴリの削除に失敗しました', 'error');
+                    }
+                } catch (error) {
+                    console.error('カテゴリ削除中にエラーが発生しました:', error);
+                    this.notify('エラー: ' + error.message, 'error');
+                }
+            }
+        });
     };
 })();
