@@ -1365,4 +1365,891 @@ Object.assign(window.UI, {
         // 実際の実装では、ドロップダウンやツールチップでサジェストを表示する
         console.log('コマンド入力検出:', input);
     };
+    
+    /**
+     * プロンプトマネージャーモーダルを表示する
+     * @function showPromptManagerModal
+     * @memberof UI
+     */
+    ui.showPromptManagerModal = function() {
+        console.log('プロンプトマネージャーモーダルを表示します');
+        const modal = document.getElementById('promptManagerModal');
+        if (!modal) {
+            console.error('モーダル要素が見つかりません: promptManagerModal');
+            return;
+        }
+        
+        // モーダル表示
+        modal.style.display = 'block';
+        
+        // カテゴリとプロンプト一覧を更新
+        this.updatePromptCategories();
+        this.updatePromptsList();
+        
+        // デバッグログ
+        console.log('プロンプトマネージャーモーダルを表示しました');
+        console.log('カテゴリ要素:', document.getElementById('promptCategoriesList'));
+        console.log('プロンプト一覧要素:', document.getElementById('promptsList'));
+    };
+    
+    /**
+     * プロンプトマネージャーモーダルを非表示にする
+     * @function hidePromptManagerModal
+     * @memberof UI
+     */
+    ui.hidePromptManagerModal = function() {
+        console.log('プロンプトマネージャーモーダルを閉じます');
+        const modal = document.getElementById('promptManagerModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    };
+    
+    /**
+     * プロンプトカテゴリ一覧を更新する
+     * @function updatePromptCategories
+     * @memberof UI
+     */
+    ui.updatePromptCategories = function() {
+        console.log('カテゴリ一覧を更新します');
+        const categoriesList = document.getElementById('promptCategoriesList');
+        if (!categoriesList) {
+            console.error('カテゴリリスト要素が見つかりません: promptCategoriesList');
+            return;
+        }
+        
+        // カテゴリリストをクリア
+        categoriesList.innerHTML = '';
+        
+        // カテゴリを読み込む
+        const categories = window.PromptManager.loadCategories();
+        console.log('読み込まれたカテゴリ:', categories);
+        
+        // カテゴリを並び替え
+        const sortedCategories = Object.entries(categories)
+            .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
+        
+        // カテゴリごとにリスト項目を作成
+        sortedCategories.forEach(([key, category]) => {
+            // カテゴリ項目
+            const categoryItem = document.createElement('div');
+            categoryItem.className = 'category-item';
+            categoryItem.dataset.category = key;
+            categoryItem.innerHTML = `
+                <span>${category.name}</span>
+                <span class="category-count">0</span>
+            `;
+            
+            // クリックイベント
+            categoryItem.addEventListener('click', () => {
+                console.log('カテゴリがクリックされました:', key);
+                document.querySelectorAll('.category-item.active').forEach(item => {
+                    item.classList.remove('active');
+                });
+                document.querySelectorAll('.subcategory-item.active').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                categoryItem.classList.add('active');
+                this.updatePromptsList({ category: key });
+            });
+            
+            categoriesList.appendChild(categoryItem);
+            
+            // サブカテゴリがある場合は表示
+            if (category.subcategories && Object.keys(category.subcategories).length > 0) {
+                const subcategoriesContainer = document.createElement('div');
+                subcategoriesContainer.className = 'subcategories-container';
+                
+                // サブカテゴリを並び替え
+                const sortedSubcategories = Object.entries(category.subcategories)
+                    .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
+                
+                // サブカテゴリごとに項目を作成
+                sortedSubcategories.forEach(([subKey, subcategory]) => {
+                    const subcategoryItem = document.createElement('div');
+                    subcategoryItem.className = 'subcategory-item';
+                    subcategoryItem.dataset.category = key;
+                    subcategoryItem.dataset.subcategory = subKey;
+                    subcategoryItem.textContent = subcategory.name;
+                    
+                    // クリックイベント
+                    subcategoryItem.addEventListener('click', () => {
+                        console.log('サブカテゴリがクリックされました:', key, subKey);
+                        document.querySelectorAll('.category-item.active, .subcategory-item.active').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        
+                        categoryItem.classList.add('active');
+                        subcategoryItem.classList.add('active');
+                        this.updatePromptsList({ category: key, subcategory: subKey });
+                    });
+                    
+                    subcategoriesContainer.appendChild(subcategoryItem);
+                });
+                
+                categoriesList.appendChild(subcategoriesContainer);
+            }
+        });
+        
+        // 最初のカテゴリを選択状態にする
+        const firstCategory = categoriesList.querySelector('.category-item');
+        if (firstCategory) {
+            firstCategory.classList.add('active');
+        }
+        
+        // カテゴリごとのプロンプト数を更新
+        this._updateCategoryCounts();
+        console.log('カテゴリ一覧の更新が完了しました');
+    };
+    
+    /**
+     * プロンプト一覧を更新する
+     * @function updatePromptsList
+     * @memberof UI
+     * @param {Object} [filter] - フィルタリング条件
+     */
+    ui.updatePromptsList = function(filter = {}) {
+        console.log('プロンプト一覧を更新します', filter);
+        const promptsList = document.getElementById('promptsList');
+        if (!promptsList) {
+            console.error('プロンプトリスト要素が見つかりません: promptsList');
+            return;
+        }
+        
+        // プロンプトリストをクリア
+        promptsList.innerHTML = '';
+        
+        // 検索条件でプロンプトを取得
+        const prompts = window.PromptManager.searchPrompts(filter);
+        console.log('検索結果:', prompts);
+        
+        if (prompts.length === 0) {
+            promptsList.innerHTML = '<div class="no-prompts-message">プロンプトが見つかりません</div>';
+            return;
+        }
+        
+        // 日付でソート（新しい順）
+        prompts.sort((a, b) => b.updatedAt - a.updatedAt);
+        
+        // プロンプトごとにリスト項目を作成
+        prompts.forEach(prompt => {
+            const promptItem = document.createElement('div');
+            promptItem.className = 'prompt-item';
+            promptItem.dataset.promptId = prompt.id;
+            
+            // プロンプト項目のHTMLを構築
+            promptItem.innerHTML = `
+                <div class="prompt-item-header">
+                    <div class="prompt-item-name">${prompt.name}</div>
+                    <div class="prompt-item-actions">
+                        <button class="edit-prompt-button" title="編集">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="use-prompt-button" title="使用">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button class="system-prompt-button" title="システムプロンプトとして設定">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <button class="template-save-button" title="テンプレートとして保存">
+                            <i class="fas fa-save"></i>
+                        </button>
+                        <button class="delete-prompt-button" title="削除">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="prompt-item-description">${prompt.description || ''}</div>
+                <div class="prompt-item-tags">
+                    ${prompt.tags.map(tag => `<span class="prompt-tag">${tag}</span>`).join('')}
+                </div>
+            `;
+            
+            // 編集ボタンのイベント
+            promptItem.querySelector('.edit-prompt-button').addEventListener('click', (e) => {
+                e.stopPropagation();
+                console.log('編集ボタンがクリックされました:', prompt.id);
+                this.showPromptEditModal(prompt);
+            });
+            
+            // 使用ボタンのイベント
+            promptItem.querySelector('.use-prompt-button').addEventListener('click', (e) => {
+                e.stopPropagation();
+                console.log('使用ボタンがクリックされました:', prompt.id);
+                this._usePrompt(prompt.id);
+            });
+            
+            // システムプロンプトとして設定するボタンのイベント
+            promptItem.querySelector('.system-prompt-button').addEventListener('click', (e) => {
+                e.stopPropagation();
+                console.log('システムプロンプト設定ボタンがクリックされました:', prompt.id);
+                this._setAsSystemPrompt(prompt.id);
+            });
+            
+            // テンプレートとして保存ボタンのイベント
+            promptItem.querySelector('.template-save-button').addEventListener('click', (e) => {
+                e.stopPropagation();
+                console.log('テンプレート保存ボタンがクリックされました:', prompt.id);
+                this._saveAsTemplate(prompt.id);
+            });
+            
+            // 削除ボタンのイベント
+            promptItem.querySelector('.delete-prompt-button').addEventListener('click', (e) => {
+                e.stopPropagation();
+                console.log('削除ボタンがクリックされました:', prompt.id);
+                this._deletePrompt(prompt.id);
+            });
+            
+            // 項目クリック時に編集モーダルを表示
+            promptItem.addEventListener('click', () => {
+                console.log('プロンプト項目がクリックされました:', prompt.id);
+                this.showPromptEditModal(prompt);
+            });
+            
+            promptsList.appendChild(promptItem);
+        });
+        
+        console.log('プロンプト一覧の更新が完了しました');
+    };
+    
+    /**
+     * プロンプトを使用する
+     * @function _usePrompt
+     * @memberof UI
+     * @param {string} promptId - 使用するプロンプトのID
+     * @private
+     */
+    ui._usePrompt = function(promptId) {
+        try {
+            console.log('プロンプトを使用します:', promptId);
+            // プロンプトを構築
+            const promptText = window.PromptManager.buildPrompt(promptId);
+            
+            // ユーザー入力欄に挿入
+            const userInput = document.getElementById('userInput');
+            if (userInput) {
+                userInput.value = promptText;
+                this.autoResizeTextarea(userInput);
+            }
+            
+            // プロンプトマネージャーモーダルを閉じる
+            this.hidePromptManagerModal();
+            
+            // 通知
+            this.notify('プロンプトをセットしました', 'success');
+        } catch (error) {
+            console.error('プロンプト使用中にエラーが発生しました:', error);
+            this.notify('プロンプトの使用に失敗しました', 'error');
+        }
+    };
+    
+    /**
+     * プロンプトを削除する
+     * @function _deletePrompt
+     * @memberof UI
+     * @param {string} promptId - 削除するプロンプトのID
+     * @private
+     */
+    ui._deletePrompt = function(promptId) {
+        console.log('プロンプト削除処理を開始します:', promptId);
+        if (confirm('このプロンプトを削除してもよろしいですか？')) {
+            try {
+                const result = window.PromptManager.deletePrompt(promptId);
+                if (result) {
+                    this.notify('プロンプトを削除しました', 'success');
+                    
+                    // プロンプト一覧を更新
+                    const activeCategory = document.querySelector('.category-item.active');
+                    const activeSubcategory = document.querySelector('.subcategory-item.active');
+                    
+                    const filter = {};
+                    if (activeCategory) {
+                        filter.category = activeCategory.dataset.category;
+                    }
+                    if (activeSubcategory) {
+                        filter.subcategory = activeSubcategory.dataset.subcategory;
+                    }
+                    
+                    this.updatePromptsList(filter);
+                    this._updateCategoryCounts();
+                } else {
+                    this.notify('プロンプトの削除に失敗しました', 'error');
+                }
+            } catch (error) {
+                console.error('プロンプト削除中にエラーが発生しました:', error);
+                this.notify('エラー: ' + error.message, 'error');
+            }
+        }
+    };
+    
+    /**
+     * プロンプト編集モーダルを表示する
+     * @function showPromptEditModal
+     * @memberof UI
+     * @param {Object|null} prompt - 編集するプロンプト（新規作成の場合はnull）
+     */
+    ui.showPromptEditModal = function(prompt = null) {
+        console.log('プロンプト編集モーダルを表示します', prompt);
+        const isNewPrompt = !prompt;
+        
+        // 必要な要素を取得
+        const modal = document.getElementById('promptEditModal');
+        const modalTitle = document.getElementById('promptEditTitle');
+        const nameInput = document.getElementById('promptNameInput');
+        const categorySelect = document.getElementById('promptCategorySelect');
+        const subcategoryContainer = document.getElementById('promptSubcategoryContainer');
+        const subcategorySelect = document.getElementById('promptSubcategorySelect');
+        const tagsInput = document.getElementById('promptTagsInput');
+        const descriptionInput = document.getElementById('promptDescriptionInput');
+        const contentInput = document.getElementById('promptContentInput');
+        
+        if (!modal || !modalTitle || !nameInput || !categorySelect || 
+            !subcategoryContainer || !subcategorySelect || 
+            !tagsInput || !descriptionInput || !contentInput) {
+            console.error('プロンプト編集モーダルの要素が見つかりません');
+            return;
+        }
+        
+        // モーダルタイトルを設定
+        modalTitle.textContent = isNewPrompt ? '新規プロンプト作成' : 'プロンプト編集';
+        
+        // カテゴリオプションを設定
+        this._updateCategoryOptions(categorySelect, subcategorySelect);
+        
+        if (isNewPrompt) {
+            // 新規プロンプトの場合はフォームをクリア
+            nameInput.value = '';
+            categorySelect.value = 'general';
+            this._updateSubcategoryVisibility(categorySelect.value, subcategoryContainer, subcategorySelect);
+            tagsInput.value = '';
+            descriptionInput.value = '';
+            contentInput.value = '';
+            
+            // プロンプトIDを削除
+            delete modal.dataset.promptId;
+        } else {
+            // 既存プロンプトの場合はフォームに値をセット
+            nameInput.value = prompt.name || '';
+            categorySelect.value = prompt.category || 'general';
+            this._updateSubcategoryVisibility(categorySelect.value, subcategoryContainer, subcategorySelect);
+            
+            if (prompt.subcategory) {
+                subcategorySelect.value = prompt.subcategory;
+            }
+            
+            tagsInput.value = prompt.tags ? prompt.tags.join(', ') : '';
+            descriptionInput.value = prompt.description || '';
+            contentInput.value = prompt.content || '';
+            
+            // プロンプトIDを保存
+            modal.dataset.promptId = prompt.id;
+        }
+        
+        // カテゴリ変更時のイベントリスナー
+        categorySelect.onchange = () => {
+            this._updateSubcategoryVisibility(categorySelect.value, subcategoryContainer, subcategorySelect);
+        };
+        
+        // モーダルを表示
+        modal.style.display = 'block';
+        console.log('プロンプト編集モーダルを表示しました');
+    };
+    
+    /**
+     * プロンプト編集モーダルを非表示にする
+     * @function hidePromptEditModal
+     * @memberof UI
+     */
+    ui.hidePromptEditModal = function() {
+        console.log('プロンプト編集モーダルを閉じます');
+        const modal = document.getElementById('promptEditModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    };
+    
+    /**
+     * プロンプト編集内容を保存する
+     * @function savePromptChanges
+     * @memberof UI
+     */
+    ui.savePromptChanges = function() {
+        console.log('プロンプト変更を保存します');
+        
+        // 必要な要素を取得
+        const modal = document.getElementById('promptEditModal');
+        const nameInput = document.getElementById('promptNameInput');
+        const categorySelect = document.getElementById('promptCategorySelect');
+        const subcategorySelect = document.getElementById('promptSubcategorySelect');
+        const tagsInput = document.getElementById('promptTagsInput');
+        const descriptionInput = document.getElementById('promptDescriptionInput');
+        const contentInput = document.getElementById('promptContentInput');
+        
+        if (!modal || !nameInput || !categorySelect || !subcategorySelect || 
+            !tagsInput || !descriptionInput || !contentInput) {
+            console.error('プロンプト編集モーダルの要素が見つかりません');
+            return;
+        }
+        
+        // 入力値を取得
+        const name = nameInput.value.trim();
+        const category = categorySelect.value;
+        const subcategory = subcategoryContainer.style.display !== 'none' ? subcategorySelect.value : '';
+        const tags = tagsInput.value.split(',').map(tag => tag.trim()).filter(Boolean);
+        const description = descriptionInput.value.trim();
+        const content = contentInput.value.trim();
+        
+        // 名前とコンテンツは必須
+        if (!name || !content) {
+            this.notify('名前とプロンプト内容は必須です', 'error');
+            return;
+        }
+        
+        try {
+            const promptId = modal.dataset.promptId;
+            
+            if (promptId) {
+                // 既存プロンプトの更新
+                console.log('既存プロンプトを更新します:', promptId);
+                const result = window.PromptManager.updatePrompt(promptId, {
+                    name,
+                    category,
+                    subcategory,
+                    tags,
+                    description,
+                    content
+                });
+                
+                if (result) {
+                    this.notify('プロンプトを更新しました', 'success');
+                } else {
+                    this.notify('プロンプトの更新に失敗しました', 'error');
+                }
+            } else {
+                // 新規プロンプトの追加
+                console.log('新規プロンプトを追加します');
+                const newPromptId = window.PromptManager.addPrompt({
+                    name,
+                    category,
+                    subcategory,
+                    tags,
+                    description,
+                    content
+                });
+                
+                if (newPromptId) {
+                    this.notify('新規プロンプトを作成しました', 'success');
+                } else {
+                    this.notify('プロンプトの作成に失敗しました', 'error');
+                }
+            }
+            
+            // モーダルを閉じる
+            this.hidePromptEditModal();
+            
+            // プロンプト一覧を更新
+            const activeCategory = document.querySelector('.category-item.active');
+            const activeSubcategory = document.querySelector('.subcategory-item.active');
+            
+            const filter = {};
+            if (activeCategory) {
+                filter.category = activeCategory.dataset.category;
+            }
+            if (activeSubcategory) {
+                filter.subcategory = activeSubcategory.dataset.subcategory;
+            }
+            
+            this.updatePromptsList(filter);
+            this._updateCategoryCounts();
+            
+        } catch (error) {
+            console.error('プロンプト保存中にエラーが発生しました:', error);
+            this.notify('エラー: ' + error.message, 'error');
+        }
+    };
+    
+    /**
+     * プロンプト編集内容をキャンセルする
+     * @function cancelPromptEdit
+     * @memberof UI
+     */
+    ui.cancelPromptEdit = function() {
+        console.log('プロンプト編集をキャンセルします');
+        this.hidePromptEditModal();
+    };
+    
+    /**
+     * プロンプト編集内容をクリアする
+     * @function clearPromptEdit
+     * @memberof UI
+     */
+    ui.clearPromptEdit = function() {
+        console.log('プロンプト編集内容をクリアします');
+        
+        // 必要な要素を取得
+        const modal = document.getElementById('promptEditModal');
+        const nameInput = document.getElementById('promptNameInput');
+        const categorySelect = document.getElementById('promptCategorySelect');
+        const subcategorySelect = document.getElementById('promptSubcategorySelect');
+        const tagsInput = document.getElementById('promptTagsInput');
+        const descriptionInput = document.getElementById('promptDescriptionInput');
+        const contentInput = document.getElementById('promptContentInput');
+        
+        if (!modal || !nameInput || !categorySelect || !subcategorySelect || 
+            !tagsInput || !descriptionInput || !contentInput) {
+            console.error('プロンプト編集モーダルの要素が見つかりません');
+            return;
+        }
+        
+        // フォームをクリア
+        nameInput.value = '';
+        categorySelect.value = 'general';
+        subcategorySelect.value = '';
+        tagsInput.value = '';
+        descriptionInput.value = '';
+        contentInput.value = '';
+        
+        // モーダルを閉じる
+        this.hidePromptEditModal();
+    };
+    
+    /**
+     * カテゴリごとのプロンプト数を更新する
+     * @function _updateCategoryCounts
+     * @memberof UI
+     * @private
+     */
+    ui._updateCategoryCounts = function() {
+        console.log('カテゴリごとのプロンプト数を更新します');
+        const categories = document.querySelectorAll('.category-item');
+        if (!categories.length) {
+            console.error('カテゴリ要素が見つかりません');
+            return;
+        }
+        
+        // プロンプトライブラリを取得
+        const prompts = window.PromptManager.loadPromptLibrary();
+        console.log('プロンプトライブラリを読み込みました:', prompts.length, '件');
+        
+        // カテゴリごとのカウントを集計
+        const counts = {};
+        prompts.forEach(prompt => {
+            if (!prompt.category) return;
+            
+            // カテゴリのカウント
+            counts[prompt.category] = (counts[prompt.category] || 0) + 1;
+            
+            // サブカテゴリがある場合
+            if (prompt.subcategory) {
+                const subKey = `${prompt.category}_${prompt.subcategory}`;
+                counts[subKey] = (counts[subKey] || 0) + 1;
+            }
+        });
+        
+        // カテゴリ要素のカウンタを更新
+        categories.forEach(categoryEl => {
+            const categoryKey = categoryEl.dataset.category;
+            if (!categoryKey) return;
+            
+            const countEl = categoryEl.querySelector('.category-count');
+            if (countEl) {
+                countEl.textContent = counts[categoryKey] || 0;
+            }
+        });
+        
+        // サブカテゴリのカウンタを更新
+        const subcategories = document.querySelectorAll('.subcategory-item');
+        subcategories.forEach(subcategoryEl => {
+            const categoryKey = subcategoryEl.datasetcategory;
+            const subcategoryKey = subcategoryEl.dataset.subcategory;
+            if (!categoryKey || !subcategoryKey) return;
+            
+            const subKey = `${categoryKey}_${subcategoryKey}`;
+            const count = counts[subKey] || 0;
+            
+            // サブカテゴリ名の後にカウントを表示
+            subcategoryEl.textContent = `${subcategoryEl.textContent.split('(')[0].trim()} (${count})`;
+        });
+        
+        console.log('カテゴリカウントを更新しました', counts);
+    };
+    
+    /**
+     * カテゴリとサブカテゴリの選択肢を更新する
+     * @function _updateCategoryOptions
+     * @memberof UI
+     * @param {HTMLSelectElement} categorySelect - カテゴリ選択要素
+     * @param {HTMLSelectElement} subcategorySelect - サブカテゴリ選択要素
+     * @private
+     */
+    ui._updateCategoryOptions = function(categorySelect, subcategorySelect) {
+        console.log('カテゴリオプションを更新します');
+        if (!categorySelect || !subcategorySelect) {
+            console.error('カテゴリ選択要素が見つかりません');
+            return;
+        }
+        
+        // カテゴリ選択肢をクリア
+        categorySelect.innerHTML = '';
+        subcategorySelect.innerHTML = '';
+        
+        // カテゴリを取得
+        const categories = window.PromptManager.loadCategories();
+        console.log('カテゴリを読み込みました:', categories);
+        
+        // カテゴリを並び替え
+        const sortedCategories = Object.entries(categories)
+            .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
+        
+        // カテゴリオプションを作成
+        sortedCategories.forEach(([key, category]) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = category.name;
+            categorySelect.appendChild(option);
+        });
+        
+        // 最初のカテゴリに対応するサブカテゴリを表示
+        const firstCategoryKey = sortedCategories[0]?.[0];
+        if (firstCategoryKey) {
+            this._updateSubcategoryOptions(firstCategoryKey, subcategorySelect);
+        }
+        
+        console.log('カテゴリオプションの更新が完了しました');
+    };
+    
+    /**
+     * サブカテゴリの選択肢を更新する
+     * @function _updateSubcategoryOptions
+     * @memberof UI
+     * @param {string} categoryKey - カテゴリキー
+     * @param {HTMLSelectElement} subcategorySelect - サブカテゴリ選択要素
+     * @private
+     */
+    ui._updateSubcategoryOptions = function(categoryKey, subcategorySelect) {
+        console.log('サブカテゴリオプションを更新します:', categoryKey);
+        if (!categoryKey || !subcategorySelect) {
+            console.error('サブカテゴリ更新に必要なパラメータが不足しています');
+            return;
+        }
+        
+        // サブカテゴリ選択肢をクリア
+        subcategorySelect.innerHTML = '';
+        
+        // 空のオプションを追加
+        const emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.textContent = '-- サブカテゴリなし --';
+        subcategorySelect.appendChild(emptyOption);
+        
+        // カテゴリを取得
+        const categories = window.PromptManager.loadCategories();
+        const category = categories[categoryKey];
+        
+        if (!category || !category.subcategories) {
+            console.log('このカテゴリにはサブカテゴリがありません:', categoryKey);
+            return;
+        }
+        
+        // サブカテゴリを並び替え
+        const sortedSubcategories = Object.entries(category.subcategories)
+            .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
+        
+        // サブカテゴリオプションを作成
+        sortedSubcategories.forEach(([key, subcategory]) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = subcategory.name;
+            subcategorySelect.appendChild(option);
+        });
+        
+        console.log('サブカテゴリオプションの更新が完了しました:', sortedSubcategories.length, '件');
+    };
+    
+    /**
+     * サブカテゴリ選択要素の表示/非表示を切り替える
+     * @function _updateSubcategoryVisibility
+     * @memberof UI
+     * @param {string} categoryKey - カテゴリキー
+     * @param {HTMLElement} subcategoryContainer - サブカテゴリコンテナ要素
+     * @param {HTMLSelectElement} subcategorySelect - サブカテゴリ選択要素
+     * @private
+     */
+    ui._updateSubcategoryVisibility = function(categoryKey, subcategoryContainer, subcategorySelect) {
+        console.log('サブカテゴリの表示状態を更新します:', categoryKey);
+        if (!categoryKey || !subcategoryContainer || !subcategorySelect) {
+            console.error('サブカテゴリ表示更新に必要なパラメータが不足しています');
+            return;
+        }
+        
+        // カテゴリを取得
+        const categories = window.PromptManager.loadCategories();
+        const category = categories[categoryKey];
+        
+        // サブカテゴリの有無によって表示/非表示を切り替え
+        if (category && category.subcategories && Object.keys(category.subcategories).length > 0) {
+            subcategoryContainer.style.display = 'block';
+            this._updateSubcategoryOptions(categoryKey, subcategorySelect);
+        } else {
+            subcategoryContainer.style.display = 'none';
+            subcategorySelect.value = '';
+        }
+        
+        console.log('サブカテゴリの表示状態を更新しました:', subcategoryContainer.style.display);
+    };
+    
+    /**
+     * プロンプトをシステムプロンプトとして設定する
+     * @function _setAsSystemPrompt
+     * @memberof UI
+     * @param {string} promptId - 設定するプロンプトのID
+     * @private
+     */
+    ui._setAsSystemPrompt = function(promptId) {
+        try {
+            console.log('プロンプトをシステムプロンプトとして設定します:', promptId);
+            // カスタム変数の取得（実際の実装ではユーザー入力を求めるなど）
+            const customVariables = {};
+            
+            // プロンプトをシステムプロンプトとして設定
+            const systemPrompt = window.PromptManager.setAsSystemPrompt(promptId, customVariables);
+            
+            // 通知
+            this.notify('システムプロンプトを更新しました', 'success');
+            
+            // プロンプトマネージャーモーダルを閉じる
+            this.hidePromptManagerModal();
+            
+            console.log('システムプロンプトを設定しました');
+        } catch (error) {
+            console.error('システムプロンプトの設定に失敗しました:', error);
+            this.notify('システムプロンプトの設定に失敗しました', 'error');
+        }
+    };
+    
+    /**
+     * プロンプトをテンプレートとして保存する
+     * @function _saveAsTemplate
+     * @memberof UI
+     * @param {string} promptId - 保存するプロンプトのID
+     * @private
+     */
+    ui._saveAsTemplate = function(promptId) {
+        console.log('プロンプトをテンプレートとして保存します:', promptId);
+        // テンプレート名の入力を求める
+        const templateName = prompt('テンプレート名を入力してください:');
+        if (!templateName) {
+            console.log('テンプレート名が入力されなかったため、処理を中断します');
+            return;
+        }
+        
+        try {
+            // テンプレートとして保存
+            const success = window.PromptManager.saveAsSystemPromptTemplate(promptId, templateName);
+            
+            if (success) {
+                this.notify(`テンプレート「${templateName}」を保存しました`, 'success');
+                console.log('テンプレートを保存しました:', templateName);
+            } else {
+                this.notify('テンプレートの保存に失敗しました', 'error');
+                console.error('テンプレートの保存に失敗しました');
+            }
+        } catch (error) {
+            console.error('テンプレートの保存中にエラーが発生しました:', error);
+            this.notify(`エラー: ${error.message}`, 'error');
+        }
+    };
+    
+    // プロンプトマネージャー関連のイベントをセットアップする
+    ui.setupPromptManagerEvents = function() {
+        console.log('プロンプトマネージャーのイベントをセットアップします');
+        
+        // 閉じるボタン
+        const closeButton = document.getElementById('closePromptManager');
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                console.log('閉じるボタンがクリックされました');
+                this.hidePromptManagerModal();
+            });
+        }
+        
+        // 新規プロンプトボタン
+        const addPromptButton = document.getElementById('addPromptButton');
+        if (addPromptButton) {
+            addPromptButton.addEventListener('click', () => {
+                console.log('新規プロンプトボタンがクリックされました');
+                this.showPromptEditModal(); // 引数なしで呼び出すと新規プロンプト作成モード
+            });
+        }
+        
+        // カテゴリ追加ボタン
+        const addCategoryButton = document.getElementById('addCategoryButton');
+        if (addCategoryButton) {
+            addCategoryButton.addEventListener('click', () => {
+                console.log('カテゴリ追加ボタンがクリックされました');
+                const categoryName = prompt('新しいカテゴリ名を入力してください:');
+                if (categoryName && categoryName.trim()) {
+                    try {
+                        const result = window.PromptManager.addCategory(categoryName.trim());
+                        if (result) {
+                            this.notify('カテゴリを追加しました', 'success');
+                            this.updatePromptCategories();
+                        } else {
+                            this.notify('カテゴリの追加に失敗しました', 'error');
+                        }
+                    } catch (error) {
+                        console.error('カテゴリ追加中にエラーが発生しました:', error);
+                        this.notify('エラー: ' + error.message, 'error');
+                    }
+                }
+            });
+        }
+        
+        // プロンプト検索入力
+        const promptSearchInput = document.getElementById('promptSearchInput');
+        if (promptSearchInput) {
+            promptSearchInput.addEventListener('input', () => {
+                console.log('検索入力:', promptSearchInput.value);
+                const searchTerm = promptSearchInput.value.trim();
+                if (searchTerm) {
+                    this.updatePromptsList({ searchTerm });
+                } else {
+                    // 検索テキストが空の場合は、選択されているカテゴリでフィルタ
+                    const activeCategory = document.querySelector('.category-item.active');
+                    const activeSubcategory = document.querySelector('.subcategory-item.active');
+                    
+                    const filter = {};
+                    if (activeCategory) {
+                        filter.category = activeCategory.dataset.category;
+                    }
+                    if (activeSubcategory) {
+                        filter.subcategory = activeSubcategory.dataset.subcategory;
+                    }
+                    
+                    this.updatePromptsList(filter);
+                }
+            });
+        }
+        
+        // プロンプト編集モーダルの保存ボタン
+        const savePromptEditButton = document.getElementById('savePromptEdit');
+        if (savePromptEditButton) {
+            savePromptEditButton.addEventListener('click', () => {
+                console.log('保存ボタンがクリックされました');
+                this.savePromptChanges();
+            });
+        }
+        
+        // プロンプト編集モーダルのキャンセルボタン
+        const cancelPromptEditButton = document.getElementById('cancelPromptEdit');
+        if (cancelPromptEditButton) {
+            cancelPromptEditButton.addEventListener('click', () => {
+                console.log('キャンセルボタンがクリックされました');
+                this.hidePromptEditModal();
+            });
+        }
+        
+        console.log('プロンプトマネージャーのイベントセットアップが完了しました');
+    };
 })();

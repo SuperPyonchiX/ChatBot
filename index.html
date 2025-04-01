@@ -126,6 +126,7 @@
                     </button>
                     <div id="settingsMenu" class="settings-menu">
                         <button id="openSystemPromptSettings">システムプロンプト設定</button>
+                        <button id="openPromptManager">高度なプロンプト管理</button>
                         <button id="openApiSettings">API設定</button>
                     </div>
                 </div>
@@ -249,12 +250,96 @@
         </div>
     </div>
 
+    <!-- 高度なプロンプト管理モーダル -->
+    <div id="promptManagerModal" class="modal">
+        <div class="modal-content prompt-manager-modal">
+            <h2>高度なプロンプト管理</h2>
+            <div class="prompt-manager-container">
+                <div class="prompt-manager-sidebar">
+                    <h3>カテゴリ</h3>
+                    <div id="promptCategoriesList" class="prompt-categories-list">
+                        <!-- カテゴリ一覧はJSで動的に生成 -->
+                    </div>
+                    <div class="category-actions">
+                        <button id="addCategoryButton" class="small-button">
+                            <i class="fas fa-plus"></i> カテゴリ追加
+                        </button>
+                    </div>
+                </div>
+                <div class="prompt-manager-main">
+                    <div class="prompt-list-header">
+                        <h3>プロンプト一覧</h3>
+                        <div class="prompt-search">
+                            <input type="text" id="promptSearchInput" placeholder="プロンプト検索...">
+                        </div>
+                        <button id="addPromptButton" class="primary-button">
+                            <i class="fas fa-plus"></i> 新規プロンプト
+                        </button>
+                    </div>
+                    <div id="promptsList" class="prompts-list">
+                        <!-- プロンプト一覧はJSで動的に生成 -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="closePromptManager">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- プロンプト編集モーダル -->
+    <div id="promptEditModal" class="modal">
+        <div class="modal-content">
+            <h2 id="promptEditTitle">プロンプト編集</h2>
+            <div class="form-group">
+                <label for="promptNameInput">名前:</label>
+                <input type="text" id="promptNameInput" placeholder="プロンプト名">
+            </div>
+            <div class="form-group">
+                <label for="promptCategorySelect">カテゴリ:</label>
+                <select id="promptCategorySelect">
+                    <!-- カテゴリオプションはJSで動的に生成 -->
+                </select>
+            </div>
+            <div class="form-group" id="promptSubcategoryContainer">
+                <label for="promptSubcategorySelect">サブカテゴリ:</label>
+                <select id="promptSubcategorySelect">
+                    <!-- サブカテゴリオプションはJSで動的に生成 -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="promptTagsInput">タグ (カンマ区切り):</label>
+                <input type="text" id="promptTagsInput" placeholder="タグ1, タグ2, ...">
+            </div>
+            <div class="form-group">
+                <label for="promptDescriptionInput">説明:</label>
+                <textarea id="promptDescriptionInput" rows="2" placeholder="プロンプトの説明..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="promptContentInput">プロンプト内容:</label>
+                <textarea id="promptContentInput" rows="10" placeholder="プロンプト内容を入力..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>使用できる変数:</label>
+                <div id="variableHelpText" class="variable-help-text">
+                    <p>変数は <code>{{ 変数名 }}</code> の形式で使用できます。例: <code>{{ current_date }}</code></p>
+                    <p>条件分岐は <code>{% if 条件 %}...{% else %}...{% endif %}</code> の形式で使用できます。</p>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="savePromptEdit">保存</button>
+                <button id="cancelPromptEdit">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
     <!-- JSファイルを読み込む -->
     <script src="js/config.js"></script>
     <script src="js/cryptoHelper.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/storage.js"></script>
+    <script src="js/promptManager.js"></script>
     <script src="js/fileHandler.js"></script>
     <script src="js/markdown.js"></script>
     <script src="js/codeExecutor.js"></script>

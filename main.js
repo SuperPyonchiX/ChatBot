@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // ボタン関連
             'newChatButton', 'clearHistoryButton', 'settingsButton', 'settingsMenu',
-            'openSystemPromptSettings', 'openApiSettings',
+            'openSystemPromptSettings', 'openApiSettings', 'openPromptManager',
             
             // ファイル関連
             'fileInput',
@@ -101,7 +101,14 @@ document.addEventListener('DOMContentLoaded', function() {
             'azureEndpointGpt4o', 'azureEndpointO1Mini', 'azureEndpointO1',
             
             // チャット名前変更関連
-            'saveRenameChat', 'cancelRenameChat', 'renameChatModal', 'chatTitleInput'
+            'saveRenameChat', 'cancelRenameChat', 'renameChatModal', 'chatTitleInput',
+            
+            // プロンプトマネージャー関連
+            'promptManagerModal', 'closePromptManager', 'addCategoryButton',
+            'addPromptButton', 'promptSearchInput', 'promptEditModal',
+            'savePromptEdit', 'cancelPromptEdit', 'promptNameInput',
+            'promptCategorySelect', 'promptSubcategorySelect', 'promptTagsInput',
+            'promptDescriptionInput', 'promptContentInput'
         ];
         
         return getElements(ids);
@@ -132,6 +139,16 @@ document.addEventListener('DOMContentLoaded', function() {
      * @private
      */
     function _init() {
+        // プロンプトマネージャーの初期化
+        if (window.PromptManager) {
+            window.PromptManager.init();
+        }
+        
+        // プロンプトマネージャーのUIイベント設定
+        if (window.UI && window.UI.setupPromptManagerEvents) {
+            window.UI.setupPromptManagerEvents();
+        }
+        
         _loadConversations();
         _setupEventListeners();
     }
@@ -251,6 +268,14 @@ document.addEventListener('DOMContentLoaded', function() {
             Elements.settingsMenu.style.display = 'none';
             window.UI.showApiKeyModal(AppState.apiSettings);
         });
+        
+        // 高度なプロンプト管理
+        if (Elements.openPromptManager) {
+            Elements.openPromptManager.addEventListener('click', () => {
+                Elements.settingsMenu.style.display = 'none';
+                window.UI.showPromptManagerModal();
+            });
+        }
     }
 
     /**
@@ -283,6 +308,10 @@ document.addEventListener('DOMContentLoaded', function() {
         _setupSystemPromptModal();
         _setupApiKeyModal();
         _setupRenameChatModal();
+        
+        // プロンプトマネージャーモーダルのセットアップは引き続き行うが、
+        // 実際の処理はUI.jsで実装されているため、ここでは何もしない
+        // _setupPromptManagerModal();
     }
 
     /**
