@@ -1462,6 +1462,10 @@ Object.assign(window.UI, {
         
         // カテゴリごとのプロンプト数を更新
         this._updateCategoryCounts();
+        
+        // プロンプト一覧も更新
+        this.updatePromptsList();
+        
         console.log('カテゴリ一覧の更新が完了しました');
     };
     
@@ -1930,7 +1934,7 @@ Object.assign(window.UI, {
                 
         console.log('カテゴリオプションの更新が完了しました');
     };
-            
+    
     /**
      * プロンプトをシステムプロンプトとして設定する
      * @function _setAsSystemPrompt
@@ -2079,7 +2083,9 @@ Object.assign(window.UI, {
                         const result = window.PromptManager.addCategory(categoryName.trim());
                         if (result) {
                             this.notify('カテゴリを追加しました', 'success');
-                            this.updatePromptCategories();
+                            // プロンプトマネージャーモーダルを一度閉じて開き直す
+                            this.hidePromptManagerModal();
+                            this.showPromptManagerModal();
                         } else {
                             this.notify('カテゴリの追加に失敗しました', 'error');
                         }

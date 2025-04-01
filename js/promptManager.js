@@ -653,6 +653,74 @@ window.PromptManager = (function() {
         });
     }
 
+    /**
+     * 日本語を含むカテゴリ名を一意のキーに変換する
+     * @private
+     * @param {string} categoryName - カテゴリ名
+     * @returns {string} 一意のカテゴリキー
+     */
+    function generateCategoryKey(categoryName) {
+        if (!categoryName) return '';
+
+        // ハッシュ関数を使用して一意のキーを生成
+        const hash = Array.from(categoryName).reduce((acc, char) => {
+            return acc + char.charCodeAt(0).toString(16);
+        }, '');
+
+        return `cat_${hash}`;
+    }
+
+    /**
+     * 新しいカテゴリを追加
+     * @public
+     * @param {string} categoryName - カテゴリ名
+     * @returns {boolean} 作成成功時true
+     */
+    function addCategory(categoryName) {
+        if (!categoryName) {
+            console.error('カテゴリ名が空です');
+            return false;
+        }
+        
+        // カテゴリキーを生成
+        const categoryKey = generateCategoryKey(categoryName);
+        
+        if (!categoryKey) {
+            console.error('カテゴリ名が不正です: ', categoryName);
+            return false;
+        }
+        
+        const categories = loadCategories();
+        
+        // 既に同じキーが存在する場合は失敗
+        if (categories[categoryKey]) {
+            console.error('カテゴリキーが既に存在します: ', categoryKey);
+            return false;
+        }
+        
+        // 既に同じ名前が存在する場合は失敗（大文字小文字を区別しない）
+        const nameExists = Object.values(categories).some(cat => 
+            cat.name.toLowerCase() === categoryName.toLowerCase()
+        );
+        if (nameExists) {
+            console.error('カテゴリ名が既に存在します: ', categoryName);
+            return false;
+        }
+        
+        // カテゴリを作成
+        const success = createCategory(categoryKey, {
+            name: categoryName,
+            description: '',
+            order: Object.keys(categories).length
+        });
+        
+        if (!success) {
+            console.error('カテゴリの保存に失敗しました: ', categoryName);
+        }
+        
+        return success;
+    }
+
     // 公開API
     return {
         init,
@@ -674,6 +742,7 @@ window.PromptManager = (function() {
         DEFAULT_CATEGORIES,
         setAsSystemPrompt,
         saveAsSystemPromptTemplate,
-        importSystemPromptTemplate
+        importSystemPromptTemplate,
+        addCategory
     };
 })();
