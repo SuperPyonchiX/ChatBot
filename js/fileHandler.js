@@ -1012,24 +1012,22 @@ window.FileHandler = {
             
             // Excelファイル (.xlsx, .xls) の処理
             if (fileType === 'Excel') {
-                // SheetJSを使用してExcelファイルを解析
                 return await this._extractTextFromExcelFile(file);
             }
             
             // PowerPointファイル (.pptx, .ppt) の処理
             if (fileType === 'PowerPoint') {
-                // PowerPointファイル用のテキスト抽出
                 return await this.readPowerPointFile(file);
             }
             
-            // Word, その他のOfficeファイルの処理
-            // 既存の処理を利用
+            // Wordファイル (.docx, .doc) の処理
+            if (fileType === 'Word') {
+                return await this._extractTextFromWordFile(file);
+            }
+            
+            // その他のOfficeファイルの処理
             const fileBase64 = await this.readFileAsBase64(file);
-            
-            // バイナリデータから可能な限りテキストを抽出
             let extractedText = `=== ${fileType}ファイル「${file.name}」の内容 ===\n\n`;
-            
-            // データURLからBase64部分のみを取得
             extractedText += this._extractTextFromBinaryData(fileBase64, file.type);
             
             if (extractedText.length < 100) {
@@ -1232,5 +1230,35 @@ window.FileHandler = {
             console.error("XMLパース中のエラー:", error);
             return "";
         }
-    }
+    },
+
+    /**
+     * Wordファイルからテキストを抽出する
+     * @private
+     * @param {File} file - Wordファイル
+     * @returns {Promise<string>} 抽出されたテキスト
+     */
+    _extractTextFromWordFile: async function(file) {
+        try {
+            // mammoth.jsが読み込まれているか確認
+            if (typeof mammoth === 'undefined') {
+                console.error('mammoth.jsライブラリが読み込まれていません');
+                return `Wordファイル「${file.name}」からのテキスト抽出に失敗しました。\nmammoth.jsライブラリが見つかりません。`;
+            }
+            
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            
+            if (result.value) {
+                return `=== Wordファイル「${file.name}」の内容 ===\n\n${result.value}`;
+            } else {
+                const messages = result.messages.map(msg => msg.message).join('\n');
+                console.warn('Word文書からのテキスト抽出の警告:', messages);
+                return `=== Wordファイル「${file.name}」の内容 ===\n\n（テキストを抽出できませんでした）`;
+            }
+        } catch (error) {
+            console.error('Word文書テキスト抽出エラー:', error);
+            return `Wordファイル「${file.name}」からのテキスト抽出に失敗しました。`;
+        }
+    },
 };
