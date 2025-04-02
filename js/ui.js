@@ -2043,7 +2043,6 @@ Object.assign(window.UI, {
     
     // プロンプトマネージャー関連のイベントをセットアップする
     ui.setupPromptManagerEvents = function() {
-        console.log('プロンプトマネージャーのイベントをセットアップします');
         
         // 閉じるボタン
         const closeButton = document.getElementById('closePromptManager');
@@ -2181,7 +2180,6 @@ Object.assign(window.UI, {
             });
         }
         
-        console.log('プロンプトマネージャーのイベントセットアップが完了しました');
     };
     
     /**
@@ -2192,7 +2190,6 @@ Object.assign(window.UI, {
      * @memberof UI
      */
     ui.initPromptSuggestions = function() {
-        console.log('プロンプト候補表示機能を初期化します');
         const userInput = document.getElementById('userInput');
         const promptSuggestions = document.getElementById('promptSuggestions');
         

@@ -506,15 +506,30 @@ window.Storage = {
             // 新形式（オブジェクト）か旧形式（配列）かを判定
             let result;
             if (Array.isArray(data)) {
-                // 旧形式の場合は新形式に変換
+                // 旧形式の場合は新形式に変換し、各ファイルに同じタイムスタンプを設定
+                const timestamp = Date.now();
                 result = {
-                    files: this._optimizeAttachments(data.map(file => ({
+                    files: data.map(file => ({
                         ...file,
-                        timestamp: Date.now()
-                    })))
+                        timestamp: timestamp
+                    }))
                 };
             } else if (data && typeof data === 'object' && 'files' in data) {
-                result = data;
+                // ファイルが配列形式であることを確認
+                if (Array.isArray(data.files)) {
+                    // 各ファイルにタイムスタンプが設定されていることを確認
+                    result = {
+                        files: data.files.map(file => ({
+                            ...file,
+                            // タイムスタンプがない場合は追加
+                            timestamp: file.timestamp || data.timestamp || Date.now()
+                        }))
+                    };
+                } else {
+                    // filesが配列でない場合は空の配列を返す
+                    console.error(`無効な添付ファイル形式です（会話ID: ${conversationId}）`, data);
+                    result = { files: [] };
+                }
             } else {
                 console.error(`不明な添付ファイル形式です（会話ID: ${conversationId}）`, data);
                 return { files: [] };

@@ -877,55 +877,119 @@ window.FileHandler = {
         if (!conversationId || !chatMessages) return;
         
         try {
+            console.log('[DEBUG] 添付ファイル表示開始 - 会話ID:', conversationId);
             const attachmentData = this.loadAttachmentsForConversation(conversationId);
-            if (!attachmentData.files || attachmentData.files.length === 0) return;
+            console.log('[DEBUG] 読み込まれた添付データ:', JSON.stringify(attachmentData));
+            
+            if (!attachmentData.files || attachmentData.files.length === 0) {
+                console.log('[DEBUG] 添付ファイルが見つかりません');
+                return;
+            }
+
+            console.log('[DEBUG] 添付ファイル数:', attachmentData.files.length);
 
             // メッセージを取得
             const userMessages = Array.from(chatMessages.querySelectorAll('.message.user'));
+            console.log('[DEBUG] ユーザーメッセージ数:', userMessages.length);
             
             // メッセージをタイムスタンプでソート
             const sortedMessages = userMessages.map(msg => ({
                 element: msg,
                 timestamp: parseInt(msg.dataset.timestamp)
             })).sort((a, b) => a.timestamp - b.timestamp);
+            
+            console.log('[DEBUG] ソート済みメッセージ:', sortedMessages.map(m => m.timestamp));
 
-            // 添付ファイルをタイムスタンプでソート
-            const sortedFiles = attachmentData.files
-                .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-
-            // 添付ファイルを適切なメッセージに割り当て
-            let currentMessageIndex = 0;
-            let currentFileGroup = [];
-            let currentFileTimestamp = null;
-
-            for (const file of sortedFiles) {
-                if (currentFileTimestamp !== file.timestamp) {
-                    if (currentFileGroup.length > 0) {
-                        this._assignFilesToMessage(
-                            currentFileGroup,
-                            sortedMessages,
-                            currentMessageIndex,
-                            currentFileTimestamp
-                        );
-                        currentFileGroup = [];
+            // メッセージと添付ファイルのマッピング - ここが重要な変更点
+            const messageAttachments = {};
+            
+            // すべてのファイルを処理し、適切なメッセージにグループ化
+            for (const file of attachmentData.files) {
+                if (!file || !file.timestamp) continue;
+                
+                // 最も近いメッセージを見つける
+                let bestMatchIndex = 0;
+                let minTimeDiff = Infinity;
+                
+                for (let i = 0; i < sortedMessages.length; i++) {
+                    const timeDiff = Math.abs(sortedMessages[i].timestamp - file.timestamp);
+                    if (timeDiff < minTimeDiff) {
+                        minTimeDiff = timeDiff;
+                        bestMatchIndex = i;
                     }
-                    currentFileTimestamp = file.timestamp;
                 }
-                currentFileGroup.push(file);
+                
+                // 対象のメッセージにファイルを割り当て
+                if (sortedMessages.length > 0) {
+                    const messageId = sortedMessages[bestMatchIndex].element.dataset.timestamp;
+                    
+                    // マッピングが存在しなければ初期化
+                    if (!messageAttachments[messageId]) {
+                        messageAttachments[messageId] = {
+                            message: sortedMessages[bestMatchIndex],
+                            files: []
+                        };
+                    }
+                    
+                    // ファイルを追加
+                    messageAttachments[messageId].files.push(file);
+                    console.log(`[DEBUG] ファイル ${file.name} をメッセージ ${messageId} に割り当てました (時間差: ${minTimeDiff}ms)`);
+                }
             }
-
-            // 最後のグループを処理
-            if (currentFileGroup.length > 0) {
-                this._assignFilesToMessage(
-                    currentFileGroup,
-                    sortedMessages,
-                    currentMessageIndex,
-                    currentFileTimestamp
-                );
+            
+            console.log('[DEBUG] メッセージごとの添付ファイルマッピング:', Object.keys(messageAttachments).length);
+            
+            // 各メッセージに添付ファイルを表示
+            for (const messageId in messageAttachments) {
+                const { message, files } = messageAttachments[messageId];
+                const messageContent = message.element.querySelector('.message-content');
+                
+                if (messageContent) {
+                    console.log(`[DEBUG] メッセージ ${messageId} に ${files.length} 個のファイルを追加します`);
+                    
+                    // 既存の添付ファイル要素があれば削除
+                    const existingAttachments = messageContent.querySelector('.message-attachments');
+                    if (existingAttachments) {
+                        console.log('[DEBUG] 既存の添付ファイル要素を削除');
+                        messageContent.removeChild(existingAttachments);
+                    }
+                    
+                    // 新しい添付ファイル要素を作成して追加（すべてのファイルを一度に）
+                    const attachmentsElement = window.Chat._createAttachmentsElement(files, parseInt(messageId));
+                    messageContent.appendChild(attachmentsElement);
+                    console.log('[DEBUG] 添付ファイル要素が追加されました');
+                }
             }
+            
+            console.log('[DEBUG] 添付ファイル表示完了');
         } catch (error) {
             console.error('[ERROR] 保存された添付ファイルの表示中にエラーが発生しました:', error);
         }
+    },
+    
+    /**
+     * ファイルをタイムスタンプでグループ化する
+     * @private
+     * @param {Array} files - ファイルの配列
+     * @returns {Object} タイムスタンプでグループ化されたファイル
+     */
+    _groupFilesByTimestamp: function(files) {
+        if (!Array.isArray(files)) return {};
+        
+        const groups = {};
+        
+        files.forEach(file => {
+            if (!file) return;
+            
+            const timestamp = file.timestamp || Date.now();
+            if (!groups[timestamp]) {
+                groups[timestamp] = [];
+            }
+            
+            groups[timestamp].push(file);
+        });
+        
+        return groups;
     },
     
     /**
@@ -1306,7 +1370,14 @@ window.FileHandler = {
         // 5秒以内の差があるメッセージが見つかった場合
         if (bestMatch && minTimeDiff <= 5000) {
             const messageContent = bestMatch.element.querySelector('.message-content');
-            if (messageContent && !messageContent.querySelector('.message-attachments')) {
+            if (messageContent) {
+                // すでに添付ファイル要素がある場合は削除（上書き）
+                const existingAttachments = messageContent.querySelector('.message-attachments');
+                if (existingAttachments) {
+                    messageContent.removeChild(existingAttachments);
+                }
+                
+                // 新しい添付ファイル要素を作成して追加
                 const attachmentsElement = window.Chat._createAttachmentsElement(files, fileTimestamp);
                 messageContent.appendChild(attachmentsElement);
             }
@@ -1314,7 +1385,14 @@ window.FileHandler = {
             // 適切なメッセージが見つからない場合は最新のメッセージに追加
             const lastMessage = messages[messages.length - 1];
             const messageContent = lastMessage.element.querySelector('.message-content');
-            if (messageContent && !messageContent.querySelector('.message-attachments')) {
+            if (messageContent) {
+                // すでに添付ファイル要素がある場合は削除（上書き）
+                const existingAttachments = messageContent.querySelector('.message-attachments');
+                if (existingAttachments) {
+                    messageContent.removeChild(existingAttachments);
+                }
+                
+                // 新しい添付ファイル要素を作成して追加
                 const attachmentsElement = window.Chat._createAttachmentsElement(files, fileTimestamp);
                 messageContent.appendChild(attachmentsElement);
             }
