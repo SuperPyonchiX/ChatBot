@@ -883,34 +883,26 @@ window.FileHandler = {
 
             // メッセージを取得
             const userMessages = Array.from(chatMessages.querySelectorAll('.message.user'));
+            if (userMessages.length === 0) return;
             
-            // メッセージをタイムスタンプでソート
+            // メッセージをタイムスタンプでソート（一度だけソート処理を実行）
             const sortedMessages = userMessages.map(msg => ({
                 element: msg,
-                timestamp: parseInt(msg.dataset.timestamp)
+                timestamp: parseInt(msg.dataset.timestamp || '0')
             })).sort((a, b) => a.timestamp - b.timestamp);
             
-            // メッセージと添付ファイルのマッピング - ここが重要な変更点
+            // メッセージと添付ファイルのマッピング
             const messageAttachments = {};
             
-            // すべてのファイルを処理し、適切なメッセージにグループ化
-            for (const file of attachmentData.files) {
+            // 添付ファイルの処理を一度にまとめて効率化
+            for (let i = 0; i < attachmentData.files.length; i++) {
+                const file = attachmentData.files[i];
                 if (!file || !file.timestamp) continue;
                 
-                // 最も近いメッセージを見つける
-                let bestMatchIndex = 0;
-                let minTimeDiff = Infinity;
+                // バイナリ検索的アプローチでタイムスタンプが最も近いメッセージを効率的に見つける
+                let bestMatchIndex = this._findClosestMessageIndex(sortedMessages, file.timestamp);
                 
-                for (let i = 0; i < sortedMessages.length; i++) {
-                    const timeDiff = Math.abs(sortedMessages[i].timestamp - file.timestamp);
-                    if (timeDiff < minTimeDiff) {
-                        minTimeDiff = timeDiff;
-                        bestMatchIndex = i;
-                    }
-                }
-                
-                // 対象のメッセージにファイルを割り当て
-                if (sortedMessages.length > 0) {
+                if (bestMatchIndex >= 0 && bestMatchIndex < sortedMessages.length) {
                     const messageId = sortedMessages[bestMatchIndex].element.dataset.timestamp;
                     
                     // マッピングが存在しなければ初期化
@@ -926,13 +918,14 @@ window.FileHandler = {
                 }
             }
                         
-            // 各メッセージに添付ファイルを表示
-            for (const messageId in messageAttachments) {
+            // 各メッセージに添付ファイルを表示（DOM操作を最小限にするため一括処理）
+            const messageIds = Object.keys(messageAttachments);
+            for (let i = 0; i < messageIds.length; i++) {
+                const messageId = messageIds[i];
                 const { message, files } = messageAttachments[messageId];
                 const messageContent = message.element.querySelector('.message-content');
                 
                 if (messageContent) {
-                    
                     // 既存の添付ファイル要素があれば削除
                     const existingAttachments = messageContent.querySelector('.message-attachments');
                     if (existingAttachments) {
@@ -944,10 +937,64 @@ window.FileHandler = {
                     messageContent.appendChild(attachmentsElement);
                 }
             }
-            
         } catch (error) {
             console.error('[ERROR] 保存された添付ファイルの表示中にエラーが発生しました:', error);
         }
+    },
+    
+    /**
+     * タイムスタンプに最も近いメッセージのインデックスを効率的に検索
+     * @private
+     * @param {Array} messages - ソート済みのメッセージ配列
+     * @param {number} timestamp - 検索するタイムスタンプ
+     * @returns {number} 最も近いメッセージのインデックス
+     */
+    _findClosestMessageIndex: function(messages, timestamp) {
+        if (!messages || messages.length === 0) return -1;
+        
+        // 配列が小さい場合は線形探索
+        if (messages.length <= 10) {
+            let bestIndex = 0;
+            let minDiff = Math.abs(messages[0].timestamp - timestamp);
+            
+            for (let i = 1; i < messages.length; i++) {
+                const diff = Math.abs(messages[i].timestamp - timestamp);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    bestIndex = i;
+                }
+            }
+            
+            return bestIndex;
+        }
+        
+        // 大きな配列の場合はバイナリサーチに近いアプローチで効率化
+        let left = 0;
+        let right = messages.length - 1;
+        
+        // タイムスタンプが範囲外の場合
+        if (timestamp <= messages[left].timestamp) return left;
+        if (timestamp >= messages[right].timestamp) return right;
+        
+        // バイナリサーチで最も近い位置を見つける
+        while (right - left > 1) {
+            const mid = Math.floor((left + right) / 2);
+            if (messages[mid].timestamp === timestamp) {
+                return mid;
+            }
+            
+            if (messages[mid].timestamp < timestamp) {
+                left = mid;
+            } else {
+                right = mid;
+            }
+        }
+        
+        // 最終的に2つに絞られた場合、より近い方を選択
+        const leftDiff = Math.abs(messages[left].timestamp - timestamp);
+        const rightDiff = Math.abs(messages[right].timestamp - timestamp);
+        
+        return leftDiff <= rightDiff ? left : right;
     },
     
     /**
