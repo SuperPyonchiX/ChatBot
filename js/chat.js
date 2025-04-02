@@ -419,8 +419,40 @@ window.Chat = {
                 
                 imgContainer.appendChild(img);
                 attachmentsDiv.appendChild(imgContainer);
+            } else if (attachment.type === 'pdf' && attachment.data) {
+                // PDFファイルのプレビュー表示
+                const pdfContainer = document.createElement('div');
+                pdfContainer.classList.add('attachment-pdf-container');
+                
+                // PDFのサムネイル・プレビュー表示
+                const pdfPreview = document.createElement('div');
+                pdfPreview.classList.add('pdf-preview');
+                
+                // PDFアイコン
+                const pdfIcon = document.createElement('i');
+                pdfIcon.className = 'fas fa-file-pdf';
+                
+                // PDFファイル名
+                const pdfName = document.createElement('span');
+                pdfName.textContent = attachment.name || 'PDF文書';
+                pdfName.classList.add('attachment-file-name');
+                
+                // プレビューボタン
+                const previewButton = document.createElement('button');
+                previewButton.classList.add('pdf-preview-button');
+                previewButton.textContent = 'プレビュー';
+                previewButton.addEventListener('click', () => {
+                    this._showPDFPreview(attachment.data, attachment.name);
+                });
+                
+                // 要素を追加
+                pdfPreview.appendChild(pdfIcon);
+                pdfPreview.appendChild(pdfName);
+                pdfPreview.appendChild(previewButton);
+                pdfContainer.appendChild(pdfPreview);
+                attachmentsDiv.appendChild(pdfContainer);
             } else if (attachment.type === 'file' && attachment.name) {
-                // 画像以外のファイル添付表示
+                // その他のファイル添付表示
                 const fileContainer = document.createElement('div');
                 fileContainer.classList.add('attachment-file-container');
                 
@@ -445,16 +477,16 @@ window.Chat = {
     },
     
     /**
-     * 画像を全画面表示する
+     * PDFプレビューを表示する
      * @private
-     * @param {string} src - 画像のソースURL
-     * @param {string} alt - 画像の代替テキスト
+     * @param {string} src - PDFのDataURL
+     * @param {string} name - PDFファイル名
      */
-    _showFullSizeImage: function(src, alt) {
+    _showPDFPreview: function(src, name) {
         if (!src) return;
         
         // すでに表示されている場合は削除
-        const existingOverlay = document.querySelector('.image-overlay');
+        const existingOverlay = document.querySelector('.pdf-overlay');
         if (existingOverlay) {
             document.body.removeChild(existingOverlay);
             return;
@@ -462,12 +494,29 @@ window.Chat = {
         
         // オーバーレイを作成
         const overlay = document.createElement('div');
-        overlay.classList.add('image-overlay');
+        overlay.classList.add('pdf-overlay');
         
-        // 画像を作成
-        const img = document.createElement('img');
-        img.src = src;
-        img.alt = alt || '添付画像';
+        // PDFプレビューエリア
+        const pdfViewer = document.createElement('div');
+        pdfViewer.classList.add('pdf-viewer');
+        
+        // PDFオブジェクト
+        const pdfObject = document.createElement('object');
+        pdfObject.type = 'application/pdf';
+        pdfObject.data = src;
+        pdfObject.width = '100%';
+        pdfObject.height = '100%';
+        
+        // PDFが表示できない場合のフォールバック
+        const fallback = document.createElement('p');
+        fallback.innerHTML = `<a href="${src}" target="_blank">PDFを表示できません。こちらをクリックして開いてください。</a>`;
+        pdfObject.appendChild(fallback);
+        
+        // タイトルバー
+        const titleBar = document.createElement('div');
+        titleBar.classList.add('pdf-title-bar');
+        const titleText = document.createElement('span');
+        titleText.textContent = name || 'PDF文書';
         
         // 閉じるボタン
         const closeBtn = document.createElement('button');
@@ -487,8 +536,11 @@ window.Chat = {
         });
         
         // 要素を追加
-        overlay.appendChild(img);
-        overlay.appendChild(closeBtn);
+        titleBar.appendChild(titleText);
+        titleBar.appendChild(closeBtn);
+        pdfViewer.appendChild(pdfObject);
+        overlay.appendChild(titleBar);
+        overlay.appendChild(pdfViewer);
         document.body.appendChild(overlay);
     },
     
@@ -621,11 +673,16 @@ window.Chat = {
             // タイトルが更新されたかどうかを追跡
             let titleUpdated = false;
 
-            // 添付ファイルの処理
+            // 添付ファイルの処理 - GPT用のテキストデータとUIプレビュー用を分離
             let attachmentContent = '';
+            let displayAttachments = [];
+            
             if (attachments && attachments.length > 0) {
+                // GPTに送信する添付ファイルデータと、表示用添付ファイルデータを分けて処理
+                displayAttachments = [...attachments]; // 表示用にはそのまま複製
+                
                 for (const attachment of attachments) {
-                    // PDFの場合は抽出されたテキストを使用
+                    // PDFの場合は抽出されたテキストを使用（GPT送信用）
                     if (attachment.type === 'pdf' && attachment.content) {
                         attachmentContent += `\n${attachment.content}\n`;
                     }
@@ -652,9 +709,10 @@ window.Chat = {
             };
             
             // メッセージを追加する
-            this.addUserMessage(userMessage.content, chatMessages, attachments, userMessage.timestamp);
+            // 表示用にはプレビュー表示を使用
+            this.addUserMessage(userText, chatMessages, displayAttachments, userMessage.timestamp);
             
-            // 現在の会話にユーザーメッセージを追加
+            // 現在の会話にユーザーメッセージを追加（APIへの送信用データを含む）
             conversation.messages.push(userMessage);
             
             // チャットタイトルがデフォルトの場合、最初のメッセージをタイトルに設定
@@ -688,7 +746,7 @@ window.Chat = {
                 await window.API.callOpenAIAPI(
                     messagesWithSystem, 
                     conversation.model,
-                    attachments,
+                    displayAttachments,  // 表示用添付ファイルをAPIに渡す
                     {
                         stream: true,
                         // チャンク受信時のコールバック

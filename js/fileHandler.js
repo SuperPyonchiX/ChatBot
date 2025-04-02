@@ -584,27 +584,20 @@ window.FileHandler = {
             } 
             // PDFファイルの場合
             else if (file.type === 'application/pdf') {
-                try {
-                    const extractedText = await this.extractTextFromPDF(file);
-                    return {
-                        type: 'pdf',
-                        name: file.name,
-                        mimeType: file.type,
-                        size: file.size,
-                        content: extractedText
-                    };
-                } catch (pdfError) {
-                    console.error('PDFテキスト抽出エラー:', pdfError);
-                    // エラーの場合は通常のファイルとして処理
-                    const base64 = await this.readFileAsBase64(file);
-                    return {
-                        type: 'file',
-                        name: file.name,
-                        mimeType: file.type,
-                        size: file.size,
-                        data: `data:${file.type};base64,${base64}`
-                    };
-                }
+                // PDFをデータURLとして読み込む（プレビュー表示用）
+                const dataUrl = await this.readFileAsDataURL(file);
+                
+                // PDFからテキストを抽出（GPT送信用）
+                const extractedText = await this.extractTextFromPDF(file);
+                
+                return {
+                    type: 'pdf',
+                    name: file.name,
+                    mimeType: file.type,
+                    size: file.size,
+                    data: dataUrl,
+                    content: extractedText // GPTに送信するテキスト内容
+                };
             }
             // その他のファイルの場合
             else {
