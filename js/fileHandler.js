@@ -131,10 +131,7 @@ window.FileHandler = {
         
         const validFiles = [];
         const errors = [];
-        
-        // 許可されるすべてのMIMEタイプのリスト
-        const allowedMimeTypes = Object.values(window.CONFIG.FILE.ALLOWED_FILE_TYPES).flat();
-        
+                
         files.forEach(file => {
             // ファイルサイズを確認
             if (file.size > window.CONFIG.FILE.MAX_FILE_SIZE) {
@@ -144,7 +141,7 @@ window.FileHandler = {
             }
             
             // MIMEタイプを確認（緩い制限）
-            if (!this._isFileTypeAllowed(file.type)) {
+            if (!this._isFileTypeAllowed(file)) {
                 errors.push(`"${file.name}"は対応していないファイル形式です`);
                 return;
             }
@@ -163,12 +160,24 @@ window.FileHandler = {
     /**
      * ファイルタイプが許可されているか確認
      * @private
-     * @param {string} mimeType - チェックするMIMEタイプ
+     * @param {File} file - チェックするファイル
      * @returns {boolean} 許可されている場合はtrue
      */
-    _isFileTypeAllowed: function(mimeType) {
-        // MIMEタイプが指定されていない場合
-        if (!mimeType) return false;
+    _isFileTypeAllowed: function(file) {
+        if (!file) return false;
+        
+        const fileName = file.name;
+        const mimeType = file.type;
+        
+        // .mdファイルの場合は許可
+        if (fileName && fileName.toLowerCase().endsWith('.md')) {
+            return true;
+        }
+        
+        // MIMEタイプが空の場合は不許可（.mdファイルは上でチェック済み）
+        if (!mimeType) {
+            return false;
+        }
         
         // すべての許可されたMIMEタイプのリスト
         const allowedMimeTypes = Object.values(window.CONFIG.FILE.ALLOWED_FILE_TYPES).flat();
