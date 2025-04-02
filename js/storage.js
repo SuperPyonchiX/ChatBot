@@ -327,30 +327,71 @@ window.Storage = {
     },
 
     /**
-     * 会話履歴をローカルストレージから読み込む
-     * @returns {Array} 会話オブジェクトの配列
-     */
-    loadConversations: function() {
-        const conversations = this._getItem(window.CONFIG.STORAGE.KEYS.CONVERSATIONS, [], true);
-        
-        // 無効なデータがあれば修正する
-        return Array.isArray(conversations) ? conversations : [];
-    },
-
-    /**
-     * 会話履歴をローカルストレージに保存
+     * 会話を保存
      * @param {Array} conversations - 保存する会話の配列
      */
     saveConversations: function(conversations) {
         if (!Array.isArray(conversations)) return;
         
-        // 保存前に会話データの大きさをチェック
-        if (conversations.length > 100) {
-            // 最新の100件のみ保持
-            conversations = conversations.slice(0, 100);
+        try {
+            // タイムスタンプを確実に保持
+            const processedConversations = conversations.map(conversation => {
+                if (!conversation) return null;
+
+                // メッセージのタイムスタンプを確認・修正
+                const messages = conversation.messages.map(msg => {
+                    if (!msg) return null;
+                    return {
+                        ...msg,
+                        timestamp: msg.timestamp || Date.now() // タイムスタンプがない場合は現在時刻を設定
+                    };
+                }).filter(Boolean);
+
+                return {
+                    ...conversation,
+                    messages,
+                    updatedAt: Date.now()
+                };
+            }).filter(Boolean);
+
+            this._setItem(window.CONFIG.STORAGE.KEYS.CONVERSATIONS, processedConversations);
+        } catch (error) {
+            console.error('会話の保存中にエラーが発生しました:', error);
         }
-        
-        this._setItem(window.CONFIG.STORAGE.KEYS.CONVERSATIONS, conversations);
+    },
+
+    /**
+     * 会話を読み込む
+     * @returns {Array} 読み込んだ会話の配列
+     */
+    loadConversations: function() {
+        try {
+            const conversations = this._getItem(window.CONFIG.STORAGE.KEYS.CONVERSATIONS, [], true);
+            if (!Array.isArray(conversations)) return [];
+
+            // タイムスタンプを確認・修正
+            return conversations.map(conversation => {
+                if (!conversation) return null;
+
+                // メッセージのタイムスタンプを確認
+                const messages = conversation.messages.map(msg => {
+                    if (!msg) return null;
+                    return {
+                        ...msg,
+                        timestamp: msg.timestamp || Date.now() // タイムスタンプがない場合は現在時刻を設定
+                    };
+                }).filter(Boolean);
+
+                return {
+                    ...conversation,
+                    messages,
+                    updatedAt: conversation.updatedAt || Date.now()
+                };
+            }).filter(Boolean);
+        } catch (error) {
+            console.error('会話の読み込み中にエラーが発生しました:', error);
+            return [];
+        }
     },
 
     /**
@@ -379,20 +420,24 @@ window.Storage = {
         if (!conversationId) return;
         
         try {
-            // 新しい構造に対応 - attachmentDataがオブジェクトか配列かを確認
             let dataToSave;
             
             if (Array.isArray(attachmentData)) {
                 // 旧形式（配列のみ）の場合は新形式に変換
                 dataToSave = {
-                    timestamp: Date.now(),
-                    files: this._optimizeAttachments(attachmentData)
+                    files: this._optimizeAttachments(attachmentData.map(file => ({
+                        ...file,
+                        timestamp: Date.now()
+                    })))
                 };
             } else if (attachmentData && typeof attachmentData === 'object') {
-                // 新形式の場合はファイルだけを最適化
+                // 新形式の場合は各ファイルに個別のタイムスタンプを設定
+                const files = Array.isArray(attachmentData.files) ? attachmentData.files : [];
                 dataToSave = {
-                    timestamp: attachmentData.timestamp || Date.now(),
-                    files: this._optimizeAttachments(attachmentData.files || [])
+                    files: this._optimizeAttachments(files.map(file => ({
+                        ...file,
+                        timestamp: file.timestamp || attachmentData.timestamp || Date.now()
+                    })))
                 };
             } else {
                 console.error('無効な添付ファイルデータ形式です');
@@ -406,7 +451,7 @@ window.Storage = {
             console.error('添付ファイルの保存中にエラーが発生しました:', error);
         }
     },
-    
+
     /**
      * 添付ファイルを最適化
      * @private
@@ -424,7 +469,8 @@ window.Storage = {
                 type: attachment.type,
                 name: attachment.name,
                 mimeType: attachment.mimeType,
-                size: attachment.size
+                size: attachment.size,
+                timestamp: attachment.timestamp || Date.now() // 個別のタイムスタンプを保持
             };
             
             // データ部分は画像やファイルの種類によって最適化
@@ -439,44 +485,58 @@ window.Storage = {
             return optimized;
         }).filter(Boolean); // null/undefinedを除外
     },
-    
+
     /**
      * 添付ファイルをローカルストレージから読み込む
      * @param {string} conversationId - 会話ID
      * @returns {Object} タイムスタンプとファイルを含むオブジェクト
      */
     loadAttachments: function(conversationId) {
-        if (!conversationId) return { timestamp: null, files: [] };
+        if (!conversationId) return { files: [] };
         
         try {
+            console.log('[DEBUG] Storage.loadAttachments 開始:', conversationId);
             const key = window.CONFIG.STORAGE.KEYS.ATTACHMENTS_PREFIX + conversationId;
             const data = this._getItem(key, null, true);
+            console.log('[DEBUG] ローカルストレージから読み込んだデータ:', JSON.stringify(data, null, 2));
             
             // データが存在しない場合
             if (!data) {
-                return { timestamp: null, files: [] };
+                console.log('[DEBUG] データが存在しません');
+                return { files: [] };
             }
             
             // 新形式（オブジェクト）か旧形式（配列）かを判定
+            let result;
             if (Array.isArray(data)) {
+                console.log('[DEBUG] 旧形式（配列）のデータを変換します');
                 // 旧形式の場合は新形式に変換
-                return {
-                    timestamp: Date.now(),
-                    files: data
+                result = {
+                    files: this._optimizeAttachments(data.map(file => ({
+                        ...file,
+                        timestamp: Date.now()
+                    })))
                 };
             } else if (data && typeof data === 'object' && 'files' in data) {
-                // 既に新形式の場合
-                return data;
+                console.log('[DEBUG] 新形式のデータを処理します');
+                result = data;
             } else {
                 console.error(`不明な添付ファイル形式です（会話ID: ${conversationId}）`, data);
-                return { timestamp: null, files: [] };
+                return { files: [] };
             }
+
+            console.log('[DEBUG] 返却するデータ:', JSON.stringify({
+                fileCount: result.files ? result.files.length : 0,
+                timestamps: result.files ? result.files.map(f => f.timestamp) : []
+            }, null, 2));
+            
+            return result;
         } catch (error) {
-            console.error('添付ファイルの読み込み中にエラーが発生しました:', error);
-            return { timestamp: null, files: [] };
+            console.error('[ERROR] 添付ファイルの読み込み中にエラーが発生しました:', error);
+            return { files: [] };
         }
     },
-    
+
     /**
      * 添付ファイルをローカルストレージから削除
      * @param {string} conversationId - 会話ID

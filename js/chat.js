@@ -390,15 +390,23 @@ window.Chat = {
      * 添付ファイル表示要素を作成
      * @private
      * @param {Array} attachments - 添付ファイルの配列
+     * @param {number} timestamp - タイムスタンプ（オプショナル）
      * @returns {HTMLElement} 添付ファイル表示要素
      */
-    _createAttachmentsElement: function(attachments) {
+    _createAttachmentsElement: function(attachments, timestamp = null) {
         if (!attachments || !Array.isArray(attachments)) {
             return document.createElement('div');
         }
         
         const attachmentsDiv = document.createElement('div');
         attachmentsDiv.classList.add('message-attachments');
+        
+        // タイムスタンプがあれば設定
+        if (timestamp || (attachments.length > 0 && attachments[0].timestamp)) {
+            // 配列内の最初の添付ファイルからタイムスタンプを取得するか、引数のタイムスタンプを使用
+            const effectiveTimestamp = timestamp || attachments[0].timestamp;
+            attachmentsDiv.dataset.timestamp = effectiveTimestamp;
+        }
         
         attachments.forEach((attachment) => {
             if (!attachment || !attachment.type) return;
@@ -807,13 +815,6 @@ window.Chat = {
 
     /**
      * メッセージを送信する
-     * @param {HTMLElement} userInput - ユーザー入力要素
-     * @param {HTMLElement} chatMessages - チャットメッセージ表示エリア
-     * @param {Object} conversation - 会話オブジェクト
-     * @param {Object} apiSettings - API設定
-     * @param {string} systemPrompt - システムプロンプト
-     * @param {Array} attachments - 添付ファイル配列
-     * @returns {Promise<Object>} 送信結果
      */
     sendMessage: async function(userInput, chatMessages, conversation, apiSettings, systemPrompt, attachments = []) {
         try {
@@ -826,27 +827,27 @@ window.Chat = {
             userInput.value = '';
             window.UI.autoResizeTextarea(userInput);
             
-            // タイトルが更新されたかどうかを追跡
             let titleUpdated = false;
+            const timestamp = Date.now(); // 共通のタイムスタンプを生成
 
-            // 添付ファイルの処理 - GPT用のテキストデータとUIプレビュー用を分離
+            // 添付ファイルの処理
             let attachmentContent = '';
             let displayAttachments = [];
             
             if (attachments && attachments.length > 0) {
-                // GPTに送信する添付ファイルデータと、表示用添付ファイルデータを分けて処理
-                displayAttachments = [...attachments]; // 表示用にはそのまま複製
+                // 各添付ファイルにタイムスタンプを設定
+                displayAttachments = attachments.map(att => ({
+                    ...att,
+                    timestamp: timestamp
+                }));
                 
                 for (const attachment of attachments) {
-                    // PDFの場合は抽出されたテキストを使用（GPT送信用）
                     if (attachment.type === 'pdf' && attachment.content) {
                         attachmentContent += `\n${attachment.content}\n`;
                     }
-                    // Office関連ファイルの場合も抽出されたテキストを使用（GPT送信用）
                     else if (attachment.type === 'office' && attachment.content) {
                         attachmentContent += `\n${attachment.content}\n`;
                     }
-                    // その他のテキストベースのファイル
                     else if (attachment.type === 'file' && 
                             (attachment.mimeType.startsWith('text/') || 
                              attachment.mimeType.includes('javascript') || 
@@ -864,20 +865,20 @@ window.Chat = {
             const userMessage = {
                 role: 'user',
                 content: attachmentContent ? `${userText}\n\n${attachmentContent}` : userText,
-                timestamp: Date.now()
+                timestamp: timestamp  // 共通のタイムスタンプを設定
             };
-            // メッセージを追加する
-            // 表示用にはプレビュー表示を使用
-            this.addUserMessage(userText, chatMessages, displayAttachments, userMessage.timestamp);
             
-            // 現在の会話にユーザーメッセージを追加（APIへの送信用データを含む）
+            // 表示用にはプレビュー表示を使用し、同じタイムスタンプを設定
+            this.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
+            
+            // 現在の会話にユーザーメッセージを追加
             conversation.messages.push(userMessage);
-            
-            // チャットタイトルがデフォルトの場合、最初のメッセージをタイトルに設定
+
+            // チャットタイトルの更新（必要な場合）
             if (conversation.title === '新しいチャット' && 
                 conversation.messages.filter(m => m.role === 'user').length === 1) {
                 conversation.title = userText.substring(0, 30) + (userText.length > 30 ? '...' : '');
-                titleUpdated = true;  // タイトルが更新されたのでフラグを設定
+                titleUpdated = true;
             }
 
             try {
