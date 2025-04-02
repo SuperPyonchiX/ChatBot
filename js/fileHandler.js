@@ -1019,7 +1019,7 @@ window.FileHandler = {
             // PowerPointファイル (.pptx, .ppt) の処理
             if (fileType === 'PowerPoint') {
                 // PowerPointファイル用のテキスト抽出
-                return await this._extractTextFromPowerPointFile(file);
+                return await this.readPowerPointFile(file);
             }
             
             // Word, その他のOfficeファイルの処理
@@ -1152,406 +1152,97 @@ window.FileHandler = {
     },
 
     /**
-     * PowerPointファイルからテキストを抽出する
-     * @private
+     * PowerPointファイルを読み込んでテキストを抽出
      * @param {File} file - PowerPointファイル
      * @returns {Promise<string>} 抽出されたテキスト
      */
-    _extractTextFromPowerPointFile: async function(file) {
-        return new Promise((resolve, reject) => {
-            try {
-                const reader = new FileReader();
-                
-                reader.onload = async (e) => {
-                    try {
-                        // ファイルからテキストを抽出
-                        const arrayBuffer = e.target.result;
-                        
-                        // ここでは簡易的な方法でテキストを抽出
-                        // バイナリデータから直接テキスト部分だけを取り出す
-                        let extractedText = await this._extractTextFromPPTArrayBuffer(arrayBuffer, file.name);
-                        
-                        // 最終的なテキストを生成
-                        let formattedText = `=== PowerPointファイル「${file.name}」の内容 ===\n\n`;
-                        formattedText += extractedText;
-                        
-                        resolve(formattedText);
-                    } catch (error) {
-                        console.error('PowerPoint解析エラー:', error);
-                        resolve(`PowerPointファイル「${file.name}」からのテキスト抽出に失敗しました。`);
-                    }
-                };
-                
-                reader.onerror = function() {
-                    reject(new Error('ファイル読み込みエラー'));
-                };
-                
-                // ファイルをArrayBufferとして読み込む
-                reader.readAsArrayBuffer(file);
-            } catch (error) {
-                console.error('PowerPoint処理エラー:', error);
-                reject(error);
-            }
-        });
-    },
-    
-    /**
-     * PowerPointのバイナリデータからテキストを抽出する（直接パース方式）
-     * @private
-     * @param {ArrayBuffer} arrayBuffer - PowerPointファイルのArrayBuffer
-     * @param {string} fileName - ファイル名
-     * @returns {Promise<string>} 抽出されたテキスト
-     */
-    _extractTextFromPPTArrayBuffer: async function(arrayBuffer, fileName) {
+    readPowerPointFile: async function(file) {
         try {
-            // ファイル拡張子を確認してファイルフォーマットを判定（.pptx か .ppt か）
-            const isPPTX = fileName.toLowerCase().endsWith('.pptx');
-            
-            // .pptxファイル（OOXML形式）の場合はZIPベースの処理
-            if (isPPTX) {
-                return await this._extractTextFromPPTXZipEntries(arrayBuffer, fileName);
-            }
-            
-            // 従来の.pptファイル（バイナリ形式）の場合は直接テキスト抽出を試みる
-            // バイナリデータから直接テキストを抽出（簡易的な方法）
-            let extractedText = '';
-            const data = new Uint8Array(arrayBuffer);
-            
-            // テキストと思われる部分を抽出（簡易版）
-            let textChunks = [];
-            let currentText = '';
-            let inTextSequence = false;
-            
-            for (let i = 0; i < data.length; i++) {
-                // ASCII印字可能文字の連続を検出
-                const currentByte = data[i];
-                if ((currentByte >= 32 && currentByte <= 126) || currentByte === 9 || currentByte === 10 || currentByte === 13) {
-                    currentText += String.fromCharCode(currentByte);
-                    inTextSequence = true;
-                } else if (inTextSequence) {
-                    // 文字列の終わり
-                    if (currentText.length >= 4) { // 短すぎる文字列は無視
-                        textChunks.push(currentText);
-                    }
-                    currentText = '';
-                    inTextSequence = false;
-                }
-            }
-            
-            // 最後のテキストチャンクを追加
-            if (currentText.length >= 4) {
-                textChunks.push(currentText);
-            }
-            
-            // 抽出したテキストからノイズを除去
-            const filteredChunks = textChunks.filter(chunk => {
-                // 明らかなバイナリノイズや構造情報を除外
-                return !/^[\W_]+$/.test(chunk) && // 記号だけの文字列を除外
-                       !chunk.includes('xmlns') && // XML名前空間を除外
-                       !chunk.includes('http://') && // URLを除外
-                       !chunk.includes('mso-') && // MSO属性を除外
-                       chunk.length > 5; // 短すぎる文字列を除外
-            });
-            
-            // スライド分割を試みる
-            let slideCount = 1;
-            let currentSlideText = '';
-            
-            filteredChunks.forEach(chunk => {
-                // スライドの境界と思われる特徴を検出
-                if (/slide[0-9]+\.xml/i.test(chunk) || 
-                    /title/i.test(chunk) || 
-                    /slide/i.test(chunk) || 
-                    chunk.length > 30) {
-                    if (currentSlideText.trim()) {
-                        textContent += `--- スライド ${slideCount++} ---\n${currentSlideText.trim()}\n\n`;
-                        currentSlideText = '';
-                    }
-                }
-                
-                currentSlideText += chunk + '\n';
-            });
-            
-            // 最後のスライドを追加
-            if (currentSlideText.trim()) {
-                textContent += `--- スライド ${slideCount} ---\n${currentSlideText.trim()}`;
-            }
-            // 何もテキストが抽出できなかった場合
-            if (!textContent.trim()) {
-                return `PowerPointファイル「${fileName}」からテキストを抽出できませんでした。`;
-            }
-            
-            return textContent;
-        } catch (error) {
-            console.error('バイナリPPTX解析エラー:', error);
-            return `PowerPointファイル「${fileName}」からのテキスト抽出に失敗しました。`;
-        }
-    },
-    
-    /**
-     * .pptxファイル（ZIPベース）からテキストを抽出する
-     * @private
-     * @param {ArrayBuffer} arrayBuffer - PowerPointファイルのArrayBuffer
-     * @param {string} fileName - ファイル名
-     * @returns {Promise<string>} 抽出されたテキスト
-     */
-    _extractTextFromPPTXZipEntries: async function(arrayBuffer, fileName) {
-        try {
-            // JSZipライブラリが読み込まれていることを確認
-            if (typeof JSZip === 'undefined') {
-                console.warn('JSZipライブラリがロードされていません。簡易的な抽出を行います。');
-                // 代替の単純なテキスト抽出方法を使用
-                return this._extractTextFromBinaryPPTX(arrayBuffer, fileName);
-            }
-            
-            // JSZipを使用して.pptxファイル（ZIP形式）を解凍
+            const arrayBuffer = await file.arrayBuffer();
             const zip = await JSZip.loadAsync(arrayBuffer);
             
-            // スライドのXMLファイルを見つける
-            const slideFiles = [];
-            const slideRegex = /ppt\/slides\/slide[0-9]+.xml/;
-            
-            // すべてのZIPエントリを走査してスライドファイルを特定
-            zip.forEach((path, entry) => {
-                if (slideRegex.test(path)) {
-                    slideFiles.push({ path, entry });
+            // スライドの一覧を取得
+            const slideEntries = [];
+            zip.forEach((path, zipEntry) => {
+                if (path.match(/ppt\/slides\/slide[0-9]+\.xml$/)) {
+                    slideEntries.push({
+                        number: parseInt(path.match(/slide([0-9]+)\.xml$/)[1]),
+                        entry: zipEntry
+                    });
                 }
             });
             
             // スライド番号でソート
-            slideFiles.sort((a, b) => {
-                const numA = parseInt(a.path.match(/slide([0-9]+)/)[1], 10);
-                const numB = parseInt(b.path.match(/slide([0-9]+)/)[1], 10);
-                return numA - numB;
-            });
+            slideEntries.sort((a, b) => a.number - b.number);
             
-            // 各スライドからテキストを抽出
-            let extractedText = '';
+            let result = [];
             
-            for (let i = 0; i < slideFiles.length; i++) {
-                const slideFile = slideFiles[i];
-                const slideNum = i + 1;
+            // 各スライドの内容を処理
+            for (const slideEntry of slideEntries) {
+                const xmlContent = await zip.file(slideEntry.entry.name).async("text");
+                const slideText = this._extractTextFromXML(xmlContent);
                 
-                // XMLデータをテキストとして取得
-                const xmlData = await slideFile.entry.async('text');
-                
-                // XMLからテキストを抽出（簡易的な実装）
-                const slideText = this._extractTextFromXML(xmlData);
-                
-                if (slideText.trim()) {
-                    extractedText += `--- スライド ${slideNum} ---\n${slideText.trim()}\n\n`;
+                if (slideText) {
+                    result.push(`--- スライド ${slideEntry.number} ---\n${slideText}`);
                 } else {
-                    extractedText += `--- スライド ${slideNum} ---\n(テキストなし)\n\n`;
+                    result.push(`--- スライド ${slideEntry.number} ---\n(テキストなし)`);
                 }
             }
             
-            // スライドが見つからない場合
-            if (!extractedText.trim()) {
-                // 代替として他のXMLファイルを検索してテキストを抽出
-                const presentationFile = zip.file('ppt/presentation.xml');
-                if (presentationFile) {
-                    const xmlData = await presentationFile.async('text');
-                    extractedText = this._extractTextFromXML(xmlData);
-                    
-                    if (extractedText.trim()) {
-                        extractedText = `PowerPointファイル「${fileName}」の内容 (スライド構造が取得できなかったため部分的な抽出):\n\n${extractedText}`;
-                    }
-                }
-                
-                // それでもテキストが抽出できない場合
-                if (!extractedText.trim()) {
-                    extractedText = `PowerPointファイル「${fileName}」からテキストを抽出できませんでした。`;
-                }
+            if (result.length === 0) {
+                return "=== PowerPointファイル「" + file.name + "」の内容 ===\n\nスライドが見つかりませんでした。";
             }
             
-            return extractedText;
+            return "=== PowerPointファイル「" + file.name + "」の内容 ===\n\n" + result.join("\n\n");
         } catch (error) {
-            console.error('PPTX解析エラー:', error);
-            // エラーが発生した場合は単純な方法で再試行
-            return this._extractTextFromBinaryPPTX(arrayBuffer, fileName);
+            console.error("PowerPointファイル処理中のエラー:", error);
+            throw new Error("PowerPointファイルの処理中にエラーが発生しました。");
         }
     },
-    
+
     /**
-     * XML文字列からテキストコンテンツを抽出
-     * @private
-     * @param {string} xmlString - XML文字列
+     * PowerPointのXMLからテキストを抽出する補助メソッド
+     * @param {string} xmlContent - スライドのXML内容
      * @returns {string} 抽出されたテキスト
+     * @private
      */
-    _extractTextFromXML: function(xmlString) {
+    _extractTextFromXML: function(xmlContent) {
         try {
-            let extractedText = '';
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
             
-            // XMLパーサーが利用可能かチェック
-            if (window.DOMParser) {
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
-                
-                // テキストノードを収集
-                const textNodes = [];
-                
-                // XML内のすべてのテキストノードを取得する関数
-                const collectTextNodes = (node) => {
-                    if (node.nodeType === Node.TEXT_NODE) {
-                        const text = node.nodeValue.trim();
+            // テキスト要素を含む可能性のある要素を検索
+            const textElements = [
+                ...xmlDoc.getElementsByTagName('a:t'),      // 通常のテキスト
+                ...xmlDoc.getElementsByTagName('p:sp'),     // シェイプ内のテキスト
+                ...xmlDoc.getElementsByTagName('p:txBody')  // テキストボックス
+            ];
+
+            let slideText = [];
+            
+            // テキスト要素から内容を抽出
+            textElements.forEach(element => {
+                if (element.tagName === 'a:t') {
+                    const text = element.textContent.trim();
+                    if (text) {
+                        slideText.push(text);
+                    }
+                } else {
+                    // シェイプやテキストボックス内のテキストを処理
+                    const textParts = element.getElementsByTagName('a:t');
+                    Array.from(textParts).forEach(textPart => {
+                        const text = textPart.textContent.trim();
                         if (text) {
-                            textNodes.push(text);
+                            slideText.push(text);
                         }
-                    } else if (node.nodeType === Node.ELEMENT_NODE) {
-                        // 'a:t'タグを特別扱い（PowerPointのテキスト要素）
-                        if (node.tagName === 'a:t') {
-                            const text = node.textContent.trim();
-                            if (text) {
-                                textNodes.push(text);
-                            }
-                        }
-                        
-                        // 子ノードを再帰的に処理
-                        for (let i = 0; i < node.childNodes.length; i++) {
-                            collectTextNodes(node.childNodes[i]);
-                        }
-                    }
-                };
-                
-                // ルートノードから走査を開始
-                collectTextNodes(xmlDoc);
-                
-                // テキストノードを結合
-                extractedText = textNodes.join('\n');
-            } else {
-                // DOMParserが利用できない場合は正規表現で抽出
-                extractedText = this._extractTextFromXMLUsingRegex(xmlString);
-            }
-            
-            return extractedText;
+                    });
+                }
+            });
+
+            return slideText.join('\n');
         } catch (error) {
-            console.error('XML解析エラー:', error);
-            // エラー時は正規表現による代替手段
-            return this._extractTextFromXMLUsingRegex(xmlString);
+            console.error("XMLパース中のエラー:", error);
+            return "";
         }
     },
-    
-    /**
-     * 正規表現を使用してXMLからテキストを抽出
-     * @private
-     * @param {string} xmlString - XML文字列
-     * @returns {string} 抽出されたテキスト
-     */
-    _extractTextFromXMLUsingRegex: function(xmlString) {
-        try {
-            let extractedText = '';
-            
-            // PowerPointの一般的なテキスト要素を抽出
-            const regex = /<a:t[^>]*>(.*?)<\/a:t>/g;
-            let match;
-            
-            while ((match = regex.exec(xmlString)) !== null) {
-                if (match[1] && match[1].trim()) {
-                    extractedText += match[1].trim() + '\n';
-                }
-            }
-            
-            return extractedText;
-        } catch (error) {
-            console.error('正規表現XML解析エラー:', error);
-            return '';
-        }
-    },
-    
-    /**
-     * バイナリデータから直接.pptxファイルのテキストを抽出（JSZipが利用できない場合）
-     * @private
-     * @param {ArrayBuffer} arrayBuffer - PowerPointファイルのArrayBuffer
-     * @param {string} fileName - ファイル名
-     * @returns {string} 抽出されたテキスト
-     */
-    _extractTextFromBinaryPPTX: function(arrayBuffer, fileName) {
-        try {
-            // Uint8Arrayに変換
-            const data = new Uint8Array(arrayBuffer);
-            const textDecoder = new TextDecoder('utf-8');
-            
-            // XMLドキュメント内のテキスト要素を探す
-            const xmlTagPattern = /<a:t>(.*?)<\/a:t>/g;
-            let textContent = '';
-            
-            // バイナリデータを検索しやすい形式に変換
-            const dataString = textDecoder.decode(data);
-            
-            // テキスト要素を抽出
-            let match;
-            while ((match = xmlTagPattern.exec(dataString)) !== null) {
-                if (match[1] && match[1].trim()) {
-                    textContent += match[1].trim() + '\n';
-                }
-            }
-            
-            // テキストが見つからない場合
-            if (!textContent.trim()) {
-                // より一般的なアプローチでテキストを探す
-                const textChunks = [];
-                let currentText = '';
-                let inTextSequence = false;
-                
-                for (let i = 0; i < data.length; i++) {
-                    // ASCII印字可能文字の連続を検出
-                    const currentByte = data[i];
-                    if ((currentByte >= 32 && currentByte <= 126) || currentByte === 9 || currentByte === 10 || currentByte === 13) {
-                        currentText += String.fromCharCode(currentByte);
-                        inTextSequence = true;
-                    } else if (inTextSequence) {
-                        // 文字列の終わり
-                        if (currentText.length >= 5) { // 短すぎる文字列は無視
-                            textChunks.push(currentText);
-                        }
-                        currentText = '';
-                        inTextSequence = false;
-                    }
-                }
-                
-                // 抽出したテキストをフィルタリング
-                const filteredChunks = textChunks.filter(chunk => {
-                    // XMLタグやバイナリノイズを除外
-                    return !/^[<\{\}\[\]\/]+$/.test(chunk) && // XMLタグやJSON構造だけのものを除外
-                           !chunk.startsWith('xmlns') && // 名前空間定義を除外
-                           !chunk.includes('</') && // 終了タグを含むものを除外
-                           chunk.length > 4; // 短すぎるものを除外
-                });
-                
-                // スライドっぽいグループに分割
-                let slideCount = 1;
-                let currentSlideText = '';
-                
-                filteredChunks.forEach(chunk => {
-                    // スライドの境界と思われる特徴を検出
-                    if (/slide[0-9]+\.xml/i.test(chunk) || 
-                        /title/i.test(chunk) || 
-                        /slide/i.test(chunk) || 
-                        chunk.length > 30) {
-                        if (currentSlideText.trim()) {
-                            textContent += `--- スライド ${slideCount++} ---\n${currentSlideText.trim()}\n\n`;
-                            currentSlideText = '';
-                        }
-                    }
-                    
-                    currentSlideText += chunk + '\n';
-                });
-                
-                // 最後のスライドを追加
-                if (currentSlideText.trim()) {
-                    textContent += `--- スライド ${slideCount} ---\n${currentSlideText.trim()}`;
-                }
-            }
-            
-            // 何もテキストが抽出できなかった場合
-            if (!textContent.trim()) {
-                return `PowerPointファイル「${fileName}」からテキストを抽出できませんでした。`;
-            }
-            
-            return textContent;
-        } catch (error) {
-            console.error('バイナリPPTX解析エラー:', error);
-            return `PowerPointファイル「${fileName}」からのテキスト抽出に失敗しました。`;
-        }
-    }
 };
