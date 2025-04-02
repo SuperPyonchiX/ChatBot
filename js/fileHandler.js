@@ -771,10 +771,6 @@ window.FileHandler = {
      */
     getAttachmentsForAPI: async function() {
         if (!this.selectedFiles || this.selectedFiles.length === 0) {
-            // 保存された添付ファイルがある場合はそれを返す
-            if (this.savedAttachments && this.savedAttachments.length > 0) {
-                return this.savedAttachments;
-            }
             return [];
         }
         
@@ -1397,8 +1393,9 @@ window.FileHandler = {
             }
         }
 
-        // 5秒以内の差があるメッセージが見つかった場合
-        if (bestMatch && minTimeDiff <= 5000) {
+        // 最も時間差が小さいメッセージに添付ファイルを表示する
+        // ※以前は5秒以内という制限があったが、それを撤廃し常に最適なメッセージに表示する
+        if (bestMatch) {
             const messageContent = bestMatch.element.querySelector('.message-content');
             if (messageContent) {
                 // すでに添付ファイル要素がある場合は削除（上書き）
@@ -1411,8 +1408,8 @@ window.FileHandler = {
                 const attachmentsElement = window.Chat._createAttachmentsElement(files, fileTimestamp);
                 messageContent.appendChild(attachmentsElement);
             }
-        } else {
-            // 適切なメッセージが見つからない場合は最新のメッセージに追加
+        } else if (messages.length > 0) {
+            // 例外的に適切なメッセージが見つからない場合は最新のメッセージに追加
             const lastMessage = messages[messages.length - 1];
             const messageContent = lastMessage.element.querySelector('.message-content');
             if (messageContent) {
