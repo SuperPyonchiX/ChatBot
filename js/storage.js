@@ -495,21 +495,17 @@ window.Storage = {
         if (!conversationId) return { files: [] };
         
         try {
-            console.log('[DEBUG] Storage.loadAttachments 開始:', conversationId);
             const key = window.CONFIG.STORAGE.KEYS.ATTACHMENTS_PREFIX + conversationId;
             const data = this._getItem(key, null, true);
-            console.log('[DEBUG] ローカルストレージから読み込んだデータ:', JSON.stringify(data, null, 2));
             
             // データが存在しない場合
             if (!data) {
-                console.log('[DEBUG] データが存在しません');
                 return { files: [] };
             }
             
             // 新形式（オブジェクト）か旧形式（配列）かを判定
             let result;
             if (Array.isArray(data)) {
-                console.log('[DEBUG] 旧形式（配列）のデータを変換します');
                 // 旧形式の場合は新形式に変換
                 result = {
                     files: this._optimizeAttachments(data.map(file => ({
@@ -518,17 +514,11 @@ window.Storage = {
                     })))
                 };
             } else if (data && typeof data === 'object' && 'files' in data) {
-                console.log('[DEBUG] 新形式のデータを処理します');
                 result = data;
             } else {
                 console.error(`不明な添付ファイル形式です（会話ID: ${conversationId}）`, data);
                 return { files: [] };
             }
-
-            console.log('[DEBUG] 返却するデータ:', JSON.stringify({
-                fileCount: result.files ? result.files.length : 0,
-                timestamps: result.files ? result.files.map(f => f.timestamp) : []
-            }, null, 2));
             
             return result;
         } catch (error) {
