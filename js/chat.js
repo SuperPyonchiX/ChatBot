@@ -696,16 +696,8 @@ window.Chat = {
             
             // ファイル内容を示すマーカーパターン（複数のタイプに対応）
             const fileMarkerPatterns = [
-                // PDFファイル内容
-                /===\s*PDFファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*|$))/g,
-                // Excelファイル内容
-                /===\s*Excelファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*|$))/g,
-                // PowerPointファイル内容
-                /===\s*PowerPointファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*|$))/g,
-                // Wordファイル内容
-                /===\s*Wordファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*|$))/g,
-                // 一般的なOfficeファイル内容
-                /===\s*Officeファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*|$))/g
+                // ファイル内容
+                /===\s*[^」]+ファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*|$))/g,
             ];
             
             // 各パターンについて内容を削除
@@ -839,7 +831,7 @@ window.Chat = {
                              attachment.mimeType.includes('json'))) {
                         try {
                             const text = atob(attachment.data.split(',')[1]);
-                            attachmentContent += `\n=== ${attachment.name} の内容 ===\n${text}\n`;
+                            attachmentContent += `\n=== ${attachment.mimeType}ファイル「${attachment.name}」の内容 ===\n${text}\n`;
                         } catch (error) {
                             console.error('ファイル内容の変換エラー:', error);
                         }
