@@ -431,6 +431,10 @@ window.Storage = {
             if (attachment.data) {
                 optimized.data = attachment.data;
             }
+            // コンテンツ部分は画像やファイルの種類によって最適化
+            if (attachment.content) {
+                optimized.content = attachment.content;
+            }
             
             return optimized;
         }).filter(Boolean); // null/undefinedを除外
