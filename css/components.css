@@ -1201,3 +1201,31 @@
     flex: 1;
     margin: 0 10px;
 }
+
+.file-type-icon .fa-file-word {
+    color: #2b579a;  /* Word青 */
+}
+
+.file-type-icon .fa-file-excel {
+    color: #217346;  /* Excel緑 */
+}
+
+.file-type-icon .fa-file-powerpoint {
+    color: #d24726;  /* PowerPointオレンジ */
+}
+
+.file-type-icon .fa-file-pdf {
+    color: #f40f02;  /* PDF赤 */
+}
+
+.file-type-icon .fa-file-alt {
+    color: #808080;  /* テキストファイル グレー */
+}
+
+.file-type-icon .fa-file-code {
+    color: #007acc;  /* コードファイル 青 */
+}
+
+.file-type-icon .fa-file {
+    color: #808080;  /* その他のファイル グレー */
+}

@@ -280,21 +280,40 @@ window.FileHandler = {
             if (file.type.startsWith('image/')) {
                 this._createImagePreview(file, fileItem);
             } 
-            // PDF、テキスト、コードなどの場合はアイコン表示
+            // PDFの場合
+            else if (file.type === 'application/pdf') {
+                fileTypeIcon.innerHTML = '<i class="fas fa-file-pdf fa-2x"></i>';
+                fileItem.appendChild(fileTypeIcon);
+            }
+            // Wordファイルの場合
+            else if (file.type.includes('word') || file.type.includes('msword')) {
+                fileTypeIcon.innerHTML = '<i class="fas fa-file-word fa-2x"></i>';
+                fileItem.appendChild(fileTypeIcon);
+            }
+            // Excelファイルの場合
+            else if (file.type.includes('excel') || file.type.includes('sheet')) {
+                fileTypeIcon.innerHTML = '<i class="fas fa-file-excel fa-2x"></i>';
+                fileItem.appendChild(fileTypeIcon);
+            }
+            // PowerPointファイルの場合
+            else if (file.type.includes('powerpoint') || file.type.includes('presentation')) {
+                fileTypeIcon.innerHTML = '<i class="fas fa-file-powerpoint fa-2x"></i>';
+                fileItem.appendChild(fileTypeIcon);
+            }
+            // テキストファイルの場合
+            else if (file.type.startsWith('text/')) {
+                fileTypeIcon.innerHTML = '<i class="fas fa-file-alt fa-2x"></i>';
+                fileItem.appendChild(fileTypeIcon);
+            }
+            // コードファイルの場合
+            else if (file.type.includes('javascript') || file.type.includes('json') || 
+                    file.type.includes('html') || file.type.includes('css')) {
+                fileTypeIcon.innerHTML = '<i class="fas fa-file-code fa-2x"></i>';
+                fileItem.appendChild(fileTypeIcon);
+            }
+            // その他のファイルの場合
             else {
-                // ファイルタイプに基づいてアイコンを選択
-                let iconClass = 'fa-file';
-                
-                if (file.type === 'application/pdf') {
-                    iconClass = 'fa-file-pdf';
-                } else if (file.type.startsWith('text/')) {
-                    iconClass = 'fa-file-alt';
-                } else if (file.type.includes('javascript') || file.type.includes('json') || 
-                           file.type.includes('html') || file.type.includes('css')) {
-                    iconClass = 'fa-file-code';
-                }
-                
-                fileTypeIcon.innerHTML = `<i class="fas ${iconClass} fa-2x"></i>`;
+                fileTypeIcon.innerHTML = '<i class="fas fa-file fa-2x"></i>';
                 fileItem.appendChild(fileTypeIcon);
             }
         } catch (error) {
