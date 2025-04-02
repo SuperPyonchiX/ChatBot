@@ -483,10 +483,10 @@ window.Chat = {
                 officeName.textContent = attachment.name || 'Officeファイル';
                 officeName.classList.add('attachment-file-name');
                 
-                // 内容表示ボタン
+                // プレビュー表示ボタン
                 const contentButton = document.createElement('button');
                 contentButton.classList.add('office-content-button');
-                contentButton.textContent = '内容';
+                contentButton.textContent = 'プレビュー';
                 contentButton.addEventListener('click', () => {
                     this._showOfficeContent(attachment.content, attachment.name);
                 });
@@ -509,8 +509,30 @@ window.Chat = {
                 fileName.textContent = attachment.name || '添付ファイル';
                 fileName.classList.add('attachment-file-name');
                 
-                fileContainer.appendChild(fileIcon);
-                fileContainer.appendChild(fileName);
+                // テキスト系のファイルの場合はプレビューボタンを追加
+                if (attachment.mimeType && (
+                    attachment.mimeType.startsWith('text/') || 
+                    attachment.mimeType.includes('javascript') || 
+                    attachment.mimeType.includes('json') ||
+                    attachment.mimeType.includes('xml') ||
+                    attachment.mimeType.includes('yaml') ||
+                    attachment.mimeType.includes('markdown')
+                )) {
+                    const previewButton = document.createElement('button');
+                    previewButton.classList.add('file-preview-button');
+                    previewButton.textContent = 'プレビュー';
+                    previewButton.addEventListener('click', () => {
+                        this._showTextFileContent(attachment.content, attachment.name);
+                    });
+                    
+                    fileContainer.appendChild(fileIcon);
+                    fileContainer.appendChild(fileName);
+                    fileContainer.appendChild(previewButton);
+                } else {
+                    fileContainer.appendChild(fileIcon);
+                    fileContainer.appendChild(fileName);
+                }
+                
                 attachmentsDiv.appendChild(fileContainer);
             }
         });
@@ -1325,5 +1347,141 @@ window.Chat = {
         } catch (error) {
             console.error('アクティブチャットの更新中にエラーが発生しました:', error);
         }
+    },
+
+    /**
+     * テキストファイルの内容を表示
+     * @private
+     * @param {string} content - ファイルの内容
+     * @param {string} name - ファイル名
+     */
+    _showTextFileContent: function(content, name) {
+        if (!content) {
+            alert('ファイルの内容を表示できません。');
+            return;
+        }
+        
+        // すでに表示されている場合は削除
+        const existingOverlay = document.querySelector('.text-file-overlay');
+        if (existingOverlay) {
+            document.body.removeChild(existingOverlay);
+            return;
+        }
+        
+        // オーバーレイを作成
+        const overlay = document.createElement('div');
+        overlay.classList.add('text-file-overlay');
+        
+        // コンテンツ表示エリア
+        const contentViewer = document.createElement('div');
+        contentViewer.classList.add('text-file-viewer');
+        
+        // テキスト表示
+        const textContent = document.createElement('pre');
+        textContent.classList.add('text-file-content');
+        textContent.innerHTML = this._formatTextContent(content, name);
+        
+        // タイトルバー
+        const titleBar = document.createElement('div');
+        titleBar.classList.add('text-file-title-bar');
+        const titleText = document.createElement('span');
+        titleText.textContent = name || 'テキストファイル';
+        
+        // 閉じるボタン
+        const closeBtn = document.createElement('button');
+        closeBtn.classList.add('overlay-close-btn');
+        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        
+        // 閉じるボタンのクリックイベント
+        closeBtn.addEventListener('click', () => {
+            document.body.removeChild(overlay);
+        });
+        
+        // オーバーレイのクリックでも閉じる
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                document.body.removeChild(overlay);
+            }
+        });
+        
+        // 要素を追加
+        titleBar.appendChild(titleText);
+        titleBar.appendChild(closeBtn);
+        contentViewer.appendChild(textContent);
+        overlay.appendChild(titleBar);
+        overlay.appendChild(contentViewer);
+        document.body.appendChild(overlay);
+        
+        // シンタックスハイライトを適用（可能な場合）
+        if (typeof Prism !== 'undefined') {
+            Prism.highlightElement(textContent);
+        }
+    },
+    
+    /**
+     * テキストファイルの内容をフォーマット
+     * @private
+     * @param {string} content - ファイルの内容
+     * @param {string} fileName - ファイル名
+     * @returns {string} フォーマットされたテキスト
+     */
+    _formatTextContent: function(content, fileName) {
+        if (!content) return '';
+        
+        // ファイルの拡張子を取得
+        const ext = fileName ? fileName.split('.').pop().toLowerCase() : '';
+        
+        // 拡張子に基づいて言語クラスを設定
+        let langClass = '';
+        switch (ext) {
+            case 'js':
+                langClass = 'language-javascript';
+                break;
+            case 'json':
+                langClass = 'language-json';
+                break;
+            case 'html':
+                langClass = 'language-html';
+                break;
+            case 'css':
+                langClass = 'language-css';
+                break;
+            case 'md':
+                langClass = 'language-markdown';
+                break;
+            case 'xml':
+                langClass = 'language-xml';
+                break;
+            case 'yaml':
+            case 'yml':
+                langClass = 'language-yaml';
+                break;
+            default:
+                langClass = 'language-plaintext';
+        }
+        
+        // エスケープしてコードブロックとして表示
+        const escapedContent = this._escapeHtml(content);
+        return `<code class="${langClass}">${escapedContent}</code>`;
+    },
+    
+    /**
+     * HTMLの特殊文字をエスケープ
+     * @private
+     * @param {string} text - エスケープするテキスト
+     * @returns {string} エスケープされたテキスト
+     */
+    _escapeHtml: function(text) {
+        if (!text) return '';
+        
+        const escape = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        };
+        
+        return text.replace(/[&<>"']/g, char => escape[char]);
     }
 };

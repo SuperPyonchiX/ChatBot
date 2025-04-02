@@ -989,7 +989,7 @@ window.FileHandler = {
         try {
             const fileType = this._getOfficeFileTypeName(file.type);
             
-            // Excelファイル (.xlsx, .xls) の処理
+            // Excelファイル (.xlsx, .xls, .xlsm) の処理
             if (fileType === 'Excel') {
                 return await this._extractTextFromExcelFile(file);
             }
