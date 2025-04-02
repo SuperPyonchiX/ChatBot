@@ -618,13 +618,25 @@ window.FileHandler = {
             }
             // その他のファイルの場合
             else {
-                const base64 = await this.readFileAsBase64(file);
+                // ファイルをデータURLとして読み込む（プレビュー表示用）
+                const dataUrl = await this.readFileAsDataURL(file);
+
+                // テキストとしてファイルの内容を読み込む
+                const textContent = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = (e) => reject(new Error('ファイルの読み込みに失敗しました'));
+                    reader.readAsText(file);
+                });
+                let extractedText = `=== ${file.type}ファイル「${file.name}」の内容 ===\n\n`;
+                extractedText += textContent;
                 return {
                     type: 'file',
                     name: file.name,
                     mimeType: file.type,
                     size: file.size,
-                    data: `data:${file.type};base64,${base64}`
+                    data: dataUrl,
+                    content: extractedText // ファイルの内容をそのまま代入
                 };
             }
         } catch (error) {
@@ -673,46 +685,46 @@ window.FileHandler = {
         });
     },
 
-        /**
+    /**
      * ファイルをBase64として読み込む (DataURLからbase64部分のみ抽出)
      * @param {File} file - 読み込むファイル
      * @returns {Promise<string>} Base64エンコードされたファイルデータ
      */
-        readFileAsBase64: function(file) {
-            return new Promise((resolve, reject) => {
-                if (!file) {
-                    reject(new Error('有効なファイルが指定されていません'));
-                    return;
+    readFileAsBase64: function(file) {
+        return new Promise((resolve, reject) => {
+            if (!file) {
+                reject(new Error('有効なファイルが指定されていません'));
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            // タイムアウト設定
+            const timeoutId = setTimeout(() => {
+                reader.abort();
+                reject(new Error('ファイル読み込みがタイムアウトしました'));
+            }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
+            
+            reader.onload = function(e) {
+                clearTimeout(timeoutId);
+                try {
+                    const base64 = e.target.result.split(',')[1];
+                    resolve(base64);
+                } catch (e) {
+                    console.error('Base64エンコードに失敗しました:', e);
+                    reject(new Error('Base64エンコードに失敗しました'));
                 }
-                
-                const reader = new FileReader();
-                
-                // タイムアウト設定
-                const timeoutId = setTimeout(() => {
-                    reader.abort();
-                    reject(new Error('ファイル読み込みがタイムアウトしました'));
-                }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
-                
-                reader.onload = function(e) {
-                    clearTimeout(timeoutId);
-                    try {
-                        const base64 = e.target.result.split(',')[1];
-                        resolve(base64);
-                    } catch (e) {
-                        console.error('Base64エンコードに失敗しました:', e);
-                        reject(new Error('Base64エンコードに失敗しました'));
-                    }
-                };
-                
-                reader.onerror = function(e) {
-                    clearTimeout(timeoutId);
-                    console.error('ファイルの読み込みに失敗しました:', e);
-                    reject(new Error('ファイルの読み込みに失敗しました'));
-                };
-                
-                reader.readAsDataURL(file);
-            });
-        },
+            };
+            
+            reader.onerror = function(e) {
+                clearTimeout(timeoutId);
+                console.error('ファイルの読み込みに失敗しました:', e);
+                reject(new Error('ファイルの読み込みに失敗しました'));
+            };
+            
+            reader.readAsDataURL(file);
+        });
+    },
     
     /**
      * 選択されたファイルをクリア

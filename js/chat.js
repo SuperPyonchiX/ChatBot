@@ -830,8 +830,7 @@ window.Chat = {
                              attachment.mimeType.includes('javascript') || 
                              attachment.mimeType.includes('json'))) {
                         try {
-                            const text = atob(attachment.data.split(',')[1]);
-                            attachmentContent += `\n=== ${attachment.mimeType}ファイル「${attachment.name}」の内容 ===\n${text}\n`;
+                            attachmentContent += `\n${attachment.content}\n`;
                         } catch (error) {
                             console.error('ファイル内容の変換エラー:', error);
                         }
@@ -845,7 +844,6 @@ window.Chat = {
                 content: attachmentContent ? `${userText}\n\n${attachmentContent}` : userText,
                 timestamp: Date.now()
             };
-            
             // メッセージを追加する
             // 表示用にはプレビュー表示を使用
             this.addUserMessage(userText, chatMessages, displayAttachments, userMessage.timestamp);

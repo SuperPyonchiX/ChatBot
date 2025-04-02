@@ -196,23 +196,7 @@ window.API = {
                 }
             });
         });
-        
-        // 非画像添付ファイルはテキストに統合
-        if (validFileAttachments.length > 0) {
-            const filesSummary = validFileAttachments.map(att => 
-                `- ${att.name} (${att.mimeType}, ${this._formatFileSize(att.size)})`
-            ).join('\n');
-            
-            textContent += `\n\n添付ファイル情報:\n${filesSummary}\n\n`;
-            
-            // 添付ファイルの内容を追加
-            validFileAttachments.forEach(attachment => {
-                textContent += `\n--- ${attachment.name} の内容 ---\n`;
-                textContent += attachment.data;
-                textContent += '\n--- 添付ファイルの内容ここまで ---\n';
-            });
-        }
-        
+                
         // テキストコンテンツを追加
         if (textContent || contentItems.length === 0) {
             contentItems.unshift({
@@ -229,7 +213,7 @@ window.API = {
             // テキストのみの場合は単純な文字列として設定
             processedMessages[lastUserMessageIndex].content = contentItems[0].text;
         }
-        
+
         return processedMessages;
     },
     
