@@ -518,14 +518,15 @@ window.Chat = {
                 fileName.classList.add('attachment-file-name');
                 
                 // テキスト系のファイルの場合はプレビューボタンを追加
-                if (attachment.mimeType && (
-                    attachment.mimeType.startsWith('text/') || 
-                    attachment.mimeType.includes('javascript') || 
-                    attachment.mimeType.includes('json') ||
-                    attachment.mimeType.includes('xml') ||
-                    attachment.mimeType.includes('yaml') ||
-                    attachment.mimeType.includes('markdown')
-                )) {
+                // if (attachment.mimeType && (
+                //     attachment.mimeType.startsWith('text/') || 
+                //     attachment.mimeType.includes('javascript') || 
+                //     attachment.mimeType.includes('json') ||
+                //     attachment.mimeType.includes('xml') ||
+                //     attachment.mimeType.includes('yaml') ||
+                //     attachment.mimeType.includes('markdown')
+                // )) 
+                {
                     const previewButton = document.createElement('button');
                     previewButton.classList.add('file-preview-button');
                     previewButton.textContent = 'プレビュー';
@@ -536,10 +537,11 @@ window.Chat = {
                     fileContainer.appendChild(fileIcon);
                     fileContainer.appendChild(fileName);
                     fileContainer.appendChild(previewButton);
-                } else {
-                    fileContainer.appendChild(fileIcon);
-                    fileContainer.appendChild(fileName);
                 }
+                // else {
+                //     fileContainer.appendChild(fileIcon);
+                //     fileContainer.appendChild(fileName);
+                // }
                 
                 attachmentsDiv.appendChild(fileContainer);
             }
@@ -848,10 +850,7 @@ window.Chat = {
                     else if (attachment.type === 'office' && attachment.content) {
                         attachmentContent += `\n${attachment.content}\n`;
                     }
-                    else if (attachment.type === 'file' && 
-                            (attachment.mimeType.startsWith('text/') || 
-                             attachment.mimeType.includes('javascript') || 
-                             attachment.mimeType.includes('json'))) {
+                    else if (attachment.type === 'file') {
                         try {
                             attachmentContent += `\n${attachment.content}\n`;
                         } catch (error) {
