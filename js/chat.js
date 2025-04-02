@@ -580,6 +580,17 @@ window.Chat = {
         
         chatMessages.innerHTML = '';
         
+        // PDFファイル内容が含まれるメッセージを処理する補助関数
+        const cleanPdfContent = (messageContent) => {
+            if (typeof messageContent !== 'string') return messageContent;
+            
+            // PDFファイル内容を示すマーカーパターン
+            const pdfMarkerPattern = /===\s*PDFファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*PDFファイル|$))/g;
+            
+            // PDFファイル内容を削除したテキストを返す
+            return messageContent.replace(pdfMarkerPattern, '').trim();
+        };
+        
         // システムメッセージ以外を表示
         for (const message of conversation.messages) {
             if (!message || !message.role) continue;
@@ -587,10 +598,15 @@ window.Chat = {
             if (message.role === 'system') continue;
             
             if (message.role === 'user') {
-                const content = typeof message.content === 'string' 
+                let content = typeof message.content === 'string' 
                     ? message.content 
                     : this._processContentArray(message.content);
-                this.addUserMessage(content, chatMessages, [], message.timestamp);
+                
+                // PDFファイルの内容を除外
+                const displayContent = cleanPdfContent(content);
+                
+                // ユーザーメッセージを表示（添付ファイルは後で追加）
+                this.addUserMessage(displayContent, chatMessages, [], message.timestamp);
             } else if (message.role === 'assistant') {
                 const content = typeof message.content === 'string' 
                     ? message.content 
