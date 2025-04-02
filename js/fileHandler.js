@@ -599,6 +599,23 @@ window.FileHandler = {
                     content: extractedText // GPTに送信するテキスト内容
                 };
             }
+            // Office関連ファイル (Word, Excel, PowerPoint) の場合
+            else if (this._isOfficeFile(file.type)) {
+                // ファイルをデータURLとして読み込む（プレビュー表示用）
+                const dataUrl = await this.readFileAsDataURL(file);
+                
+                // Officeファイルからテキストを抽出（GPT送信用）
+                const extractedText = await this.extractTextFromOfficeFile(file);
+                
+                return {
+                    type: 'office',
+                    name: file.name,
+                    mimeType: file.type,
+                    size: file.size,
+                    data: dataUrl,
+                    content: extractedText // GPTに送信するテキスト内容
+                };
+            }
             // その他のファイルの場合
             else {
                 const base64 = await this.readFileAsBase64(file);
@@ -620,7 +637,7 @@ window.FileHandler = {
             };
         }
     },
-
+    
     /**
      * ファイルをDataURL (base64エンコード含む) として読み込む
      * @param {File} file - 読み込むファイル
@@ -656,55 +673,47 @@ window.FileHandler = {
         });
     },
 
-    /**
+        /**
      * ファイルをBase64として読み込む (DataURLからbase64部分のみ抽出)
      * @param {File} file - 読み込むファイル
      * @returns {Promise<string>} Base64エンコードされたファイルデータ
      */
-    readFileAsBase64: function(file) {
-        return new Promise((resolve, reject) => {
-            if (!file) {
-                reject(new Error('有効なファイルが指定されていません'));
-                return;
-            }
-            
-            const reader = new FileReader();
-            
-            // タイムアウト設定
-            const timeoutId = setTimeout(() => {
-                reader.abort();
-                reject(new Error('ファイル読み込みがタイムアウトしました'));
-            }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
-            
-            reader.onload = function(e) {
-                clearTimeout(timeoutId);
-                try {
-                    const base64 = e.target.result.split(',')[1];
-                    resolve(base64);
-                } catch (e) {
-                    console.error('Base64エンコードに失敗しました:', e);
-                    reject(new Error('Base64エンコードに失敗しました'));
+        readFileAsBase64: function(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) {
+                    reject(new Error('有効なファイルが指定されていません'));
+                    return;
                 }
-            };
-            
-            reader.onerror = function(e) {
-                clearTimeout(timeoutId);
-                console.error('ファイルの読み込みに失敗しました:', e);
-                reject(new Error('ファイルの読み込みに失敗しました'));
-            };
-            
-            reader.readAsDataURL(file);
-        });
-    },
-
-    /**
-     * 選択されたファイルを取得
-     * @returns {Array<File>} 選択されたファイルの配列
-     */
-    getSelectedFiles: function() {
-        return this.selectedFiles || [];
-    },
-
+                
+                const reader = new FileReader();
+                
+                // タイムアウト設定
+                const timeoutId = setTimeout(() => {
+                    reader.abort();
+                    reject(new Error('ファイル読み込みがタイムアウトしました'));
+                }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
+                
+                reader.onload = function(e) {
+                    clearTimeout(timeoutId);
+                    try {
+                        const base64 = e.target.result.split(',')[1];
+                        resolve(base64);
+                    } catch (e) {
+                        console.error('Base64エンコードに失敗しました:', e);
+                        reject(new Error('Base64エンコードに失敗しました'));
+                    }
+                };
+                
+                reader.onerror = function(e) {
+                    clearTimeout(timeoutId);
+                    console.error('ファイルの読み込みに失敗しました:', e);
+                    reject(new Error('ファイルの読み込みに失敗しました'));
+                };
+                
+                reader.readAsDataURL(file);
+            });
+        },
+    
     /**
      * 選択されたファイルをクリア
      */
@@ -762,208 +771,425 @@ window.FileHandler = {
         }
     },
 
-    /**
-     * 会話用の添付ファイルを保存する
-     * @param {string} conversationId - 会話ID
-     * @param {Array<Object>} attachments - 添付ファイルの配列
-     */
-    saveAttachmentsForConversation: function(conversationId, attachments) {
-        if (!conversationId || !attachments || !Array.isArray(attachments)) return;
-        
-        try {
-            // タイムスタンプを含めた添付ファイル情報を作成
-            const attachmentData = {
-                timestamp: this.attachmentTimestamp || Date.now(),
-                files: attachments
-            };
+        /**
+         * 会話用の添付ファイルを保存する
+         * @param {string} conversationId - 会話ID
+         * @param {Array<Object>} attachments - 添付ファイルの配列
+         */
+        saveAttachmentsForConversation: function(conversationId, attachments) {
+            if (!conversationId || !attachments || !Array.isArray(attachments)) return;
             
-            // 添付ファイルをローカルストレージに保存
-            window.Storage.saveAttachments(conversationId, attachmentData);
-            
-            // タイムスタンプをリセット
-            this.attachmentTimestamp = null;
-        } catch (error) {
-            console.error('添付ファイルの保存中にエラーが発生しました:', error);
-        }
-    },
-
-    /**
-     * 会話の添付ファイルを読み込む
-     * @param {string} conversationId - 会話ID
-     * @returns {Object} タイムスタンプと添付ファイルの配列を含むオブジェクト
-     */
-    loadAttachmentsForConversation: function(conversationId) {
-        if (!conversationId) return { timestamp: null, files: [] };
-        
-        try {
-            // ローカルストレージから添付ファイルを読み込む
-            const attachmentData = window.Storage.loadAttachments(conversationId) || { timestamp: null, files: [] };
-            
-            // 古い形式のデータを新しい形式に変換（互換性のため）
-            if (Array.isArray(attachmentData)) {
-                const newFormat = {
-                    timestamp: Date.now(),
-                    files: attachmentData
+            try {
+                // タイムスタンプを含めた添付ファイル情報を作成
+                const attachmentData = {
+                    timestamp: this.attachmentTimestamp || Date.now(),
+                    files: attachments
                 };
-                this.savedAttachments = newFormat;
-                return newFormat;
+                
+                // 添付ファイルをローカルストレージに保存
+                window.Storage.saveAttachments(conversationId, attachmentData);
+                
+                // タイムスタンプをリセット
+                this.attachmentTimestamp = null;
+            } catch (error) {
+                console.error('添付ファイルの保存中にエラーが発生しました:', error);
             }
+        },
+    
+        /**
+         * 会話の添付ファイルを読み込む
+         * @param {string} conversationId - 会話ID
+         * @returns {Object} タイムスタンプと添付ファイルの配列を含むオブジェクト
+         */
+        loadAttachmentsForConversation: function(conversationId) {
+            if (!conversationId) return { timestamp: null, files: [] };
             
-            this.savedAttachments = attachmentData;
-            return attachmentData;
-        } catch (error) {
-            console.error('添付ファイルの読み込み中にエラーが発生しました:', error);
-            return { timestamp: null, files: [] };
-        }
-    },
-
-    /**
-     * メッセージごとに添付ファイルを表示
-     * @param {string} conversationId - 会話ID
-     * @param {HTMLElement} chatMessages - チャットメッセージ表示エリア
-     */
-    displaySavedAttachments: function(conversationId, chatMessages) {
-        if (!conversationId || !chatMessages) return;
-        
-        try {
-            // 保存されている添付ファイルを読み込む
-            const attachmentData = this.loadAttachmentsForConversation(conversationId);
-            
-            // attachmentDataが存在しない、または有効なファイルがない場合は処理をスキップ
-            if (!attachmentData || !attachmentData.files || attachmentData.files.length === 0) {
-                return;
+            try {
+                // ローカルストレージから添付ファイルを読み込む
+                const attachmentData = window.Storage.loadAttachments(conversationId) || { timestamp: null, files: [] };
+                
+                // 古い形式のデータを新しい形式に変換（互換性のため）
+                if (Array.isArray(attachmentData)) {
+                    const newFormat = {
+                        timestamp: Date.now(),
+                        files: attachmentData
+                    };
+                    this.savedAttachments = newFormat;
+                    return newFormat;
+                }
+                
+                this.savedAttachments = attachmentData;
+                return attachmentData;
+            } catch (error) {
+                console.error('添付ファイルの読み込み中にエラーが発生しました:', error);
+                return { timestamp: null, files: [] };
             }
+        },
+    
+        /**
+         * メッセージごとに添付ファイルを表示
+         * @param {string} conversationId - 会話ID
+         * @param {HTMLElement} chatMessages - チャットメッセージ表示エリア
+         */
+        displaySavedAttachments: function(conversationId, chatMessages) {
+            if (!conversationId || !chatMessages) return;
             
-            // タイムスタンプが存在しない場合は現在時刻を使用
-            const timestamp = attachmentData.timestamp || Date.now();
-            
-            // 各メッセージに添付ファイルを表示
-            const messages = chatMessages.querySelectorAll('.message');
-            if (!messages || messages.length === 0) {
-                return;
-            }
-            
-            // ユーザーメッセージを抽出
-            const userMessages = Array.from(messages).filter(msg => msg.classList.contains('user'));
-            if (userMessages.length === 0) {
-                return;
-            }
-            
-            // 添付ファイルのタイムスタンプに最も近いメッセージを見つける
-            let closestMessage = null;
-            let minTimeDifference = Number.MAX_SAFE_INTEGER;
-            
-            userMessages.forEach((message) => {
-                // メッセージのタイムスタンプを取得
-                const messageTimestamp = parseInt(message.dataset.timestamp || '0', 10);
-                if (!messageTimestamp) {
+            try {
+                // 保存されている添付ファイルを読み込む
+                const attachmentData = this.loadAttachmentsForConversation(conversationId);
+                
+                // attachmentDataが存在しない、または有効なファイルがない場合は処理をスキップ
+                if (!attachmentData || !attachmentData.files || attachmentData.files.length === 0) {
                     return;
                 }
                 
-                // タイムスタンプの差分を計算（添付ファイルの送信タイミングに最も近いメッセージを選択）
-                const timeDiff = Math.abs(timestamp - messageTimestamp);
+                // タイムスタンプが存在しない場合は現在時刻を使用
+                const timestamp = attachmentData.timestamp || Date.now();
                 
-                if (timeDiff < minTimeDifference) {
-                    minTimeDifference = timeDiff;
-                    closestMessage = message;
+                // 各メッセージに添付ファイルを表示
+                const messages = chatMessages.querySelectorAll('.message');
+                if (!messages || messages.length === 0) {
+                    return;
                 }
-            });
-            
-            // 最も近いメッセージが見つからない場合は最新のユーザーメッセージを使用
-            if (!closestMessage && userMessages.length > 0) {
-                closestMessage = userMessages[userMessages.length - 1];
-            }
-            
-            if (closestMessage) {
-                const messageContent = closestMessage.querySelector('.message-content');
-                if (messageContent) {
-                    // すでに添付ファイルが表示されていない場合のみ表示
-                    const existingAttachments = messageContent.querySelector('.message-attachments');
-                    if (!existingAttachments) {
-                        // ファイルだけを渡す
-                        const attachmentsElement = window.Chat._createAttachmentsElement(attachmentData.files);
-                        if (attachmentsElement) {
-                            messageContent.appendChild(attachmentsElement);
+                
+                // ユーザーメッセージを抽出
+                const userMessages = Array.from(messages).filter(msg => msg.classList.contains('user'));
+                if (userMessages.length === 0) {
+                    return;
+                }
+                
+                // 添付ファイルのタイムスタンプに最も近いメッセージを見つける
+                let closestMessage = null;
+                let minTimeDifference = Number.MAX_SAFE_INTEGER;
+                
+                userMessages.forEach((message) => {
+                    // メッセージのタイムスタンプを取得
+                    const messageTimestamp = parseInt(message.dataset.timestamp || '0', 10);
+                    if (!messageTimestamp) {
+                        return;
+                    }
+                    
+                    // タイムスタンプの差分を計算（添付ファイルの送信タイミングに最も近いメッセージを選択）
+                    const timeDiff = Math.abs(timestamp - messageTimestamp);
+                    
+                    if (timeDiff < minTimeDifference) {
+                        minTimeDifference = timeDiff;
+                        closestMessage = message;
+                    }
+                });
+                
+                // 最も近いメッセージが見つからない場合は最新のユーザーメッセージを使用
+                if (!closestMessage && userMessages.length > 0) {
+                    closestMessage = userMessages[userMessages.length - 1];
+                }
+                
+                if (closestMessage) {
+                    const messageContent = closestMessage.querySelector('.message-content');
+                    if (messageContent) {
+                        // すでに添付ファイルが表示されていない場合のみ表示
+                        const existingAttachments = messageContent.querySelector('.message-attachments');
+                        if (!existingAttachments) {
+                            // ファイルだけを渡す
+                            const attachmentsElement = window.Chat._createAttachmentsElement(attachmentData.files);
+                            if (attachmentsElement) {
+                                messageContent.appendChild(attachmentsElement);
+                            }
                         }
                     }
                 }
+            } catch (error) {
+                console.error('保存された添付ファイルの表示中にエラーが発生しました:', error);
             }
-        } catch (error) {
-            console.error('保存された添付ファイルの表示中にエラーが発生しました:', error);
-        }
-    },
-
+        },
+    
+        /**
+         * PDFファイルからテキストを抽出する
+         * @param {File} file - PDFファイル
+         * @returns {Promise<string>} 抽出されたテキスト
+         */
+        extractTextFromPDF: async function(file) {
+            if (!file || file.type !== 'application/pdf') {
+                return Promise.reject(new Error('有効なPDFファイルではありません'));
+            }
+            
+            try {
+                // ファイルをArrayBufferとして読み込む
+                const arrayBuffer = await this._readFileAsArrayBuffer(file);
+                
+                // PDF.jsを使用してPDFを読み込む
+                const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                
+                let extractedText = `=== PDFファイル「${file.name}」の内容 ===\n\n`;
+                
+                // 各ページからテキストを抽出
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    
+                    extractedText += `--- ページ ${i} ---\n`;
+                    
+                    // テキストアイテムを連結
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    extractedText += pageText + '\n\n';
+                }
+                
+                return extractedText;
+            } catch (error) {
+                console.error('PDFテキスト抽出エラー:', error);
+                return `PDFファイル「${file.name}」からテキストを抽出できませんでした。`;
+            }
+        },
+        
+        /**
+         * ファイルをArrayBufferとして読み込む
+         * @private
+         * @param {File} file - 読み込むファイル
+         * @returns {Promise<ArrayBuffer>} ArrayBuffer形式のファイルデータ
+         */
+        _readFileAsArrayBuffer: function(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) {
+                    reject(new Error('有効なファイルが指定されていません'));
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                // タイムアウト設定
+                const timeoutId = setTimeout(() => {
+                    reader.abort();
+                    reject(new Error('ファイル読み込みがタイムアウトしました'));
+                }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
+                
+                reader.onload = function(e) {
+                    clearTimeout(timeoutId);
+                    resolve(e.target.result);
+                };
+                
+                reader.onerror = function(e) {
+                    clearTimeout(timeoutId);
+                    console.error('ファイルの読み込みに失敗しました:', e);
+                    reject(new Error('ファイルの読み込みに失敗しました'));
+                };
+                
+                reader.readAsArrayBuffer(file);
+            });
+        },
+    
     /**
-     * PDFファイルからテキストを抽出する
-     * @param {File} file - PDFファイル
+     * ファイルがOffice関連ファイルかどうかを判定する
+     * @private
+     * @param {string} mimeType - ファイルのMIMEタイプ
+     * @returns {boolean} Office関連ファイルの場合はtrue
+     */
+    _isOfficeFile: function(mimeType) {
+        if (!mimeType) return false;
+        
+        const officeTypes = [
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        ];
+        
+        return officeTypes.includes(mimeType);
+    },
+    
+    /**
+     * Officeファイルからテキストを抽出する
+     * @param {File} file - Officeファイル
      * @returns {Promise<string>} 抽出されたテキスト
      */
-    extractTextFromPDF: async function(file) {
-        if (!file || file.type !== 'application/pdf') {
-            return Promise.reject(new Error('有効なPDFファイルではありません'));
+    extractTextFromOfficeFile: async function(file) {
+        if (!file || !this._isOfficeFile(file.type)) {
+            return Promise.reject(new Error('有効なOfficeファイルではありません'));
         }
         
         try {
-            // ファイルをArrayBufferとして読み込む
-            const arrayBuffer = await this._readFileAsArrayBuffer(file);
+            const fileType = this._getOfficeFileTypeName(file.type);
+            const fileBase64 = await this.readFileAsBase64(file);
             
-            // PDF.jsを使用してPDFを読み込む
-            const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+            // 注: ここでは簡易的なテキスト抽出を行います
+            // クライアントサイドでの完全なテキスト抽出には外部ライブラリが必要です
             
-            let extractedText = `=== PDFファイル「${file.name}」の内容 ===\n\n`;
+            // バイナリデータから可能な限りテキストを抽出
+            let extractedText = `=== ${fileType}ファイル「${file.name}」の内容 ===\n\n`;
             
-            // 各ページからテキストを抽出
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const textContent = await page.getTextContent();
-                
-                extractedText += `--- ページ ${i} ---\n`;
-                
-                // テキストアイテムを連結
-                const pageText = textContent.items.map(item => item.str).join(' ');
-                extractedText += pageText + '\n\n';
+            // データURLからBase64部分のみを取得
+            extractedText += this._extractTextFromBinaryData(fileBase64, file.type);
+            
+            if (extractedText.length < 100) {
+                extractedText += `\n\n注: このファイルからのテキスト抽出は限定的です。`;
             }
             
             return extractedText;
         } catch (error) {
-            console.error('PDFテキスト抽出エラー:', error);
-            return `PDFファイル「${file.name}」からテキストを抽出できませんでした。`;
+            console.error('Officeファイルテキスト抽出エラー:', error);
+            return `${this._getOfficeFileTypeName(file.type)}ファイル「${file.name}」からテキストを抽出できませんでした。`;
         }
     },
     
     /**
-     * ファイルをArrayBufferとして読み込む
+     * バイナリデータからテキストを抽出する
      * @private
-     * @param {File} file - 読み込むファイル
-     * @returns {Promise<ArrayBuffer>} ArrayBuffer形式のファイルデータ
+     * @param {string} base64Data - Base64エンコードされたデータ
+     * @param {string} mimeType - MIMEタイプ
+     * @returns {string} 抽出されたテキスト
      */
-    _readFileAsArrayBuffer: function(file) {
-        return new Promise((resolve, reject) => {
-            if (!file) {
-                reject(new Error('有効なファイルが指定されていません'));
-                return;
+    _extractTextFromBinaryData: function(base64Data, mimeType) {
+        try {
+            if (!base64Data) return '';
+            
+            // Base64をデコードしてバイナリデータを取得
+            const binaryString = atob(base64Data);
+            let extractedText = '';
+            
+            // Word文書 (.doc, .docx)
+            if (mimeType.includes('word')) {
+                // XMLベースのdocxからテキストを検索
+                if (mimeType.includes('openxml')) {
+                    // document.xmlやcore.xmlからテキストを抽出する簡易的な方法
+                    extractedText = this._findXMLText(binaryString);
+                } else {
+                    // 古い.docファイルからのテキスト抽出は限定的
+                    extractedText = this._findPlainText(binaryString);
+                }
+            }
+            // Excel (.xls, .xlsx)
+            else if (mimeType.includes('excel') || mimeType.includes('sheet')) {
+                if (mimeType.includes('openxml')) {
+                    // sheetX.xmlからテキストを抽出
+                    extractedText = this._findXMLText(binaryString);
+                } else {
+                    extractedText = this._findPlainText(binaryString);
+                }
+            }
+            // PowerPoint (.ppt, .pptx)
+            else if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) {
+                if (mimeType.includes('openxml')) {
+                    // slideX.xmlからテキストを抽出
+                    extractedText = this._findXMLText(binaryString);
+                } else {
+                    extractedText = this._findPlainText(binaryString);
+                }
+            }
+            // その他のファイル形式
+            else {
+                extractedText = this._findPlainText(binaryString);
             }
             
-            const reader = new FileReader();
+            return extractedText || 'テキスト内容を抽出できませんでした。';
+        } catch (error) {
+            console.error('バイナリデータからのテキスト抽出エラー:', error);
+            return 'テキスト抽出処理中にエラーが発生しました。';
+        }
+    },
+    
+    /**
+     * バイナリデータから一般的なテキストを検索する
+     * @private
+     * @param {string} binaryString - バイナリデータ
+     * @returns {string} 抽出されたテキスト
+     */
+    _findPlainText: function(binaryString) {
+        if (!binaryString) return '';
+        
+        let result = '';
+        let inTextSegment = false;
+        let textBuffer = '';
+        
+        // 連続する印字可能なASCII文字を探す（英数字や記号など）
+        for (let i = 0; i < binaryString.length; i++) {
+            const charCode = binaryString.charCodeAt(i);
             
-            // タイムアウト設定
-            const timeoutId = setTimeout(() => {
-                reader.abort();
-                reject(new Error('ファイル読み込みがタイムアウトしました'));
-            }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
-            
-            reader.onload = function(e) {
-                clearTimeout(timeoutId);
-                resolve(e.target.result);
-            };
-            
-            reader.onerror = function(e) {
-                clearTimeout(timeoutId);
-                console.error('ファイルの読み込みに失敗しました:', e);
-                reject(new Error('ファイルの読み込みに失敗しました'));
-            };
-            
-            reader.readAsArrayBuffer(file);
-        });
+            // 印字可能なASCII文字（スペース含む）
+            if ((charCode >= 32 && charCode <= 126) || charCode === 9 || charCode === 10 || charCode === 13) {
+                inTextSegment = true;
+                textBuffer += binaryString.charAt(i);
+            } else {
+                if (inTextSegment) {
+                    // 文字列セグメントの終了
+                    if (textBuffer.length >= 4) { // 最低4文字以上のセグメントのみ追加
+                        result += textBuffer + ' ';
+                    }
+                    textBuffer = '';
+                    inTextSegment = false;
+                }
+            }
+        }
+        
+        // 最後のバッファも追加
+        if (inTextSegment && textBuffer.length >= 4) {
+            result += textBuffer;
+        }
+        
+        return result;
+    },
+    
+    /**
+     * XML形式のデータからテキストを抽出する
+     * @private
+     * @param {string} binaryString - バイナリデータ
+     * @returns {string} 抽出されたテキスト
+     */
+    _findXMLText: function(binaryString) {
+        if (!binaryString) return '';
+        
+        const result = [];
+        
+        // '<w:t>' や '<t>'などのXMLテキストタグとその内容を検索
+        const tagPatterns = [
+            { start: '<w:t', end: '</w:t>' }, // Word
+            { start: '<t>', end: '</t>' },    // Excel
+            { start: '<a:t>', end: '</a:t>' } // PowerPoint
+        ];
+        
+        for (const pattern of tagPatterns) {
+            let pos = 0;
+            while (pos < binaryString.length) {
+                const startIdx = binaryString.indexOf(pattern.start, pos);
+                if (startIdx === -1) break;
+                
+                // タグの終了位置（>）を見つける
+                let contentStart = binaryString.indexOf('>', startIdx);
+                if (contentStart === -1) break;
+                contentStart++; // '>'の次の文字から
+                
+                const endIdx = binaryString.indexOf(pattern.end, contentStart);
+                if (endIdx === -1) break;
+                
+                // テキスト内容を抽出
+                const textContent = binaryString.substring(contentStart, endIdx);
+                if (textContent && textContent.trim().length > 0) {
+                    result.push(textContent.trim());
+                }
+                
+                pos = endIdx + pattern.end.length;
+            }
+        }
+        
+        return result.join(' ');
+    },
+    
+    /**
+     * Office関連ファイルの種類名を取得
+     * @private
+     * @param {string} mimeType - MIMEタイプ
+     * @returns {string} ファイルの種類名
+     */
+    _getOfficeFileTypeName: function(mimeType) {
+        if (!mimeType) return 'Office';
+        
+        if (mimeType.includes('word')) {
+            return 'Word';
+        } else if (mimeType.includes('excel') || mimeType.includes('sheet')) {
+            return 'Excel';
+        } else if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) {
+            return 'PowerPoint';
+        }
+        
+        return 'Office';
     },
 };

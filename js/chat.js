@@ -451,6 +451,52 @@ window.Chat = {
                 pdfPreview.appendChild(previewButton);
                 pdfContainer.appendChild(pdfPreview);
                 attachmentsDiv.appendChild(pdfContainer);
+            } else if (attachment.type === 'office' && attachment.data) {
+                // Officeファイルのプレビュー表示
+                const officeContainer = document.createElement('div');
+                officeContainer.classList.add('attachment-office-container');
+                
+                // Officeファイルのサムネイル・プレビュー表示
+                const officePreview = document.createElement('div');
+                officePreview.classList.add('office-preview');
+                
+                // Officeアイコン（ファイルタイプに応じて変更）
+                const officeIcon = document.createElement('i');
+                
+                // MIMEタイプに基づいてアイコンを設定
+                if (attachment.mimeType) {
+                    if (attachment.mimeType.includes('word')) {
+                        officeIcon.className = 'fas fa-file-word';
+                    } else if (attachment.mimeType.includes('excel') || attachment.mimeType.includes('sheet')) {
+                        officeIcon.className = 'fas fa-file-excel';
+                    } else if (attachment.mimeType.includes('powerpoint') || attachment.mimeType.includes('presentation')) {
+                        officeIcon.className = 'fas fa-file-powerpoint';
+                    } else {
+                        officeIcon.className = 'fas fa-file';
+                    }
+                } else {
+                    officeIcon.className = 'fas fa-file';
+                }
+                
+                // ファイル名
+                const officeName = document.createElement('span');
+                officeName.textContent = attachment.name || 'Officeファイル';
+                officeName.classList.add('attachment-file-name');
+                
+                // 内容表示ボタン
+                const contentButton = document.createElement('button');
+                contentButton.classList.add('office-content-button');
+                contentButton.textContent = '内容';
+                contentButton.addEventListener('click', () => {
+                    this._showOfficeContent(attachment.content, attachment.name);
+                });
+                
+                // 要素を追加
+                officePreview.appendChild(officeIcon);
+                officePreview.appendChild(officeName);
+                officePreview.appendChild(contentButton);
+                officeContainer.appendChild(officePreview);
+                attachmentsDiv.appendChild(officeContainer);
             } else if (attachment.type === 'file' && attachment.name) {
                 // その他のファイル添付表示
                 const fileContainer = document.createElement('div');
@@ -541,6 +587,70 @@ window.Chat = {
         pdfViewer.appendChild(pdfObject);
         overlay.appendChild(titleBar);
         overlay.appendChild(pdfViewer);
+        document.body.appendChild(overlay);
+    },
+
+    /**
+     * Officeファイルの内容を表示する
+     * @private
+     * @param {string} content - ファイルから抽出されたテキスト内容
+     * @param {string} name - ファイル名
+     */
+    _showOfficeContent: function(content, name) {
+        if (!content) {
+            alert('ファイルの内容を表示できません。');
+            return;
+        }
+        
+        // すでに表示されている場合は削除
+        const existingOverlay = document.querySelector('.office-overlay');
+        if (existingOverlay) {
+            document.body.removeChild(existingOverlay);
+            return;
+        }
+        
+        // オーバーレイを作成
+        const overlay = document.createElement('div');
+        overlay.classList.add('office-overlay');
+        
+        // コンテンツ表示エリア
+        const contentViewer = document.createElement('div');
+        contentViewer.classList.add('office-content-viewer');
+        
+        // テキスト表示
+        const textContent = document.createElement('pre');
+        textContent.classList.add('office-text-content');
+        textContent.textContent = content;
+        
+        // タイトルバー
+        const titleBar = document.createElement('div');
+        titleBar.classList.add('office-title-bar');
+        const titleText = document.createElement('span');
+        titleText.textContent = name || 'ファイル内容';
+        
+        // 閉じるボタン
+        const closeBtn = document.createElement('button');
+        closeBtn.classList.add('overlay-close-btn');
+        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        
+        // 閉じるボタンのクリックイベント
+        closeBtn.addEventListener('click', () => {
+            document.body.removeChild(overlay);
+        });
+        
+        // オーバーレイのクリックでも閉じる
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                document.body.removeChild(overlay);
+            }
+        });
+        
+        // 要素を追加
+        titleBar.appendChild(titleText);
+        titleBar.appendChild(closeBtn);
+        contentViewer.appendChild(textContent);
+        overlay.appendChild(titleBar);
+        overlay.appendChild(contentViewer);
         document.body.appendChild(overlay);
     },
     
@@ -700,6 +810,10 @@ window.Chat = {
                 for (const attachment of attachments) {
                     // PDFの場合は抽出されたテキストを使用（GPT送信用）
                     if (attachment.type === 'pdf' && attachment.content) {
+                        attachmentContent += `\n${attachment.content}\n`;
+                    }
+                    // Office関連ファイルの場合も抽出されたテキストを使用（GPT送信用）
+                    else if (attachment.type === 'office' && attachment.content) {
                         attachmentContent += `\n${attachment.content}\n`;
                     }
                     // その他のテキストベースのファイル
