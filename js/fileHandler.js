@@ -56,30 +56,7 @@ window.FileHandler = {
         try {
             const extensions = [];
             const allowedTypes = window.CONFIG.FILE.ALLOWED_FILE_TYPES;
-            
-            // MIMEタイプから拡張子への変換マップ
-            const mimeToExtMap = {
-                'image/jpeg': ['.jpg', '.jpeg'],
-                'image/png': ['.png'],
-                'image/gif': ['.gif'],
-                'image/webp': ['.webp'],
-                'image/svg+xml': ['.svg'],
-                'text/plain': ['.txt'],
-                'text/markdown': ['.md'],
-                'text/csv': ['.csv'],
-                'application/pdf': ['.pdf'],
-                'text/javascript': ['.js'],
-                'text/html': ['.html', '.htm'],
-                'text/css': ['.css'],
-                'application/json': ['.json'],
-                // Office形式を追加
-                'application/vnd.ms-excel': ['.xls'],
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-                'application/msword': ['.doc'],
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-                'application/vnd.ms-powerpoint': ['.ppt'],
-                'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx']
-            };
+            const mimeToExtMap = window.CONFIG.FILE.MIME_TO_EXTENSION_MAP;
             
             // 各カテゴリから拡張子を抽出
             for (const category in allowedTypes) {
@@ -996,17 +973,7 @@ window.FileHandler = {
      */
     _isOfficeFile: function(mimeType) {
         if (!mimeType) return false;
-        
-        const officeTypes = [
-            'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-powerpoint',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-        ];
-        
-        return officeTypes.includes(mimeType);
+        return window.CONFIG.FILE.ALLOWED_FILE_TYPES.office.includes(mimeType);
     },
     
     /**

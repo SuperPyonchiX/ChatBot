@@ -67,11 +67,36 @@ window.CONFIG = {
             office: [
                 'application/vnd.ms-excel',
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-excel.sheet.macroEnabled.12',
                 'application/msword',
                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'application/vnd.ms-powerpoint',
                 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
             ]
+        },
+
+        // MIMEタイプから拡張子へのマッピング
+        MIME_TO_EXTENSION_MAP: {
+            'image/jpeg': ['.jpg', '.jpeg'],
+            'image/png': ['.png'],
+            'image/gif': ['.gif'],
+            'image/webp': ['.webp'],
+            'image/svg+xml': ['.svg'],
+            'text/plain': ['.txt'],
+            'text/markdown': ['.md'],
+            'text/csv': ['.csv'],
+            'application/pdf': ['.pdf'],
+            'text/javascript': ['.js'],
+            'text/html': ['.html', '.htm'],
+            'text/css': ['.css'],
+            'application/json': ['.json'],
+            'application/vnd.ms-excel': ['.xls'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+            'application/vnd.ms-excel.sheet.macroEnabled.12': ['.xlsm'],
+            'application/msword': ['.doc'],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+            'application/vnd.ms-powerpoint': ['.ppt'],
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx']
         }
     },
     
