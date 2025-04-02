@@ -690,15 +690,15 @@ window.Chat = {
         
         chatMessages.innerHTML = '';
         
-        // PDFファイル内容が含まれるメッセージを処理する補助関数
-        const cleanPdfContent = (messageContent) => {
+        // PDF, Officeファイル内容が含まれるメッセージを処理する補助関数
+        const cleanContent = (messageContent) => {
             if (typeof messageContent !== 'string') return messageContent;
             
-            // PDFファイル内容を示すマーカーパターン
-            const pdfMarkerPattern = /===\s*PDFファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*PDFファイル|$))/g;
+            // PDF, Officeファイル内容を示すマーカーパターン
+            const markerPattern = /===\s*\w+ファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*\w+ファイル|$))/g;
             
-            // PDFファイル内容を削除したテキストを返す
-            return messageContent.replace(pdfMarkerPattern, '').trim();
+            // PDF, Officeファイル内容を削除したテキストを返す
+            return messageContent.replace(markerPattern, '').trim();
         };
         
         // システムメッセージ以外を表示
@@ -713,7 +713,7 @@ window.Chat = {
                     : this._processContentArray(message.content);
                 
                 // PDFファイルの内容を除外
-                const displayContent = cleanPdfContent(content);
+                const displayContent = cleanContent(content);
                 
                 // ユーザーメッセージを表示（添付ファイルは後で追加）
                 this.addUserMessage(displayContent, chatMessages, [], message.timestamp);
