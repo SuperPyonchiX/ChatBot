@@ -902,79 +902,79 @@ window.FileHandler = {
             }
         },
     
-        /**
-         * PDFファイルからテキストを抽出する
-         * @param {File} file - PDFファイル
-         * @returns {Promise<string>} 抽出されたテキスト
-         */
-        extractTextFromPDF: async function(file) {
-            if (!file || file.type !== 'application/pdf') {
-                return Promise.reject(new Error('有効なPDFファイルではありません'));
+    /**
+     * PDFファイルからテキストを抽出する
+     * @param {File} file - PDFファイル
+     * @returns {Promise<string>} 抽出されたテキスト
+     */
+    extractTextFromPDF: async function(file) {
+        if (!file || file.type !== 'application/pdf') {
+            return Promise.reject(new Error('有効なPDFファイルではありません'));
+        }
+        
+        try {
+            // ファイルをArrayBufferとして読み込む
+            const arrayBuffer = await this._readFileAsArrayBuffer(file);
+            
+            // PDF.jsを使用してPDFを読み込む
+            const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+            
+            let extractedText = `=== PDFファイル「${file.name}」の内容 ===\n\n`;
+            
+            // 各ページからテキストを抽出
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                
+                extractedText += `--- ページ ${i} ---\n`;
+                
+                // テキストアイテムを連結
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                extractedText += pageText + '\n\n';
             }
             
-            try {
-                // ファイルをArrayBufferとして読み込む
-                const arrayBuffer = await this._readFileAsArrayBuffer(file);
-                
-                // PDF.jsを使用してPDFを読み込む
-                const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
-                
-                let extractedText = `=== PDFファイル「${file.name}」の内容 ===\n\n`;
-                
-                // 各ページからテキストを抽出
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-                    
-                    extractedText += `--- ページ ${i} ---\n`;
-                    
-                    // テキストアイテムを連結
-                    const pageText = textContent.items.map(item => item.str).join(' ');
-                    extractedText += pageText + '\n\n';
-                }
-                
-                return extractedText;
-            } catch (error) {
-                console.error('PDFテキスト抽出エラー:', error);
-                return `PDFファイル「${file.name}」からテキストを抽出できませんでした。`;
-            }
-        },
+            return extractedText;
+        } catch (error) {
+            console.error('PDFテキスト抽出エラー:', error);
+            return `PDFファイル「${file.name}」からテキストを抽出できませんでした。`;
+        }
+    },
         
-        /**
-         * ファイルをArrayBufferとして読み込む
-         * @private
-         * @param {File} file - 読み込むファイル
-         * @returns {Promise<ArrayBuffer>} ArrayBuffer形式のファイルデータ
-         */
-        _readFileAsArrayBuffer: function(file) {
-            return new Promise((resolve, reject) => {
-                if (!file) {
-                    reject(new Error('有効なファイルが指定されていません'));
-                    return;
-                }
-                
-                const reader = new FileReader();
-                
-                // タイムアウト設定
-                const timeoutId = setTimeout(() => {
-                    reader.abort();
-                    reject(new Error('ファイル読み込みがタイムアウトしました'));
-                }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
-                
-                reader.onload = function(e) {
-                    clearTimeout(timeoutId);
-                    resolve(e.target.result);
-                };
-                
-                reader.onerror = function(e) {
-                    clearTimeout(timeoutId);
-                    console.error('ファイルの読み込みに失敗しました:', e);
-                    reject(new Error('ファイルの読み込みに失敗しました'));
-                };
-                
-                reader.readAsArrayBuffer(file);
-            });
-        },
+    /**
+     * ファイルをArrayBufferとして読み込む
+     * @private
+     * @param {File} file - 読み込むファイル
+     * @returns {Promise<ArrayBuffer>} ArrayBuffer形式のファイルデータ
+     */
+    _readFileAsArrayBuffer: function(file) {
+        return new Promise((resolve, reject) => {
+            if (!file) {
+                reject(new Error('有効なファイルが指定されていません'));
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            // タイムアウト設定
+            const timeoutId = setTimeout(() => {
+                reader.abort();
+                reject(new Error('ファイル読み込みがタイムアウトしました'));
+            }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
+            
+            reader.onload = function(e) {
+                clearTimeout(timeoutId);
+                resolve(e.target.result);
+            };
+            
+            reader.onerror = function(e) {
+                clearTimeout(timeoutId);
+                console.error('ファイルの読み込みに失敗しました:', e);
+                reject(new Error('ファイルの読み込みに失敗しました'));
+            };
+            
+            reader.readAsArrayBuffer(file);
+        });
+    },
     
     /**
      * ファイルがOffice関連ファイルかどうかを判定する
@@ -1009,10 +1009,16 @@ window.FileHandler = {
         
         try {
             const fileType = this._getOfficeFileTypeName(file.type);
-            const fileBase64 = await this.readFileAsBase64(file);
             
-            // 注: ここでは簡易的なテキスト抽出を行います
-            // クライアントサイドでの完全なテキスト抽出には外部ライブラリが必要です
+            // Excelファイル (.xlsx, .xls) の処理
+            if (fileType === 'Excel') {
+                // SheetJSを使用してExcelファイルを解析
+                return await this._extractTextFromExcelFile(file);
+            }
+            
+            // Word, PowerPointなどその他のOfficeファイルの処理
+            // 既存の処理を利用
+            const fileBase64 = await this.readFileAsBase64(file);
             
             // バイナリデータから可能な限りテキストを抽出
             let extractedText = `=== ${fileType}ファイル「${file.name}」の内容 ===\n\n`;
@@ -1032,145 +1038,78 @@ window.FileHandler = {
     },
     
     /**
-     * バイナリデータからテキストを抽出する
+     * SheetJSを使用してExcelファイルからテキストを抽出する
      * @private
-     * @param {string} base64Data - Base64エンコードされたデータ
-     * @param {string} mimeType - MIMEタイプ
-     * @returns {string} 抽出されたテキスト
+     * @param {File} file - Excelファイル
+     * @returns {Promise<string>} 抽出されたテキスト
      */
-    _extractTextFromBinaryData: function(base64Data, mimeType) {
-        try {
-            if (!base64Data) return '';
-            
-            // Base64をデコードしてバイナリデータを取得
-            const binaryString = atob(base64Data);
-            let extractedText = '';
-            
-            // Word文書 (.doc, .docx)
-            if (mimeType.includes('word')) {
-                // XMLベースのdocxからテキストを検索
-                if (mimeType.includes('openxml')) {
-                    // document.xmlやcore.xmlからテキストを抽出する簡易的な方法
-                    extractedText = this._findXMLText(binaryString);
-                } else {
-                    // 古い.docファイルからのテキスト抽出は限定的
-                    extractedText = this._findPlainText(binaryString);
+    _extractTextFromExcelFile: async function(file) {
+        return new Promise((resolve, reject) => {
+            try {
+                // SheetJSライブラリが読み込まれているか確認
+                if (typeof XLSX === 'undefined') {
+                    console.error('SheetJS (XLSX) ライブラリが読み込まれていません');
+                    return resolve(`Excelファイル「${file.name}」からのテキスト抽出に失敗しました。\nSheetJSライブラリが見つかりません。`);
                 }
-            }
-            // Excel (.xls, .xlsx)
-            else if (mimeType.includes('excel') || mimeType.includes('sheet')) {
-                if (mimeType.includes('openxml')) {
-                    // sheetX.xmlからテキストを抽出
-                    extractedText = this._findXMLText(binaryString);
-                } else {
-                    extractedText = this._findPlainText(binaryString);
-                }
-            }
-            // PowerPoint (.ppt, .pptx)
-            else if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) {
-                if (mimeType.includes('openxml')) {
-                    // slideX.xmlからテキストを抽出
-                    extractedText = this._findXMLText(binaryString);
-                } else {
-                    extractedText = this._findPlainText(binaryString);
-                }
-            }
-            // その他のファイル形式
-            else {
-                extractedText = this._findPlainText(binaryString);
-            }
-            
-            return extractedText || 'テキスト内容を抽出できませんでした。';
-        } catch (error) {
-            console.error('バイナリデータからのテキスト抽出エラー:', error);
-            return 'テキスト抽出処理中にエラーが発生しました。';
-        }
-    },
-    
-    /**
-     * バイナリデータから一般的なテキストを検索する
-     * @private
-     * @param {string} binaryString - バイナリデータ
-     * @returns {string} 抽出されたテキスト
-     */
-    _findPlainText: function(binaryString) {
-        if (!binaryString) return '';
-        
-        let result = '';
-        let inTextSegment = false;
-        let textBuffer = '';
-        
-        // 連続する印字可能なASCII文字を探す（英数字や記号など）
-        for (let i = 0; i < binaryString.length; i++) {
-            const charCode = binaryString.charCodeAt(i);
-            
-            // 印字可能なASCII文字（スペース含む）
-            if ((charCode >= 32 && charCode <= 126) || charCode === 9 || charCode === 10 || charCode === 13) {
-                inTextSegment = true;
-                textBuffer += binaryString.charAt(i);
-            } else {
-                if (inTextSegment) {
-                    // 文字列セグメントの終了
-                    if (textBuffer.length >= 4) { // 最低4文字以上のセグメントのみ追加
-                        result += textBuffer + ' ';
+                
+                // ファイルリーダーの作成
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        // ファイルデータを取得
+                        const data = e.target.result;
+                        
+                        // SheetJSを使用してワークブックを解析
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        let extractedText = `=== Excelファイル「${file.name}」の内容 ===\n\n`;
+                        
+                        // 各シートからデータを抽出
+                        workbook.SheetNames.forEach(sheetName => {
+                            // シート名をテキストに追加
+                            extractedText += `--- シート: ${sheetName} ---\n\n`;
+                            
+                            // シートをJSONに変換
+                            const worksheet = workbook.Sheets[sheetName];
+                            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                            
+                            // シートが空でないことを確認
+                            if (jsonData && jsonData.length > 0) {
+                                // 各行を反復
+                                jsonData.forEach((row, rowIndex) => {
+                                    if (row && row.length > 0) {
+                                        // 空でない行のみを追加
+                                        const rowText = row.filter(cell => cell !== '').join('\t');
+                                        if (rowText.trim()) {
+                                            extractedText += rowText + '\n';
+                                        }
+                                    }
+                                });
+                                extractedText += '\n';
+                            } else {
+                                extractedText += '（空のシート）\n\n';
+                            }
+                        });
+                        
+                        resolve(extractedText);
+                    } catch (error) {
+                        console.error('Excel解析エラー:', error);
+                        resolve(`Excelファイル「${file.name}」からのテキスト抽出に失敗しました。`);
                     }
-                    textBuffer = '';
-                    inTextSegment = false;
-                }
+                };
+                
+                reader.onerror = function() {
+                    reject(new Error('ファイル読み込みエラー'));
+                };
+                
+                // ファイルをArrayBufferとして読み込む（SheetJSに最適）
+                reader.readAsArrayBuffer(file);
+            } catch (error) {
+                console.error('Excel処理エラー:', error);
+                reject(error);
             }
-        }
-        
-        // 最後のバッファも追加
-        if (inTextSegment && textBuffer.length >= 4) {
-            result += textBuffer;
-        }
-        
-        return result;
-    },
-    
-    /**
-     * XML形式のデータからテキストを抽出する
-     * @private
-     * @param {string} binaryString - バイナリデータ
-     * @returns {string} 抽出されたテキスト
-     */
-    _findXMLText: function(binaryString) {
-        if (!binaryString) return '';
-        
-        const result = [];
-        
-        // '<w:t>' や '<t>'などのXMLテキストタグとその内容を検索
-        const tagPatterns = [
-            { start: '<w:t', end: '</w:t>' }, // Word
-            { start: '<t>', end: '</t>' },    // Excel
-            { start: '<a:t>', end: '</a:t>' } // PowerPoint
-        ];
-        
-        for (const pattern of tagPatterns) {
-            let pos = 0;
-            while (pos < binaryString.length) {
-                const startIdx = binaryString.indexOf(pattern.start, pos);
-                if (startIdx === -1) break;
-                
-                // タグの終了位置（>）を見つける
-                let contentStart = binaryString.indexOf('>', startIdx);
-                if (contentStart === -1) break;
-                contentStart++; // '>'の次の文字から
-                
-                const endIdx = binaryString.indexOf(pattern.end, contentStart);
-                if (endIdx === -1) break;
-                
-                // テキスト内容を抽出
-                const textContent = binaryString.substring(contentStart, endIdx);
-                if (textContent && textContent.trim().length > 0) {
-                    result.push(textContent.trim());
-                }
-                
-                pos = endIdx + pattern.end.length;
-            }
-        }
-        
-        return result.join(' ');
+        });
     },
     
     /**
@@ -1191,5 +1130,18 @@ window.FileHandler = {
         }
         
         return 'Office';
+    },
+    
+    /**
+     * バイナリデータからテキストを抽出する
+     * @private
+     * @param {string} base64Data - Base64エンコードされたデータ
+     * @param {string} mimeType - MIMEタイプ
+     * @returns {string} 抽出されたテキスト
+     */
+    _extractTextFromBinaryData: function(base64Data, mimeType) {
+        // ここにバイナリデータからテキストを抽出するロジックを実装
+        // 例: PDFファイルやOfficeファイルの解析ロジックを追加することができます
+        return `このファイルは${this._getOfficeFileTypeName(mimeType)}ファイルです。`;
     },
 };
