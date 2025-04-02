@@ -1212,37 +1212,25 @@ window.FileHandler = {
             const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
             
             // テキスト要素を含む可能性のある要素を検索
-            const textElements = [
-                ...xmlDoc.getElementsByTagName('a:t'),      // 通常のテキスト
-                ...xmlDoc.getElementsByTagName('p:sp'),     // シェイプ内のテキスト
-                ...xmlDoc.getElementsByTagName('p:txBody')  // テキストボックス
-            ];
-
-            let slideText = [];
+            // a:t要素のみを直接取得し、重複を避ける
+            const textElements = xmlDoc.getElementsByTagName('a:t');
+            
+            // 重複を防ぐためにSetを使用
+            const uniqueTexts = new Set();
             
             // テキスト要素から内容を抽出
-            textElements.forEach(element => {
-                if (element.tagName === 'a:t') {
-                    const text = element.textContent.trim();
-                    if (text) {
-                        slideText.push(text);
-                    }
-                } else {
-                    // シェイプやテキストボックス内のテキストを処理
-                    const textParts = element.getElementsByTagName('a:t');
-                    Array.from(textParts).forEach(textPart => {
-                        const text = textPart.textContent.trim();
-                        if (text) {
-                            slideText.push(text);
-                        }
-                    });
+            Array.from(textElements).forEach(element => {
+                const text = element.textContent.trim();
+                if (text) {
+                    uniqueTexts.add(text);
                 }
             });
 
-            return slideText.join('\n');
+            // 重複のないテキストを配列に変換して結合
+            return Array.from(uniqueTexts).join('\n');
         } catch (error) {
             console.error("XMLパース中のエラー:", error);
             return "";
         }
-    },
+    }
 };
