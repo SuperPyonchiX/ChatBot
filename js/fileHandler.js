@@ -1016,7 +1016,13 @@ window.FileHandler = {
                 return await this._extractTextFromExcelFile(file);
             }
             
-            // Word, PowerPointなどその他のOfficeファイルの処理
+            // PowerPointファイル (.pptx, .ppt) の処理
+            if (fileType === 'PowerPoint') {
+                // PowerPointファイル用のテキスト抽出
+                return await this._extractTextFromPowerPointFile(file);
+            }
+            
+            // Word, その他のOfficeファイルの処理
             // 既存の処理を利用
             const fileBase64 = await this.readFileAsBase64(file);
             
@@ -1036,7 +1042,7 @@ window.FileHandler = {
             return `${this._getOfficeFileTypeName(file.type)}ファイル「${file.name}」からテキストを抽出できませんでした。`;
         }
     },
-    
+
     /**
      * SheetJSを使用してExcelファイルからテキストを抽出する
      * @private
@@ -1111,7 +1117,7 @@ window.FileHandler = {
             }
         });
     },
-    
+
     /**
      * Office関連ファイルの種類名を取得
      * @private
@@ -1131,7 +1137,7 @@ window.FileHandler = {
         
         return 'Office';
     },
-    
+
     /**
      * バイナリデータからテキストを抽出する
      * @private
@@ -1143,5 +1149,137 @@ window.FileHandler = {
         // ここにバイナリデータからテキストを抽出するロジックを実装
         // 例: PDFファイルやOfficeファイルの解析ロジックを追加することができます
         return `このファイルは${this._getOfficeFileTypeName(mimeType)}ファイルです。`;
+    },
+
+    /**
+     * PowerPointファイルからテキストを抽出する
+     * @private
+     * @param {File} file - PowerPointファイル
+     * @returns {Promise<string>} 抽出されたテキスト
+     */
+    _extractTextFromPowerPointFile: async function(file) {
+        return new Promise((resolve, reject) => {
+            try {
+                const reader = new FileReader();
+                
+                reader.onload = async (e) => {
+                    try {
+                        // ファイルからテキストを抽出
+                        const arrayBuffer = e.target.result;
+                        
+                        // ここでは簡易的な方法でテキストを抽出
+                        // バイナリデータから直接テキスト部分だけを取り出す
+                        let extractedText = await this._extractTextFromPPTArrayBuffer(arrayBuffer, file.name);
+                        
+                        // 最終的なテキストを生成
+                        let formattedText = `=== PowerPointファイル「${file.name}」の内容 ===\n\n`;
+                        formattedText += extractedText;
+                        
+                        resolve(formattedText);
+                    } catch (error) {
+                        console.error('PowerPoint解析エラー:', error);
+                        resolve(`PowerPointファイル「${file.name}」からのテキスト抽出に失敗しました。`);
+                    }
+                };
+                
+                reader.onerror = function() {
+                    reject(new Error('ファイル読み込みエラー'));
+                };
+                
+                // ファイルをArrayBufferとして読み込む
+                reader.readAsArrayBuffer(file);
+            } catch (error) {
+                console.error('PowerPoint処理エラー:', error);
+                reject(error);
+            }
+        });
+    },
+    
+    /**
+     * PowerPointのArrayBufferからテキストを抽出する
+     * @private
+     * @param {ArrayBuffer} arrayBuffer - PowerPointファイルのArrayBuffer
+     * @param {string} fileName - ファイル名
+     * @returns {Promise<string>} 抽出されたテキスト
+     */
+    _extractTextFromPPTArrayBuffer: async function(arrayBuffer, fileName) {
+        try {
+            // ArrayBufferをUint8Arrayに変換
+            const data = new Uint8Array(arrayBuffer);
+            
+            // テキスト抽出のための処理
+            let extractedText = '';
+            let slideNumber = 1;
+            let inTextBlock = false;
+            let currentText = '';
+            
+            // PowerPointファイルの構造を解析してテキストを抽出
+            // .pptxはZIP形式なので、テキスト部分を特定のパターンで検出
+            for (let i = 0; i < data.length - 4; i++) {
+                // スライドの区切りを検出する
+                if (this._checkPattern(data, i, [0x53, 0x6C, 0x69, 0x64, 0x65])) { // "Slide"
+                    if (currentText) {
+                        extractedText += `--- スライド ${slideNumber} ---\n${currentText.trim()}\n\n`;
+                        currentText = '';
+                        slideNumber++;
+                    }
+                }
+                
+                // テキストデータの開始/終了を検出
+                if (this._checkPattern(data, i, [0x3C, 0x61, 0x3A, 0x74])) { // "<a:t"
+                    inTextBlock = true;
+                    continue;
+                }
+                
+                if (inTextBlock && this._checkPattern(data, i, [0x3C, 0x2F, 0x61, 0x3A, 0x74])) { // "</a:t"
+                    inTextBlock = false;
+                    currentText += '\n';
+                    continue;
+                }
+                
+                // テキストブロック内の文字を抽出
+                if (inTextBlock && data[i] >= 32 && data[i] <= 126) {
+                    currentText += String.fromCharCode(data[i]);
+                }
+            }
+            
+            // 最後のスライドのテキストを追加
+            if (currentText) {
+                extractedText += `--- スライド ${slideNumber} ---\n${currentText.trim()}\n\n`;
+            }
+            
+            // テキストが抽出できなかった場合のフォールバック
+            if (!extractedText) {
+                extractedText = `PowerPointファイル「${fileName}」からテキストを抽出できませんでした。\n`;
+                extractedText += 'ファイル内のテキストを読み取れません。';
+            }
+            
+            return extractedText;
+        } catch (error) {
+            console.error('PowerPointバイナリ解析エラー:', error);
+            return `PowerPointファイル「${fileName}」の解析中にエラーが発生しました。`;
+        }
+    },
+    
+    /**
+     * バイト配列内の特定パターンをチェックする
+     * @private
+     * @param {Uint8Array} data - バイト配列
+     * @param {number} offset - 開始オフセット
+     * @param {Array<number>} pattern - 検索するバイトパターン
+     * @returns {boolean} パターンが一致した場合はtrue
+     */
+    _checkPattern: function(data, offset, pattern) {
+        if (offset + pattern.length > data.length) {
+            return false;
+        }
+        
+        for (let i = 0; i < pattern.length; i++) {
+            if (data[offset + i] !== pattern[i]) {
+                return false;
+            }
+        }
+        
+        return true;
     },
 };

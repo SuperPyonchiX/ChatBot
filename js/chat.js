@@ -690,15 +690,31 @@ window.Chat = {
         
         chatMessages.innerHTML = '';
         
-        // PDF, Officeファイル内容が含まれるメッセージを処理する補助関数
-        const cleanContent = (messageContent) => {
+        // PDFファイル内容が含まれるメッセージを処理する補助関数
+        const cleanFileContent = (messageContent) => {
             if (typeof messageContent !== 'string') return messageContent;
             
-            // PDF, Officeファイル内容を示すマーカーパターン
-            const markerPattern = /===\s*\w+ファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*\w+ファイル|$))/g;
+            // ファイル内容を示すマーカーパターン（複数のタイプに対応）
+            const fileMarkerPatterns = [
+                // PDFファイル内容
+                /===\s*PDFファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*|$))/g,
+                // Excelファイル内容
+                /===\s*Excelファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*|$))/g,
+                // PowerPointファイル内容
+                /===\s*PowerPointファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*|$))/g,
+                // Wordファイル内容
+                /===\s*Wordファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*|$))/g,
+                // 一般的なOfficeファイル内容
+                /===\s*Officeファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*|$))/g
+            ];
             
-            // PDF, Officeファイル内容を削除したテキストを返す
-            return messageContent.replace(markerPattern, '').trim();
+            // 各パターンについて内容を削除
+            let cleanedContent = messageContent;
+            for (const pattern of fileMarkerPatterns) {
+                cleanedContent = cleanedContent.replace(pattern, '');
+            }
+            
+            return cleanedContent.trim();
         };
         
         // システムメッセージ以外を表示
@@ -712,8 +728,8 @@ window.Chat = {
                     ? message.content 
                     : this._processContentArray(message.content);
                 
-                // PDFファイルの内容を除外
-                const displayContent = cleanContent(content);
+                // ファイルの内容を除外
+                const displayContent = cleanFileContent(content);
                 
                 // ユーザーメッセージを表示（添付ファイルは後で追加）
                 this.addUserMessage(displayContent, chatMessages, [], message.timestamp);
