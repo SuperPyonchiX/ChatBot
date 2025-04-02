@@ -877,20 +877,12 @@ window.FileHandler = {
         if (!conversationId || !chatMessages) return;
         
         try {
-            console.log('[DEBUG] 添付ファイル表示開始 - 会話ID:', conversationId);
             const attachmentData = this.loadAttachmentsForConversation(conversationId);
-            console.log('[DEBUG] 読み込まれた添付データ:', JSON.stringify(attachmentData));
             
-            if (!attachmentData.files || attachmentData.files.length === 0) {
-                console.log('[DEBUG] 添付ファイルが見つかりません');
-                return;
-            }
-
-            console.log('[DEBUG] 添付ファイル数:', attachmentData.files.length);
+            if (!attachmentData.files || attachmentData.files.length === 0) return;
 
             // メッセージを取得
             const userMessages = Array.from(chatMessages.querySelectorAll('.message.user'));
-            console.log('[DEBUG] ユーザーメッセージ数:', userMessages.length);
             
             // メッセージをタイムスタンプでソート
             const sortedMessages = userMessages.map(msg => ({
@@ -898,8 +890,6 @@ window.FileHandler = {
                 timestamp: parseInt(msg.dataset.timestamp)
             })).sort((a, b) => a.timestamp - b.timestamp);
             
-            console.log('[DEBUG] ソート済みメッセージ:', sortedMessages.map(m => m.timestamp));
-
             // メッセージと添付ファイルのマッピング - ここが重要な変更点
             const messageAttachments = {};
             
@@ -933,35 +923,28 @@ window.FileHandler = {
                     
                     // ファイルを追加
                     messageAttachments[messageId].files.push(file);
-                    console.log(`[DEBUG] ファイル ${file.name} をメッセージ ${messageId} に割り当てました (時間差: ${minTimeDiff}ms)`);
                 }
             }
-            
-            console.log('[DEBUG] メッセージごとの添付ファイルマッピング:', Object.keys(messageAttachments).length);
-            
+                        
             // 各メッセージに添付ファイルを表示
             for (const messageId in messageAttachments) {
                 const { message, files } = messageAttachments[messageId];
                 const messageContent = message.element.querySelector('.message-content');
                 
                 if (messageContent) {
-                    console.log(`[DEBUG] メッセージ ${messageId} に ${files.length} 個のファイルを追加します`);
                     
                     // 既存の添付ファイル要素があれば削除
                     const existingAttachments = messageContent.querySelector('.message-attachments');
                     if (existingAttachments) {
-                        console.log('[DEBUG] 既存の添付ファイル要素を削除');
                         messageContent.removeChild(existingAttachments);
                     }
                     
                     // 新しい添付ファイル要素を作成して追加（すべてのファイルを一度に）
                     const attachmentsElement = window.Chat._createAttachmentsElement(files, parseInt(messageId));
                     messageContent.appendChild(attachmentsElement);
-                    console.log('[DEBUG] 添付ファイル要素が追加されました');
                 }
             }
             
-            console.log('[DEBUG] 添付ファイル表示完了');
         } catch (error) {
             console.error('[ERROR] 保存された添付ファイルの表示中にエラーが発生しました:', error);
         }

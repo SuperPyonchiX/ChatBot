@@ -77,7 +77,6 @@ window.PromptSuggestions = {
         // クリックイベント（イベント委任）
         this.suggestionsElement.addEventListener('click', this._handleSuggestionClick.bind(this));
         
-        console.log('プロンプト候補表示機能を初期化しました');
     },
     
     /**
