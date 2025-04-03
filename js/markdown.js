@@ -220,6 +220,11 @@ window.Markdown = {
                                     if (svgElement) {
                                         svgElement.style.maxWidth = '100%';
                                         svgElement.style.height = 'auto';
+                                        
+                                        // エラー表示のSVGをチェックして非表示にする
+                                        if (svgElement.getAttribute('aria-roledescription') === 'error') {
+                                            svgElement.style.display = 'none';
+                                        }
                                     }
                                     
                                     diagramContainer.setAttribute('data-rendered', 'true');
@@ -1016,8 +1021,31 @@ window.Markdown = {
             // Mermaidの初期設定
             mermaid.initialize({
                 ...this._CONFIG.MERMAID.DEFAULT_CONFIG,
-                startOnLoad: false
+                startOnLoad: false,
+                securityLevel: 'strict',
+                suppressErrors: true, // エラーメッセージを抑制
+                logLevel: 'fatal', // 最小限のログ出力
+                flowchart: {
+                    htmlLabels: true,
+                    useMaxWidth: true
+                },
+                er: {
+                    useMaxWidth: true
+                },
+                sequence: {
+                    useMaxWidth: true
+                },
+                gantt: {
+                    useMaxWidth: true
+                }
             });
+
+            // エラーハンドラーをオーバーライド
+            mermaid.parseError = (err, hash) => {
+                // エラーの表示を完全に抑制
+                console.debug('Mermaid構文エラー:', err);
+                return '';
+            };
             
             return Promise.resolve(true);
         } catch (error) {

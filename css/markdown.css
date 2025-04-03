@@ -224,3 +224,15 @@
     border-left: 3px solid #ffaaaa;
     overflow-x: auto;
 }
+
+/* Mermaidエラー表示の完全抑制 */
+[aria-roledescription="error"],
+.mermaid [aria-roledescription="error"],
+.mermaid-diagram [aria-roledescription="error"] {
+    display: none !important;
+}
+
+.error-icon,
+.error-text {
+    display: none !important;
+}
