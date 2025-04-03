@@ -168,21 +168,23 @@ window.FileHandler = {
         
         const fileName = file.name;
         const mimeType = file.type;
-        
-        // .mdファイルの場合は許可
-        if (fileName && fileName.toLowerCase().endsWith('.md')) {
-            return true;
-        }
-        
-        // MIMEタイプが空の場合は不許可（.mdファイルは上でチェック済み）
+                
+        // MIMEタイプが空の場合は拡張子でチェック
         if (!mimeType) {
+            const extension = '.' + fileName.split('.').pop().toLowerCase();
+            // MIME_TO_EXTENSION_MAPの全ての拡張子をチェック
+            for (const mimeExtensions of Object.values(window.CONFIG.FILE.MIME_TO_EXTENSION_MAP)) {
+                if (mimeExtensions.includes(extension)) {
+                    return true;
+                }
+            }
             return false;
         }
         
         // すべての許可されたMIMEタイプのリスト
         const allowedMimeTypes = Object.values(window.CONFIG.FILE.ALLOWED_FILE_TYPES).flat();
         
-        // 完全一致を確認
+        // MIMEタイプの完全一致を確認
         if (allowedMimeTypes.includes(mimeType)) {
             return true;
         }
@@ -191,6 +193,14 @@ window.FileHandler = {
         for (const allowed of allowedMimeTypes) {
             const genericType = allowed.split('/')[0];
             if (mimeType.startsWith(`${genericType}/`)) {
+                return true;
+            }
+        }
+        
+        // 拡張子でのチェック
+        const extension = '.' + fileName.split('.').pop().toLowerCase();
+        for (const mimeExtensions of Object.values(window.CONFIG.FILE.MIME_TO_EXTENSION_MAP)) {
+            if (mimeExtensions.includes(extension)) {
                 return true;
             }
         }

@@ -62,7 +62,12 @@ window.CONFIG = {
             // PDFファイル
             pdf: ['application/pdf'],
             // コード関連
-            code: ['text/javascript', 'text/html', 'text/css', 'application/json'],
+            code: [
+                'text/javascript', 'text/html', 'text/css', 'application/json',
+                'text/x-python', 'text/x-c', 'text/x-cpp',
+                'text/x-java', 'text/x-csharp', 'text/x-ruby',
+                'text/x-php', 'text/x-typescript'
+            ],
             // Office関連
             office: [
                 'application/vnd.ms-excel',
@@ -96,7 +101,16 @@ window.CONFIG = {
             'application/msword': ['.doc'],
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
             'application/vnd.ms-powerpoint': ['.ppt'],
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx']
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
+            // プログラミング言語ファイル
+            'text/x-python': ['.py', '.pyw'],
+            'text/x-c': ['.c', '.h'],
+            'text/x-cpp': ['.cpp', '.hpp', '.cc', '.hh'],
+            'text/x-java': ['.java'],
+            'text/x-csharp': ['.cs'],
+            'text/x-ruby': ['.rb'],
+            'text/x-php': ['.php'],
+            'text/x-typescript': ['.ts', '.tsx']
         }
     },
     
