@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // システムプロンプト関連
             'systemPromptModal', 'systemPromptInput', 'saveSystemPrompt',
-            'cancelSystemPrompt', 'saveNewTemplate', 'newTemplateName',
+            'cancelSystemPrompt', 'saveSystemPrompt', 'newSystemPromptName',
             
             // API設定関連
             'apiKeyModal', 'saveApiKey', 'cancelApiKey', 'openaiRadio', 'azureRadio',
@@ -341,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function _setupSystemPromptModal() {
         if (!Elements.saveSystemPrompt || !Elements.cancelSystemPrompt || 
-            !Elements.saveNewTemplate || !Elements.newTemplateName) return;
+            !Elements.saveSystemPrompt || !Elements.newSystemPromptName) return;
         
         // システムプロンプト保存
         Elements.saveSystemPrompt.addEventListener('click', () => {
@@ -356,17 +356,17 @@ document.addEventListener('DOMContentLoaded', function() {
         Elements.cancelSystemPrompt.addEventListener('click', window.UI.hideSystemPromptModal);
         
         // 新しいテンプレート保存
-        Elements.saveNewTemplate.addEventListener('click', () => {
-            if (!Elements.systemPromptInput || !Elements.newTemplateName) return;
+        Elements.saveSystemPrompt.addEventListener('click', () => {
+            if (!Elements.systemPromptInput || !Elements.newSystemPromptName) return;
             
-            const name = Elements.newTemplateName.value.trim();
+            const name = Elements.newSystemPromptName.value.trim();
             const prompt = Elements.systemPromptInput.value.trim();
             
             if (name && prompt) {
                 AppState.promptTemplates[name] = prompt;
                 window.Storage.savePromptTemplates(AppState.promptTemplates);
                 window.UI.updateTemplateList(AppState.promptTemplates, onTemplateSelect, onTemplateDelete);
-                Elements.newTemplateName.value = '';
+                Elements.newSystemPromptName.value = '';
             }
         });
 
