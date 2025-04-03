@@ -130,15 +130,9 @@ window.Markdown = {
                     wrapperContainer.classList.add('mermaid-wrapper');
                     wrapperContainer.setAttribute('data-mermaid-index', i);
                     
+                    // ツールバーを作成
                     const toolbar = document.createElement('div');
                     toolbar.classList.add('mermaid-toolbar');
-                    
-                    const previewButton = document.createElement('button');
-                    previewButton.classList.add('mermaid-preview-toggle');
-                    previewButton.setAttribute('type', 'button');
-                    previewButton.setAttribute('data-mermaid-index', i);
-                    previewButton.innerHTML = '<i class="fas fa-eye"></i> プレビュー表示';
-                    previewButton.title = 'プレビュー表示/コード表示を切り替え';
                     
                     // ダウンロードボタンを追加
                     const downloadButton = document.createElement('button');
@@ -148,6 +142,17 @@ window.Markdown = {
                     downloadButton.innerHTML = '<i class="fas fa-download"></i> SVG保存';
                     downloadButton.title = 'SVGファイルとして保存';
                     downloadButton.style.display = 'none'; // 初期状態では非表示
+                    
+                    const previewButton = document.createElement('button');
+                    previewButton.classList.add('mermaid-preview-toggle');
+                    previewButton.setAttribute('type', 'button');
+                    previewButton.setAttribute('data-mermaid-index', i);
+                    previewButton.innerHTML = '<i class="fas fa-eye"></i> プレビュー表示';
+                    previewButton.title = 'プレビュー表示/コード表示を切り替え';
+                    
+                    // 順序を変更：ダウンロードボタンを先に追加
+                    toolbar.appendChild(downloadButton);
+                    toolbar.appendChild(previewButton);
                     
                     const codeContainer = document.createElement('div');
                     codeContainer.classList.add('mermaid-code-container');
@@ -174,7 +179,6 @@ window.Markdown = {
                     
                     // DOMツリーを構築
                     toolbar.appendChild(previewButton);
-                    toolbar.appendChild(downloadButton);
                     wrapperContainer.appendChild(toolbar);
                     wrapperContainer.appendChild(codeContainer);
                     wrapperContainer.appendChild(diagramContainer);
