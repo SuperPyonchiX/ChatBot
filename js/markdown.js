@@ -116,6 +116,9 @@ window.Markdown = {
                 
                 const parentElement = preElement.parentElement;
                 if (!parentElement) continue;
+
+                // 現在の位置を記録
+                const nextSibling = preElement.nextSibling;
                 
                 try {
                     console.log('processing block', i);
@@ -141,9 +144,13 @@ window.Markdown = {
                     codeContainer.classList.add('mermaid-code-container');
                     codeContainer.setAttribute('data-mermaid-index', i);
                     
+                    // ダイアグラム表示用の要素を作成
                     const diagramContainer = document.createElement('div');
                     diagramContainer.classList.add('mermaid-diagram', 'hidden');
                     diagramContainer.setAttribute('data-mermaid-index', i);
+                    
+                    const renderedDiagramId = `mermaid-diagram-${Date.now()}-${i}`;
+                    diagramContainer.setAttribute('data-diagram-id', renderedDiagramId);
                     
                     const loadingElement = document.createElement('div');
                     loadingElement.classList.add('mermaid-loading');
@@ -164,54 +171,28 @@ window.Markdown = {
                     wrapperContainer.appendChild(loadingElement);
                     wrapperContainer.appendChild(errorElement);
                     
-                    // preElementを移動
+                    // 元のpreElementを移動
                     preElement.remove();
                     codeContainer.appendChild(preElement);
                     
-                    // 親要素に追加
-                    parentElement.insertBefore(wrapperContainer, null);
+                    // 元の位置に新しい要素を挿入（nextSiblingがnullの場合は最後に追加）
+                    parentElement.insertBefore(wrapperContainer, nextSibling);
                     
                     // イベントハンドラを作成
                     const togglePreview = async (e) => {
-                        console.log('Toggle preview clicked', e);
-                        // ボタン要素を正しく取得
                         const button = e.target.closest('.mermaid-preview-toggle');
-                        if (!button) {
-                            console.error('Button not found');
-                            return;
-                        }
-
-                        // インデックスを取得
+                        if (!button) return;
+                        
                         const index = button.getAttribute('data-mermaid-index');
                         const wrapper = document.querySelector(`.mermaid-wrapper[data-mermaid-index="${index}"]`);
-                        if (!wrapper) {
-                            console.error('Wrapper not found for index:', index);
-                            return;
-                        }
-
+                        if (!wrapper) return;
+                        
                         const diagramContainer = wrapper.querySelector('.mermaid-diagram');
                         const codeContainer = wrapper.querySelector('.mermaid-code-container');
                         const loadingElement = wrapper.querySelector('.mermaid-loading');
                         const errorElement = wrapper.querySelector('.mermaid-error');
-
-                        if (!diagramContainer || !codeContainer || !loadingElement || !errorElement) {
-                            console.error('Required elements not found');
-                            console.log('Found elements:', {
-                                diagramContainer,
-                                codeContainer,
-                                loadingElement,
-                                errorElement
-                            });
-                            return;
-                        }
-
-                        console.log('Elements found:', {
-                            diagramContainer,
-                            codeContainer,
-                            loadingElement,
-                            errorElement,
-                            button
-                        });
+                        
+                        if (!diagramContainer || !codeContainer || !loadingElement || !errorElement) return;
                         
                         const isPreviewMode = !diagramContainer.classList.contains('hidden');
                         
@@ -228,9 +209,9 @@ window.Markdown = {
                             button.innerHTML = '<i class="fas fa-code"></i> コード表示';
                             
                             try {
-                                // ダイアグラムがまだレンダリングされていない場合はレンダリング
+                                // まだレンダリングされていないダイアグラムの場合
                                 if (!diagramContainer.hasAttribute('data-rendered')) {
-                                    const diagramId = `mermaid-diagram-${Date.now()}-${index}`;
+                                    const diagramId = diagramContainer.getAttribute('data-diagram-id');
                                     const { svg } = await mermaid.render(diagramId, mermaidCode);
                                     diagramContainer.innerHTML = svg;
                                     
@@ -243,7 +224,6 @@ window.Markdown = {
                                     
                                     diagramContainer.setAttribute('data-rendered', 'true');
                                 }
-                                
                                 errorElement.style.display = 'none';
                             } catch (error) {
                                 console.error('Mermaidレンダリングエラー:', error);
@@ -262,10 +242,9 @@ window.Markdown = {
                         }
                     };
                     
-                    // イベントハンドラをキャッシュしておく
+                    // イベントハンドラをキャッシュ
                     handlers.push({ button: previewButton, handler: togglePreview });
                     
-                    console.log('event listener attached to button', previewButton);
                 } catch (blockError) {
                     console.error('mermaidブロック処理エラー:', blockError);
                     continue;
@@ -279,7 +258,6 @@ window.Markdown = {
                 handlers.forEach(({ handler }) => {
                     const buttons = document.querySelectorAll('.mermaid-preview-toggle');
                     buttons.forEach(button => {
-                        console.log('Reattaching event listener to actual button');
                         button.addEventListener('click', handler);
                     });
                 });
