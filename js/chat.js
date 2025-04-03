@@ -246,17 +246,24 @@ window.Chat = (function() {
             try {
                 // 最新の完全なテキストをMarkdownとしてレンダリング
                 const renderedHTML = await window.Markdown.renderMarkdown(currentFullText);
-                container.innerHTML = renderedHTML;
                 
-                // シンタックスハイライトを適用
-                if (typeof Prism !== 'undefined') {
-                    Prism.highlightAllUnder(container);
-                }
-                
-                // スクロール位置を更新
                 const chatMessages = container.closest('.chat-messages');
                 if (chatMessages) {
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    // スクロール位置を確認
+                    const isNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
+                    
+                    // コンテンツを更新
+                    container.innerHTML = renderedHTML;
+                    
+                    // シンタックスハイライトを適用
+                    if (typeof Prism !== 'undefined') {
+                        Prism.highlightAllUnder(container);
+                    }
+                    
+                    // スクロール位置が下に近い場合のみ自動スクロール
+                    if (isNearBottom) {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
                 }
             } catch (e) {
                 console.error('ストリーミング中のMarkdown解析エラー:', e);
@@ -401,7 +408,7 @@ window.Chat = (function() {
                         window.Markdown.addCodeBlockCopyButtons(container.closest('.message'));
                         
                         // 親要素のスクロール位置を更新
-                        const chatMessages = container.closest('.chat-messages');
+const chatMessages = container.closest('.chat-messages');
                         if (chatMessages) {
                             chatMessages.scrollTop = chatMessages.scrollHeight;
                         }
