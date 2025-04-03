@@ -261,7 +261,12 @@ window.Storage = {
      * @returns {Object} プロンプトテンプレートのオブジェクト
      */
     loadPromptTemplates: function() {
-        return this._getItem(window.CONFIG.STORAGE.KEYS.PROMPT_TEMPLATES, window.CONFIG.PROMPTS.TEMPLATES, true);
+        // カスタムテンプレートを読み込む
+        const customTemplates = this._getItem(window.CONFIG.STORAGE.KEYS.PROMPT_TEMPLATES, {}, true);
+        
+        // デフォルトのテンプレートと結合して返す
+        // デフォルトのテンプレートが常に優先されるようにする
+        return { ...window.CONFIG.PROMPTS.TEMPLATES, ...customTemplates };
     },
 
     /**

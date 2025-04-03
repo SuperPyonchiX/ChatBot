@@ -474,17 +474,13 @@ window.UI = {
         
         // テンプレート一覧をクリア
         templateListArea.innerHTML = '';
-        
-        // デフォルトテンプレート
-        const defaultTemplates = ['default', 'creative', 'technical'];
-        
+                
         // DocumentFragmentを使用してDOM操作を最適化
         const fragment = document.createDocumentFragment();
         
         // テンプレート項目を作成して追加
         Object.keys(promptTemplates).forEach(templateName => {
-            const isDefault = defaultTemplates.includes(templateName);
-            const item = this._createTemplateItem(templateName, isDefault, onTemplateSelect, onTemplateDelete);
+            const item = this._createTemplateItem(templateName, onTemplateSelect, onTemplateDelete);
             fragment.appendChild(item);
         });
         
@@ -499,14 +495,13 @@ window.UI = {
      * @function _createTemplateItem
      * @memberof UI
      * @param {string} templateName - テンプレート名
-     * @param {boolean} isDefault - デフォルトテンプレートかどうか
      * @param {Function} onTemplateSelect - テンプレート選択時のコールバック関数
      * @param {Function} onTemplateDelete - テンプレート削除時のコールバック関数
      * @returns {HTMLElement} テンプレート項目要素
      * @private
      */
-    _createTemplateItem: function(templateName, isDefault, onTemplateSelect, onTemplateDelete) {
-        // 削除ボタン（デフォルトテンプレート以外のみ）
+    _createTemplateItem: function(templateName, onTemplateSelect, onTemplateDelete) {
+        // 削除ボタン（デフォルトテンプレートと設定ファイルで定義されたテンプレート以外のみ）
         const children = [
             UIUtils.createElement('span', {
                 textContent: templateName,
@@ -514,7 +509,11 @@ window.UI = {
             })
         ];
         
-        if (!isDefault) {
+        // config.jsで定義されたテンプレートの判定
+        const isConfigTemplate = Object.keys(window.CONFIG.PROMPTS.TEMPLATES).includes(templateName);
+        
+        // デフォルトテンプレートとconfig.jsで定義されたテンプレート以外に削除ボタンを表示
+        if (!isConfigTemplate) {
             children.push(UIUtils.createElement('button', {
                 classList: ['template-delete-button'],
                 innerHTML: '<i class="fas fa-trash"></i>',

@@ -788,6 +788,63 @@ window.PromptManager = (function() {
         return success;
     }
 
+    /**
+     * テンプレート選択UIを初期化
+     * @private
+     */
+    function _initializeTemplateSelector() {
+        const templateSelector = document.querySelector('#template-selector');
+        if (!templateSelector) return;
+        
+        // テンプレートのリストをクリア
+        templateSelector.innerHTML = '';
+        
+        // デフォルトオプション
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'テンプレートを選択...';
+        templateSelector.appendChild(defaultOption);
+        
+        // テンプレートを取得して選択肢を追加
+        const templates = window.Storage.loadPromptTemplates();
+        
+        if (templates && typeof templates === 'object') {
+            // テンプレートをアルファベット順にソート
+            const sortedTemplateNames = Object.keys(templates).sort();
+            
+            sortedTemplateNames.forEach(templateName => {
+                const option = document.createElement('option');
+                option.value = templateName;
+                option.textContent = templateName;
+                templateSelector.appendChild(option);
+            });
+        }
+        
+        // テンプレート選択時のイベント
+        templateSelector.addEventListener('change', (event) => {
+            const selectedTemplate = event.target.value;
+            if (!selectedTemplate) return;
+            
+            const templates = window.Storage.loadPromptTemplates();
+            if (templates && templates[selectedTemplate]) {
+                // システムプロンプトの更新
+                setAsSystemPrompt(selectedTemplate, templates[selectedTemplate]);
+                
+                // UIの更新
+                const promptInput = document.querySelector('#system-prompt-input');
+                if (promptInput) {
+                    promptInput.value = templates[selectedTemplate];
+                    promptInput.dispatchEvent(new Event('input'));
+                }
+                
+                // セレクターをリセット
+                event.target.value = '';
+                
+                console.log(`テンプレート "${selectedTemplate}" を適用しました`);
+            }
+        });
+    }
+
     // 公開API
     return {
         init,
@@ -811,6 +868,7 @@ window.PromptManager = (function() {
         setAsSystemPrompt,
         saveAsSystemPromptTemplate,
         importSystemPromptTemplate,
-        addCategory
+        addCategory,
+        _initializeTemplateSelector // テンプレートセレクター初期化を公開APIに追加
     };
 })();

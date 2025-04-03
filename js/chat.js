@@ -1182,7 +1182,7 @@ window.Chat = (function() {
             
             // カテゴリー名
             const categoryName = document.createElement('span');
-            categoryName.textContent = this.getPromptNiceName(promptKey);
+            categoryName.textContent = promptKey;
             
             // 会話数バッジ
             const countBadge = document.createElement('span');
@@ -1382,38 +1382,10 @@ window.Chat = (function() {
                 }
             }
             
-            // 特定のキーワードで判定
-            if (promptText.includes('開発者') || promptText.includes('エンジニア')) {
-                return 'developer';
-            } else if (promptText.includes('クリエイティブ') || promptText.includes('創造的')) {
-                return 'creative';
-            } else if (promptText.includes('技術的') || promptText.includes('technical')) {
-                return 'technical';
-            }
-            
             // デフォルトは未分類
             return '未分類';
         },
         
-        /**
-         * プロンプトカテゴリの表示名を取得
-         * @param {string} categoryKey - カテゴリーキー
-         * @returns {string} 表示用カテゴリー名
-         */
-        getPromptNiceName: function(categoryKey) {
-            if (!categoryKey) return '未分類';
-            
-            const displayNames = {
-                'default': 'デフォルト',
-                'creative': 'クリエイティブ',
-                'technical': '技術的',
-                'developer': '開発者',
-                '未分類': '未分類'
-            };
-            
-            return displayNames[categoryKey] || categoryKey;
-        },
-
         /**
          * アクティブなチャットを更新
          * @param {string} currentConversationId - 現在の会話ID
