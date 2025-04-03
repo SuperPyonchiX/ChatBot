@@ -373,7 +373,6 @@
     border: 1px solid #404040;
     border-radius: 4px;
     margin: 1em 0;
-    background-color: #2d2d2d;
 }
 
 .mermaid-toolbar {
@@ -418,37 +417,10 @@
     display: none;
 }
 
-/* mermaid図のダークモード対応 */
-.mermaid-diagram svg {
-    background-color: #2d2d2d;
-}
-
-.mermaid-diagram .titleText,
-.mermaid-diagram .messageText,
-.mermaid-diagram .actor {
-    fill: #e0e0e0 !important;
-}
-
-.mermaid-diagram .noteText,
-.mermaid-diagram .labelText {
-    fill: #333 !important;
-}
-
-.mermaid-diagram .edgeLabel {
-    background-color: #2d2d2d !important;
-    color: #e0e0e0 !important;
-}
-
-.mermaid-diagram .actor-line,
-.mermaid-diagram .messageLine0,
-.mermaid-diagram .messageLine1 {
-    stroke: #606060 !important;
-}
-
 .mermaid-loading {
     padding: 16px;
     text-align: center;
-    color: #888;
+    color: #666;
 }
 
 .mermaid-loading i {
@@ -457,9 +429,9 @@
 
 .mermaid-error {
     padding: 16px;
-    color: #ff6b6b;
-    background-color: rgba(255, 107, 107, 0.1);
-    border: 1px solid rgba(255, 107, 107, 0.3);
+    color: #dc3545;
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.3);
     border-radius: 4px;
     margin: 8px;
 }
@@ -473,9 +445,8 @@
 .error-details {
     margin-top: 8px;
     padding: 8px;
-    background-color: #363636;
+    background-color: #f8f9fa;
     border-radius: 4px;
     font-size: 0.9em;
     white-space: pre-wrap;
-    color: #e0e0e0;
 }

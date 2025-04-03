@@ -30,37 +30,8 @@ window.Markdown = {
             ENABLED: true,        // mermaidサポートの有効化
             CDN_URL: 'https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js',
             DEFAULT_CONFIG: {
-                theme: 'dark',
-                logLevel: 'error',
                 startOnLoad: false,
-                securityLevel: 'strict',
-                darkMode: true,
-                themeVariables: {
-                    primaryColor: '#10a37f',
-                    primaryTextColor: '#e0e0e0',
-                    primaryBorderColor: '#404040',
-                    lineColor: '#606060',
-                    secondaryColor: '#363636',
-                    tertiaryColor: '#2d2d2d'
-                },
-                flowchart: {
-                    useMaxWidth: true,
-                    htmlLabels: true,
-                    curve: 'basis',
-                    defaultLinkColor: '#606060',
-                    nodeTextColor: '#e0e0e0',
-                    edgeTextColor: '#e0e0e0'
-                },
-                sequence: {
-                    diagramMarginX: 50,
-                    diagramMarginY: 10,
-                    boxMargin: 10,
-                    noteMargin: 10,
-                    messageMargin: 35,
-                    actorFontColor: '#e0e0e0',
-                    noteFontColor: '#333333',
-                    messageFontColor: '#e0e0e0'
-                }
+                securityLevel: 'strict'
             }
         }
     },
