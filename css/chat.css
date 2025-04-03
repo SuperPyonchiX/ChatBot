@@ -367,3 +367,115 @@
         opacity: 0;
     }
 }
+
+/* Mermaid図表示関連のスタイル */
+.mermaid-wrapper {
+    border: 1px solid #404040;
+    border-radius: 4px;
+    margin: 1em 0;
+    background-color: #2d2d2d;
+}
+
+.mermaid-toolbar {
+    padding: 8px;
+    border-bottom: 1px solid #404040;
+    background-color: #363636;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.mermaid-preview-toggle {
+    padding: 4px 8px;
+    border: 1px solid #505050;
+    border-radius: 4px;
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+}
+
+.mermaid-preview-toggle:hover {
+    background-color: #404040;
+    border-color: #606060;
+}
+
+.mermaid-code-container,
+.mermaid-diagram {
+    padding: 16px;
+}
+
+.mermaid-code-container pre {
+    margin: 0;
+}
+
+.mermaid-diagram.hidden,
+.mermaid-code-container.hidden {
+    display: none;
+}
+
+/* mermaid図のダークモード対応 */
+.mermaid-diagram svg {
+    background-color: #2d2d2d;
+}
+
+.mermaid-diagram .titleText,
+.mermaid-diagram .messageText,
+.mermaid-diagram .actor {
+    fill: #e0e0e0 !important;
+}
+
+.mermaid-diagram .noteText,
+.mermaid-diagram .labelText {
+    fill: #333 !important;
+}
+
+.mermaid-diagram .edgeLabel {
+    background-color: #2d2d2d !important;
+    color: #e0e0e0 !important;
+}
+
+.mermaid-diagram .actor-line,
+.mermaid-diagram .messageLine0,
+.mermaid-diagram .messageLine1 {
+    stroke: #606060 !important;
+}
+
+.mermaid-loading {
+    padding: 16px;
+    text-align: center;
+    color: #888;
+}
+
+.mermaid-loading i {
+    margin-right: 8px;
+}
+
+.mermaid-error {
+    padding: 16px;
+    color: #ff6b6b;
+    background-color: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 4px;
+    margin: 8px;
+}
+
+.mermaid-error .error-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.error-details {
+    margin-top: 8px;
+    padding: 8px;
+    background-color: #363636;
+    border-radius: 4px;
+    font-size: 0.9em;
+    white-space: pre-wrap;
+    color: #e0e0e0;
+}

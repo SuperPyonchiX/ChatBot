@@ -30,21 +30,36 @@ window.Markdown = {
             ENABLED: true,        // mermaidサポートの有効化
             CDN_URL: 'https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js',
             DEFAULT_CONFIG: {
-                theme: 'default',
+                theme: 'dark',
                 logLevel: 'error',
                 startOnLoad: false,
                 securityLevel: 'strict',
+                darkMode: true,
+                themeVariables: {
+                    primaryColor: '#10a37f',
+                    primaryTextColor: '#e0e0e0',
+                    primaryBorderColor: '#404040',
+                    lineColor: '#606060',
+                    secondaryColor: '#363636',
+                    tertiaryColor: '#2d2d2d'
+                },
                 flowchart: {
                     useMaxWidth: true,
                     htmlLabels: true,
-                    curve: 'basis'
+                    curve: 'basis',
+                    defaultLinkColor: '#606060',
+                    nodeTextColor: '#e0e0e0',
+                    edgeTextColor: '#e0e0e0'
                 },
                 sequence: {
                     diagramMarginX: 50,
                     diagramMarginY: 10,
                     boxMargin: 10,
                     noteMargin: 10,
-                    messageMargin: 35
+                    messageMargin: 35,
+                    actorFontColor: '#e0e0e0',
+                    noteFontColor: '#333333',
+                    messageFontColor: '#e0e0e0'
                 }
             }
         }
@@ -111,82 +126,199 @@ window.Markdown = {
         if (!html || typeof mermaid === 'undefined') return html;
         
         try {
-            // 一時的なDOM要素を作成してHTMLを解析
+            console.log('mermaid processing start');
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = html;
             
-            // mermaidコードブロックを探す
             const mermaidBlocks = tempDiv.querySelectorAll('pre code.language-mermaid');
+            console.log('found mermaid blocks:', mermaidBlocks.length);
+            
             if (!mermaidBlocks || mermaidBlocks.length === 0) return html;
             
-            // 各mermaidブロックを処理
+            // イベントハンドラを保持するための配列
+            const handlers = [];
+            
             for (let i = 0; i < mermaidBlocks.length; i++) {
                 const codeBlock = mermaidBlocks[i];
                 const preElement = codeBlock.parentElement;
                 if (!preElement) continue;
                 
+                const parentElement = preElement.parentElement;
+                if (!parentElement) continue;
+                
                 try {
-                    // mermaidダイアグラムコードを取得
+                    console.log('processing block', i);
                     const mermaidCode = codeBlock.textContent;
                     if (!mermaidCode.trim()) continue;
                     
-                    // mermaidダイアグラム用のコンテナを作成
+                    // 要素を作成
+                    const wrapperContainer = document.createElement('div');
+                    wrapperContainer.classList.add('mermaid-wrapper');
+                    wrapperContainer.setAttribute('data-mermaid-index', i);
+                    
+                    const toolbar = document.createElement('div');
+                    toolbar.classList.add('mermaid-toolbar');
+                    
+                    const previewButton = document.createElement('button');
+                    previewButton.classList.add('mermaid-preview-toggle');
+                    previewButton.setAttribute('type', 'button');
+                    previewButton.setAttribute('data-mermaid-index', i);
+                    previewButton.innerHTML = '<i class="fas fa-eye"></i> プレビュー表示';
+                    previewButton.title = 'プレビュー表示/コード表示を切り替え';
+                    
+                    const codeContainer = document.createElement('div');
+                    codeContainer.classList.add('mermaid-code-container');
+                    codeContainer.setAttribute('data-mermaid-index', i);
+                    
                     const diagramContainer = document.createElement('div');
-                    diagramContainer.classList.add('mermaid-diagram');
-                    diagramContainer.setAttribute('data-diagram-index', i);
+                    diagramContainer.classList.add('mermaid-diagram', 'hidden');
+                    diagramContainer.setAttribute('data-mermaid-index', i);
                     
-                    // ユニークなIDを生成
-                    const diagramId = `mermaid-diagram-${Date.now()}-${i}`;
-                    diagramContainer.id = diagramId;
+                    const loadingElement = document.createElement('div');
+                    loadingElement.classList.add('mermaid-loading');
+                    loadingElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ダイアグラムを生成中...';
+                    loadingElement.style.display = 'none';
+                    loadingElement.setAttribute('data-mermaid-index', i);
                     
-                    // mermaidコードをDOMにマークアップとして設定
-                    diagramContainer.innerHTML = mermaidCode;
+                    const errorElement = document.createElement('div');
+                    errorElement.classList.add('mermaid-error');
+                    errorElement.style.display = 'none';
+                    errorElement.setAttribute('data-mermaid-index', i);
                     
-                    // preタグをダイアグラムコンテナに置き換え
-                    preElement.parentNode.replaceChild(diagramContainer, preElement);
+                    // DOMツリーを構築
+                    toolbar.appendChild(previewButton);
+                    wrapperContainer.appendChild(toolbar);
+                    wrapperContainer.appendChild(codeContainer);
+                    wrapperContainer.appendChild(diagramContainer);
+                    wrapperContainer.appendChild(loadingElement);
+                    wrapperContainer.appendChild(errorElement);
                     
-                    // mermaidをレンダリング（非同期）
-                    await mermaid.render(diagramId, mermaidCode)
-                        .then(result => {
-                            // レンダリング成功時は、生成されたSVGで置き換え
-                            diagramContainer.innerHTML = result.svg;
-                            
-                            // SVGを表示するためのスタイルを追加
-                            const svgElement = diagramContainer.querySelector('svg');
-                            if (svgElement) {
-                                svgElement.style.maxWidth = '100%';
-                                svgElement.style.height = 'auto';
-                            }
-                        })
-                        .catch(err => {
-                            console.error('Mermaidレンダリングエラー:', err);
-                            // エラー時は元のコードブロックとエラーメッセージを表示
-                            diagramContainer.innerHTML = `
-                                <div class="mermaid-error">
-                                    <p>ダイアグラムの描画に失敗しました：${err.message || 'エラーが発生しました'}</p>
-                                    <pre><code class="language-mermaid">${this.escapeHtml(mermaidCode)}</code></pre>
-                                </div>
-                            `;
+                    // preElementを移動
+                    preElement.remove();
+                    codeContainer.appendChild(preElement);
+                    
+                    // 親要素に追加
+                    parentElement.insertBefore(wrapperContainer, null);
+                    
+                    // イベントハンドラを作成
+                    const togglePreview = async (e) => {
+                        console.log('Toggle preview clicked', e);
+                        // ボタン要素を正しく取得
+                        const button = e.target.closest('.mermaid-preview-toggle');
+                        if (!button) {
+                            console.error('Button not found');
+                            return;
+                        }
+
+                        // インデックスを取得
+                        const index = button.getAttribute('data-mermaid-index');
+                        const wrapper = document.querySelector(`.mermaid-wrapper[data-mermaid-index="${index}"]`);
+                        if (!wrapper) {
+                            console.error('Wrapper not found for index:', index);
+                            return;
+                        }
+
+                        const diagramContainer = wrapper.querySelector('.mermaid-diagram');
+                        const codeContainer = wrapper.querySelector('.mermaid-code-container');
+                        const loadingElement = wrapper.querySelector('.mermaid-loading');
+                        const errorElement = wrapper.querySelector('.mermaid-error');
+
+                        if (!diagramContainer || !codeContainer || !loadingElement || !errorElement) {
+                            console.error('Required elements not found');
+                            console.log('Found elements:', {
+                                diagramContainer,
+                                codeContainer,
+                                loadingElement,
+                                errorElement
+                            });
+                            return;
+                        }
+
+                        console.log('Elements found:', {
+                            diagramContainer,
+                            codeContainer,
+                            loadingElement,
+                            errorElement,
+                            button
                         });
+                        
+                        const isPreviewMode = !diagramContainer.classList.contains('hidden');
+                        
+                        if (isPreviewMode) {
+                            // プレビューモードから通常モードへ
+                            diagramContainer.classList.add('hidden');
+                            codeContainer.classList.remove('hidden');
+                            button.innerHTML = '<i class="fas fa-eye"></i> プレビュー表示';
+                        } else {
+                            // 通常モードからプレビューモードへ
+                            codeContainer.classList.add('hidden');
+                            loadingElement.style.display = 'block';
+                            diagramContainer.classList.remove('hidden');
+                            button.innerHTML = '<i class="fas fa-code"></i> コード表示';
+                            
+                            try {
+                                // ダイアグラムがまだレンダリングされていない場合はレンダリング
+                                if (!diagramContainer.hasAttribute('data-rendered')) {
+                                    const diagramId = `mermaid-diagram-${Date.now()}-${index}`;
+                                    const { svg } = await mermaid.render(diagramId, mermaidCode);
+                                    diagramContainer.innerHTML = svg;
+                                    
+                                    // SVGのスタイルを調整
+                                    const svgElement = diagramContainer.querySelector('svg');
+                                    if (svgElement) {
+                                        svgElement.style.maxWidth = '100%';
+                                        svgElement.style.height = 'auto';
+                                    }
+                                    
+                                    diagramContainer.setAttribute('data-rendered', 'true');
+                                }
+                                
+                                errorElement.style.display = 'none';
+                            } catch (error) {
+                                console.error('Mermaidレンダリングエラー:', error);
+                                errorElement.style.display = 'block';
+                                errorElement.innerHTML = `
+                                    <div class="error-message">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        ダイアグラムの生成に失敗しました: ${error.message || 'エラーが発生しました'}
+                                    </div>
+                                `;
+                                diagramContainer.classList.add('hidden');
+                                codeContainer.classList.remove('hidden');
+                            } finally {
+                                loadingElement.style.display = 'none';
+                            }
+                        }
+                    };
                     
+                    // イベントハンドラをキャッシュしておく
+                    handlers.push({ button: previewButton, handler: togglePreview });
+                    
+                    console.log('event listener attached to button', previewButton);
                 } catch (blockError) {
                     console.error('mermaidブロック処理エラー:', blockError);
-                    
-                    // エラー表示用のコンテナに置き換え
-                    const errorContainer = document.createElement('div');
-                    errorContainer.classList.add('mermaid-error');
-                    errorContainer.innerHTML = `
-                        <p>ダイアグラムの処理中にエラーが発生しました：${blockError.message || 'エラーが発生しました'}</p>
-                        <pre>${preElement.innerHTML}</pre>
-                    `;
-                    preElement.parentNode.replaceChild(errorContainer, preElement);
+                    continue;
                 }
             }
             
-            return tempDiv.innerHTML;
+            const resultHtml = tempDiv.innerHTML;
+            
+            // イベントハンドラを実際のDOM要素に適用
+            requestAnimationFrame(() => {
+                handlers.forEach(({ handler }) => {
+                    const buttons = document.querySelectorAll('.mermaid-preview-toggle');
+                    buttons.forEach(button => {
+                        console.log('Reattaching event listener to actual button');
+                        button.addEventListener('click', handler);
+                    });
+                });
+            });
+            
+            return resultHtml;
+            
         } catch (error) {
             console.error('mermaidブロック処理中にエラーが発生しました:', error);
-            return html; // エラー時は元のHTMLを返す
+            return html;
         }
     },
 
