@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // システムプロンプト関連
             'systemPromptModal', 'systemPromptInput', 'saveSystemPrompt',
-            'cancelSystemPrompt', 'saveNewTemplate', 'newTemplateName',
+            'cancelSystemPrompt', 'saveNewTemplate', 'newTemplateName', 'newTemplateCategory',
             
             // API設定関連
             'apiKeyModal', 'saveApiKey', 'cancelApiKey', 'openaiRadio', 'azureRadio',
@@ -341,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function _setupSystemPromptModal() {
         if (!Elements.saveSystemPrompt || !Elements.cancelSystemPrompt || 
-            !Elements.saveNewTemplate || !Elements.newTemplateName) return;
+            !Elements.saveNewTemplate || !Elements.newTemplateName || !Elements.newTemplateCategory) return;
         
         // システムプロンプト保存
         Elements.saveSystemPrompt.addEventListener('click', () => {
@@ -356,19 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
         Elements.cancelSystemPrompt.addEventListener('click', window.UI.hideSystemPromptModal);
         
         // 新しいテンプレート保存
-        Elements.saveNewTemplate.addEventListener('click', () => {
-            if (!Elements.systemPromptInput || !Elements.newTemplateName) return;
-            
-            const name = Elements.newTemplateName.value.trim();
-            const prompt = Elements.systemPromptInput.value.trim();
-            
-            if (name && prompt) {
-                AppState.promptTemplates[name] = prompt;
-                window.Storage.savePromptTemplates(AppState.promptTemplates);
-                window.UI.updateTemplateList(AppState.promptTemplates, onTemplateSelect, onTemplateDelete);
-                Elements.newTemplateName.value = '';
-            }
-        });
+        Elements.saveNewTemplate.addEventListener('click', saveNewTemplate);
 
         // 高度なプロンプト管理へ切り替え
         const switchToPromptManagerBtn = document.getElementById('switchToPromptManager');
@@ -378,6 +366,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.UI.showPromptManagerModal();
             });
         }
+    }
+
+    /**
+     * 新規テンプレートとして保存する
+     */
+    function saveNewTemplate() {
+        const templateName = document.getElementById('newTemplateName').value.trim();
+        const templateCategory = document.getElementById('newTemplateCategory').value;
+        const systemPrompt = document.getElementById('systemPromptInput').value.trim();
+        
+        if (!templateName || !systemPrompt) {
+            window.UI.notify('テンプレート名とプロンプト内容を入力してください', 'error');
+            return;
+        }
+        
+        const templates = AppState.promptTemplates;
+        if (templates[templateName]) {
+            window.UI.notify('同じ名前のテンプレートが既に存在します', 'error');
+            return;
+        }
+        
+        // カテゴリ情報を更新
+        if (!window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES[templateCategory]) {
+            window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES[templateCategory] = {};
+        }
+        window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES[templateCategory][templateName] = true;
+        
+        // テンプレートを保存
+        templates[templateName] = systemPrompt;
+        window.Storage.savePromptTemplates(templates);
+        
+        // 入力をクリア
+        document.getElementById('newTemplateName').value = '';
+        
+        // テンプレート一覧を更新
+        window.UI.updateTemplateList(templates, onTemplateSelect, onTemplateDelete);
+        
+        window.UI.notify('新規テンプレートを保存しました', 'success');
     }
 
     /**

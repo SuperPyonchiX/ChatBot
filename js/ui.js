@@ -441,8 +441,45 @@ window.UI = {
         UIUtils.toggleModal('systemPromptModal', true);
         UICache.get('systemPromptInput').value = systemPrompt;
         
-        // テンプレート一覧を表示
-        this.updateTemplateList(promptTemplates, onTemplateSelect, onTemplateDelete);
+        // カテゴリ選択肢を設定
+        const categorySelect = document.getElementById('newTemplateCategory');
+        if (categorySelect) {
+            const categories = window.CONFIG.PROMPTS.TEMPLATES.CATEGORY_ORDER || [];
+            categorySelect.innerHTML = ''; // 既存の選択肢をクリア
+            
+            // デフォルトのカテゴリを追加
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '基本';
+            defaultOption.textContent = '基本';
+            categorySelect.appendChild(defaultOption);
+            
+            // その他のカテゴリを追加
+            categories.forEach(category => {
+                if (category !== '基本') {  // デフォルトカテゴリは既に追加済み
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    categorySelect.appendChild(option);
+                }
+            });
+            
+            // 「その他」カテゴリを最後に追加
+            const otherOption = document.createElement('option');
+            otherOption.value = 'その他';
+            otherOption.textContent = 'その他';
+            categorySelect.appendChild(otherOption);
+        }
+        
+        // テンプレート一覧を表示（不要なエントリを除外）
+        const filteredTemplates = {};
+        Object.entries(promptTemplates).forEach(([key, value]) => {
+            // 'CATEGORIES'と'CATEGORY_ORDER'は除外
+            if (key !== 'CATEGORIES' && key !== 'CATEGORY_ORDER') {
+                filteredTemplates[key] = value;
+            }
+        });
+        
+        this.updateTemplateList(filteredTemplates, onTemplateSelect, onTemplateDelete);
     },
 
     /**
