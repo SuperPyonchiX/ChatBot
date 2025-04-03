@@ -225,6 +225,63 @@ window.Markdown = {
                                         if (svgElement.getAttribute('aria-roledescription') === 'error') {
                                             svgElement.style.display = 'none';
                                         }
+
+                                        // クリック時の全画面表示用のスタイルとイベントを追加
+                                        svgElement.style.cursor = 'pointer';
+                                        svgElement.title = 'クリックで全画面表示';
+                                        
+                                        svgElement.addEventListener('click', (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            
+                                            // モーダル要素を作成
+                                            const modal = document.createElement('div');
+                                            modal.classList.add('mermaid-modal');
+                                            modal.style.cssText = `
+                                                position: fixed;
+                                                top: 0;
+                                                left: 0;
+                                                width: 100vw;
+                                                height: 100vh;
+                                                background: rgba(0, 0, 0, 0.8);
+                                                display: flex;
+                                                justify-content: center;
+                                                align-items: center;
+                                                z-index: 10000;
+                                                padding: 20px;
+                                                box-sizing: border-box;
+                                            `;
+                                            
+                                            // SVGのクローンを作成
+                                            const clonedSvg = svgElement.cloneNode(true);
+                                            clonedSvg.style.cssText = `
+                                                max-width: 95%;
+                                                max-height: 95%;
+                                                width: auto;
+                                                height: auto;
+                                                background: white;
+                                                padding: 20px;
+                                                border-radius: 8px;
+                                                box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+                                            `;
+                                            
+                                            modal.appendChild(clonedSvg);
+                                            
+                                            // モーダルクリックで閉じる
+                                            modal.addEventListener('click', () => {
+                                                modal.remove();
+                                            });
+                                            
+                                            // ESCキーでも閉じる
+                                            document.addEventListener('keydown', function closeOnEsc(e) {
+                                                if (e.key === 'Escape') {
+                                                    modal.remove();
+                                                    document.removeEventListener('keydown', closeOnEsc);
+                                                }
+                                            });
+                                            
+                                            document.body.appendChild(modal);
+                                        });
                                     }
                                     
                                     diagramContainer.setAttribute('data-rendered', 'true');
