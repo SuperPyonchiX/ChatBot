@@ -969,7 +969,7 @@ window.Chat = (function() {
                 };
                 
                 // 表示用にはプレビュー表示を使用し、同じタイムスタンプを設定
-                this.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
+                await this.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
                 
                 // 現在の会話にユーザーメッセージを追加
                 conversation.messages.push(userMessage);
