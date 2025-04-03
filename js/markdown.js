@@ -24,7 +24,30 @@ window.Markdown = {
         // プリロードする言語
         PRELOAD_LANGUAGES: ['javascript', 'typescript', 'html', 'css', 'python', 'json', 'markdown', 'cpp'],
         // 実行可能な言語リスト
-        EXECUTABLE_LANGUAGES: ['javascript', 'js', 'python', 'py', 'html', 'cpp', 'c++']
+        EXECUTABLE_LANGUAGES: ['javascript', 'js', 'python', 'py', 'html', 'cpp', 'c++'],
+        // Mermaid関連の設定
+        MERMAID: {
+            ENABLED: true,        // mermaidサポートの有効化
+            CDN_URL: 'https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js',
+            DEFAULT_CONFIG: {
+                theme: 'default',
+                logLevel: 'error',
+                startOnLoad: false,
+                securityLevel: 'strict',
+                flowchart: {
+                    useMaxWidth: true,
+                    htmlLabels: true,
+                    curve: 'basis'
+                },
+                sequence: {
+                    diagramMarginX: 50,
+                    diagramMarginY: 10,
+                    boxMargin: 10,
+                    noteMargin: 10,
+                    messageMargin: 35
+                }
+            }
+        }
     },
     
     /**
@@ -42,7 +65,7 @@ window.Markdown = {
      * @param {string} text - レンダリングするマークダウンテキスト
      * @returns {string} レンダリングされたHTML
      */
-    renderMarkdown: function(text) {
+    renderMarkdown: async function(text) {
         if (!text) return '';
         
         try {
@@ -53,8 +76,20 @@ window.Markdown = {
                     this.initializeMarkdown();
                 }
                 
+                // Mermaidのサポートが有効で、mermaidブロックが検出された場合はmermaidライブラリをロード
+                if (this._CONFIG.MERMAID.ENABLED && text.includes('```mermaid')) {
+                    await this.loadMermaid();
+                }
+                
                 // マークダウンをレンダリング
-                return marked.parse(text);
+                let renderedHtml = marked.parse(text);
+                
+                // mermaidブロックを探して処理
+                if (this._CONFIG.MERMAID.ENABLED && typeof mermaid !== 'undefined') {
+                    renderedHtml = await this._processMermaidBlocks(renderedHtml);
+                }
+                
+                return renderedHtml;
             } else {
                 console.warn('マークダウンライブラリが読み込まれていません');
                 return this.escapeHtml(text).replace(/\n/g, '<br>');
@@ -66,6 +101,95 @@ window.Markdown = {
         }
     },
     
+    /**
+     * レンダリング済みHTMLからmermaidブロックを探して処理します
+     * @private
+     * @param {string} html - 処理するHTML
+     * @returns {Promise<string>} 処理後のHTML
+     */
+    _processMermaidBlocks: async function(html) {
+        if (!html || typeof mermaid === 'undefined') return html;
+        
+        try {
+            // 一時的なDOM要素を作成してHTMLを解析
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            
+            // mermaidコードブロックを探す
+            const mermaidBlocks = tempDiv.querySelectorAll('pre code.language-mermaid');
+            if (!mermaidBlocks || mermaidBlocks.length === 0) return html;
+            
+            // 各mermaidブロックを処理
+            for (let i = 0; i < mermaidBlocks.length; i++) {
+                const codeBlock = mermaidBlocks[i];
+                const preElement = codeBlock.parentElement;
+                if (!preElement) continue;
+                
+                try {
+                    // mermaidダイアグラムコードを取得
+                    const mermaidCode = codeBlock.textContent;
+                    if (!mermaidCode.trim()) continue;
+                    
+                    // mermaidダイアグラム用のコンテナを作成
+                    const diagramContainer = document.createElement('div');
+                    diagramContainer.classList.add('mermaid-diagram');
+                    diagramContainer.setAttribute('data-diagram-index', i);
+                    
+                    // ユニークなIDを生成
+                    const diagramId = `mermaid-diagram-${Date.now()}-${i}`;
+                    diagramContainer.id = diagramId;
+                    
+                    // mermaidコードをDOMにマークアップとして設定
+                    diagramContainer.innerHTML = mermaidCode;
+                    
+                    // preタグをダイアグラムコンテナに置き換え
+                    preElement.parentNode.replaceChild(diagramContainer, preElement);
+                    
+                    // mermaidをレンダリング（非同期）
+                    await mermaid.render(diagramId, mermaidCode)
+                        .then(result => {
+                            // レンダリング成功時は、生成されたSVGで置き換え
+                            diagramContainer.innerHTML = result.svg;
+                            
+                            // SVGを表示するためのスタイルを追加
+                            const svgElement = diagramContainer.querySelector('svg');
+                            if (svgElement) {
+                                svgElement.style.maxWidth = '100%';
+                                svgElement.style.height = 'auto';
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Mermaidレンダリングエラー:', err);
+                            // エラー時は元のコードブロックとエラーメッセージを表示
+                            diagramContainer.innerHTML = `
+                                <div class="mermaid-error">
+                                    <p>ダイアグラムの描画に失敗しました：${err.message || 'エラーが発生しました'}</p>
+                                    <pre><code class="language-mermaid">${this.escapeHtml(mermaidCode)}</code></pre>
+                                </div>
+                            `;
+                        });
+                    
+                } catch (blockError) {
+                    console.error('mermaidブロック処理エラー:', blockError);
+                    
+                    // エラー表示用のコンテナに置き換え
+                    const errorContainer = document.createElement('div');
+                    errorContainer.classList.add('mermaid-error');
+                    errorContainer.innerHTML = `
+                        <p>ダイアグラムの処理中にエラーが発生しました：${blockError.message || 'エラーが発生しました'}</p>
+                        <pre>${preElement.innerHTML}</pre>
+                    `;
+                    preElement.parentNode.replaceChild(errorContainer, preElement);
+                }
+            }
+            
+            return tempDiv.innerHTML;
+        } catch (error) {
+            console.error('mermaidブロック処理中にエラーが発生しました:', error);
+            return html; // エラー時は元のHTMLを返す
+        }
+    },
+
     /**
      * コードブロックにコピーボタンと実行ボタンを追加します
      * @param {HTMLElement} messageElement - コードブロックを含むメッセージ要素
@@ -767,5 +891,57 @@ window.Markdown = {
             console.error('依存関係の読み込みに失敗しました:', error);
             return false;
         }
-    }
+    },
+
+    /**
+     * Mermaidライブラリを読み込みます
+     * @returns {Promise} ロード完了後に解決するPromise
+     */
+    loadMermaid: async function() {
+        try {
+            // mermaidが無効化されている場合は何もしない
+            if (!this._CONFIG.MERMAID.ENABLED) {
+                return Promise.resolve(false);
+            }
+            
+            // すでにロードされている場合は何もしない
+            if (typeof mermaid !== 'undefined') {
+                return Promise.resolve(true);
+            }
+            
+            // mermaidライブラリをロード
+            await this.loadScript(this._CONFIG.MERMAID.CDN_URL);
+            
+            // 初期化
+            await this.initializeMermaid();
+            
+            return true;
+        } catch (error) {
+            console.error('Mermaidライブラリのロードに失敗しました:', error);
+            return false;
+        }
+    },
+    
+    /**
+     * Mermaidライブラリを初期化します
+     */
+    initializeMermaid: function() {
+        if (typeof mermaid === 'undefined') {
+            console.warn('Mermaidライブラリが読み込まれていません');
+            return Promise.resolve(false);
+        }
+        
+        try {
+            // Mermaidの初期設定
+            mermaid.initialize({
+                ...this._CONFIG.MERMAID.DEFAULT_CONFIG,
+                startOnLoad: false
+            });
+            
+            return Promise.resolve(true);
+        } catch (error) {
+            console.error('Mermaidの初期化に失敗しました:', error);
+            return Promise.resolve(false);
+        }
+    },
 };

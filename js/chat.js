@@ -60,7 +60,7 @@ window.Chat = (function() {
          * @param {Array} attachments - 添付ファイルの配列（任意）
          * @param {number} timestamp - メッセージのタイムスタンプ（任意）
          */
-        addUserMessage: function(message, chatMessages, attachments = [], timestamp = null) {
+        addUserMessage: async function(message, chatMessages, attachments = [], timestamp = null) {
             if (!chatMessages) return;
             
             const msgTimestamp = timestamp || Date.now();
@@ -83,9 +83,12 @@ window.Chat = (function() {
             const copyButton = this._createCopyButton(message || '');
             
             try {
+                // 非同期レンダリングの結果を待機
+                const renderedMarkdown = await window.Markdown.renderMarkdown(message || '');
+                
                 const markdownContent = _createElement('div', {
                     classList: 'markdown-content',
-                    innerHTML: window.Markdown.renderMarkdown(message || '')
+                    innerHTML: renderedMarkdown
                 });
                 
                 contentDiv.appendChild(copyButton);
@@ -130,7 +133,7 @@ window.Chat = (function() {
          * @param {number} timestamp - メッセージのタイムスタンプ（任意）
          * @param {boolean} animate - タイピングアニメーションを使用するか（デフォルト:true）
          */
-        addBotMessage: function(message, chatMessages, timestamp = null, animate = true) {
+        addBotMessage: async function(message, chatMessages, timestamp = null, animate = true) {
             if (!chatMessages) return;
             
             const msgTimestamp = timestamp || Date.now();
@@ -167,7 +170,9 @@ window.Chat = (function() {
             } else {
                 // アニメーションなしの場合はすぐに表示
                 try {
-                    messageContent.innerHTML = window.Markdown.renderMarkdown(message || '');
+                    // 非同期レンダリングの結果を待機
+                    const renderedMarkdown = await window.Markdown.renderMarkdown(message || '');
+                    messageContent.innerHTML = renderedMarkdown;
                     contentDiv.appendChild(copyButton);
                     contentDiv.appendChild(messageContent);
                     messageDiv.appendChild(contentDiv);
@@ -235,12 +240,12 @@ window.Chat = (function() {
          * @param {string} currentFullText - 現在の完全なテキスト
          * @param {boolean} isFirstChunk - 最初のチャンクかどうか
          */
-        updateStreamingBotMessage: function(container, chunk, currentFullText, isFirstChunk = false) {
+        updateStreamingBotMessage: async function(container, chunk, currentFullText, isFirstChunk = false) {
             if (!container) return;
             
             try {
                 // 最新の完全なテキストをMarkdownとしてレンダリング
-                const renderedHTML = window.Markdown.renderMarkdown(currentFullText);
+                const renderedHTML = await window.Markdown.renderMarkdown(currentFullText);
                 container.innerHTML = renderedHTML;
                 
                 // シンタックスハイライトを適用
@@ -266,12 +271,12 @@ window.Chat = (function() {
          * @param {HTMLElement} container - コンテンツコンテナ
          * @param {string} fullText - 完全なレスポンステキスト
          */
-        finalizeStreamingBotMessage: function(messageDiv, container, fullText) {
+        finalizeStreamingBotMessage: async function(messageDiv, container, fullText) {
             if (!messageDiv || !container) return;
             
             try {
                 // 最終的なテキストを設定
-                const renderedHTML = window.Markdown.renderMarkdown(fullText);
+                const renderedHTML = await window.Markdown.renderMarkdown(fullText);
                 container.innerHTML = renderedHTML;
                 
                 // コピーボタンを親のmessage-contentに追加
@@ -332,7 +337,7 @@ window.Chat = (function() {
          * @param {string} message - 表示するメッセージ
          * @param {HTMLElement} container - メッセージを表示する要素
          */
-        _animateTyping: function(message, container) {
+        _animateTyping: async function(message, container) {
             if (!message || !container) return;
             
             // 設定から値を取得（存在しない場合はデフォルト値を使用）
@@ -342,7 +347,9 @@ window.Chat = (function() {
             // タイピングエフェクトが無効な場合は即座に表示して終了
             if (!typingEnabled) {
                 try {
-                    container.innerHTML = window.Markdown.renderMarkdown(message);
+                    // 非同期レンダリングの結果を待機
+                    const renderedHTML = await window.Markdown.renderMarkdown(message);
+                    container.innerHTML = renderedHTML;
                     
                     // シンタックスハイライトを適用
                     if (typeof Prism !== 'undefined') {
@@ -363,9 +370,6 @@ window.Chat = (function() {
             // 処理中のmarkdownテキスト
             let markdownText = '';
             
-            // markdownをレンダリングした結果
-            let renderedHTML = '';
-            
             // 表示速度（ミリ秒）- 設定から取得またはデフォルト値を使用
             const typingSpeed = typingConfig.SPEED !== undefined ? typingConfig.SPEED : 5;
             
@@ -375,7 +379,7 @@ window.Chat = (function() {
             // テキストを一文字ずつ追加
             let currentIndex = 0;
             
-            const typeNextCharacters = () => {
+            const typeNextCharacters = async () => {
                 if (currentIndex < message.length) {
                     // バッファサイズ分の文字を追加（ただし残りが少ない場合はその分だけ）
                     const charsToAdd = Math.min(bufferSize, message.length - currentIndex);
@@ -384,7 +388,8 @@ window.Chat = (function() {
                     
                     // 現在のテキストをMarkdownとしてレンダリング
                     try {
-                        renderedHTML = window.Markdown.renderMarkdown(markdownText);
+                        // 非同期レンダリングの結果を待機
+                        const renderedHTML = await window.Markdown.renderMarkdown(markdownText);
                         container.innerHTML = renderedHTML;
                         
                         // シンタックスハイライトを適用
@@ -411,7 +416,7 @@ window.Chat = (function() {
             };
             
             // アニメーション開始
-            typeNextCharacters();
+            await typeNextCharacters();
         },
         
         /**
@@ -606,8 +611,6 @@ window.Chat = (function() {
                 } else if (attachment.type === 'file' && attachment.name) {
                     // その他のファイル添付表示
                     const fileContainer = document.createElement('div');
-                    fileContainer.classList.add('attachment-file-container');
-                    
                     const fileIcon = document.createElement('i');
                     fileIcon.className = 'fas fa-file';
                     
@@ -815,7 +818,7 @@ window.Chat = (function() {
          * @param {HTMLElement} chatMessages - メッセージを表示する要素
          * @param {HTMLSelectElement} modelSelect - モデル選択要素
          */
-        displayConversation: function(conversation, chatMessages, modelSelect) {
+        displayConversation: async function(conversation, chatMessages, modelSelect) {
             if (!conversation || !chatMessages) return;
             
             chatMessages.innerHTML = '';
@@ -854,13 +857,13 @@ window.Chat = (function() {
                     const displayContent = cleanFileContent(content);
                     
                     // ユーザーメッセージを表示（添付ファイルは後で追加）
-                    this.addUserMessage(displayContent, chatMessages, [], message.timestamp);
+                    await this.addUserMessage(displayContent, chatMessages, [], message.timestamp);
                 } else if (message.role === 'assistant') {
                     const content = typeof message.content === 'string' 
                         ? message.content 
                         : this._processContentArray(message.content);
                     // チャット履歴の表示時はタイピングエフェクトを使わない(false)
-                    this.addBotMessage(content, chatMessages, message.timestamp, false);
+                    await this.addBotMessage(content, chatMessages, message.timestamp, false);
                 }
             }
             

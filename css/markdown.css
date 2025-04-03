@@ -190,3 +190,37 @@
     background-color: #10a37f;
     color: white;
 }
+
+/* Mermaid図のスタイル */
+.mermaid-diagram {
+    margin: 1rem 0;
+    text-align: center;
+    background: #f6f8fa;
+    border-radius: 6px;
+    padding: 1rem;
+    overflow: auto;
+}
+
+.mermaid-diagram svg {
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+
+.mermaid-error {
+    margin: 1rem 0;
+    padding: 1rem;
+    border-radius: 6px;
+    background-color: #fff0f0;
+    border: 1px solid #ffcccc;
+    color: #cc0000;
+}
+
+.mermaid-error pre {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background-color: #fff8f8;
+    border-radius: 4px;
+    border-left: 3px solid #ffaaaa;
+    overflow-x: auto;
+}
