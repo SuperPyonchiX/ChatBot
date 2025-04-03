@@ -249,18 +249,24 @@
     <div id="systemPromptModal" class="modal">
         <div class="modal-content">
             <h2>システムプロンプト設定</h2>
-            <h3 class="template-list-title">テンプレート一覧</h3>
-            <div id="templateListArea" class="template-list-area">
-                <!-- テンプレート一覧はJSで動的に生成 -->
-            </div>
-            <div class="form-group">
-                <label for="systemPromptInput">システムプロンプト:</label>
-                <textarea id="systemPromptInput" rows="10" placeholder="システムプロンプトを入力..."></textarea>
-            </div>
-            <div class="form-group">
-                <label for="newTemplateName">新規テンプレート名:</label>
-                <input type="text" id="newTemplateName" placeholder="新しいテンプレート名">
-                <button id="saveNewTemplate" class="secondary-button">新規テンプレートとして保存</button>
+            <div class="system-prompt-container">
+                <div class="system-prompt-sidebar">
+                    <h3 class="template-list-title">システムプロンプト一覧</h3>
+                    <div id="templateListArea" class="template-list-area">
+                        <!-- テンプレート一覧はJSで動的に生成 -->
+                    </div>
+                </div>
+                <div class="system-prompt-main">
+                    <div class="form-group">
+                        <label for="systemPromptInput">システムプロンプト:</label>
+                        <textarea id="systemPromptInput" rows="15" placeholder="システムプロンプトを入力..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="newTemplateName">新規テンプレート名:</label>
+                        <input type="text" id="newTemplateName" placeholder="新しいテンプレート名">
+                        <button id="saveNewTemplate" class="secondary-button">新規テンプレートとして保存</button>
+                    </div>
+                </div>
             </div>
             <div class="modal-buttons">
                 <button id="saveSystemPrompt">保存</button>
@@ -270,7 +276,7 @@
         </div>
     </div>
 
-    <!-- 高度なプロンプト管理モーダル -->
+    <!-- ユーザープロンプト管理モーダル -->
     <div id="promptManagerModal" class="modal">
         <div class="modal-content prompt-manager-modal">
             <h2>ユーザープロンプト管理</h2>
@@ -308,7 +314,7 @@
         </div>
     </div>
 
-    <!-- プロンプト編集モーダル -->
+    <!-- ユーザープロンプト編集モーダル -->
     <div id="promptEditModal" class="modal">
         <div class="modal-content">
             <h2 id="promptEditTitle">プロンプト編集</h2>

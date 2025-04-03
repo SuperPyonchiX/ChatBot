@@ -97,12 +97,10 @@ window.Markdown = {
         if (!html || typeof mermaid === 'undefined') return html;
         
         try {
-            console.log('mermaid processing start');
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = html;
             
             const mermaidBlocks = tempDiv.querySelectorAll('pre code.language-mermaid');
-            console.log('found mermaid blocks:', mermaidBlocks.length);
             
             if (!mermaidBlocks || mermaidBlocks.length === 0) return html;
             
@@ -121,7 +119,6 @@ window.Markdown = {
                 const nextSibling = preElement.nextSibling;
                 
                 try {
-                    console.log('processing block', i);
                     const mermaidCode = codeBlock.textContent;
                     if (!mermaidCode.trim()) continue;
                     
