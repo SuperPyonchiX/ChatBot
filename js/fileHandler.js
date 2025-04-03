@@ -168,18 +168,6 @@ window.FileHandler = {
         
         const fileName = file.name;
         const mimeType = file.type;
-                
-        // MIMEタイプが空の場合は拡張子でチェック
-        if (!mimeType) {
-            const extension = '.' + fileName.split('.').pop().toLowerCase();
-            // MIME_TO_EXTENSION_MAPの全ての拡張子をチェック
-            for (const mimeExtensions of Object.values(window.CONFIG.FILE.MIME_TO_EXTENSION_MAP)) {
-                if (mimeExtensions.includes(extension)) {
-                    return true;
-                }
-            }
-            return false;
-        }
         
         // すべての許可されたMIMEタイプのリスト
         const allowedMimeTypes = Object.values(window.CONFIG.FILE.ALLOWED_FILE_TYPES).flat();
@@ -187,6 +175,14 @@ window.FileHandler = {
         // MIMEタイプの完全一致を確認
         if (allowedMimeTypes.includes(mimeType)) {
             return true;
+        }
+
+        // 拡張子でチェック
+        const extension = '.' + fileName.split('.').pop().toLowerCase();
+        for (const mimeExtensions of Object.values(window.CONFIG.FILE.MIME_TO_EXTENSION_MAP)) {
+            if (mimeExtensions.includes(extension)) {
+                return true;
+            }
         }
         
         // 一般的なタイプに対して前方一致を確認
@@ -196,15 +192,7 @@ window.FileHandler = {
                 return true;
             }
         }
-        
-        // 拡張子でのチェック
-        const extension = '.' + fileName.split('.').pop().toLowerCase();
-        for (const mimeExtensions of Object.values(window.CONFIG.FILE.MIME_TO_EXTENSION_MAP)) {
-            if (mimeExtensions.includes(extension)) {
-                return true;
-            }
-        }
-        
+                
         return false;
     },
 
