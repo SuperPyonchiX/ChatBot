@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // テキストエリアの入力イベント（自動リサイズ）
-        Elements.userInput.addEventListener('input', () => window.UI.autoResizeTextarea(Elements.userInput));
+        Elements.userInput.addEventListener('input', () => window.UIUtils.autoResizeTextarea(Elements.userInput));
 
         // 新しいチャットボタン
         Elements.newChatButton.addEventListener('click', _createNewConversation);

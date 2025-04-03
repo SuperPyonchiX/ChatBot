@@ -935,7 +935,7 @@ const chatMessages = container.closest('.chat-messages');
                 
                 // ユーザー入力をクリア
                 userInput.value = '';
-                window.UI.autoResizeTextarea(userInput);
+                window.UIUtils.autoResizeTextarea(userInput);
                 
                 let titleUpdated = false;
                 const timestamp = Date.now(); // 共通のタイムスタンプを生成
