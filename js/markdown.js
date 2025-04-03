@@ -130,7 +130,15 @@ window.Markdown = {
                     // ツールバーを作成
                     const toolbar = document.createElement('div');
                     toolbar.classList.add('mermaid-toolbar');
-                    
+
+                    // テキストラベルを作成
+                    const toolbarLabel = document.createElement('span');
+                    toolbarLabel.textContent = 'mermaid出力';
+                    toolbarLabel.style.marginRight = 'auto'; // 右側の余白を自動で取る
+                    toolbarLabel.style.color = '#666';
+                    toolbarLabel.style.fontSize = '0.9em';
+                    toolbar.appendChild(toolbarLabel);
+
                     // ダウンロードボタンを追加
                     const downloadButton = document.createElement('button');
                     downloadButton.classList.add('mermaid-download');
@@ -194,157 +202,192 @@ window.Markdown = {
                         const button = e.target.closest('.mermaid-preview-toggle');
                         if (!button) return;
                         
+                        // ボタンを一時的に無効化して連打を防止
+                        button.disabled = true;
+                        
                         const index = button.getAttribute('data-mermaid-index');
                         const wrapper = button.closest('.mermaid-wrapper');
-                        if (!wrapper) return;
+                        if (!wrapper) {
+                            button.disabled = false;
+                            return;
+                        }
                         
                         const diagramContainer = wrapper.querySelector('.mermaid-diagram');
                         const codeContainer = wrapper.querySelector('.mermaid-code-container');
                         const loadingElement = wrapper.querySelector('.mermaid-loading');
                         const errorElement = wrapper.querySelector('.mermaid-error');
                         
-                        if (!diagramContainer || !codeContainer || !loadingElement || !errorElement) return;
+                        if (!diagramContainer || !codeContainer || !loadingElement || !errorElement) {
+                            button.disabled = false;
+                            return;
+                        }
                         
-                        const isPreviewMode = !diagramContainer.classList.contains('hidden');
-                        
-                        if (isPreviewMode) {
-                            // プレビューモードから通常モードへ
-                            diagramContainer.classList.add('hidden');
-                            codeContainer.classList.remove('hidden');
-                            button.innerHTML = '<i class="fas fa-eye"></i> プレビュー表示';
-                        } else {
-                            // 通常モードからプレビューモードへ
-                            codeContainer.classList.add('hidden');
-                            loadingElement.style.display = 'block';
-                            diagramContainer.classList.remove('hidden');
-                            button.innerHTML = '<i class="fas fa-code"></i> コード表示';
+                        try {
+                            const isPreviewMode = !diagramContainer.classList.contains('hidden');
                             
-                            try {
-                                // まだレンダリングされていないダイアグラムの場合
-                                if (!diagramContainer.hasAttribute('data-rendered')) {
-                                    const diagramId = diagramContainer.getAttribute('data-diagram-id');
-                                    // mermaidCodeを取得する際に、対応するコードブロックから取得
-                                    const mermaidCode = wrapper.querySelector('pre code').textContent;
-                                    const { svg } = await mermaid.render(diagramId, mermaidCode);
-                                    diagramContainer.innerHTML = svg;
-                                    
-                                    // SVGのスタイルを調整
-                                    const svgElement = diagramContainer.querySelector('svg');
-                                    if (svgElement) {
-                                        svgElement.style.maxWidth = '100%';
-                                        svgElement.style.height = 'auto';
-                                        
-                                        // エラー表示のSVGをチェックして非表示にする
-                                        if (svgElement.getAttribute('aria-roledescription') === 'error') {
-                                            svgElement.style.display = 'none';
-                                        } else {
-                                            // エラーでない場合はダウンロードボタンを表示
-                                            const downloadBtn = wrapper.querySelector('.mermaid-download');
-                                            if (downloadBtn) {
-                                                downloadBtn.style.display = 'flex';
+                            if (isPreviewMode) {
+                                // プレビューモードから通常モードへ
+                                await new Promise(resolve => {
+                                    // CSSトランジションが完了するのを待つ
+                                    requestAnimationFrame(() => {
+                                        diagramContainer.classList.add('hidden');
+                                        codeContainer.classList.remove('hidden');
+                                        button.innerHTML = '<i class="fas fa-eye"></i> プレビュー表示';
+                                        resolve();
+                                    });
+                                });
+                            } else {
+                                // 通常モードからプレビューモードへ
+                                codeContainer.classList.add('hidden');
+                                loadingElement.style.display = 'block';
+                                button.innerHTML = '<i class="fas fa-code"></i> コード表示';
+                                
+                                // requestAnimationFrameを使用して画面の更新を待つ
+                                await new Promise(resolve => {
+                                    requestAnimationFrame(async () => {
+                                        try {
+                                            diagramContainer.classList.remove('hidden');
+                                            
+                                            // まだレンダリングされていないダイアグラムの場合
+                                            if (!diagramContainer.hasAttribute('data-rendered')) {
+                                                const diagramId = diagramContainer.getAttribute('data-diagram-id');
+                                                const mermaidCode = wrapper.querySelector('pre code').textContent;
                                                 
-                                                // ダウンロードボタンのクリックイベント
-                                                downloadBtn.addEventListener('click', (e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    
-                                                    // SVGをシリアライズ
-                                                    const serializer = new XMLSerializer();
-                                                    const source = serializer.serializeToString(svgElement);
-                                                    
-                                                    // SVGをBlobに変換
-                                                    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
-                                                    const url = URL.createObjectURL(blob);
-                                                    
-                                                    // ダウンロードリンクを作成
-                                                    const link = document.createElement('a');
-                                                    link.href = url;
-                                                    link.download = `diagram-${Date.now()}.svg`;
-                                                    document.body.appendChild(link);
-                                                    link.click();
-                                                    document.body.removeChild(link);
-                                                    
-                                                    // BlobURLを解放
-                                                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                                                // mermaidのレンダリングを待つ
+                                                const { svg } = await mermaid.render(diagramId, mermaidCode);
+                                                
+                                                // 画面更新を待ってから要素を更新
+                                                await new Promise(resolve => {
+                                                    requestAnimationFrame(() => {
+                                                        diagramContainer.innerHTML = svg;
+                                                        resolve();
+                                                    });
                                                 });
-                                            }
-                                        }
-
-                                        // クリック時の全画面表示用のスタイルとイベントを追加
-                                        svgElement.style.cursor = 'pointer';
-                                        svgElement.title = 'クリックで全画面表示';
-                                        
-                                        svgElement.addEventListener('click', (e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            
-                                            // モーダル要素を作成
-                                            const modal = document.createElement('div');
-                                            modal.classList.add('mermaid-modal');
-                                            modal.style.cssText = `
-                                                position: fixed;
-                                                top: 0;
-                                                left: 0;
-                                                width: 100vw;
-                                                height: 100vh;
-                                                background: rgba(0, 0, 0, 0.8);
-                                                display: flex;
-                                                justify-content: center;
-                                                align-items: center;
-                                                z-index: 10000;
-                                                padding: 20px;
-                                                box-sizing: border-box;
-                                            `;
-                                            
-                                            // SVGのクローンを作成
-                                            const clonedSvg = svgElement.cloneNode(true);
-                                            clonedSvg.style.cssText = `
-                                                max-width: 95%;
-                                                max-height: 95%;
-                                                width: auto;
-                                                height: auto;
-                                                background: white;
-                                                padding: 20px;
-                                                border-radius: 8px;
-                                                box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-                                            `;
-                                            
-                                            modal.appendChild(clonedSvg);
-                                            
-                                            // モーダルクリックで閉じる
-                                            modal.addEventListener('click', () => {
-                                                modal.remove();
-                                            });
-                                            
-                                            // ESCキーでも閉じる
-                                            document.addEventListener('keydown', function closeOnEsc(e) {
-                                                if (e.key === 'Escape') {
-                                                    modal.remove();
-                                                    document.removeEventListener('keydown', closeOnEsc);
+                                                
+                                                // SVGのスタイルを調整
+                                                const svgElement = diagramContainer.querySelector('svg');
+                                                if (svgElement) {
+                                                    svgElement.style.maxWidth = '100%';
+                                                    svgElement.style.height = 'auto';
+                                                    
+                                                    // エラー表示のSVGをチェックして非表示にする
+                                                    if (svgElement.getAttribute('aria-roledescription') === 'error') {
+                                                        svgElement.style.display = 'none';
+                                                    } else {
+                                                        // エラーでない場合はダウンロードボタンを表示
+                                                        const downloadBtn = wrapper.querySelector('.mermaid-download');
+                                                        if (downloadBtn) {
+                                                            downloadBtn.style.display = 'flex';
+                                                            
+                                                            // ダウンロードボタンのクリックイベント
+                                                            downloadBtn.addEventListener('click', (e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                
+                                                                // SVGをシリアライズ
+                                                                const serializer = new XMLSerializer();
+                                                                const source = serializer.serializeToString(svgElement);
+                                                                
+                                                                // SVGをBlobに変換
+                                                                const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+                                                                const url = URL.createObjectURL(blob);
+                                                                
+                                                                // ダウンロードリンクを作成
+                                                                const link = document.createElement('a');
+                                                                link.href = url;
+                                                                link.download = `diagram-${Date.now()}.svg`;
+                                                                document.body.appendChild(link);
+                                                                link.click();
+                                                                document.body.removeChild(link);
+                                                                
+                                                                // BlobURLを解放
+                                                                setTimeout(() => URL.revokeObjectURL(url), 100);
+                                                            });
+                                                        }
+                                                    }
+                                                    
+                                                    // クリック時の全画面表示用のスタイルとイベントを追加
+                                                    svgElement.style.cursor = 'pointer';
+                                                    svgElement.title = 'クリックで全画面表示';
+                                                    
+                                                    svgElement.addEventListener('click', (e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        
+                                                        // モーダル要素を作成
+                                                        const modal = document.createElement('div');
+                                                        modal.classList.add('mermaid-modal');
+                                                        modal.style.cssText = `
+                                                            position: fixed;
+                                                            top: 0;
+                                                            left: 0;
+                                                            width: 100vw;
+                                                            height: 100vh;
+                                                            background: rgba(0, 0, 0, 0.8);
+                                                            display: flex;
+                                                            justify-content: center;
+                                                            align-items: center;
+                                                            z-index: 10000;
+                                                            padding: 20px;
+                                                            box-sizing: border-box;
+                                                        `;
+                                                        
+                                                        // SVGのクローンを作成
+                                                        const clonedSvg = svgElement.cloneNode(true);
+                                                        clonedSvg.style.cssText = `
+                                                            max-width: 95%;
+                                                            max-height: 95%;
+                                                            width: auto;
+                                                            height: auto;
+                                                            background: white;
+                                                            padding: 20px;
+                                                            border-radius: 8px;
+                                                            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+                                                        `;
+                                                        
+                                                        modal.appendChild(clonedSvg);
+                                                        
+                                                        // モーダルクリックで閉じる
+                                                        modal.addEventListener('click', () => {
+                                                            modal.remove();
+                                                        });
+                                                        
+                                                        // ESCキーでも閉じる
+                                                        document.addEventListener('keydown', function closeOnEsc(e) {
+                                                            if (e.key === 'Escape') {
+                                                                modal.remove();
+                                                                document.removeEventListener('keydown', closeOnEsc);
+                                                            }
+                                                        });
+                                                        
+                                                        document.body.appendChild(modal);
+                                                    });
                                                 }
-                                            });
-                                            
-                                            document.body.appendChild(modal);
-                                        });
-                                    }
-                                    
-                                    diagramContainer.setAttribute('data-rendered', 'true');
-                                }
-                                errorElement.style.display = 'none';
-                            } catch (error) {
-                                console.error('Mermaidレンダリングエラー:', error);
-                                errorElement.style.display = 'block';
-                                errorElement.innerHTML = `
-                                    <div class="error-message">
-                                        <i class="fas fa-exclamation-circle"></i>
-                                        ダイアグラムの生成に失敗しました: ${error.message || 'エラーが発生しました'}
-                                    </div>
-                                `;
-                                diagramContainer.classList.add('hidden');
-                                codeContainer.classList.remove('hidden');
-                            } finally {
-                                loadingElement.style.display = 'none';
+                                                
+                                                diagramContainer.setAttribute('data-rendered', 'true');
+                                            }
+                                            errorElement.style.display = 'none';
+                                        } catch (error) {
+                                            console.error('Mermaidレンダリングエラー:', error);
+                                            errorElement.style.display = 'block';
+                                            errorElement.innerHTML = `
+                                                <div class="error-message">
+                                                    <i class="fas fa-exclamation-circle"></i>
+                                                    ダイアグラムの生成に失敗しました: ${error.message || 'エラーが発生しました'}
+                                                </div>
+                                            `;
+                                            diagramContainer.classList.add('hidden');
+                                            codeContainer.classList.remove('hidden');
+                                        } finally {
+                                            loadingElement.style.display = 'none';
+                                            resolve();
+                                        }
+                                    });
+                                });
                             }
+                        } finally {
+                            // 処理完了後にボタンを再度有効化
+                            button.disabled = false;
                         }
                     };
                     
