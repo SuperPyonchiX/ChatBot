@@ -275,6 +275,101 @@
     flex-direction: column;
 }
 
+.template-list-area {
+    height: 100%;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.template-category {
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.template-category-header {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: var(--background-secondary);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.template-category-header:hover {
+    background-color: var(--background-hover);
+}
+
+.template-category-header i {
+    margin-right: 10px;
+    transition: transform 0.2s ease;
+}
+
+.template-category-header .category-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--text-primary);
+}
+
+.template-category-header .category-count {
+    margin-left: auto;
+    background-color: var(--background-tertiary);
+    color: var(--text-secondary);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+}
+
+.template-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--background-primary);
+    transition: max-height 0.3s ease;
+}
+
+.template-category.collapsed .template-list {
+    display: none;
+}
+
+.template-category.collapsed .template-category-header i {
+    transform: rotate(-90deg);
+}
+
+.template-category-header {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.template-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.template-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.template-item:hover {
+    background-color: var(--background-hover);
+    border-color: var(--primary-color);
+}
 
 #saveApiKey, #saveSystemPrompt, #saveRenameChat {
     background-color: #404040;

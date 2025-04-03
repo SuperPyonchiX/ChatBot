@@ -324,6 +324,54 @@ window.Storage = {
     },
 
     /**
+     * カテゴリの状態を保存
+     * @param {string} categoryName - カテゴリ名
+     * @param {boolean} isCollapsed - カテゴリが折りたたまれているか
+     */
+    saveCategoryState: function(categoryName, isCollapsed) {
+        if (!categoryName) return;
+        
+        try {
+            const states = this.loadCategoryStates();
+            states[categoryName] = isCollapsed;
+            localStorage.setItem('categoryStates', JSON.stringify(states));
+        } catch (e) {
+            console.warn('カテゴリ状態の保存に失敗しました:', e);
+        }
+    },
+
+    /**
+     * カテゴリの状態を読み込む
+     * @param {string} categoryName - カテゴリ名
+     * @returns {boolean} カテゴリが折りたたまれているか
+     */
+    loadCategoryState: function(categoryName) {
+        if (!categoryName) return false;
+        
+        try {
+            const states = this.loadCategoryStates();
+            return states[categoryName] || false;
+        } catch (e) {
+            console.warn('カテゴリ状態の読み込みに失敗しました:', e);
+            return false;
+        }
+    },
+
+    /**
+     * すべてのカテゴリの状態を読み込む
+     * @returns {Object} カテゴリ名をキーとした状態のオブジェクト
+     */
+    loadCategoryStates: function() {
+        try {
+            const states = localStorage.getItem('categoryStates');
+            return states ? JSON.parse(states) : {};
+        } catch (e) {
+            console.warn('カテゴリ状態の読み込みに失敗しました:', e);
+            return {};
+        }
+    },
+
+    /**
      * カテゴリー設定状態を読み込む
      * @returns {Object} カテゴリーの状態オブジェクト
      */

@@ -474,14 +474,87 @@ window.UI = {
         
         // テンプレート一覧をクリア
         templateListArea.innerHTML = '';
-                
+        
         // DocumentFragmentを使用してDOM操作を最適化
         const fragment = document.createDocumentFragment();
         
-        // テンプレート項目を作成して追加
-        Object.keys(promptTemplates).forEach(templateName => {
-            const item = this._createTemplateItem(templateName, onTemplateSelect, onTemplateDelete);
-            fragment.appendChild(item);
+        // カテゴリごとにテンプレートを整理
+        const categorizedTemplates = {};
+        Object.entries(promptTemplates).forEach(([templateName, content]) => {
+            // configファイルからカテゴリを取得
+            let category = '';
+            for (const [cat, templates] of Object.entries(window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES)) {
+                if (templates[templateName]) {
+                    category = cat;
+                    break;
+                }
+            }
+            // カテゴリがない場合は「その他」に分類
+            if (!category) category = 'その他';
+            
+            if (!categorizedTemplates[category]) {
+                categorizedTemplates[category] = [];
+            }
+            categorizedTemplates[category].push({name: templateName, content: content});
+        });
+        
+        // カテゴリの表示順序を取得
+        const categoryOrder = window.CONFIG.PROMPTS.TEMPLATES.CATEGORY_ORDER || [];
+        const sortedCategories = [...categoryOrder];
+        // 設定されていないカテゴリを追加
+        Object.keys(categorizedTemplates).forEach(category => {
+            if (!sortedCategories.includes(category)) {
+                sortedCategories.push(category);
+            }
+        });
+        
+        // カテゴリごとにテンプレートを表示
+        sortedCategories.forEach(category => {
+            if (!categorizedTemplates[category]) return;
+            
+            const categoryElement = document.createElement('div');
+            categoryElement.className = 'template-category';
+            
+            // 保存された展開状態を復元
+            const isCategoryCollapsed = window.Storage.loadCategoryState(category);
+            if (isCategoryCollapsed) {
+                categoryElement.classList.add('collapsed');
+            }
+            
+            // カテゴリヘッダー
+            const categoryHeader = document.createElement('div');
+            categoryHeader.className = 'template-category-header';
+            categoryHeader.innerHTML = `
+                <i class="fas fa-chevron-down"></i>
+                <span class="category-title">${category}</span>
+                <span class="category-count">${categorizedTemplates[category].length}</span>
+            `;
+            
+            // カテゴリヘッダーのクリックイベント
+            categoryHeader.addEventListener('click', () => {
+                categoryElement.classList.toggle('collapsed');
+                // 展開状態を保存
+                window.Storage.saveCategoryState(
+                    category, 
+                    categoryElement.classList.contains('collapsed')
+                );
+            });
+            
+            // テンプレートリスト
+            const templateList = document.createElement('div');
+            templateList.className = 'template-list';
+            
+            // カテゴリ内のテンプレートをソート
+            categorizedTemplates[category]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .forEach(({name: templateName}) => {
+                    const item = this._createTemplateItem(templateName, onTemplateSelect, onTemplateDelete);
+                    templateList.appendChild(item);
+                });
+            
+            categoryElement.appendChild(categoryHeader);
+            categoryElement.appendChild(templateList);
+            fragment.appendChild(categoryElement);
         });
         
         // 一度のDOM操作でフラグメントを追加
