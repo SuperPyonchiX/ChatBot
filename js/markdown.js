@@ -140,6 +140,15 @@ window.Markdown = {
                     previewButton.innerHTML = '<i class="fas fa-eye"></i> プレビュー表示';
                     previewButton.title = 'プレビュー表示/コード表示を切り替え';
                     
+                    // ダウンロードボタンを追加
+                    const downloadButton = document.createElement('button');
+                    downloadButton.classList.add('mermaid-download');
+                    downloadButton.setAttribute('type', 'button');
+                    downloadButton.setAttribute('data-mermaid-index', i);
+                    downloadButton.innerHTML = '<i class="fas fa-download"></i> SVG保存';
+                    downloadButton.title = 'SVGファイルとして保存';
+                    downloadButton.style.display = 'none'; // 初期状態では非表示
+                    
                     const codeContainer = document.createElement('div');
                     codeContainer.classList.add('mermaid-code-container');
                     codeContainer.setAttribute('data-mermaid-index', i);
@@ -165,6 +174,7 @@ window.Markdown = {
                     
                     // DOMツリーを構築
                     toolbar.appendChild(previewButton);
+                    toolbar.appendChild(downloadButton);
                     wrapperContainer.appendChild(toolbar);
                     wrapperContainer.appendChild(codeContainer);
                     wrapperContainer.appendChild(diagramContainer);
@@ -224,6 +234,37 @@ window.Markdown = {
                                         // エラー表示のSVGをチェックして非表示にする
                                         if (svgElement.getAttribute('aria-roledescription') === 'error') {
                                             svgElement.style.display = 'none';
+                                        } else {
+                                            // エラーでない場合はダウンロードボタンを表示
+                                            const downloadBtn = wrapper.querySelector('.mermaid-download');
+                                            if (downloadBtn) {
+                                                downloadBtn.style.display = 'flex';
+                                                
+                                                // ダウンロードボタンのクリックイベント
+                                                downloadBtn.addEventListener('click', (e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    
+                                                    // SVGをシリアライズ
+                                                    const serializer = new XMLSerializer();
+                                                    const source = serializer.serializeToString(svgElement);
+                                                    
+                                                    // SVGをBlobに変換
+                                                    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+                                                    const url = URL.createObjectURL(blob);
+                                                    
+                                                    // ダウンロードリンクを作成
+                                                    const link = document.createElement('a');
+                                                    link.href = url;
+                                                    link.download = `diagram-${Date.now()}.svg`;
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                    document.body.removeChild(link);
+                                                    
+                                                    // BlobURLを解放
+                                                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                                                });
+                                            }
                                         }
 
                                         // クリック時の全画面表示用のスタイルとイベントを追加
