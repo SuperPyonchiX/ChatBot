@@ -194,7 +194,7 @@ window.Markdown = {
                         if (!button) return;
                         
                         const index = button.getAttribute('data-mermaid-index');
-                        const wrapper = document.querySelector(`.mermaid-wrapper[data-mermaid-index="${index}"]`);
+                        const wrapper = button.closest('.mermaid-wrapper');
                         if (!wrapper) return;
                         
                         const diagramContainer = wrapper.querySelector('.mermaid-diagram');
@@ -222,6 +222,8 @@ window.Markdown = {
                                 // まだレンダリングされていないダイアグラムの場合
                                 if (!diagramContainer.hasAttribute('data-rendered')) {
                                     const diagramId = diagramContainer.getAttribute('data-diagram-id');
+                                    // mermaidCodeを取得する際に、対応するコードブロックから取得
+                                    const mermaidCode = wrapper.querySelector('pre code').textContent;
                                     const { svg } = await mermaid.render(diagramId, mermaidCode);
                                     diagramContainer.innerHTML = svg;
                                     
