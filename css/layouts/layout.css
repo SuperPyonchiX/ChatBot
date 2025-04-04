@@ -11,7 +11,7 @@
 /* サイドバーレイアウト */
 .sidebar {
     width: var(--sidebar-width);
-    background-color: #202123;
+    background-color: var(--background-sidebar);
     color: var(--text-primary);
     display: flex;
     flex-direction: column;
@@ -117,31 +117,6 @@
     background-color: var(--background-secondary);
     align-items: flex-end;
     gap: var(--spacing-sm);
-}
-
-.input-wrapper {
-    flex: 1;
-    display: flex;
-    align-items: flex-end;
-    position: relative;
-    background-color: var(--background-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
-    padding: var(--spacing-sm);
-}
-
-#userInput {
-    flex: 1;
-    border: none;
-    padding: var(--spacing-sm);
-    resize: none;
-    font-size: var(--font-size-md);
-    outline: none;
-    overflow-y: auto;
-    max-height: 150px;
-    line-height: 1.4;
-    background-color: transparent;
-    color: var(--text-primary);
 }
 
 /* レスポンシブデザイン */

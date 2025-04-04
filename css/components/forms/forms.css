@@ -27,6 +27,32 @@
     resize: vertical;
 }
 
+/* チャット入力エリア */
+.input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    position: relative;
+    background-color: var(--background-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-sm);
+}
+
+#userInput {
+    flex: 1;
+    border: none;
+    padding: var(--spacing-sm);
+    resize: none;
+    font-size: var(--font-size-md);
+    outline: none;
+    overflow-y: auto;
+    max-height: 150px;
+    line-height: 1.4;
+    background-color: transparent;
+    color: var(--text-primary);
+}
+
 /* モデルセレクター */
 .model-selector select {
     padding: var(--model-selector-padding-y) var(--model-selector-padding-x);

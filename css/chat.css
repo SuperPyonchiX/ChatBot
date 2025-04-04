@@ -1,4 +1,13 @@
-/* チャットメッセージ */
+/* チャットコンテナの見た目 */
+.chat-container {
+    background-color: var(--background-secondary);
+}
+
+.chat-messages {
+    background-color: var(--background-primary);
+}
+
+/* メッセージスタイル */
 .message {
     display: flex;
     max-width: 85%;
