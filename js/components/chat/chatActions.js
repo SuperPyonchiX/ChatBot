@@ -136,7 +136,8 @@ window.ChatActions = {
                 timestamp: timestamp
             };
 
-            await window.Chat.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
+            // ユーザーメッセージを表示
+            await window.ChatRenderer.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
             conversation.messages.push(userMessage);
 
             // チャットタイトルの更新
@@ -154,7 +155,8 @@ window.ChatActions = {
             ];
 
             const botTimestamp = Date.now();
-            const { messageDiv, contentContainer } = window.Chat.addStreamingBotMessage(chatMessages, botTimestamp);
+            // ストリーミング用のボットメッセージを表示
+            const { messageDiv, contentContainer } = window.ChatRenderer.addStreamingBotMessage(chatMessages, botTimestamp);
 
             let fullResponseText = '';
             let isFirstChunk = true;
@@ -168,11 +170,13 @@ window.ChatActions = {
                     stream: true,
                     onChunk: (chunk) => {
                         fullResponseText += chunk;
-                        window.Chat.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
+                        // ストリーミング中のメッセージ更新
+                        window.ChatRenderer.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
                         isFirstChunk = false;
                     },
                     onComplete: (fullText) => {
-                        window.Chat.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
+                        // ストリーミング完了時の処理
+                        window.ChatRenderer.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
                         fullResponseText = fullText;
                     }
                 }
@@ -243,7 +247,8 @@ window.ChatActions = {
         this.renderChatHistory();
         
         if (window.Elements.chatMessages && window.Elements.modelSelect) {
-            window.Chat.displayConversation(newConversation, window.Elements.chatMessages, window.Elements.modelSelect);
+            // 会話を表示
+            window.ChatHistory.displayConversation(newConversation, window.Elements.chatMessages, window.Elements.modelSelect);
         }
     },
 
@@ -253,7 +258,8 @@ window.ChatActions = {
     renderChatHistory() {
         if (!window.Elements.chatHistory) return;
         
-        window.Chat.renderChatHistory(
+        // チャット履歴を更新
+        window.ChatHistory.renderChatHistory(
             window.AppState.conversations, 
             window.AppState.currentConversationId, 
             window.Elements.chatHistory, 
@@ -272,10 +278,12 @@ window.ChatActions = {
         window.AppState.currentConversationId = conversationId;
         window.Storage.saveCurrentConversationId(window.AppState.currentConversationId);
         
-        window.Chat.updateActiveChatInHistory(window.AppState.currentConversationId);
+        // アクティブチャットを更新
+        window.ChatHistory.updateActiveChatInHistory(window.AppState.currentConversationId);
         
         if (window.Elements.chatMessages && window.Elements.modelSelect) {
-            window.Chat.displayConversation(
+            // 会話を表示
+            window.ChatHistory.displayConversation(
                 window.AppState.getConversationById(window.AppState.currentConversationId),
                 window.Elements.chatMessages,
                 window.Elements.modelSelect
@@ -311,7 +319,8 @@ window.ChatActions = {
                 window.Storage.saveCurrentConversationId(window.AppState.currentConversationId);
                 
                 if (window.Elements.chatMessages && window.Elements.modelSelect) {
-                    window.Chat.displayConversation(
+                    // 会話を表示
+                    window.ChatHistory.displayConversation(
                         window.AppState.getConversationById(window.AppState.currentConversationId),
                         window.Elements.chatMessages,
                         window.Elements.modelSelect
