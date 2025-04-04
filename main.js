@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
             );
             
             // 添付ファイルを表示
-            window.FileHandler.displaySavedAttachments(window.AppState.currentConversationId, window.Elements.chatMessages);
+            window.UI.Components.FileAttachment.displaySavedAttachments(window.AppState.currentConversationId, window.Elements.chatMessages);
         }
     }
 });

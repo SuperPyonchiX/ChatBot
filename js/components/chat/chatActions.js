@@ -20,7 +20,7 @@ Object.assign(window.Chat.Actions, {
             }
             
             // FileHandlerから現在の添付ファイルを取得
-            const apiAttachments = await window.FileHandler.getAttachmentsForAPI();
+            const apiAttachments = await window.UI.Components.FileAttachment.getAttachmentsForAPI();
             
             // 添付ファイルの参照を保持
             const attachmentsToSend = apiAttachments.length > 0 ? apiAttachments : window.AppState.currentAttachments;
@@ -69,7 +69,7 @@ Object.assign(window.Chat.Actions, {
                     const timestamp = window.FileHandler.attachmentTimestamp || 
                                     (latestUserMessage ? latestUserMessage.timestamp : Date.now());
                     
-                    window.FileHandler.saveAttachmentsForConversation(
+                    window.UI.Components.FileAttachment.saveAttachmentsForConversation(
                         currentConversation.id, 
                         attachmentsToSend
                     );
@@ -292,7 +292,7 @@ Object.assign(window.Chat.Actions, {
             );
             
             // 添付ファイルを表示
-            window.FileHandler.displaySavedAttachments(window.AppState.currentConversationId, window.Elements.chatMessages);
+            window.UI.Components.FileAttachment.displaySavedAttachments(window.AppState.currentConversationId, window.Elements.chatMessages);
         }
     },
 

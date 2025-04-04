@@ -25,6 +25,7 @@ Object.assign(window.Chat.History, (function() {
                         ? message.content 
                         : this._processContentArray(message.content);
                     
+                    // ファイル内容を除去
                     const displayContent = this._cleanFileContent(content);
                     await window.Chat.Renderer.addUserMessage(displayContent, chatMessages, [], message.timestamp);
                 } else if (message.role === 'assistant') {
@@ -45,7 +46,8 @@ Object.assign(window.Chat.History, (function() {
                 }
             }
             
-            window.FileHandler.displaySavedAttachments(conversation.id, chatMessages);
+            // 添付ファイルの表示
+            window.UI.Components.FileAttachment.displaySavedAttachments(conversation.id, chatMessages);
             
             if (typeof Prism !== 'undefined') {
                 try {
@@ -60,20 +62,13 @@ Object.assign(window.Chat.History, (function() {
          * ファイルの内容をクリーンアップする
          * @private
          */
-        _cleanFileContent: function(messageContent) {
-            if (typeof messageContent !== 'string') return messageContent;
+        _cleanFileContent: function(content) {
+            if (!content) return '';
             
-            const fileMarkerPatterns = [
-                /===\s*[^」]+ファイル「[^」]+」の内容\s*===[\s\S]*?(?=(===\s*|$))/g,
-            ];
-            
-            let cleanedContent = messageContent;
-            for (const pattern of fileMarkerPatterns) {
-                cleanedContent = cleanedContent.replace(pattern, '');
-            }
-            
-            return cleanedContent.trim();
+            // === ファイル名「...」の内容 === 以降のテキストをすべて削除
+            return content.replace(/===\s+.*?ファイル「.*?」の内容\s+===[\s\S]*$/g, '').trim();
         },
+
 
         /**
          * 配列型のコンテンツを処理する

@@ -178,12 +178,12 @@ window.API = {
         // 添付ファイルのタイプ別に処理
         const validImageAttachments = attachments.filter(
             att => att && att.type === 'image' && att.data && 
-            (!att.size || att.size <= window.FileHandler?.MAX_FILE_SIZE || 10 * 1024 * 1024)
+            (!att.size || att.size <= window.CONFIG.FILE.MAX_FILE_SIZE || 10 * 1024 * 1024)
         );
         
         const validFileAttachments = attachments.filter(
             att => att && att.type === 'file' && att.name && att.data && att.mimeType &&
-            (!att.size || att.size <= window.FileHandler?.MAX_FILE_SIZE || 10 * 1024 * 1024)
+            (!att.size || att.size <= window.CONFIG.FILE.MAX_FILE_SIZE || 10 * 1024 * 1024)
         );
         
         // 画像添付ファイルをcontent_urlタイプとして追加
