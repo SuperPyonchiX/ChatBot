@@ -118,7 +118,6 @@
         });
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js"></script>
-    <script src="js/lib/JSCPP.es5.min.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -359,31 +358,45 @@
     </div>
 
     <!-- JSファイルを読み込む -->
+    <!-- 基本的なユーティリティとヘルパー -->
+    <script src="js/lib/JSCPP.es5.min.js"></script>
     <script src="js/config.js"></script>
     <script src="js/cryptoHelper.js"></script>
-    <!-- Core UI関連のファイル -->
+    <script src="js/storage.js"></script>
+    
+    <!-- Core基本モジュール -->
+    <script src="js/core/domElements.js"></script>
+    <script src="js/core/appState.js"></script>
     <script src="js/core/uiCache.js"></script>
     <script src="js/core/uiUtils.js"></script>
     <script src="js/core/ui.js"></script>
+    <script src="js/core/eventHandlers.js"></script>
+    
+    <!-- アプリケーションの主要な機能 -->
+    <script src="js/chat.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/markdown.js"></script>
+    <script src="js/fileHandler.js"></script>
+    <script src="js/promptManager.js"></script>
+    <script src="js/promptSuggestions.js"></script>
+    <script src="js/codeExecutor.js"></script>
+    
+    <!-- コンポーネント関連のファイル -->
+    <script src="js/components/chat/chatActions.js"></script>
+    <script src="js/components/fileAttachment/fileAttachment.js"></script>
+    <script src="js/components/sidebar/sidebar.js"></script>
+    
     <!-- モーダル関連のファイル -->
+    <script src="js/modals/modalHandlers.js"></script>
     <script src="js/modals/apiSettings/apiSettingsModal.js"></script>
     <script src="js/modals/renameChat/renameChatModal.js"></script>
     <script src="js/modals/systemPrompt/systemPromptModal.js"></script>
     <script src="js/modals/promptManager/promptManagerModal.js"></script>
-    <!-- コンポーネント関連のファイル -->
-    <script src="js/components/fileAttachment/fileAttachment.js"></script>
-    <script src="js/components/sidebar/sidebar.js"></script>
+    
     <!-- ユーティリティ関連のファイル -->
     <script src="js/utils/shareUtils.js"></script>
-    <!-- その他の主要なファイル -->
-    <script src="js/chat.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/promptManager.js"></script>
-    <script src="js/promptSuggestions.js"></script>
-    <script src="js/fileHandler.js"></script>
-    <script src="js/markdown.js"></script>
-    <script src="js/codeExecutor.js"></script>
-    <script src="js/api.js"></script>
+    
+    <!-- メインアプリケーションファイル -->
     <script src="main.js"></script>
 </body>
 </html>
