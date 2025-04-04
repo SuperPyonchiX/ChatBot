@@ -1,0 +1,142 @@
+/* コードスニペット実行機能用スタイル */
+.code-block-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.code-block:hover .code-block-toolbar {
+    opacity: 1;
+}
+
+.code-execution-result {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #282c34;
+    border-left: 3px solid #3498db;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+    overflow: auto;
+    color: #e0e0e0;
+}
+
+.execution-time {
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-bottom: 8px;
+    text-align: right;
+}
+
+.execution-error {
+    color: #e74c3c;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.error-details {
+    margin: 5px 0;
+    padding: 8px;
+    background-color: #462a2a;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    color: #e74c3c;
+    white-space: pre-wrap;
+}
+
+.execution-result-value,
+.console-output {
+    margin-top: 8px;
+}
+
+.result-title,
+.console-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #ddd;
+}
+
+.result-content {
+    white-space: pre-wrap;
+    background-color: #333;
+    border-radius: 3px;
+    padding: 8px;
+    margin: 0;
+    overflow: auto;
+    color: #e0e0e0;
+}
+
+.console-content {
+    background-color: #333;
+    padding: 8px;
+    border-radius: 3px;
+    max-height: 200px;
+    overflow: auto;
+    color: #e0e0e0;
+}
+
+.console-line {
+    padding: 2px 0;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.console-log {
+    color: #ddd;
+}
+
+.console-error {
+    color: #e74c3c;
+}
+
+.console-warn {
+    color: #f39c12;
+}
+
+.console-info {
+    color: #3498db;
+}
+
+/* HTMLプレビュー用iframe */
+.html-result-frame {
+    width: 100%;
+    min-height: 100px;
+    border: 1px solid #444;
+    border-radius: 3px;
+    background-color: #fff;
+}
+
+/* リアルタイム出力表示用のスタイル */
+.realtime-output {
+    background-color: #333;
+    border-radius: 3px;
+    padding: 8px;
+    margin: 10px 0;
+    max-height: 200px;
+    overflow: auto;
+    color: #e0e0e0;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.execution-status {
+    color: #aaa;
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+    padding: 5px 8px;
+    background-color: #2d2d2d;
+    border-radius: 3px;
+    border-left: 3px solid #3498db;
+}
+
+.execution-complete {
+    color: #2ecc71;
+    border-left-color: #2ecc71;
+}

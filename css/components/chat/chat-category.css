@@ -1,0 +1,97 @@
+/* チャット履歴カテゴリースタイル */
+.chat-category {
+    margin-bottom: 15px;
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    background-color: #2a2a2d;
+    margin-bottom: 5px;
+    transition: background-color 0.2s;
+}
+
+.category-header:hover {
+    background-color: #343541;
+}
+
+.category-header i {
+    margin-right: 10px;
+    width: 16px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.category-header .fa-chevron-down {
+    transform: rotate(0deg);
+}
+
+.category-header .fa-chevron-right {
+    transform: rotate(0deg);
+}
+
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.category-name-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-grow: 1;
+}
+
+.category-count {
+    background-color: #404040;
+    color: #e0e0e0;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    min-width: 20px;
+    text-align: center;
+}
+
+.category-item.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.category-item.active .category-count {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.category-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.category-edit-button,
+.category-delete-button {
+    background: none;
+    border: none;
+    color: #888;
+    padding: 4px 8px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s, color 0.2s;
+}
+
+.category-edit-button:hover {
+    opacity: 1;
+    color: #10a37f;
+}
+
+.category-delete-button:hover {
+    opacity: 1;
+    color: #e25555;
+}

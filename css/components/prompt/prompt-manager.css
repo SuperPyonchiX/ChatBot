@@ -1,0 +1,217 @@
+/* プロンプトマネージャー関連のスタイル */
+.prompt-manager-modal {
+    max-width: 900px;
+    width: 90%;
+    max-height: 80vh;
+}
+
+.prompt-manager-container {
+    display: flex;
+    height: 60vh;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    margin-bottom: 15px;
+    background-color: #1e1e1e;
+}
+
+.prompt-manager-sidebar {
+    width: 250px;
+    background-color: #1e1e1e;
+    border-right: 1px solid #404040;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.prompt-manager-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: #1e1e1e;
+}
+
+.prompt-list-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid #404040;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.prompt-search {
+    flex: 1;
+    margin: 0 15px;
+}
+
+.prompt-search input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #404040;
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+.prompts-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.prompt-categories-list {
+    margin-bottom: 15px;
+}
+
+/* プロンプトマネージャー特有のカテゴリースタイル */
+.prompt-categories-list .category-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s;
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+.prompt-categories-list .category-item:hover {
+    background-color: #363636;
+}
+
+.prompt-categories-list .category-item.active {
+    background-color: #404040;
+    color: #fff;
+}
+
+.category-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+.prompt-item {
+    padding: 12px;
+    border: 1px solid #404040;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #2d2d2d;
+}
+
+.prompt-item:hover {
+    border-color: #505050;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    background-color: #363636;
+}
+
+.prompt-item-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.prompt-item-name {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #e0e0e0;
+}
+
+.prompt-item-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    padding: 3px 6px;
+    margin-left: 5px;
+    color: #888;
+}
+
+.prompt-item-actions button:hover {
+    opacity: 1;
+}
+
+.prompt-item-description {
+    color: #b0b0b0;
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+
+.prompt-item-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.prompt-tag {
+    background-color: #404040;
+    color: #e0e0e0;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+}
+
+/* Variable help text */
+.variable-help-text {
+    background-color: #2d2d2d;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 5px;
+    font-size: 0.9em;
+    border: 1px solid #404040;
+}
+
+.variable-help-text code {
+    background-color: #363636;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+    color: #e0e0e0;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .prompt-manager-container {
+        flex-direction: column;
+        height: 70vh;
+    }
+    
+    .prompt-manager-sidebar {
+        width: 100%;
+        height: 150px;
+        border-right: none;
+        border-bottom: 1px solid #404040;
+    }
+    
+    .prompt-list-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .prompt-search {
+        margin: 10px 0;
+    }
+    
+    .prompt-manager-modal {
+        padding: 10px;
+    }
+}
+
+/* プロンプトマネージャー閉じるボタン */
+#closePromptManager {
+    background-color: #404040;
+    color: #e0e0e0;
+    border: 1px solid #505050;
+    border-radius: 4px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#closePromptManager:hover {
+    background-color: #505050;
+}

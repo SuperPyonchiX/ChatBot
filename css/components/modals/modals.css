@@ -1,0 +1,208 @@
+/* モーダルの基本スタイル */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    padding: 25px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 1000px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 確認ダイアログのスタイル */
+.custom-confirm-dialog .modal-content {
+    max-width: 400px;
+}
+
+.custom-confirm-dialog .modal-header {
+    margin-bottom: 15px;
+}
+
+.custom-confirm-dialog .modal-body {
+    margin-bottom: 20px;
+}
+
+.custom-confirm-dialog .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* モーダルボタンエリアのスタイル */
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* システムプロンプト設定のモーダル用スタイル */
+.system-prompt-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.system-prompt-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.system-prompt-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* テンプレート関連のスタイル */
+.template-list-area {
+    height: 100%;
+    overflow-y: auto;
+    padding: 10px;
+    margin: 5px 0 20px 0;
+    background-color: #1e1e1e;
+    border-radius: 6px;
+    border: 1px solid #404040;
+    max-height: 400px;
+}
+
+.template-category {
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.template-category-header {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: var(--background-secondary);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.template-category-header:hover {
+    background-color: var(--background-hover);
+}
+
+.template-category-header i {
+    margin-right: 10px;
+    transition: transform 0.2s ease;
+}
+
+.template-category-header .category-title {
+    font-weight: 600;
+    font-size: 0.95em;
+    color: var(--text-primary);
+}
+
+.template-category-header .category-count {
+    margin-left: auto;
+    background-color: var(--background-tertiary);
+    color: var(--text-secondary);
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.8em;
+}
+
+.template-category.collapsed .template-list {
+    display: none;
+}
+
+.template-category.collapsed .template-category-header i {
+    transform: rotate(-90deg);
+}
+
+.template-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--background-primary);
+    transition: max-height 0.3s ease;
+}
+
+.template-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background-color: #2d2d2d;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.template-item:last-child {
+    margin-bottom: 0;
+}
+
+.template-item:hover {
+    background-color: #363636;
+    border-color: #505050;
+    transform: translateY(-1px);
+}
+
+.template-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #e0e0e0;
+    font-size: 0.95rem;
+}
+
+.template-delete-button {
+    background: none;
+    border: none;
+    color: #888;
+    padding: 4px 8px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s ease;
+}
+
+.template-item:hover .template-delete-button {
+    opacity: 0.7;
+}
+
+.template-delete-button:hover {
+    opacity: 1;
+    color: #e25555;
+}
+
+.template-list-title {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    color: #e0e0e0;
+    padding-left: 5px;
+}

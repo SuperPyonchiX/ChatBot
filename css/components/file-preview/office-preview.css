@@ -1,0 +1,91 @@
+/* Office関連ファイルプレビュー関連のスタイル */
+.attachment-office-container {
+    margin: 10px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 300px;
+}
+
+.office-preview {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    gap: 10px;
+    background-color: var(--card-bg);
+}
+
+.office-preview .fas {
+    font-size: 24px;
+}
+
+/* Wordアイコンの色 */
+.office-preview .fa-file-word {
+    color: #2b579a;
+}
+
+/* Excelアイコンの色 */
+.office-preview .fa-file-excel {
+    color: #217346;
+}
+
+/* PowerPointアイコンの色 */
+.office-preview .fa-file-powerpoint {
+    color: #d24726;
+}
+
+.office-content-button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.2s;
+}
+
+.office-content-button:hover {
+    background-color: var(--accent-hover-color);
+}
+
+.office-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.office-title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    padding: 10px;
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 10px;
+}
+
+.office-content-viewer {
+    flex-grow: 1;
+    background-color: #1e1e1e;
+    border-radius: 4px;
+    overflow: auto;
+    color: #e0e0e0;
+    padding: 15px;
+}
+
+.office-text-content {
+    font-family: 'Consolas', 'Courier New', monospace;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    font-size: 0.9rem;
+    color: #e0e0e0;
+}

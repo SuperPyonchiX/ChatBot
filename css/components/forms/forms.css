@@ -1,0 +1,92 @@
+/* フォーム要素のスタイル */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #e0e0e0;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* モデルセレクター */
+.model-selector select {
+    padding: 5px 10px;
+    border-radius: 4px;
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border: 1px solid #404040;
+    outline: none;
+    cursor: pointer;
+}
+
+.model-selector select:hover {
+    background-color: #404040;
+}
+
+/* Azure モデルエンドポイント設定 */
+.azure-model-endpoints {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #404040;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #1e1e1e;
+}
+
+.azure-model-endpoints .form-group {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #404040;
+}
+
+.azure-model-endpoints .form-group:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.azure-model-endpoints label {
+    font-weight: 500;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+}
+
+.azure-model-endpoints input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+.hidden {
+    display: none;
+}
+
+/* ラジオボタングループ */
+.radio-group {
+    display: flex;
+    gap: 15px;
+}

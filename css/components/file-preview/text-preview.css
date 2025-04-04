@@ -1,0 +1,101 @@
+/* テキストファイルプレビュー関連のスタイル */
+.text-file-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.text-file-viewer {
+    background-color: var(--background-color);
+    border-radius: 8px;
+    flex: 1;
+    overflow: auto;
+    margin-top: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.text-file-title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--secondary-background-color);
+    padding: 10px 20px;
+    border-radius: 8px;
+}
+
+.text-file-content {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.file-preview-button {
+    margin-left: 10px;
+    padding: 4px 8px;
+    background-color: var(--accent-color);
+    color: var(--background-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.file-preview-button:hover {
+    background-color: var(--accent-color-hover);
+}
+
+.attachment-file-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: var(--secondary-background-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 5px 0;
+}
+
+.attachment-file-name {
+    flex: 1;
+    margin: 0 10px;
+}
+
+/* ファイルタイプアイコンの色 */
+.file-type-icon .fa-file-word {
+    color: #2b579a;  /* Word青 */
+}
+
+.file-type-icon .fa-file-excel {
+    color: #217346;  /* Excel緑 */
+}
+
+.file-type-icon .fa-file-powerpoint {
+    color: #d24726;  /* PowerPointオレンジ */
+}
+
+.file-type-icon .fa-file-pdf {
+    color: #f40f02;  /* PDF赤 */
+}
+
+.file-type-icon .fa-file-alt {
+    color: #808080;  /* テキストファイル グレー */
+}
+
+.file-type-icon .fa-file-code {
+    color: #007acc;  /* コードファイル 青 */
+}
+
+.file-type-icon .fa-file {
+    color: #808080;  /* その他のファイル グレー */
+}
