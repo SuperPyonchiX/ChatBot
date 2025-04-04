@@ -39,7 +39,7 @@ window.ChatActions = {
             }
             
             // ストリーミングメソッドを使用してメッセージを送信
-            const result = await window.Chat.sendMessage(
+            const result = await this.processAndSendMessage(
                 window.Elements.userInput, 
                 window.Elements.chatMessages, 
                 currentConversation, 
@@ -86,6 +86,136 @@ window.ChatActions = {
                 window.Elements.sendButton.disabled = false;
             }
         }
+    },
+
+    /**
+     * メッセージを処理して送信する
+     * @param {Object} userInput - ユーザー入力要素
+     * @param {HTMLElement} chatMessages - チャットメッセージ要素
+     * @param {Object} conversation - 現在の会話オブジェクト
+     * @param {Object} apiSettings - API設定
+     * @param {string} systemPrompt - システムプロンプト
+     * @param {Array} attachments - 添付ファイル配列
+     * @returns {Promise<Object>} 送信結果
+     */
+    async processAndSendMessage(userInput, chatMessages, conversation, apiSettings, systemPrompt, attachments = []) {
+        if (!userInput || !chatMessages || !conversation) {
+            return { error: 'Invalid parameters' };
+        }
+
+        try {
+            const userText = userInput.value.trim();
+            if (!userText && (!attachments || attachments.length === 0)) {
+                return { error: 'No message content' };
+            }
+
+            // ユーザー入力をクリア
+            userInput.value = '';
+            window.UIUtils.autoResizeTextarea(userInput);
+
+            let titleUpdated = false;
+            const timestamp = Date.now();
+
+            // 添付ファイルの処理
+            let attachmentContent = '';
+            let displayAttachments = [];
+
+            if (attachments && attachments.length > 0) {
+                displayAttachments = attachments.map(att => ({
+                    ...att,
+                    timestamp: timestamp
+                }));
+
+                attachmentContent = await this._processAttachments(attachments);
+            }
+
+            // ユーザーメッセージを作成と表示
+            const userMessage = {
+                role: 'user',
+                content: attachmentContent ? `${userText}\n\n${attachmentContent}` : userText,
+                timestamp: timestamp
+            };
+
+            await window.Chat.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
+            conversation.messages.push(userMessage);
+
+            // チャットタイトルの更新
+            if (conversation.title === '新しいチャット' && 
+                conversation.messages.filter(m => m.role === 'user').length === 1) {
+                conversation.title = userText.substring(0, 30) + (userText.length > 30 ? '...' : '');
+                titleUpdated = true;
+            }
+
+            // APIリクエストの処理
+            const effectiveSystemPrompt = systemPrompt || window.CONFIG.PROMPTS.DEFAULT_SYSTEM_PROMPT;
+            const messagesWithSystem = [
+                { role: 'system', content: effectiveSystemPrompt },
+                ...conversation.messages.filter(m => m.role !== 'system')
+            ];
+
+            const botTimestamp = Date.now();
+            const { messageDiv, contentContainer } = window.Chat.addStreamingBotMessage(chatMessages, botTimestamp);
+
+            let fullResponseText = '';
+            let isFirstChunk = true;
+
+            // ストリーミングAPI呼び出し
+            await window.API.callOpenAIAPI(
+                messagesWithSystem,
+                conversation.model,
+                displayAttachments,
+                {
+                    stream: true,
+                    onChunk: (chunk) => {
+                        fullResponseText += chunk;
+                        window.Chat.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
+                        isFirstChunk = false;
+                    },
+                    onComplete: (fullText) => {
+                        window.Chat.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
+                        fullResponseText = fullText;
+                    }
+                }
+            );
+
+            // 応答をメッセージ履歴に追加
+            conversation.messages.push({
+                role: 'assistant',
+                content: fullResponseText,
+                timestamp: botTimestamp
+            });
+
+            return { titleUpdated, response: fullResponseText };
+
+        } catch (error) {
+            console.error('メッセージ送信処理中にエラーが発生しました:', error);
+            return { titleUpdated: false, error: error.message || '内部エラーが発生しました' };
+        }
+    },
+
+    /**
+     * 添付ファイルの内容を処理する
+     * @private
+     * @param {Array} attachments - 添付ファイルの配列
+     * @returns {Promise<string>} 処理された添付ファイルの内容
+     */
+    async _processAttachments(attachments) {
+        if (!attachments || !Array.isArray(attachments)) {
+            return '';
+        }
+
+        let content = '';
+        for (const attachment of attachments) {
+            if (!attachment || !attachment.type) continue;
+
+            if ((attachment.type === 'pdf' || 
+                 attachment.type === 'office' || 
+                 attachment.type === 'file') && 
+                attachment.content) {
+                content += `\n${attachment.content}\n`;
+            }
+        }
+        return content;
     },
 
     /**
