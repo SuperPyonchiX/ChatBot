@@ -247,6 +247,53 @@
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
+/* 確認ダイアログのスタイル */
+.custom-confirm-dialog .modal-content {
+    max-width: 400px;
+}
+
+.custom-confirm-dialog .modal-header {
+    margin-bottom: 15px;
+}
+
+.custom-confirm-dialog .modal-body {
+    margin-bottom: 20px;
+}
+
+.custom-confirm-dialog .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.custom-confirm-dialog .confirm-button {
+    background-color: #404040;
+    color: #e0e0e0;
+    border: 1px solid #505050;
+    border-radius: 4px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.custom-confirm-dialog .confirm-button:hover {
+    background-color: #505050;
+}
+
+.custom-confirm-dialog .cancel-button {
+    background-color: #363636;
+    border: 1px solid #404040;
+    color: #e0e0e0;
+    border-radius: 4px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.custom-confirm-dialog .cancel-button:hover {
+    background-color: #404040;
+}
+
 /* モーダルボタンエリアのスタイル */
 .modal-buttons {
     display: flex;

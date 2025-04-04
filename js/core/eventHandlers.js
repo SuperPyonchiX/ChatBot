@@ -177,7 +177,7 @@ window.EventHandlers = {
      */
     setupPromptManagerModal() {
         // 閉じるボタンのイベントハンドラー
-        const closePromptManagerBtn =window.UI.Cache.get('closePromptManager');
+        const closePromptManagerBtn = window.UI.Cache.get('closePromptManager');
         if (closePromptManagerBtn) {
             closePromptManagerBtn.addEventListener('click', () => {
                 window.UI.Core.Modal.hidePromptManagerModal();
@@ -197,9 +197,17 @@ window.EventHandlers = {
                 );
             });
         }
+        
+        // カテゴリ追加ボタンのイベントハンドラー
+        const addCategoryBtn = window.UI.Cache.get('addCategoryButton');
+        if (addCategoryBtn) {
+            addCategoryBtn.addEventListener('click', () => {
+                window.UI.Core.Modal._handleAddCategory();
+            });
+        }
 
         // 新規プロンプト追加ボタンのイベントハンドラー
-        const addPromptButton =window.UI.Cache.get('addPromptButton');
+        const addPromptButton = window.UI.Cache.get('addPromptButton');
         if (addPromptButton) {
             addPromptButton.addEventListener('click', () => {
                 window.UI.Core.Modal.showPromptEditModal(null);

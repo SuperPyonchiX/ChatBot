@@ -11,7 +11,7 @@ Object.assign(window.UI.Core.Modal, {
      */
     showPromptManagerModal: function() {
         console.log('プロンプトマネージャーモーダルを表示します');
-        const modal =window.UI.Cache.get('promptManagerModal');
+        const modal = window.UI.Cache.get('promptManagerModal');
         if (!modal) {
             console.error('モーダル要素が見つかりません: promptManagerModal');
             return;
@@ -30,7 +30,7 @@ Object.assign(window.UI.Core.Modal, {
      */
     hidePromptManagerModal: function() {
         console.log('プロンプトマネージャーモーダルを閉じます');
-        const modal =window.UI.Cache.get('promptManagerModal');
+        const modal = window.UI.Cache.get('promptManagerModal');
         if (modal) {
             modal.style.display = 'none';
         }
@@ -41,7 +41,7 @@ Object.assign(window.UI.Core.Modal, {
      */
     updatePromptCategories: function() {
         console.log('カテゴリ一覧を更新します');
-        const categoriesList =window.UI.Cache.get('promptCategoriesList');
+        const categoriesList = window.UI.Cache.get('promptCategoriesList');
         if (!categoriesList) {
             console.error('カテゴリリスト要素が見つかりません: promptCategoriesList');
             return;
@@ -129,7 +129,7 @@ Object.assign(window.UI.Core.Modal, {
      * @param {Object} filter - フィルタリング条件
      */
     updatePromptsList: function(filter = {}) {
-        const promptsList =window.UI.Cache.get('promptsList');
+        const promptsList = window.UI.Cache.get('promptsList');
         if (!promptsList) {
             console.error('プロンプトリスト要素が見つかりません: promptsList');
             return;
@@ -232,17 +232,17 @@ Object.assign(window.UI.Core.Modal, {
         try {
             const promptText = window.PromptManager.buildPrompt(promptId);
             
-            const userInput =window.UI.Cache.get('userInput');
+            const userInput = window.UI.Cache.get('userInput');
             if (userInput) {
                 userInput.value = promptText;
                 window.UI.Utils.autoResizeTextarea(userInput);
             }
             
             this.hidePromptManagerModal();
-            this.notify('プロンプトをセットしました', 'success');
+            window.UI.Core.Notification.show('プロンプトをセットしました', 'success');
         } catch (error) {
             console.error('プロンプト使用中にエラーが発生しました:', error);
-            this.notify('プロンプトの使用に失敗しました', 'error');
+            window.UI.Core.Notification.show('プロンプトの使用に失敗しました', 'error');
         }
     },
     
@@ -287,7 +287,7 @@ Object.assign(window.UI.Core.Modal, {
             try {
                 const result = window.PromptManager.deletePrompt(promptId);
                 if (result) {
-                    this.notify('プロンプトを削除しました', 'success');
+                    window.UI.Core.Notification.show('プロンプトを削除しました', 'success');
                     
                     const activeCategory = document.querySelector('.category-item.active');
                     const filter = {};
@@ -298,11 +298,11 @@ Object.assign(window.UI.Core.Modal, {
                     this.updatePromptsList(filter);
                     this._updateCategoryCounts();
                 } else {
-                    this.notify('プロンプトの削除に失敗しました', 'error');
+                    window.UI.Core.Notification.show('プロンプトの削除に失敗しました', 'error');
                 }
             } catch (error) {
                 console.error('プロンプト削除中にエラーが発生しました:', error);
-                this.notify('エラー: ' + error.message, 'error');
+                window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
             }
         }
     },
@@ -315,11 +315,11 @@ Object.assign(window.UI.Core.Modal, {
         try {
             const customVariables = {};
             const systemPrompt = window.PromptManager.setAsSystemPrompt(promptId, customVariables);
-            this.notify('システムプロンプトを更新しました', 'success');
+            window.UI.Core.Notification.show('システムプロンプトを更新しました', 'success');
             this.hidePromptManagerModal();
         } catch (error) {
             console.error('システムプロンプトの設定に失敗しました:', error);
-            this.notify('システムプロンプトの設定に失敗しました', 'error');
+            window.UI.Core.Notification.show('システムプロンプトの設定に失敗しました', 'error');
         }
     },
 
@@ -335,13 +335,13 @@ Object.assign(window.UI.Core.Modal, {
             const success = window.PromptManager.saveAsSystemPromptTemplate(promptId, templateName);
             
             if (success) {
-                this.notify(`テンプレート「${templateName}」を保存しました`, 'success');
+                window.UI.Core.Notification.show(`テンプレート「${templateName}」を保存しました`, 'success');
             } else {
-                this.notify('テンプレートの保存に失敗しました', 'error');
+                window.UI.Core.Notification.show('テンプレートの保存に失敗しました', 'error');
             }
         } catch (error) {
             console.error('テンプレートの保存中にエラーが発生しました:', error);
-            this.notify(`エラー: ${error.message}`, 'error');
+            window.UI.Core.Notification.show(`エラー: ${error.message}`, 'error');
         }
     },
     
@@ -359,14 +359,14 @@ Object.assign(window.UI.Core.Modal, {
                 });
                 
                 if (success) {
-                    this.notify('カテゴリ名を更新しました', 'success');
+                    window.UI.Core.Notification.show('カテゴリ名を更新しました', 'success');
                     this.updatePromptCategories();
                 } else {
-                    this.notify('カテゴリの更新に失敗しました', 'error');
+                    window.UI.Core.Notification.show('カテゴリの更新に失敗しました', 'error');
                 }
             } catch (error) {
                 console.error('カテゴリ更新中にエラーが発生しました:', error);
-                this.notify('エラー: ' + error.message, 'error');
+                window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
             }
         }
     },
@@ -389,14 +389,14 @@ Object.assign(window.UI.Core.Modal, {
                     const success = window.PromptManager.deleteCategory(categoryKey);
                     
                     if (success) {
-                        this.notify('カテゴリを削除しました', 'success');
+                        window.UI.Core.Notification.show('カテゴリを削除しました', 'success');
                         this.updatePromptCategories();
                     } else {
-                        this.notify('カテゴリの削除に失敗しました', 'error');
+                        window.UI.Core.Notification.show('カテゴリの削除に失敗しました', 'error');
                     }
                 } catch (error) {
                     console.error('カテゴリ削除中にエラーが発生しました:', error);
-                    this.notify('エラー: ' + error.message, 'error');
+                    window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
                 }
             }
         });
@@ -407,24 +407,24 @@ Object.assign(window.UI.Core.Modal, {
      * @param {Object} prompt - 編集するプロンプトデータ
      */
     showPromptEditModal: function(prompt) {
-        const modal =window.UI.Cache.get('promptEditModal');
+        const modal = window.UI.Cache.get('promptEditModal');
         if (!modal) {
             console.error('モーダル要素が見つかりません: promptEditModal');
             return;
         }
 
         // モーダルタイトルを設定
-        const title =window.UI.Cache.get('promptEditTitle');
+        const title = window.UI.Cache.get('promptEditTitle');
         if (title) {
             title.textContent = prompt ? 'プロンプト編集' : '新規プロンプト';
         }
 
         // フォームに値を設定
-        const nameInput =window.UI.Cache.get('promptNameInput');
-        const categorySelect =window.UI.Cache.get('promptCategorySelect');
-        const tagsInput =window.UI.Cache.get('promptTagsInput');
-        const descriptionInput =window.UI.Cache.get('promptDescriptionInput');
-        const contentInput =window.UI.Cache.get('promptContentInput');
+        const nameInput = window.UI.Cache.get('promptNameInput');
+        const categorySelect = window.UI.Cache.get('promptCategorySelect');
+        const tagsInput = window.UI.Cache.get('promptTagsInput');
+        const descriptionInput = window.UI.Cache.get('promptDescriptionInput');
+        const contentInput = window.UI.Cache.get('promptContentInput');
 
         if (prompt) {
             nameInput.value = prompt.name || '';
@@ -448,23 +448,23 @@ Object.assign(window.UI.Core.Modal, {
         modal.style.display = 'block';
 
         // イベントリスナーを設定
-        const saveButton =window.UI.Cache.get('savePromptEdit');
-        const cancelButton =window.UI.Cache.get('cancelPromptEdit');
+        const saveButton = window.UI.Cache.get('savePromptEdit');
+        const cancelButton = window.UI.Cache.get('cancelPromptEdit');
 
         // 既存のイベントリスナーを削除
         saveButton.replaceWith(saveButton.cloneNode(true));
         cancelButton.replaceWith(cancelButton.cloneNode(true));
 
         // 新しいイベントリスナーを追加
-       window.UI.Cache.get('savePromptEdit').addEventListener('click', () => this._savePromptEdit(modal));
-       window.UI.Cache.get('cancelPromptEdit').addEventListener('click', () => this.hidePromptEditModal());
+        window.UI.Cache.get('savePromptEdit').addEventListener('click', () => this._savePromptEdit(modal));
+        window.UI.Cache.get('cancelPromptEdit').addEventListener('click', () => this.hidePromptEditModal());
     },
 
     /**
      * プロンプト編集モーダルを非表示にする
      */
     hidePromptEditModal: function() {
-        const modal =window.UI.Cache.get('promptEditModal');
+        const modal = window.UI.Cache.get('promptEditModal');
         if (modal) {
             modal.style.display = 'none';
         }
@@ -503,11 +503,11 @@ Object.assign(window.UI.Core.Modal, {
      * @private
      */
     _savePromptEdit: function(modal) {
-        const nameInput =window.UI.Cache.get('promptNameInput');
-        const categorySelect =window.UI.Cache.get('promptCategorySelect');
-        const tagsInput =window.UI.Cache.get('promptTagsInput');
-        const descriptionInput =window.UI.Cache.get('promptDescriptionInput');
-        const contentInput =window.UI.Cache.get('promptContentInput');
+        const nameInput = window.UI.Cache.get('promptNameInput');
+        const categorySelect = window.UI.Cache.get('promptCategorySelect');
+        const tagsInput = window.UI.Cache.get('promptTagsInput');
+        const descriptionInput = window.UI.Cache.get('promptDescriptionInput');
+        const contentInput = window.UI.Cache.get('promptContentInput');
 
         // 入力値を取得
         const name = nameInput.value.trim();
@@ -518,7 +518,7 @@ Object.assign(window.UI.Core.Modal, {
 
         // バリデーション
         if (!name || !content) {
-            this.notify('名前とプロンプト内容は必須です', 'error');
+            window.UI.Core.Notification.show('名前とプロンプト内容は必須です', 'error');
             return;
         }
 
@@ -543,7 +543,7 @@ Object.assign(window.UI.Core.Modal, {
             }
 
             if (success) {
-                this.notify(promptId ? 'プロンプトを更新しました' : 'プロンプトを作成しました', 'success');
+                window.UI.Core.Notification.show(promptId ? 'プロンプトを更新しました' : 'プロンプトを作成しました', 'success');
                 this.hidePromptEditModal();
                 
                 // プロンプトリストを更新
@@ -552,11 +552,33 @@ Object.assign(window.UI.Core.Modal, {
                 this.updatePromptsList(filter);
                 this._updateCategoryCounts();
             } else {
-                this.notify('プロンプトの保存に失敗しました', 'error');
+                window.UI.Core.Notification.show('プロンプトの保存に失敗しました', 'error');
             }
         } catch (error) {
             console.error('プロンプト保存中にエラーが発生しました:', error);
-            this.notify('エラー: ' + error.message, 'error');
+            window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
+        }
+    },
+
+    /**
+     * カテゴリ追加ボタンのクリックイベントを処理する
+     * @private
+     */
+    _handleAddCategory: function() {
+        const categoryName = prompt('新しいカテゴリ名を入力してください:');
+        if (!categoryName || !categoryName.trim()) return;
+
+        try {
+            const success = window.PromptManager.addCategory(categoryName.trim());
+            if (success) {
+                window.UI.Core.Notification.show('カテゴリを追加しました', 'success');
+                this.updatePromptCategories();
+            } else {
+                window.UI.Core.Notification.show('カテゴリの追加に失敗しました', 'error');
+            }
+        } catch (error) {
+            console.error('カテゴリ追加中にエラーが発生しました:', error);
+            window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
         }
     }
 });
