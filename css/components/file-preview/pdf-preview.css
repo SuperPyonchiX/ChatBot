@@ -21,7 +21,7 @@
 }
 
 .pdf-preview-button {
-    background-color: var(--accent-color);
+    background-color: var(--background-secondary);
     color: white;
     border: none;
     padding: 4px 12px;
@@ -32,7 +32,7 @@
 }
 
 .pdf-preview-button:hover {
-    background-color: var(--accent-hover-color);
+    background-color: var(--background-quaternary);
 }
 
 .pdf-overlay {

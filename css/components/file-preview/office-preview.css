@@ -35,7 +35,7 @@
 }
 
 .office-content-button {
-    background-color: var(--accent-color);
+    background-color: var(--background-secondary);
     color: white;
     border: none;
     padding: 4px 12px;
@@ -46,7 +46,7 @@
 }
 
 .office-content-button:hover {
-    background-color: var(--accent-hover-color);
+    background-color: var(--background-quaternary);
 }
 
 .office-overlay {

@@ -1,0 +1,54 @@
+/* グローバルなCSS変数定義 */
+:root {
+    /* カラーパレット */
+    --background-primary: #1e1e1e;
+    --background-secondary: #2d2d2d;
+    --background-tertiary: #363636;
+    --background-quaternary: #404040;
+    
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-tertiary: #888888;
+    
+    --border-color: #404040;
+    --border-color-hover: #505050;
+    
+    --accent-color: #10a37f;
+    --accent-hover-color: #0d8c6d;
+    --error-color: #e25555;
+    --success-color: #28a745;
+    
+    /* レイアウト */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+    
+    --border-radius-sm: 4px;
+    --border-radius-md: 6px;
+    --border-radius-lg: 8px;
+    --border-radius-xl: 12px;
+    
+    /* アニメーション */
+    --transition-fast: 0.2s;
+    --transition-normal: 0.3s;
+    --transition-slow: 0.5s;
+    
+    /* シャドウ */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.3);
+    
+    /* フォント */
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.85rem;
+    --font-size-md: 0.95rem;
+    --font-size-lg: 1.1rem;
+    --font-size-xl: 1.25rem;
+    
+    /* レイアウト固定値 */
+    --sidebar-width: 260px;
+    --header-height: 60px;
+    --modal-max-width: 900px;
+}

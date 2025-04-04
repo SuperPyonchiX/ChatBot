@@ -43,7 +43,7 @@
 .file-preview-button {
     margin-left: 10px;
     padding: 4px 8px;
-    background-color: var(--accent-color);
+    background-color: var(--background-secondary);
     color: var(--background-color);
     border: none;
     border-radius: 4px;
@@ -53,17 +53,21 @@
 }
 
 .file-preview-button:hover {
-    background-color: var(--accent-color-hover);
+    background-color: var(--background-quaternary);
 }
 
 .attachment-file-container {
     display: flex;
     align-items: center;
-    gap: 10px;
-    background-color: var(--secondary-background-color);
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin: 5px 0;
+    gap: var(--spacing-sm);
+    /* background-color: var(--background-tertiary); */
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.attachment-file-container .fas {
+    color: var(--text-tertiary);
 }
 
 .attachment-file-name {

@@ -5,18 +5,18 @@
     height: 100%;
     max-width: 100%;
     overflow: hidden;
-    background-color: #1e1e1e;
+    background-color: var(--background-primary);
 }
 
 /* サイドバーレイアウト */
 .sidebar {
-    width: 260px;
+    width: var(--sidebar-width);
     background-color: #202123;
-    color: white;
+    color: var(--text-primary);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transition: transform 0.3s ease, width 0.3s ease;
+    transition: transform var(--transition-normal) ease, width var(--transition-normal) ease;
 }
 
 .sidebar.collapsed {
@@ -25,21 +25,21 @@
 
 /* サイドバーフッター */
 .sidebar-footer {
-    padding: 15px;
-    border-top: 1px solid #4d4d4f;
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: space-around;
-    gap: 10px;
+    gap: var(--spacing-sm);
 }
 
 /* サイドバートグルボタン */
 .sidebar-toggle {
     position: fixed;
-    top: 10px;
-    left: 10px;
+    top: var(--spacing-sm);
+    left: var(--spacing-sm);
     z-index: 101;
-    background-color: #404040;
-    color: #e0e0e0;
+    background-color: var(--background-quaternary);
+    color: var(--text-primary);
     border: none;
     border-radius: 50%;
     width: 40px;
@@ -48,7 +48,7 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.3s ease, opacity 0.3s ease;
+    transition: background-color var(--transition-fast), transform var(--transition-normal) ease, opacity var(--transition-normal) ease;
     opacity: 0;
 }
 
@@ -67,17 +67,17 @@
 }
 
 .sidebar-toggle:hover {
-    background-color: #505050;
+    background-color: var(--border-color-hover);
 }
 
 .sidebar-toggle.sidebar-visible {
-    transform: translateX(260px);
+    transform: translateX(var(--sidebar-width));
 }
 
 /* チャットコンテナレイアウト */
 .chat-container {
     flex: 1;
-    background-color: #2d2d2d;
+    background-color: var(--background-secondary);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -85,38 +85,38 @@
 
 /* チャットヘッダー */
 .chat-header {
-    background-color: #363636;
-    color: #e0e0e0;
-    padding: 15px 20px;
+    background-color: var(--background-tertiary);
+    color: var(--text-primary);
+    padding: var(--spacing-md) var(--spacing-lg);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .chat-header h1 {
-    font-size: 1.5rem;
+    font-size: var(--font-size-xl);
     font-weight: 600;
 }
 
 /* チャットメッセージエリアレイアウト */
 .chat-messages {
     flex: 1;
-    padding: 20px;
+    padding: var(--spacing-lg);
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    background-color: #1e1e1e;
+    gap: var(--spacing-md);
+    background-color: var(--background-primary);
 }
 
 /* チャット入力エリアレイアウト */
 .chat-input-container {
     display: flex;
-    padding: 15px;
-    border-top: 1px solid #404040;
-    background-color: #2d2d2d;
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+    background-color: var(--background-secondary);
     align-items: flex-end;
-    gap: 10px;
+    gap: var(--spacing-sm);
 }
 
 .input-wrapper {
@@ -124,24 +124,24 @@
     display: flex;
     align-items: flex-end;
     position: relative;
-    background-color: #1e1e1e;
-    border: 1px solid #404040;
-    border-radius: 8px;
-    padding: 8px;
+    background-color: var(--background-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-sm);
 }
 
 #userInput {
     flex: 1;
     border: none;
-    padding: 8px;
+    padding: var(--spacing-sm);
     resize: none;
-    font-size: 0.95rem;
+    font-size: var(--font-size-md);
     outline: none;
     overflow-y: auto;
     max-height: 150px;
     line-height: 1.4;
     background-color: transparent;
-    color: #e0e0e0;
+    color: var(--text-primary);
 }
 
 /* レスポンシブデザイン */
@@ -157,7 +157,7 @@
     }
     
     .chat-messages {
-        padding: 10px;
+        padding: var(--spacing-sm);
     }
     
     .message {
@@ -166,7 +166,7 @@
 
     .modal-content {
         width: 95%;
-        padding: 15px;
+        padding: var(--spacing-md);
     }
 }
 
@@ -180,7 +180,7 @@
         height: 100%;
         z-index: 100;
         transform: translateX(-100%);
-        transition: transform 0.3s ease;
+        transition: transform var(--transition-normal) ease;
     }
     
     .sidebar.show {
@@ -189,11 +189,11 @@
     
     .sidebar-toggle {
         position: absolute;
-        top: 10px;
-        left: 10px;
+        top: var(--spacing-sm);
+        left: var(--spacing-sm);
         z-index: 101;
-        background-color: #10a37f;
-        color: white;
+        background-color: var(--accent-color);
+        color: var(--text-primary);
         border: none;
         border-radius: 50%;
         width: 40px;
@@ -202,6 +202,6 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        box-shadow: var(--shadow-sm);
     }
 }
