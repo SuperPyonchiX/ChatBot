@@ -264,7 +264,7 @@ window.ChatActions = {
             window.AppState.currentConversationId, 
             window.Elements.chatHistory, 
             this.switchConversation.bind(this), 
-            window.UI.Modal.RenameChat.showRenameChatModal, 
+            window.Modal.RenameChat.showRenameChatModal, 
             this.deleteConversation.bind(this)
         );
     },

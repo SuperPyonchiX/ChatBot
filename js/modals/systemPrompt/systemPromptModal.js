@@ -1,11 +1,10 @@
-window.UI = window.UI || {};
-window.UI.Modal = window.UI.Modal || {};
-window.UI.Modal.SystemPrompt = window.UI.Modal.SystemPrompt || {};
+window.Modal = window.Modal || {};
+window.Modal.SystemPrompt = window.Modal.SystemPrompt || {};
 
 /**
  * システムプロンプトモーダル関連の機能
  */
-Object.assign(window.UI.Modal.SystemPrompt, {
+Object.assign(window.Modal.SystemPrompt, {
     /**
      * システムプロンプト設定モーダルを表示します
      * システムプロンプト編集モーダルを表示し、テンプレート一覧も更新します

@@ -46,7 +46,7 @@ window.ModalHandlers = {
 
         // ローカルストレージに保存
         window.Storage.saveApiSettings(window.AppState.apiSettings);
-        window.UI.Modal.ApiSettings.hideApiKeyModal();
+        window.Modal.ApiSettings.hideApiKeyModal();
     },
 
     /**
@@ -69,7 +69,7 @@ window.ModalHandlers = {
         }
         
         // モーダルを閉じる
-        window.UI.Modal.RenameChat.hideRenameChatModal();
+        window.Modal.RenameChat.hideRenameChatModal();
     },
 
     /**
@@ -105,7 +105,7 @@ window.ModalHandlers = {
         document.getElementById('newTemplateCategory').value = '';
         
         // テンプレート一覧を更新
-        window.UI.Modal.SystemPrompt.updateTemplateList(templates, this.onTemplateSelect, this.onTemplateDelete);
+        window.Modal.SystemPrompt.updateTemplateList(templates, this.onTemplateSelect, this.onTemplateDelete);
         
         window.UI.notify('新規テンプレートを保存しました', 'success');
     },
@@ -129,7 +129,7 @@ window.ModalHandlers = {
         if (confirm(`テンプレート "${templateName}" を削除してもよろしいですか？`)) {
             delete window.AppState.promptTemplates[templateName];
             window.Storage.savePromptTemplates(window.AppState.promptTemplates);
-            window.UI.Modal.SystemPrompt.updateTemplateList(
+            window.Modal.SystemPrompt.updateTemplateList(
                 window.AppState.promptTemplates, 
                 this.onTemplateSelect, 
                 this.onTemplateDelete

@@ -1,11 +1,10 @@
-window.UI = window.UI || {};
-window.UI.Modal = window.UI.Modal || {};
-window.UI.Modal.PromptManager = window.UI.Modal.PromptManager || {};
+window.Modal = window.Modal || {};
+window.Modal.PromptManager = window.Modal.PromptManager || {};
 
 /**
  * プロンプトマネージャー関連の機能
  */
-Object.assign(window.UI.Modal.PromptManager, {
+Object.assign(window.Modal.PromptManager, {
     /**
      * プロンプトマネージャーモーダルを表示する
      */
