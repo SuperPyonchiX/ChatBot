@@ -5,51 +5,51 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--text-preview-overlay-bg);
     z-index: 1000;
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: var(--spacing-lg);
 }
 
 .text-file-viewer {
-    background-color: var(--background-color);
-    border-radius: 8px;
+    background-color: var(--background-primary);
+    border-radius: var(--border-radius-lg);
     flex: 1;
     overflow: auto;
-    margin-top: 10px;
-    padding: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-lg);
+    box-shadow: var(--text-preview-shadow);
 }
 
 .text-file-title-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--secondary-background-color);
-    padding: 10px 20px;
-    border-radius: 8px;
+    background-color: var(--background-secondary);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
 }
 
 .text-file-content {
-    font-family: 'Consolas', 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 1.5;
+    font-family: var(--font-family-code);
+    font-size: var(--text-content-size);
+    line-height: var(--office-text-line-height);
     margin: 0;
     white-space: pre-wrap;
     word-wrap: break-word;
 }
 
 .file-preview-button {
-    margin-left: 10px;
-    padding: 4px 8px;
+    margin-left: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
     background-color: var(--background-secondary);
-    color: var(--background-color);
+    color: var(--text-primary);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
     cursor: pointer;
-    font-size: 12px;
-    transition: background-color 0.2s;
+    font-size: var(--text-preview-btn-size);
+    transition: background-color var(--transition-fast);
 }
 
 .file-preview-button:hover {
@@ -60,7 +60,6 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
-    /* background-color: var(--background-tertiary); */
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--border-radius-md);
     border: 1px solid var(--border-color);
@@ -72,34 +71,34 @@
 
 .attachment-file-name {
     flex: 1;
-    margin: 0 10px;
+    margin: 0 var(--spacing-sm);
 }
 
 /* ファイルタイプアイコンの色 */
 .file-type-icon .fa-file-word {
-    color: #2b579a;  /* Word青 */
+    color: var(--file-icon-word);
 }
 
 .file-type-icon .fa-file-excel {
-    color: #217346;  /* Excel緑 */
+    color: var(--file-icon-excel);
 }
 
 .file-type-icon .fa-file-powerpoint {
-    color: #d24726;  /* PowerPointオレンジ */
+    color: var(--file-icon-powerpoint);
 }
 
 .file-type-icon .fa-file-pdf {
-    color: #f40f02;  /* PDF赤 */
+    color: var(--file-icon-pdf);
 }
 
 .file-type-icon .fa-file-alt {
-    color: #808080;  /* テキストファイル グレー */
+    color: var(--file-icon-text);
 }
 
 .file-type-icon .fa-file-code {
-    color: #007acc;  /* コードファイル 青 */
+    color: var(--file-icon-code);
 }
 
 .file-type-icon .fa-file {
-    color: #808080;  /* その他のファイル グレー */
+    color: var(--file-icon-default);
 }

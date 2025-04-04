@@ -1,25 +1,25 @@
 /* プロンプトマネージャー関連のスタイル */
 .prompt-manager-modal {
-    max-width: 900px;
-    width: 90%;
+    max-width: var(--prompt-manager-width);
+    width: var(--modal-width);
     max-height: 80vh;
 }
 
 .prompt-manager-container {
     display: flex;
-    height: 60vh;
+    height: var(--prompt-manager-height);
     overflow: hidden;
     border: 1px solid var(--border-color);
-    border-radius: 5px;
-    margin-bottom: 15px;
-    background-color: #1e1e1e;
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-md);
+    background-color: var(--background-primary);
 }
 
 .prompt-manager-sidebar {
-    width: 250px;
-    background-color: #1e1e1e;
-    border-right: 1px solid #404040;
-    padding: 10px;
+    width: var(--prompt-sidebar-width);
+    background-color: var(--background-primary);
+    border-right: 1px solid var(--border-color);
+    padding: var(--spacing-sm);
     overflow-y: auto;
 }
 
@@ -28,12 +28,12 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background-color: #1e1e1e;
+    background-color: var(--background-primary);
 }
 
 .prompt-list-header {
-    padding: 10px 15px;
-    border-bottom: 1px solid #404040;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -41,94 +41,94 @@
 
 .prompt-search {
     flex: 1;
-    margin: 0 15px;
+    margin: 0 var(--spacing-md);
 }
 
 .prompt-search input {
     width: 100%;
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #404040;
-    background-color: #2d2d2d;
-    color: #e0e0e0;
+    padding: var(--prompt-search-padding);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+    background-color: var(--background-secondary);
+    color: var(--text-primary);
 }
 
 .prompts-list {
     flex: 1;
     overflow-y: auto;
-    padding: 10px;
+    padding: var(--spacing-sm);
 }
 
 .prompt-categories-list {
-    margin-bottom: 15px;
+    margin-bottom: var(--spacing-md);
 }
 
 /* プロンプトマネージャー特有のカテゴリースタイル */
 .prompt-categories-list .category-item {
-    padding: 8px 10px;
+    padding: var(--spacing-sm) var(--spacing-sm);
     cursor: pointer;
-    border-radius: 4px;
-    margin-bottom: 5px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-xs);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: background-color 0.2s;
-    background-color: #2d2d2d;
-    color: #e0e0e0;
+    transition: background-color var(--transition-fast);
+    background-color: var(--background-secondary);
+    color: var(--text-primary);
 }
 
 .prompt-categories-list .category-item:hover {
-    background-color: #363636;
+    background-color: var(--background-tertiary);
 }
 
 .prompt-categories-list .category-item.active {
-    background-color: #404040;
-    color: #fff;
+    background-color: var(--background-quaternary);
+    color: var(--text-primary);
 }
 
 .category-actions {
-    margin-top: 10px;
+    margin-top: var(--spacing-sm);
     display: flex;
     justify-content: center;
 }
 
 .prompt-item {
-    padding: 12px;
-    border: 1px solid #404040;
-    border-radius: 5px;
-    margin-bottom: 10px;
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-sm);
     cursor: pointer;
-    transition: all 0.2s ease;
-    background-color: #2d2d2d;
+    transition: all var(--transition-fast) ease;
+    background-color: var(--background-secondary);
 }
 
 .prompt-item:hover {
-    border-color: #505050;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    background-color: #363636;
+    border-color: var(--border-color-hover);
+    box-shadow: var(--shadow-sm);
+    background-color: var(--background-tertiary);
 }
 
 .prompt-item-header {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-sm);
 }
 
 .prompt-item-name {
     font-weight: bold;
-    font-size: 1.1em;
-    color: #e0e0e0;
+    font-size: var(--prompt-item-name-size);
+    color: var(--text-primary);
 }
 
 .prompt-item-actions button {
     background: none;
     border: none;
     cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-    padding: 3px 6px;
-    margin-left: 5px;
-    color: #888;
+    opacity: var(--button-opacity-default);
+    transition: opacity var(--transition-fast);
+    padding: var(--spacing-xs) var(--spacing-xs);
+    margin-left: var(--spacing-xs);
+    color: var(--text-tertiary);
 }
 
 .prompt-item-actions button:hover {
@@ -136,55 +136,55 @@
 }
 
 .prompt-item-description {
-    color: #b0b0b0;
-    font-size: 0.9em;
-    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-sm);
 }
 
 .prompt-item-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: var(--spacing-xs);
 }
 
 .prompt-tag {
-    background-color: #404040;
-    color: #e0e0e0;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.8em;
+    background-color: var(--background-quaternary);
+    color: var(--text-primary);
+    padding: var(--prompt-tag-padding);
+    border-radius: var(--prompt-tag-radius);
+    font-size: var(--font-size-xs);
 }
 
 /* Variable help text */
 .variable-help-text {
-    background-color: #2d2d2d;
-    padding: 10px;
-    border-radius: 5px;
-    margin-top: 5px;
-    font-size: 0.9em;
-    border: 1px solid #404040;
+    background-color: var(--background-secondary);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    border: 1px solid var(--border-color);
 }
 
 .variable-help-text code {
-    background-color: #363636;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-family: monospace;
-    color: #e0e0e0;
+    background-color: var(--background-tertiary);
+    padding: var(--spacing-xs) var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+    font-family: var(--font-family-code);
+    color: var(--text-primary);
 }
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
     .prompt-manager-container {
         flex-direction: column;
-        height: 70vh;
+        height: var(--prompt-manager-mobile-height);
     }
     
     .prompt-manager-sidebar {
         width: 100%;
-        height: 150px;
+        height: var(--prompt-mobile-sidebar-height);
         border-right: none;
-        border-bottom: 1px solid #404040;
+        border-bottom: 1px solid var(--border-color);
     }
     
     .prompt-list-header {
@@ -193,25 +193,25 @@
     }
     
     .prompt-search {
-        margin: 10px 0;
+        margin: var(--spacing-sm) 0;
     }
     
     .prompt-manager-modal {
-        padding: 10px;
+        padding: var(--spacing-sm);
     }
 }
 
 /* プロンプトマネージャー閉じるボタン */
 #closePromptManager {
-    background-color: #404040;
-    color: #e0e0e0;
-    border: 1px solid #505050;
-    border-radius: 4px;
-    padding: 8px 15px;
+    background-color: var(--background-quaternary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color var(--transition-fast);
 }
 
 #closePromptManager:hover {
-    background-color: #505050;
+    background-color: var(--border-color-hover);
 }

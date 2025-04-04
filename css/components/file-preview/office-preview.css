@@ -1,48 +1,48 @@
 /* Office関連ファイルプレビュー関連のスタイル */
 .attachment-office-container {
-    margin: 10px 0;
+    margin: var(--spacing-sm) 0;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: var(--border-radius-lg);
     overflow: hidden;
-    max-width: 300px;
+    max-width: var(--office-preview-max-width);
 }
 
 .office-preview {
     display: flex;
     align-items: center;
-    padding: 12px;
-    gap: 10px;
-    background-color: var(--card-bg);
+    padding: var(--spacing-md);
+    gap: var(--office-preview-gap);
+    background-color: var(--background-secondary);
 }
 
 .office-preview .fas {
-    font-size: 24px;
+    font-size: var(--office-icon-size);
 }
 
 /* Wordアイコンの色 */
 .office-preview .fa-file-word {
-    color: #2b579a;
+    color: var(--office-word-color);
 }
 
 /* Excelアイコンの色 */
 .office-preview .fa-file-excel {
-    color: #217346;
+    color: var(--office-excel-color);
 }
 
 /* PowerPointアイコンの色 */
 .office-preview .fa-file-powerpoint {
-    color: #d24726;
+    color: var(--office-powerpoint-color);
 }
 
 .office-content-button {
     background-color: var(--background-secondary);
-    color: white;
+    color: var(--text-primary);
     border: none;
-    padding: 4px 12px;
-    border-radius: 4px;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
     cursor: pointer;
-    font-size: 0.8rem;
-    transition: background-color 0.2s;
+    font-size: var(--font-size-xs);
+    transition: background-color var(--transition-fast);
 }
 
 .office-content-button:hover {
@@ -55,37 +55,37 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: var(--office-overlay-bg);
     z-index: 1000;
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: var(--spacing-lg);
 }
 
 .office-title-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: white;
-    padding: 10px;
-    font-size: 1.1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    margin-bottom: 10px;
+    color: var(--text-primary);
+    padding: var(--spacing-sm);
+    font-size: var(--office-title-size);
+    border-bottom: 1px solid var(--office-border-light);
+    margin-bottom: var(--spacing-sm);
 }
 
 .office-content-viewer {
     flex-grow: 1;
-    background-color: #1e1e1e;
-    border-radius: 4px;
+    background-color: var(--background-primary);
+    border-radius: var(--border-radius-sm);
     overflow: auto;
-    color: #e0e0e0;
-    padding: 15px;
+    color: var(--text-primary);
+    padding: var(--office-content-padding);
 }
 
 .office-text-content {
-    font-family: 'Consolas', 'Courier New', monospace;
+    font-family: var(--font-family-code);
     white-space: pre-wrap;
-    line-height: 1.5;
-    font-size: 0.9rem;
-    color: #e0e0e0;
+    line-height: var(--office-text-line-height);
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
 }

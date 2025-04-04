@@ -5,9 +5,9 @@
 
 .typing-dots span {
     display: inline-block;
-    animation: typingDot 1.4s infinite;
+    animation: typingDot var(--animation-duration-slow) infinite;
     opacity: 0;
-    margin: 0 2px;
+    margin: 0 var(--spacing-xs);
 }
 
 .typing-dots span:nth-child(2) {
@@ -25,26 +25,26 @@
 }
 
 .typing-indicator {
-    padding: 12px;
-    background-color: var(--message-bot-bg);
-    border-radius: 8px;
+    padding: var(--spacing-md);
+    background-color: var(--background-secondary);
+    border-radius: var(--border-radius-lg);
 }
 
 .typing-indicator p {
-    color: var(--text-color);
-    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
     margin: 0;
 }
 
 /* 実行中のスピナーアニメーション */
 .executing-spinner {
     display: inline-block;
-    width: 16px;
-    height: 16px;
+    width: var(--spinner-size-sm);
+    height: var(--spinner-size-sm);
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: #fff;
-    animation: spin 1s linear infinite;
+    border: var(--spinner-border-width) solid var(--spinner-overlay-color);
+    border-top-color: var(--spinner-primary-color);
+    animation: spin var(--animation-duration-normal) linear infinite;
 }
 
 @keyframes spin {

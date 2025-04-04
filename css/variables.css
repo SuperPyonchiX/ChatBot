@@ -35,6 +35,11 @@
     --transition-normal: 0.3s;
     --transition-slow: 0.5s;
     
+    /* アニメーション時間 */
+    --animation-duration-fast: 0.8s;
+    --animation-duration-normal: 1s;
+    --animation-duration-slow: 1.4s;
+    
     /* シャドウ */
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -51,4 +56,140 @@
     --sidebar-width: 260px;
     --header-height: 60px;
     --modal-max-width: 900px;
+    
+    /* スピナー */
+    --spinner-size-sm: 16px;
+    --spinner-size-md: 24px;
+    --spinner-size-lg: 32px;
+    --spinner-border-width: 2px;
+    --spinner-overlay-color: rgba(255, 255, 255, 0.3);
+    --spinner-primary-color: #fff;
+
+    /* ボタン */
+    --button-text-color: #e0e0e0;
+    --button-disabled-text: #666;
+    --button-history-text: #c5c5d2;
+    --button-size-sm: 28px;
+    --button-size-md: 40px;
+    --button-border-sidebar: #565869;
+    --button-bg-hover-sidebar: #343541;
+    --button-bg-active-sidebar: #40414f;
+    --button-opacity-default: 0.7;
+    --button-scale-hover: 1.05;
+    
+    /* 実行ボタン */
+    --execute-button-bg: rgba(46, 204, 113, 0.2);
+    --execute-button-bg-hover: rgba(46, 204, 113, 0.5);
+
+    /* コード実行 */
+    --code-bg: #282c34;
+    --code-border-info: #3498db;
+    --code-border-success: #2ecc71;
+    --code-bg-error: #462a2a;
+    --code-text-error: #e74c3c;
+    --code-text-warn: #f39c12;
+    --code-text-info: #3498db;
+    --code-console-bg: #333;
+    --code-max-height: 200px;
+    --code-html-border: #444;
+    --code-status-bg: #2d2d2d;
+    
+    /* フォントファミリー */
+    --font-family-code: 'Consolas', 'Monaco', monospace;
+
+    /* フォーム */
+    --form-input-bg: #1e1e1e;
+    --form-input-bg-secondary: #2d2d2d;
+    --form-input-border: #404040;
+    --form-max-height: 300px;
+    --form-input-padding: 10px;
+    --form-label-weight: 500;
+    --form-textarea-min-height: 100px;
+    
+    /* モデルセレクター */
+    --model-selector-padding-y: 5px;
+    --model-selector-padding-x: 10px;
+
+    /* モーダル */
+    --modal-overlay-bg: rgba(0, 0, 0, 0.5);
+    --modal-content-padding: 25px;
+    --modal-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    --modal-width: 90%;
+    --modal-max-width-default: 1000px;
+    --modal-max-width-small: 400px;
+    --modal-max-height-template: 400px;
+    --modal-template-sidebar-width: 300px;
+    
+    /* テンプレート */
+    --template-item-padding: 10px 12px;
+    --template-header-icon-size: 10px;
+    --template-count-padding: 2px 6px;
+    --template-gap: 8px;
+    --template-translate-y: -1px;
+
+    /* プロンプトマネージャー */
+    --prompt-manager-width: 900px;
+    --prompt-manager-height: 60vh;
+    --prompt-manager-mobile-height: 70vh;
+    --prompt-sidebar-width: 250px;
+    --prompt-mobile-sidebar-height: 150px;
+    --prompt-item-name-size: 1.1em;
+    --prompt-tag-radius: 12px;
+    --prompt-tag-padding: 2px 8px;
+    --prompt-search-padding: 8px;
+
+    /* プロンプト候補表示 */
+    --suggestions-max-height: 250px;
+    --suggestions-padding: 8px 12px;
+    --suggestion-label-padding: 2px 6px;
+    --suggestion-label-margin: 5px;
+    --suggestion-name-margin: 2px;
+    --suggestion-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+    /* 設定メニュー */
+    --settings-menu-min-width: 200px;
+    --settings-menu-margin: 8px;
+    --settings-menu-padding: 10px 15px;
+    --settings-menu-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    /* Officeプレビュー */
+    --office-preview-max-width: 300px;
+    --office-preview-gap: 10px;
+    --office-icon-size: 24px;
+    --office-word-color: #2b579a;
+    --office-excel-color: #217346;
+    --office-powerpoint-color: #d24726;
+    --office-overlay-bg: rgba(0, 0, 0, 0.85);
+    --office-border-light: rgba(255, 255, 255, 0.2);
+    --office-content-padding: 15px;
+    --office-title-size: 1.1rem;
+    --office-text-line-height: 1.5;
+
+    /* PDFプレビュー */
+    --pdf-preview-max-width: 300px;
+    --pdf-preview-gap: 10px;
+    --pdf-icon-size: 24px;
+    --pdf-icon-color: #e74c3c;
+    --pdf-overlay-bg: rgba(0, 0, 0, 0.85);
+    --pdf-border-light: rgba(255, 255, 255, 0.2);
+    --pdf-viewer-bg: #f5f5f5;
+    --pdf-close-btn-size: 40px;
+    --pdf-close-btn-hover: rgba(255, 255, 255, 0.1);
+    --pdf-title-size: 1.1rem;
+    --pdf-close-icon-size: 1.5rem;
+
+    /* テキストプレビュー */
+    --text-preview-overlay-bg: rgba(0, 0, 0, 0.5);
+    --text-preview-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --text-content-size: 14px;
+    --text-preview-btn-size: 12px;
+    
+    /* ファイルタイプアイコン */
+    --file-icon-word: #2b579a;
+    --file-icon-excel: #217346;
+    --file-icon-powerpoint: #d24726;
+    --file-icon-pdf: #f40f02;
+    --file-icon-text: #808080;
+    --file-icon-code: #007acc;
+    --file-icon-default: #808080;
 }

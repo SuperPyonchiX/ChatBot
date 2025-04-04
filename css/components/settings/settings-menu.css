@@ -9,13 +9,13 @@
     position: absolute;
     bottom: 100%;
     right: 0;
-    background-color: #2d2d2d;
-    min-width: 200px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border: 1px solid #404040;
-    border-radius: 4px;
+    background-color: var(--background-secondary);
+    min-width: var(--settings-menu-min-width);
+    box-shadow: var(--settings-menu-shadow);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
     z-index: 1000;
-    margin-bottom: 8px;
+    margin-bottom: var(--settings-menu-margin);
 }
 
 .settings-menu.show {
@@ -24,14 +24,14 @@
 
 .settings-menu button {
     width: 100%;
-    padding: 10px 15px;
+    padding: var(--settings-menu-padding);
     border: none;
     background: none;
-    color: #e0e0e0;
+    color: var(--text-primary);
     text-align: left;
-    transition: background-color 0.2s;
+    transition: background-color var(--transition-fast);
 }
 
 .settings-menu button:hover {
-    background-color: #404040;
+    background-color: var(--background-quaternary);
 }
