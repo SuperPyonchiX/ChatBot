@@ -197,6 +197,14 @@ window.EventHandlers = {
                 );
             });
         }
+
+        // 新規プロンプト追加ボタンのイベントハンドラー
+        const addPromptButton = document.getElementById('addPromptButton');
+        if (addPromptButton) {
+            addPromptButton.addEventListener('click', () => {
+                window.UI.showPromptEditModal(null);
+            });
+        }
     },
 
     /**
