@@ -391,15 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window.UI.notify('同じ名前のテンプレートが既に存在します', 'error');
             return;
         }
-        
-        // 新しいカテゴリの場合、カテゴリリストに追加
-        if (!window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES[templateCategory]) {
-            window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES[templateCategory] = {};
-        }
-        
-        // カテゴリ情報を更新
-        window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES[templateCategory][templateName] = true;
-        
+                
         // テンプレートを保存
         templates[templateName] = systemPrompt;
         window.Storage.savePromptTemplates(templates);
