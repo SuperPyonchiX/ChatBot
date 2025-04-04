@@ -1,9 +1,11 @@
 window.UI = window.UI || {};
+window.UI.FileAttachment = window.UI.FileAttachment || {};
+
 
 /**
  * ファイル添付関連の機能
  */
-Object.assign(window.UI, {
+Object.assign(window.UI.FileAttachment, {
     /**
      * ファイル添付ボタンと添付ファイル表示エリアを作成します
      * チャット入力エリアにファイル添付機能を追加します

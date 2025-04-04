@@ -1,9 +1,11 @@
 window.UI = window.UI || {};
+window.UI.Modal = window.UI.Modal || {};
+window.UI.Modal.ApiSettings = window.UI.Modal.ApiSettings || {};
 
 /**
  * APIキーモーダル関連の機能
  */
-Object.assign(window.UI, {
+Object.assign(window.UI.Modal.ApiSettings, {
     /**
      * APIキーモーダルを表示します
      * API設定を編集するためのモーダルダイアログを表示します

@@ -1,9 +1,11 @@
 window.UI = window.UI || {};
+window.UI.Modal = window.UI.Modal || {};
+window.UI.Modal.RenameChat = window.UI.Modal.RenameChat || {};
 
 /**
  * チャット名変更モーダル関連の機能
  */
-Object.assign(window.UI, {
+Object.assign(window.UI.Modal.RenameChat, {
     /**
      * チャットの名前変更モーダルを表示します
      * 会話のタイトルを変更するためのモーダルを表示します

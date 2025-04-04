@@ -57,7 +57,7 @@ window.EventHandlers = {
         // システムプロンプト設定
         window.Elements.openSystemPromptSettings.addEventListener('click', () => {
             window.Elements.settingsMenu.style.display = 'none';
-            window.UI.showSystemPromptModal(
+            window.UI.Modal.SystemPrompt.showSystemPromptModal(
                 window.AppState.systemPrompt, 
                 window.AppState.promptTemplates, 
                 window.ModalHandlers.onTemplateSelect, 
@@ -68,14 +68,14 @@ window.EventHandlers = {
         // API設定
         window.Elements.openApiSettings.addEventListener('click', () => {
             window.Elements.settingsMenu.style.display = 'none';
-            window.UI.showApiKeyModal(window.AppState.apiSettings);
+            window.UI.Modal.ApiSettings.showApiKeyModal(window.AppState.apiSettings);
         });
         
         // 高度なプロンプト管理
         if (window.Elements.openPromptManager) {
             window.Elements.openPromptManager.addEventListener('click', () => {
                 window.Elements.settingsMenu.style.display = 'none';
-                window.UI.showPromptManagerModal();
+                window.UI.Modal.PromptManager.showPromptManagerModal();
             });
         }
     },
@@ -122,11 +122,11 @@ window.EventHandlers = {
             
             window.AppState.systemPrompt = window.Elements.systemPromptInput.value.trim();
             window.Storage.saveSystemPrompt(window.AppState.systemPrompt);
-            window.UI.hideSystemPromptModal();
+            window.UI.Modal.SystemPrompt.hideSystemPromptModal();
         });
         
         // システムプロンプトキャンセル
-        window.Elements.cancelSystemPrompt.addEventListener('click', window.UI.hideSystemPromptModal);
+        window.Elements.cancelSystemPrompt.addEventListener('click', window.UI.Modal.SystemPrompt.hideSystemPromptModal);
         
         // 新しいテンプレート保存
         window.Elements.saveNewTemplate.addEventListener('click', window.ModalHandlers.saveNewTemplate.bind(window.ModalHandlers));
@@ -135,8 +135,8 @@ window.EventHandlers = {
         const switchToPromptManagerBtn = document.getElementById('switchToPromptManager');
         if (switchToPromptManagerBtn) {
             switchToPromptManagerBtn.addEventListener('click', () => {
-                window.UI.hideSystemPromptModal();
-                window.UI.showPromptManagerModal();
+                window.UI.Modal.SystemPrompt.hideSystemPromptModal();
+                window.UI.Modal.PromptManager.showPromptManagerModal();
             });
         }
     },
@@ -152,11 +152,11 @@ window.EventHandlers = {
         window.Elements.saveApiKey.addEventListener('click', window.ModalHandlers.saveApiSettings);
         
         // APIキーキャンセル
-        window.Elements.cancelApiKey.addEventListener('click', window.UI.hideApiKeyModal);
+        window.Elements.cancelApiKey.addEventListener('click', window.UI.Modal.ApiSettings.hideApiKeyModal);
         
         // APIタイプ切り替え
-        window.Elements.openaiRadio.addEventListener('change', window.UI.toggleAzureSettings);
-        window.Elements.azureRadio.addEventListener('change', window.UI.toggleAzureSettings);
+        window.Elements.openaiRadio.addEventListener('change', window.UI.Modal.ApiSettings.toggleAzureSettings);
+        window.Elements.azureRadio.addEventListener('change', window.UI.Modal.ApiSettings.toggleAzureSettings);
     },
 
     /**
@@ -169,7 +169,7 @@ window.EventHandlers = {
         window.Elements.saveRenameChat.addEventListener('click', window.ModalHandlers.saveRenamedChat);
         
         // キャンセルボタン
-        window.Elements.cancelRenameChat.addEventListener('click', window.UI.hideRenameChatModal);
+        window.Elements.cancelRenameChat.addEventListener('click', window.UI.Modal.RenameChat.hideRenameChatModal);
     },
 
     /**
@@ -180,7 +180,7 @@ window.EventHandlers = {
         const closePromptManagerBtn = document.getElementById('closePromptManager');
         if (closePromptManagerBtn) {
             closePromptManagerBtn.addEventListener('click', () => {
-                window.UI.hidePromptManagerModal();
+                window.UI.Modal.PromptManager.hidePromptManagerModal();
             });
         }
 
@@ -188,8 +188,8 @@ window.EventHandlers = {
         const switchToSystemPromptBtn = document.getElementById('switchToSystemPrompt');
         if (switchToSystemPromptBtn) {
             switchToSystemPromptBtn.addEventListener('click', () => {
-                window.UI.hidePromptManagerModal();
-                window.UI.showSystemPromptModal(
+                window.UI.Modal.PromptManager.hidePromptManagerModal();
+                window.UI.Modal.SystemPrompt.showSystemPromptModal(
                     window.AppState.systemPrompt,
                     window.AppState.promptTemplates,
                     window.ModalHandlers.onTemplateSelect,
@@ -202,7 +202,7 @@ window.EventHandlers = {
         const addPromptButton = document.getElementById('addPromptButton');
         if (addPromptButton) {
             addPromptButton.addEventListener('click', () => {
-                window.UI.showPromptEditModal(null);
+                window.UI.Modal.PromptManager.showPromptEditModal(null);
             });
         }
     },
@@ -214,7 +214,7 @@ window.EventHandlers = {
         // エラーアクションのイベント委任
         document.addEventListener('click', function(e) {
             if (e.target && e.target.id === 'showApiSettings') {
-                window.UI.showApiKeyModal(window.AppState.apiSettings);
+                window.UI.Modal.ApiSettings.showApiKeyModal(window.AppState.apiSettings);
             }
         });
         
@@ -234,9 +234,9 @@ window.EventHandlers = {
             if (e.key === 'Escape') {
                 // 開いているモーダルを閉じる
                 const modals = [
-                    { id: 'systemPromptModal', hide: window.UI.hideSystemPromptModal },
-                    { id: 'apiKeyModal', hide: window.UI.hideApiKeyModal },
-                    { id: 'renameChatModal', hide: window.UI.hideRenameChatModal }
+                    { id: 'systemPromptModal', hide: window.UI.Modal.SystemPrompt.hideSystemPromptModal },
+                    { id: 'apiKeyModal', hide: window.UI.Modal.ApiSettings.hideApiKeyModal },
+                    { id: 'renameChatModal', hide: window.UI.Modal.RenameChat.hideRenameChatModal }
                 ];
                 
                 modals.forEach(modal => {

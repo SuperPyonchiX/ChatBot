@@ -221,7 +221,7 @@ window.UI = {
         this.applyTheme();
         this.setupAccessibility();
         this.optimizeForTouchDevices();
-        this.createSidebarToggle();
+        this.Sidebar.createSidebarToggle();
         this._optimizeUI();
     },
     

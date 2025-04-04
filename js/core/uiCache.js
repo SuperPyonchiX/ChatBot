@@ -4,7 +4,7 @@
  * 
  * @namespace UICache
  */
-const UICache = {
+window.UICache = {
     elements: {},
     
     /**
@@ -59,6 +59,3 @@ const UICache = {
         UICache.elements = {};
     }
 };
-
-// グローバルに公開
-window.UICache = UICache;

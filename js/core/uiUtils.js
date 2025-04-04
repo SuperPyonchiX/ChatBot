@@ -4,7 +4,7 @@
  * 
  * @namespace UIUtils
  */
-const UIUtils = {
+window.UIUtils = {
     /**
      * 要素の表示/非表示を切り替えます
      * @param {HTMLElement} element - 対象要素
@@ -150,5 +150,3 @@ const UIUtils = {
         textarea.style.height = `${textarea.scrollHeight}px`;
     }
 };
-
-window.UIUtils = UIUtils;

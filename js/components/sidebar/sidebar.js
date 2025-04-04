@@ -1,9 +1,11 @@
 window.UI = window.UI || {};
+window.UI.Sidebar = window.UI.Sidebar || {};
+
 
 /**
  * サイドバー関連の機能
  */
-Object.assign(window.UI, {
+Object.assign(window.UI.Sidebar, {
     /**
      * モバイル用のサイドバートグルボタンを作成します
      * 画面サイズに応じてサイドバーの表示/非表示を切り替えるボタンを配置します

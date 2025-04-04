@@ -35,7 +35,7 @@ window.ChatActions = {
             
             const attachmentPreviewArea = document.querySelector('.attachment-preview-area');
             if (attachmentPreviewArea) {
-                window.UI.clearAttachments(attachmentPreviewArea);
+                window.UI.FileAttachment.clearAttachments(attachmentPreviewArea);
             }
             
             // ストリーミングメソッドを使用してメッセージを送信
@@ -128,7 +128,7 @@ window.ChatActions = {
             window.AppState.currentConversationId, 
             window.Elements.chatHistory, 
             this.switchConversation.bind(this), 
-            window.UI.showRenameChatModal, 
+            window.UI.Modal.RenameChat.showRenameChatModal, 
             this.deleteConversation.bind(this)
         );
     },
