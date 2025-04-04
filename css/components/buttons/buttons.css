@@ -108,28 +108,22 @@
 }
 
 /* モーダル関連ボタン */
-#saveApiKey, #saveSystemPrompt, #saveRenameChat {
-    background-color: var(--background-quaternary);
+#saveApiKey, #saveSystemPrompt, #saveRenameChat,
+#cancelApiKey, #cancelSystemPrompt, #cancelRenameChat,
+#switchToPromptManager, #closePromptManager {
+    background-color: var(--background-tertiary);
     color: var(--button-text-color);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
     padding: var(--spacing-sm) var(--spacing-md);
+    height: 36px;
+    transition: background-color var(--transition-fast);
 }
 
-#saveApiKey:hover, #saveSystemPrompt:hover, #saveRenameChat:hover {
-    background-color: var(--border-color-hover);
-}
-
-#cancelApiKey, #cancelSystemPrompt, #cancelRenameChat {
-    background-color: var(--background-secondary);
-    border: 1px solid var(--background-quaternary);
-    color: var(--button-text-color);
-    border-radius: var(--border-radius-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-}
-
-#cancelApiKey:hover, #cancelSystemPrompt:hover, #cancelRenameChat:hover {
-    background-color: var(--background-tertiary);
+#saveApiKey:hover, #saveSystemPrompt:hover, #saveRenameChat:hover,
+#cancelApiKey:hover, #cancelSystemPrompt:hover, #cancelRenameChat:hover,
+#switchToPromptManager:hover, #closePromptManager:hover {
+    background-color: var(--background-quaternary);
 }
 
 /* セカンダリーボタン */
@@ -139,7 +133,6 @@
     color: var(--button-text-color);
     border-radius: var(--border-radius-sm);
     padding: var(--spacing-xs) var(--spacing-sm);
-    margin-top: var(--spacing-xs);
     cursor: pointer;
     transition: background-color var(--transition-fast);
 }

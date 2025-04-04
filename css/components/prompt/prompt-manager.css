@@ -201,17 +201,3 @@
     }
 }
 
-/* プロンプトマネージャー閉じるボタン */
-#closePromptManager {
-    background-color: var(--background-quaternary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-    cursor: pointer;
-    transition: background-color var(--transition-fast);
-}
-
-#closePromptManager:hover {
-    background-color: var(--border-color-hover);
-}
