@@ -45,17 +45,8 @@ Object.assign(window.UI, {
             otherOption.textContent = 'その他';
             categorySelect.appendChild(otherOption);
         }
-        
-        // テンプレート一覧を表示（不要なエントリを除外）
-        const filteredTemplates = {};
-        Object.entries(promptTemplates).forEach(([key, value]) => {
-            // 'CATEGORIES'と'CATEGORY_ORDER'は除外
-            if (key !== 'CATEGORIES' && key !== 'CATEGORY_ORDER') {
-                filteredTemplates[key] = value;
-            }
-        });
-        
-        this.updateTemplateList(filteredTemplates, onTemplateSelect, onTemplateDelete);
+                
+        this.updateTemplateList(promptTemplates, onTemplateSelect, onTemplateDelete);
     },
 
     /**
@@ -82,7 +73,7 @@ Object.assign(window.UI, {
         
         // DocumentFragmentを使用してDOM操作を最適化
         const fragment = document.createDocumentFragment();
-        
+
         // カテゴリごとにテンプレートを整理
         const categorizedTemplates = {};
         Object.entries(promptTemplates).forEach(([templateName, content]) => {
@@ -179,9 +170,10 @@ Object.assign(window.UI, {
             })
         ];
         
-        // config.jsで定義されたテンプレートの判定
-        const isConfigTemplate = Object.keys(window.CONFIG.PROMPTS.TEMPLATES).includes(templateName);
-        
+        // テンプレート名がデフォルトテンプレートかどうかを判定
+        const isConfigTemplate = Object.values(window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES)
+                                    .some(category => Object.keys(category).includes(templateName));
+
         // デフォルトテンプレートとconfig.jsで定義されたテンプレート以外に削除ボタンを表示
         if (!isConfigTemplate) {
             children.push(UIUtils.createElement('button', {
