@@ -106,6 +106,7 @@ window.EventHandlers = {
         this.setupSystemPromptModal();
         this.setupApiKeyModal();
         this.setupRenameChatModal();
+        this.setupPromptManagerModal();
     },
 
     /**
@@ -169,6 +170,33 @@ window.EventHandlers = {
         
         // キャンセルボタン
         window.Elements.cancelRenameChat.addEventListener('click', window.UI.hideRenameChatModal);
+    },
+
+    /**
+     * プロンプト管理モーダルのイベントをセットアップします
+     */
+    setupPromptManagerModal() {
+        // 閉じるボタンのイベントハンドラー
+        const closePromptManagerBtn = document.getElementById('closePromptManager');
+        if (closePromptManagerBtn) {
+            closePromptManagerBtn.addEventListener('click', () => {
+                window.UI.hidePromptManagerModal();
+            });
+        }
+
+        // システムプロンプト設定への切り替えボタンのイベントハンドラー
+        const switchToSystemPromptBtn = document.getElementById('switchToSystemPrompt');
+        if (switchToSystemPromptBtn) {
+            switchToSystemPromptBtn.addEventListener('click', () => {
+                window.UI.hidePromptManagerModal();
+                window.UI.showSystemPromptModal(
+                    window.AppState.systemPrompt,
+                    window.AppState.promptTemplates,
+                    window.ModalHandlers.onTemplateSelect,
+                    window.ModalHandlers.onTemplateDelete
+                );
+            });
+        }
     },
 
     /**
