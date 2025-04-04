@@ -60,8 +60,8 @@ window.EventHandlers = {
             window.Modal.SystemPrompt.showSystemPromptModal(
                 window.AppState.systemPrompt, 
                 window.AppState.promptTemplates, 
-                window.ModalHandlers.onTemplateSelect, 
-                window.ModalHandlers.onTemplateDelete
+                window.Modal.Handlers.onTemplateSelect, 
+                window.Modal.Handlers.onTemplateDelete
             );
         });
         
@@ -129,7 +129,7 @@ window.EventHandlers = {
         window.Elements.cancelSystemPrompt.addEventListener('click', window.Modal.SystemPrompt.hideSystemPromptModal);
         
         // 新しいテンプレート保存
-        window.Elements.saveNewTemplate.addEventListener('click', window.ModalHandlers.saveNewTemplate.bind(window.ModalHandlers));
+        window.Elements.saveNewTemplate.addEventListener('click', window.Modal.Handlers.saveNewTemplate.bind(window.Modal.Handlers));
 
         // 高度なプロンプト管理へ切り替え
         const switchToPromptManagerBtn = document.getElementById('switchToPromptManager');
@@ -149,7 +149,7 @@ window.EventHandlers = {
             !window.Elements.openaiRadio || !window.Elements.azureRadio) return;
         
         // APIキー保存
-        window.Elements.saveApiKey.addEventListener('click', window.ModalHandlers.saveApiSettings);
+        window.Elements.saveApiKey.addEventListener('click', window.Modal.Handlers.saveApiSettings);
         
         // APIキーキャンセル
         window.Elements.cancelApiKey.addEventListener('click', window.Modal.ApiSettings.hideApiKeyModal);
@@ -166,7 +166,7 @@ window.EventHandlers = {
         if (!window.Elements.saveRenameChat || !window.Elements.cancelRenameChat) return;
         
         // 保存ボタン
-        window.Elements.saveRenameChat.addEventListener('click', window.ModalHandlers.saveRenamedChat);
+        window.Elements.saveRenameChat.addEventListener('click', window.Modal.Handlers.saveRenamedChat);
         
         // キャンセルボタン
         window.Elements.cancelRenameChat.addEventListener('click', window.Modal.RenameChat.hideRenameChatModal);
@@ -192,8 +192,8 @@ window.EventHandlers = {
                 window.Modal.SystemPrompt.showSystemPromptModal(
                     window.AppState.systemPrompt,
                     window.AppState.promptTemplates,
-                    window.ModalHandlers.onTemplateSelect,
-                    window.ModalHandlers.onTemplateDelete
+                    window.Modal.Handlers.onTemplateSelect,
+                    window.Modal.Handlers.onTemplateDelete
                 );
             });
         }

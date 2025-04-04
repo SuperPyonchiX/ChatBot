@@ -1,9 +1,12 @@
+window.Modal = window.Modal || {};
+window.Modal.Handlers = window.Modal.Handlers || {};
+
 /**
  * modalHandlers.js
  * モーダル関連のイベントハンドラーを管理するモジュール
  */
 
-window.ModalHandlers = {
+Object.assign(window.Modal.Handlers, {
     /**
      * API設定を保存します
      */
@@ -136,4 +139,4 @@ window.ModalHandlers = {
             );
         }
     }
-};
+});
