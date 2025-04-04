@@ -373,11 +373,16 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function saveNewTemplate() {
         const templateName = document.getElementById('newTemplateName').value.trim();
-        const templateCategory = document.getElementById('newTemplateCategory').value;
+        const templateCategory = document.getElementById('newTemplateCategory').value.trim();
         const systemPrompt = document.getElementById('systemPromptInput').value.trim();
         
         if (!templateName || !systemPrompt) {
             window.UI.notify('テンプレート名とプロンプト内容を入力してください', 'error');
+            return;
+        }
+
+        if (!templateCategory) {
+            window.UI.notify('カテゴリを入力してください', 'error');
             return;
         }
         
@@ -386,13 +391,22 @@ document.addEventListener('DOMContentLoaded', function() {
             window.UI.notify('同じ名前のテンプレートが既に存在します', 'error');
             return;
         }
-                
+        
+        // 新しいカテゴリの場合、カテゴリリストに追加
+        if (!window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES[templateCategory]) {
+            window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES[templateCategory] = {};
+        }
+        
+        // カテゴリ情報を更新
+        window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES[templateCategory][templateName] = true;
+        
         // テンプレートを保存
         templates[templateName] = systemPrompt;
         window.Storage.savePromptTemplates(templates);
         
         // 入力をクリア
         document.getElementById('newTemplateName').value = '';
+        document.getElementById('newTemplateCategory').value = '';
         
         // テンプレート一覧を更新
         window.UI.updateTemplateList(templates, onTemplateSelect, onTemplateDelete);
