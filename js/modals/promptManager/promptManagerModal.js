@@ -11,7 +11,7 @@ Object.assign(window.UI.Core.Modal, {
      */
     showPromptManagerModal: function() {
         console.log('プロンプトマネージャーモーダルを表示します');
-        const modal = document.getElementById('promptManagerModal');
+        const modal =window.UI.Cache.get('promptManagerModal');
         if (!modal) {
             console.error('モーダル要素が見つかりません: promptManagerModal');
             return;
@@ -30,7 +30,7 @@ Object.assign(window.UI.Core.Modal, {
      */
     hidePromptManagerModal: function() {
         console.log('プロンプトマネージャーモーダルを閉じます');
-        const modal = document.getElementById('promptManagerModal');
+        const modal =window.UI.Cache.get('promptManagerModal');
         if (modal) {
             modal.style.display = 'none';
         }
@@ -41,7 +41,7 @@ Object.assign(window.UI.Core.Modal, {
      */
     updatePromptCategories: function() {
         console.log('カテゴリ一覧を更新します');
-        const categoriesList = document.getElementById('promptCategoriesList');
+        const categoriesList =window.UI.Cache.get('promptCategoriesList');
         if (!categoriesList) {
             console.error('カテゴリリスト要素が見つかりません: promptCategoriesList');
             return;
@@ -129,7 +129,7 @@ Object.assign(window.UI.Core.Modal, {
      * @param {Object} filter - フィルタリング条件
      */
     updatePromptsList: function(filter = {}) {
-        const promptsList = document.getElementById('promptsList');
+        const promptsList =window.UI.Cache.get('promptsList');
         if (!promptsList) {
             console.error('プロンプトリスト要素が見つかりません: promptsList');
             return;
@@ -232,7 +232,7 @@ Object.assign(window.UI.Core.Modal, {
         try {
             const promptText = window.PromptManager.buildPrompt(promptId);
             
-            const userInput = document.getElementById('userInput');
+            const userInput =window.UI.Cache.get('userInput');
             if (userInput) {
                 userInput.value = promptText;
                 window.UI.Utils.autoResizeTextarea(userInput);
@@ -407,24 +407,24 @@ Object.assign(window.UI.Core.Modal, {
      * @param {Object} prompt - 編集するプロンプトデータ
      */
     showPromptEditModal: function(prompt) {
-        const modal = document.getElementById('promptEditModal');
+        const modal =window.UI.Cache.get('promptEditModal');
         if (!modal) {
             console.error('モーダル要素が見つかりません: promptEditModal');
             return;
         }
 
         // モーダルタイトルを設定
-        const title = document.getElementById('promptEditTitle');
+        const title =window.UI.Cache.get('promptEditTitle');
         if (title) {
             title.textContent = prompt ? 'プロンプト編集' : '新規プロンプト';
         }
 
         // フォームに値を設定
-        const nameInput = document.getElementById('promptNameInput');
-        const categorySelect = document.getElementById('promptCategorySelect');
-        const tagsInput = document.getElementById('promptTagsInput');
-        const descriptionInput = document.getElementById('promptDescriptionInput');
-        const contentInput = document.getElementById('promptContentInput');
+        const nameInput =window.UI.Cache.get('promptNameInput');
+        const categorySelect =window.UI.Cache.get('promptCategorySelect');
+        const tagsInput =window.UI.Cache.get('promptTagsInput');
+        const descriptionInput =window.UI.Cache.get('promptDescriptionInput');
+        const contentInput =window.UI.Cache.get('promptContentInput');
 
         if (prompt) {
             nameInput.value = prompt.name || '';
@@ -448,23 +448,23 @@ Object.assign(window.UI.Core.Modal, {
         modal.style.display = 'block';
 
         // イベントリスナーを設定
-        const saveButton = document.getElementById('savePromptEdit');
-        const cancelButton = document.getElementById('cancelPromptEdit');
+        const saveButton =window.UI.Cache.get('savePromptEdit');
+        const cancelButton =window.UI.Cache.get('cancelPromptEdit');
 
         // 既存のイベントリスナーを削除
         saveButton.replaceWith(saveButton.cloneNode(true));
         cancelButton.replaceWith(cancelButton.cloneNode(true));
 
         // 新しいイベントリスナーを追加
-        document.getElementById('savePromptEdit').addEventListener('click', () => this._savePromptEdit(modal));
-        document.getElementById('cancelPromptEdit').addEventListener('click', () => this.hidePromptEditModal());
+       window.UI.Cache.get('savePromptEdit').addEventListener('click', () => this._savePromptEdit(modal));
+       window.UI.Cache.get('cancelPromptEdit').addEventListener('click', () => this.hidePromptEditModal());
     },
 
     /**
      * プロンプト編集モーダルを非表示にする
      */
     hidePromptEditModal: function() {
-        const modal = document.getElementById('promptEditModal');
+        const modal =window.UI.Cache.get('promptEditModal');
         if (modal) {
             modal.style.display = 'none';
         }
@@ -503,11 +503,11 @@ Object.assign(window.UI.Core.Modal, {
      * @private
      */
     _savePromptEdit: function(modal) {
-        const nameInput = document.getElementById('promptNameInput');
-        const categorySelect = document.getElementById('promptCategorySelect');
-        const tagsInput = document.getElementById('promptTagsInput');
-        const descriptionInput = document.getElementById('promptDescriptionInput');
-        const contentInput = document.getElementById('promptContentInput');
+        const nameInput =window.UI.Cache.get('promptNameInput');
+        const categorySelect =window.UI.Cache.get('promptCategorySelect');
+        const tagsInput =window.UI.Cache.get('promptTagsInput');
+        const descriptionInput =window.UI.Cache.get('promptDescriptionInput');
+        const contentInput =window.UI.Cache.get('promptContentInput');
 
         // 入力値を取得
         const name = nameInput.value.trim();

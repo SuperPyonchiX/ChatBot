@@ -132,7 +132,7 @@ window.EventHandlers = {
         window.Elements.saveNewTemplate.addEventListener('click', window.UI.Core.Modal.Handlers.saveNewTemplate.bind(window.UI.Core.Modal.Handlers));
 
         // 高度なプロンプト管理へ切り替え
-        const switchToPromptManagerBtn = document.getElementById('switchToPromptManager');
+        const switchToPromptManagerBtn =window.UI.Cache.get('switchToPromptManager');
         if (switchToPromptManagerBtn) {
             switchToPromptManagerBtn.addEventListener('click', () => {
                 window.UI.Core.Modal.hideSystemPromptModal();
@@ -177,7 +177,7 @@ window.EventHandlers = {
      */
     setupPromptManagerModal() {
         // 閉じるボタンのイベントハンドラー
-        const closePromptManagerBtn = document.getElementById('closePromptManager');
+        const closePromptManagerBtn =window.UI.Cache.get('closePromptManager');
         if (closePromptManagerBtn) {
             closePromptManagerBtn.addEventListener('click', () => {
                 window.UI.Core.Modal.hidePromptManagerModal();
@@ -185,7 +185,7 @@ window.EventHandlers = {
         }
 
         // システムプロンプト設定への切り替えボタンのイベントハンドラー
-        const switchToSystemPromptBtn = document.getElementById('switchToSystemPrompt');
+        const switchToSystemPromptBtn =window.UI.Cache.get('switchToSystemPrompt');
         if (switchToSystemPromptBtn) {
             switchToSystemPromptBtn.addEventListener('click', () => {
                 window.UI.Core.Modal.hidePromptManagerModal();
@@ -199,7 +199,7 @@ window.EventHandlers = {
         }
 
         // 新規プロンプト追加ボタンのイベントハンドラー
-        const addPromptButton = document.getElementById('addPromptButton');
+        const addPromptButton =window.UI.Cache.get('addPromptButton');
         if (addPromptButton) {
             addPromptButton.addEventListener('click', () => {
                 window.UI.Core.Modal.showPromptEditModal(null);
@@ -240,7 +240,7 @@ window.EventHandlers = {
                 ];
                 
                 modals.forEach(modal => {
-                    const element = document.getElementById(modal.id);
+                    const element =window.UI.Cache.get(modal.id);
                     if (element && element.style.display === 'block' && typeof modal.hide === 'function') {
                         modal.hide();
                     }

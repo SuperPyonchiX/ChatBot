@@ -36,7 +36,7 @@ window.FileHandler = {
      */
     updateAcceptedFileTypes: function() {
         try {
-            const fileInput = document.getElementById('fileInput');
+            const fileInput =window.UI.Cache.get('fileInput');
             if (!fileInput) return;
             
             const acceptedExtensions = this.getAllowedFileExtensions();
@@ -216,7 +216,7 @@ window.FileHandler = {
             if (!previewArea) {
                 previewArea = document.createElement('div');
                 previewArea.classList.add('file-preview');
-                const userInput = document.getElementById('userInput');
+                const userInput =window.UI.Cache.get('userInput');
                 if (userInput) {
                     inputWrapper.insertBefore(previewArea, userInput);
                 } else {

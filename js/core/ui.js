@@ -228,14 +228,14 @@ window.UI = {
             setup: function() {
                 document.addEventListener('keydown', (e) => {
                     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                        const sendButton = document.getElementById('sendButton');
+                        const sendButton =window.UI.Cache.get('sendButton');
                         if (sendButton) {
                             sendButton.click();
                         }
                     }
                     
                     if ((e.ctrlKey || e.metaKey) && e.key === '/') {
-                        const newChatButton = document.getElementById('newChatButton');
+                        const newChatButton =window.UI.Cache.get('newChatButton');
                         if (newChatButton) {
                             newChatButton.click();
                         }
@@ -374,7 +374,7 @@ window.UI = {
 
     Components: {},  // 既存のSidebarとChatコンポーネントはこちらに移動
     Utils: window.UI.Utils || {},  // 既存のUIUtils
-    Cache: window.window.UI.Cache || {},  // 既存のUICache
+    Cache: window.UI.Cache || {},  // 既存のUICache
 
     /**
      * アプリケーションの初期化処理を行います

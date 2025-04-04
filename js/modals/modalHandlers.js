@@ -80,9 +80,9 @@ Object.assign(window.UI.Core.Modal.Handlers, {
      * 新しいテンプレートを保存します
      */
     saveNewTemplate: function() {
-        const templateName = document.getElementById('newTemplateName').value.trim();
-        const templateCategory = document.getElementById('newTemplateCategory').value.trim();
-        const systemPrompt = document.getElementById('systemPromptInput').value.trim();
+        const templateName =window.UI.Cache.get('newTemplateName').value.trim();
+        const templateCategory =window.UI.Cache.get('newTemplateCategory').value.trim();
+        const systemPrompt =window.UI.Cache.get('systemPromptInput').value.trim();
         
         if (!templateName || !systemPrompt) {
             window.UI.Core.Notification.show('テンプレート名と内容を入力してください', 'error');
@@ -108,8 +108,8 @@ Object.assign(window.UI.Core.Modal.Handlers, {
         window.Storage.savePromptTemplates(templates);
         
         // 入力をクリア
-        document.getElementById('newTemplateName').value = '';
-        document.getElementById('newTemplateCategory').value = '';
+       window.UI.Cache.get('newTemplateName').value = '';
+       window.UI.Cache.get('newTemplateCategory').value = '';
         
         // テンプレート一覧を更新
         window.UI.Core.Modal.updateTemplateList(templates, this.onTemplateSelect, this.onTemplateDelete);

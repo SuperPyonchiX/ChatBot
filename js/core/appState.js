@@ -73,7 +73,7 @@ window.AppState = (function() {
          * @returns {string} 現在選択されているモデル名
          */
         getCurrentModel() {
-            const modelSelect = document.getElementById('modelSelect');
+            const modelSelect =window.UI.Cache.get('modelSelect');
             return modelSelect ? modelSelect.value : 'gpt-4o-mini';
         }
     }.initialize(); // 即時実行して初期化済みのオブジェクトを返す

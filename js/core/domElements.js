@@ -14,17 +14,21 @@ window.Elements = (function() {
         const elements = {};
         
         selectors.forEach(id => {
-            elements[id] = document.getElementById(id);
+            // window.UI.Cacheを使用して要素を取得
+            const element = window.UI.Cache.get(id);
             
-            if (!elements[id]) {
+            if (element) {
+                elements[id] = element;
+            } else {
                 console.warn(`Element with id "${id}" not found.`);
+                elements[id] = null;
             }
         });
         
         return elements;
     }
     
-    // 主要な要素をキャッシュ
+    // 主要な要素のID一覧
     const ids = [
         // チャット関連
         'chatMessages', 'userInput', 'sendButton', 'modelSelect', 'chatHistory', 'chatInputContainer',
