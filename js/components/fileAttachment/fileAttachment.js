@@ -1,11 +1,10 @@
 window.UI = window.UI || {};
-window.UI.FileAttachment = window.UI.FileAttachment || {};
-
-
+window.UI.Components = window.UI.Components || {};
+window.UI.Components.FileAttachment = window.UI.Components.FileAttachment || {};
 /**
  * ファイル添付関連の機能
  */
-Object.assign(window.UI.FileAttachment, {
+Object.assign(window.UI.Components.FileAttachment, {
     /**
      * ファイル添付ボタンと添付ファイル表示エリアを作成します
      * チャット入力エリアにファイル添付機能を追加します
@@ -18,7 +17,7 @@ Object.assign(window.UI.FileAttachment, {
         if (!chatInputContainer) return {};
         
         // ファイル入力要素（非表示）
-        const fileInput = UIUtils.createElement('input', {
+        const fileInput = window.UI.Utils.createElement('input', {
             type: 'file',
             id: 'fileAttachment',
             accept: 'image/*',
@@ -27,7 +26,7 @@ Object.assign(window.UI.FileAttachment, {
         });
         
         // ファイル添付ボタン
-        const attachButton = UIUtils.createElement('button', {
+        const attachButton = window.UI.Utils.createElement('button', {
             classList: ['attachment-button'],
             innerHTML: '<i class="fas fa-paperclip"></i>',
             title: '画像を添付',
@@ -37,7 +36,7 @@ Object.assign(window.UI.FileAttachment, {
         });
         
         // 添付ファイル表示エリア
-        const attachmentPreviewArea = UIUtils.createElement('div', {
+        const attachmentPreviewArea = window.UI.Utils.createElement('div', {
             classList: ['attachment-preview-area'],
             style: { display: 'none' }
         });
@@ -86,7 +85,7 @@ Object.assign(window.UI.FileAttachment, {
         
         // 画像プレビュー（画像ファイルの場合）
         if (file.type.startsWith('image/')) {
-            children.push(UIUtils.createElement('img', {
+            children.push(window.UI.Utils.createElement('img', {
                 src: base64Data,
                 alt: file.name,
                 classList: ['attachment-preview-image']
@@ -94,13 +93,13 @@ Object.assign(window.UI.FileAttachment, {
         }
         
         // ファイル情報
-        children.push(UIUtils.createElement('div', {
+        children.push(window.UI.Utils.createElement('div', {
             classList: ['attachment-file-info'],
             textContent: file.name
         }));
         
         // 削除ボタン
-        children.push(UIUtils.createElement('button', {
+        children.push(window.UI.Utils.createElement('button', {
             classList: ['attachment-remove-button'],
             innerHTML: '<i class="fas fa-times"></i>',
             title: '添付を削除',
@@ -116,7 +115,7 @@ Object.assign(window.UI.FileAttachment, {
         }));
         
         // プレビュー項目を追加
-        const previewItem = UIUtils.createElement('div', {
+        const previewItem = window.UI.Utils.createElement('div', {
             classList: ['attachment-preview-item'],
             children
         });

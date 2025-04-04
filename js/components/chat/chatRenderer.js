@@ -16,7 +16,7 @@ Object.assign(window.Chat.Renderer, (function() {
             const msgTimestamp = timestamp || Date.now();
             const fragment = document.createDocumentFragment();
             
-            const messageDiv = window.Chat.UI.createElement('div', {
+            const messageDiv = window.UI.Components.Chat.createElement('div', {
                 classList: ['message', 'user'],
                 attributes: {
                     'data-timestamp': msgTimestamp.toString(),
@@ -25,12 +25,12 @@ Object.assign(window.Chat.Renderer, (function() {
                 }
             });
             
-            const contentDiv = window.Chat.UI.createElement('div', { classList: 'message-content' });
+            const contentDiv = window.UI.Components.Chat.createElement('div', { classList: 'message-content' });
             const copyButton = this._createCopyButton(message || '');
             
             try {
                 const renderedMarkdown = await window.Markdown.renderMarkdown(message || '');
-                const markdownContent = window.Chat.UI.createElement('div', {
+                const markdownContent = window.UI.Components.Chat.createElement('div', {
                     classList: 'markdown-content',
                     innerHTML: renderedMarkdown
                 });
@@ -50,7 +50,7 @@ Object.assign(window.Chat.Renderer, (function() {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             } catch (e) {
                 console.error('ユーザーメッセージのMarkdown解析エラー:', e);
-                const markdownContent = window.Chat.UI.createElement('div', {
+                const markdownContent = window.UI.Components.Chat.createElement('div', {
                     classList: 'markdown-content',
                     textContent: message || ''
                 });
@@ -71,7 +71,7 @@ Object.assign(window.Chat.Renderer, (function() {
             if (!chatMessages) return;
             
             const msgTimestamp = timestamp || Date.now();
-            const messageDiv = window.Chat.UI.createElement('div', {
+            const messageDiv = window.UI.Components.Chat.createElement('div', {
                 classList: ['message', 'bot'],
                 attributes: {
                     'data-timestamp': msgTimestamp.toString(),
@@ -80,9 +80,9 @@ Object.assign(window.Chat.Renderer, (function() {
                 }
             });
             
-            const contentDiv = window.Chat.UI.createElement('div', { classList: 'message-content' });
+            const contentDiv = window.UI.Components.Chat.createElement('div', { classList: 'message-content' });
             const copyButton = this._createCopyButton(message || '');
-            const messageContent = window.Chat.UI.createElement('div', { classList: 'markdown-content' });
+            const messageContent = window.UI.Components.Chat.createElement('div', { classList: 'markdown-content' });
             
             if (animate) {
                 messageContent.innerHTML = '';
@@ -123,7 +123,7 @@ Object.assign(window.Chat.Renderer, (function() {
             if (!chatMessages) return null;
             
             const msgTimestamp = timestamp || Date.now();
-            const messageDiv = window.Chat.UI.createElement('div', {
+            const messageDiv = window.UI.Components.Chat.createElement('div', {
                 classList: ['message', 'bot'],
                 attributes: {
                     'data-timestamp': msgTimestamp.toString(),
@@ -132,8 +132,8 @@ Object.assign(window.Chat.Renderer, (function() {
                 }
             });
             
-            const contentDiv = window.Chat.UI.createElement('div', { classList: 'message-content' });
-            const messageContent = window.Chat.UI.createElement('div', {
+            const contentDiv = window.UI.Components.Chat.createElement('div', { classList: 'message-content' });
+            const messageContent = window.UI.Components.Chat.createElement('div', {
                 classList: 'markdown-content',
                 innerHTML: '<p>Thinking<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>'
             });

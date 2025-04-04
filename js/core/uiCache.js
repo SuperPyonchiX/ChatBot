@@ -1,10 +1,12 @@
+window.UI = window.UI || {};
+window.UI.Cache = window.UI.Cache || {};
 /**
  * DOM要素をキャッシュするためのヘルパーオブジェクト
  * 同じ要素への参照を複数回取得する際のパフォーマンスを向上させます
  * 
- * @namespace UICache
+ * @namespace UI.Cache
  */
-window.UICache = {
+Object.assign(window.UI.Cache, {
     elements: {},
     
     /**
@@ -13,49 +15,47 @@ window.UICache = {
      * @param {boolean} useQuerySelector - true: querySelector, false: getElementById
      * @returns {HTMLElement} 取得した要素
      */
-    get: (selector, useQuerySelector = false) => {
+    get: function(selector, useQuerySelector = false) {
         if (!selector) return null;
         
         // キャッシュに要素が存在するか確認
-        if (!UICache.elements[selector]) {
+        if (!this.elements[selector]) {
             try {
-                UICache.elements[selector] = useQuerySelector 
-                    ? document.querySelector(selector) 
+                this.elements[selector] = useQuerySelector 
+                    ? document.querySelector(selector)
                     : document.getElementById(selector);
-                    
-                // 要素が見つからない場合はnullを返す（エラー防止）
-                if (!UICache.elements[selector]) {
-                    console.warn(`要素が見つかりません: ${selector}`);
-                    return null;
-                }
-            } catch (error) {
-                console.error(`要素の取得エラー: ${selector}`, error);
+            } catch (e) {
+                console.warn('要素の取得に失敗しました:', e);
                 return null;
             }
         }
-        return UICache.elements[selector];
+        
+        return this.elements[selector];
     },
     
     /**
-     * 指定されたセレクタに一致する複数の要素を取得します
-     * @param {string} selector - CSS セレクタ
-     * @returns {Array<HTMLElement>} 取得した要素の配列
+     * 要素をキャッシュに追加します
+     * @param {string} key - キャッシュのキー
+     * @param {HTMLElement} element - キャッシュする要素
      */
-    getAll: (selector) => {
-        if (!selector) return [];
-        
-        try {
-            return Array.from(document.querySelectorAll(selector));
-        } catch (error) {
-            console.error(`要素の複数取得エラー: ${selector}`, error);
-            return [];
-        }
+    set: function(key, element) {
+        if (!key || !element) return;
+        this.elements[key] = element;
+    },
+    
+    /**
+     * キャッシュから要素を削除します
+     * @param {string} key - 削除する要素のキー
+     */
+    remove: function(key) {
+        if (!key) return;
+        delete this.elements[key];
     },
     
     /**
      * キャッシュをクリアします
      */
-    clear: () => {
-        UICache.elements = {};
+    clear: function() {
+        this.elements = {};
     }
-};
+});

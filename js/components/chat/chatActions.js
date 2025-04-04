@@ -37,7 +37,7 @@ Object.assign(window.Chat.Actions, {
             
             const attachmentPreviewArea = document.querySelector('.attachment-preview-area');
             if (attachmentPreviewArea) {
-                window.UI.FileAttachment.clearAttachments(attachmentPreviewArea);
+                window.UI.Components.FileAttachment.clearAttachments(attachmentPreviewArea);
             }
             
             // ストリーミングメソッドを使用してメッセージを送信
@@ -113,7 +113,7 @@ Object.assign(window.Chat.Actions, {
 
             // ユーザー入力をクリア
             userInput.value = '';
-            window.UIUtils.autoResizeTextarea(userInput);
+            window.UI.Utils.autoResizeTextarea(userInput);
 
             let titleUpdated = false;
             const timestamp = Date.now();
@@ -266,7 +266,7 @@ Object.assign(window.Chat.Actions, {
             window.AppState.currentConversationId, 
             window.Elements.chatHistory, 
             this.switchConversation.bind(this), 
-            window.Modal.RenameChat.showRenameChatModal, 
+            window.UI.Core.Modal.showRenameChatModal, 
             this.deleteConversation.bind(this)
         );
     },

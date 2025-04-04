@@ -1,10 +1,11 @@
-window.Modal = window.Modal || {};
-window.Modal.SystemPrompt = window.Modal.SystemPrompt || {};
+window.UI = window.UI || {};
+window.UI.Core = window.UI.Core || {};
+window.UI.Core.Modal = window.UI.Core.Modal || {};
 
 /**
- * システムプロンプトモーダル関連の機能
+ * システムプロンプトモーダル
  */
-Object.assign(window.Modal.SystemPrompt, {
+Object.assign(window.UI.Core.Modal, {
     /**
      * システムプロンプト設定モーダルを表示します
      * システムプロンプト編集モーダルを表示し、テンプレート一覧も更新します
@@ -15,19 +16,19 @@ Object.assign(window.Modal.SystemPrompt, {
      * @param {Function} onTemplateDelete - テンプレート削除時のコールバック
      */
     showSystemPromptModal: function(systemPrompt, promptTemplates, onTemplateSelect, onTemplateDelete) {
-        UIUtils.toggleModal('systemPromptModal', true);
-        UICache.get('systemPromptInput').value = systemPrompt;
+        window.UI.Utils.toggleModal('systemPromptModal', true);
+        window.UI.Cache.get('systemPromptInput').value = systemPrompt;
         
         this.updateTemplateList(promptTemplates, onTemplateSelect, onTemplateDelete);
     },
-
+    
     /**
-     * システムプロンプト設定モーダルを非表示にします
+     * システムプロンプトモーダルを非表示にします
      */
     hideSystemPromptModal: function() {
-        UIUtils.toggleModal('systemPromptModal', false);
+        window.UI.Utils.toggleModal('systemPromptModal', false);
     },
-
+    
     /**
      * テンプレート一覧を表示します
      * システムプロンプトテンプレートの一覧を表示し、選択/削除機能を提供します
@@ -37,7 +38,7 @@ Object.assign(window.Modal.SystemPrompt, {
      * @param {Function} onTemplateDelete - テンプレート削除時のコールバック関数
      */
     updateTemplateList: function(promptTemplates, onTemplateSelect, onTemplateDelete) {
-        const templateListArea = UICache.get('templateListArea');
+        const templateListArea = window.UI.Cache.get('templateListArea');
         if (!templateListArea) return;
         
         // テンプレート一覧をクリア
@@ -136,7 +137,7 @@ Object.assign(window.Modal.SystemPrompt, {
     _createTemplateItem: function(templateName, onTemplateSelect, onTemplateDelete) {
         // 削除ボタン（デフォルトテンプレートと設定ファイルで定義されたテンプレート以外のみ）
         const children = [
-            UIUtils.createElement('span', {
+            window.UI.Utils.createElement('span', {
                 textContent: templateName,
                 classList: ['template-name']
             })
@@ -148,7 +149,7 @@ Object.assign(window.Modal.SystemPrompt, {
 
         // デフォルトテンプレートとconfig.jsで定義されたテンプレート以外に削除ボタンを表示
         if (!isConfigTemplate) {
-            children.push(UIUtils.createElement('button', {
+            children.push(window.UI.Utils.createElement('button', {
                 classList: ['template-delete-button'],
                 innerHTML: '<i class="fas fa-trash"></i>',
                 title: 'テンプレートを削除',
@@ -162,7 +163,7 @@ Object.assign(window.Modal.SystemPrompt, {
         }
         
         // テンプレート項目
-        return UIUtils.createElement('div', {
+        return window.UI.Utils.createElement('div', {
             classList: ['template-item'],
             children,
             events: {

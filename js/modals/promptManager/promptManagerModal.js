@@ -1,12 +1,13 @@
-window.Modal = window.Modal || {};
-window.Modal.PromptManager = window.Modal.PromptManager || {};
+window.UI = window.UI || {};
+window.UI.Core = window.UI.Core || {};
+window.UI.Core.Modal = window.UI.Core.Modal || {};
 
 /**
- * プロンプトマネージャー関連の機能
+ * プロンプトマネージャー機能
  */
-Object.assign(window.Modal.PromptManager, {
+Object.assign(window.UI.Core.Modal, {
     /**
-     * プロンプトマネージャーモーダルを表示する
+     * プロンプトマネージャーモーダルを表示します
      */
     showPromptManagerModal: function() {
         console.log('プロンプトマネージャーモーダルを表示します');
@@ -25,7 +26,7 @@ Object.assign(window.Modal.PromptManager, {
     },
     
     /**
-     * プロンプトマネージャーモーダルを非表示にする
+     * プロンプトマネージャーモーダルを非表示にします
      */
     hidePromptManagerModal: function() {
         console.log('プロンプトマネージャーモーダルを閉じます');
@@ -234,7 +235,7 @@ Object.assign(window.Modal.PromptManager, {
             const userInput = document.getElementById('userInput');
             if (userInput) {
                 userInput.value = promptText;
-                window.UIUtils.autoResizeTextarea(userInput);
+                window.UI.Utils.autoResizeTextarea(userInput);
             }
             
             this.hidePromptManagerModal();

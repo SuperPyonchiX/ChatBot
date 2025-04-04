@@ -362,8 +362,8 @@ window.PromptSuggestions = {
         }
         
         // テキストエリアのサイズを自動調整
-        if (window.UI && window.UIUtils.autoResizeTextarea) {
-            window.UIUtils.autoResizeTextarea(this.inputElement);
+        if (window.UI && window.UI.Utils.autoResizeTextarea) {
+            window.UI.Utils.autoResizeTextarea(this.inputElement);
         }
         
         // 候補を非表示

@@ -1,11 +1,12 @@
-window.Chat = window.Chat || {};
-window.Chat.UI = window.Chat.UI || {};
+window.UI = window.UI || {};
+window.UI.Components = window.UI.Components || {};
+window.UI.Components.Chat = window.UI.Components.Chat || {};
 /**
- * chatUI.js
+ * ChatUI.js
  * チャットUIの基本機能を提供します
+ * @namespace UI.Components.Chat
  */
-
-Object.assign(window.Chat.UI, (function() {
+Object.assign(window.UI.Components.Chat, (function() {
     // プライベート変数とキャッシングメカニズム
     const _cache = {
         elements: new Map(),
@@ -52,58 +53,37 @@ Object.assign(window.Chat.UI, (function() {
     };
 
     return {
+        /**
+         * DOM要素を作成します
+         */
         createElement: _createElement,
-
+        
         /**
-         * 「Thinking...」インジケーターを作成
-         * @returns {HTMLElement} 作成されたインジケーター要素
+         * キャッシュされた要素を取得または作成します
          */
-        createTypingIndicator: function() {
-            const typingIndicator = document.createElement('div');
-            typingIndicator.classList.add('message', 'bot', 'typing-indicator');
-            typingIndicator.innerHTML = `
-                <div class="message-content">
-                    <p>Thinking<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>
-                </div>
-            `;
-            return typingIndicator;
-        },
-
-        /**
-         * エラーメッセージを表示
-         * @param {string} errorMessage - エラーメッセージ
-         * @param {HTMLElement} chatMessages - メッセージ表示要素
-         */
-        showErrorMessage: function(errorMessage, chatMessages) {
-            if (!chatMessages) return;
-            
-            const errorMessageDiv = document.createElement('div');
-            errorMessageDiv.classList.add('message', 'bot', 'error');
-            errorMessageDiv.innerHTML = `
-                <div class="message-content">
-                    <p>エラーが発生しました: ${errorMessage || '不明なエラー'}</p>
-                    <button id="showApiSettings" class="error-action">API設定を確認する</button>
-                </div>
-            `;
-            chatMessages.appendChild(errorMessageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        },
-
-        /**
-         * 安全に子要素を削除する
-         * @param {HTMLElement} parent - 親要素
-         * @param {HTMLElement} child - 削除する子要素
-         */
-        safeRemoveChild: function(parent, child) {
-            if (!parent || !child) return;
-            
-            try {
-                if (parent.contains(child)) {
-                    parent.removeChild(child);
-                }
-            } catch (error) {
-                console.error('子要素の削除中にエラーが発生しました:', error);
+        getCachedElement: function(key, creator) {
+            if (!_cache.elements.has(key)) {
+                _cache.elements.set(key, creator());
             }
+            return _cache.elements.get(key);
+        },
+        
+        /**
+         * テンプレートをキャッシュから取得または作成します
+         */
+        getCachedTemplate: function(key, template) {
+            if (!_cache.templates.has(key)) {
+                _cache.templates.set(key, template);
+            }
+            return _cache.templates.get(key);
+        },
+        
+        /**
+         * キャッシュをクリアします
+         */
+        clearCache: function() {
+            _cache.elements.clear();
+            _cache.templates.clear();
         }
     };
 })());

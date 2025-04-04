@@ -107,7 +107,7 @@ Object.assign(window.Chat.History, (function() {
             chatHistory.innerHTML = '';
             
             if (conversations.length === 0) {
-                const emptyState = window.Chat.UI.createElement('div', {
+                const emptyState = window.UI.Components.Chat.createElement('div', {
                     classList: 'empty-history',
                     innerHTML: `
                         <p>会話履歴がありません</p>
@@ -150,23 +150,23 @@ Object.assign(window.Chat.History, (function() {
                 return document.createElement('div');
             }
             
-            const categorySection = window.Chat.UI.createElement('div', {
+            const categorySection = window.UI.Components.Chat.createElement('div', {
                 classList: 'chat-category',
                 attributes: {
                     'data-category': promptKey
                 }
             });
             
-            const categoryHeader = window.Chat.UI.createElement('div', { classList: 'category-header' });
-            const toggleIcon = window.Chat.UI.createElement('i', {
+            const categoryHeader = window.UI.Components.Chat.createElement('div', { classList: 'category-header' });
+            const toggleIcon = window.UI.Components.Chat.createElement('i', {
                 classList: ['fas', isExpanded ? 'fa-chevron-down' : 'fa-chevron-right']
             });
             
-            const categoryName = window.Chat.UI.createElement('span', {
+            const categoryName = window.UI.Components.Chat.createElement('span', {
                 textContent: promptKey
             });
             
-            const countBadge = window.Chat.UI.createElement('span', {
+            const countBadge = window.UI.Components.Chat.createElement('span', {
                 classList: 'category-count',
                 textContent: groupConversations.length
             });
@@ -175,7 +175,7 @@ Object.assign(window.Chat.History, (function() {
             categoryHeader.appendChild(categoryName);
             categoryHeader.appendChild(countBadge);
             
-            const conversationList = window.Chat.UI.createElement('div', { classList: 'category-conversations' });
+            const conversationList = window.UI.Components.Chat.createElement('div', { classList: 'category-conversations' });
             if (!isExpanded) {
                 conversationList.style.display = 'none';
             }
@@ -232,14 +232,14 @@ Object.assign(window.Chat.History, (function() {
                 return document.createElement('div');
             }
             
-            const historyItem = window.Chat.UI.createElement('div', {
+            const historyItem = window.UI.Components.Chat.createElement('div', {
                 classList: 'history-item',
                 attributes: {
                     'data-id': conversation.id
                 }
             });
             
-            const itemContent = window.Chat.UI.createElement('div', {
+            const itemContent = window.UI.Components.Chat.createElement('div', {
                 classList: 'history-item-content',
                 innerHTML: `
                     <i class="fas fa-comments"></i>
@@ -247,9 +247,9 @@ Object.assign(window.Chat.History, (function() {
                 `
             });
             
-            const actionButtons = window.Chat.UI.createElement('div', { classList: 'history-item-actions' });
+            const actionButtons = window.UI.Components.Chat.createElement('div', { classList: 'history-item-actions' });
             
-            const editButton = window.Chat.UI.createElement('button', {
+            const editButton = window.UI.Components.Chat.createElement('button', {
                 classList: ['history-action-button', 'edit-button'],
                 innerHTML: '<i class="fas fa-edit"></i>',
                 attributes: {
@@ -264,7 +264,7 @@ Object.assign(window.Chat.History, (function() {
                 }
             });
             
-            const deleteButton = window.Chat.UI.createElement('button', {
+            const deleteButton = window.UI.Components.Chat.createElement('button', {
                 classList: ['history-action-button', 'delete-button'],
                 innerHTML: '<i class="fas fa-trash"></i>',
                 attributes: {

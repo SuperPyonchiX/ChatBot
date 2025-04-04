@@ -1,39 +1,39 @@
-window.Modal = window.Modal || {};
-window.Modal.ApiSettings = window.Modal.ApiSettings || {};
+window.UI = window.UI || {};
+window.UI.Core = window.UI.Core || {};
+window.UI.Core.Modal = window.UI.Core.Modal || {};
 
 /**
- * APIキーモーダル関連の機能
+ * API設定モーダル
+ * @namespace UI.Core.Modal
  */
-Object.assign(window.Modal.ApiSettings, {
+Object.assign(window.UI.Core.Modal, {
     /**
-     * APIキーモーダルを表示します
-     * API設定を編集するためのモーダルダイアログを表示します
-     * 
+     * API設定モーダルを表示します
      * @param {Object} apiSettings - API設定オブジェクト
      */
     showApiKeyModal: function(apiSettings) {
-        UIUtils.toggleModal('apiKeyModal', true);
+        window.UI.Utils.toggleModal('apiKeyModal', true);
         
         // 必要な要素を一度に取得
         const elements = {
-            azureApiKeyInput: UICache.get('azureApiKeyInput'),
-            openaiRadio: UICache.get('openaiRadio'),
-            azureRadio: UICache.get('azureRadio'),
-            apiKeyInput: UICache.get('apiKeyInput'),
-            openaiSettings: UICache.get('openaiSettings'),
-            azureSettings: UICache.get('azureSettings'),
-            azureEndpointGpt4oMini: UICache.get('azureEndpointGpt4oMini'),
-            azureEndpointGpt4o: UICache.get('azureEndpointGpt4o'),
-            azureEndpointO1Mini: UICache.get('azureEndpointO1Mini'),
-            azureEndpointO1: UICache.get('azureEndpointO1')
+            azureApiKeyInput: window.UI.Cache.get('azureApiKeyInput'),
+            openaiRadio: window.UI.Cache.get('openaiRadio'),
+            azureRadio: window.UI.Cache.get('azureRadio'),
+            apiKeyInput: window.UI.Cache.get('apiKeyInput'),
+            openaiSettings: window.UI.Cache.get('openaiSettings'),
+            azureSettings: window.UI.Cache.get('azureSettings'),
+            azureEndpointGpt4oMini: window.UI.Cache.get('azureEndpointGpt4oMini'),
+            azureEndpointGpt4o: window.UI.Cache.get('azureEndpointGpt4o'),
+            azureEndpointO1Mini: window.UI.Cache.get('azureEndpointO1Mini'),
+            azureEndpointO1: window.UI.Cache.get('azureEndpointO1')
         };
         
         // APIタイプに応じて設定を表示
         if (apiSettings.apiType === 'azure') {
             elements.azureRadio.checked = true;
             elements.azureApiKeyInput.value = apiSettings.azureApiKey;
-            UIUtils.toggleVisibility(elements.openaiSettings, false);
-            UIUtils.toggleVisibility(elements.azureSettings, true);
+            window.UI.Utils.toggleVisibility(elements.openaiSettings, false);
+            window.UI.Utils.toggleVisibility(elements.azureSettings, true);
             
             // Azureエンドポイント設定を適用
             elements.azureEndpointGpt4oMini.value = apiSettings.azureEndpoints['gpt-4o-mini'];
@@ -43,27 +43,27 @@ Object.assign(window.Modal.ApiSettings, {
         } else {
             elements.openaiRadio.checked = true;
             elements.apiKeyInput.value = apiSettings.openaiApiKey;
-            UIUtils.toggleVisibility(elements.openaiSettings, true);
-            UIUtils.toggleVisibility(elements.azureSettings, false);
+            window.UI.Utils.toggleVisibility(elements.openaiSettings, true);
+            window.UI.Utils.toggleVisibility(elements.azureSettings, false);
         }
     },
-
+    
     /**
-     * APIキーモーダルを非表示にします
+     * API設定モーダルを非表示にします
      */
     hideApiKeyModal: function() {
-        UIUtils.toggleModal('apiKeyModal', false);
+        window.UI.Utils.toggleModal('apiKeyModal', false);
     },
-
+    
     /**
      * Azure設定の表示/非表示を切り替えます
      */
     toggleAzureSettings: function() {
-        const openaiSettings = UICache.get('openaiSettings');
-        const azureSettings = UICache.get('azureSettings');
-        const azureRadio = UICache.get('azureRadio');
+        const openaiSettings = window.UI.Cache.get('openaiSettings');
+        const azureSettings = window.UI.Cache.get('azureSettings');
+        const azureRadio = window.UI.Cache.get('azureRadio');
         
-        UIUtils.toggleVisibility(openaiSettings, !azureRadio.checked);
-        UIUtils.toggleVisibility(azureSettings, azureRadio.checked);
+        window.UI.Utils.toggleVisibility(openaiSettings, !azureRadio.checked);
+        window.UI.Utils.toggleVisibility(azureSettings, azureRadio.checked);
     }
 });

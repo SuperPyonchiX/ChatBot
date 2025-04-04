@@ -1,16 +1,18 @@
+window.UI = window.UI || {};
+window.UI.Utils = window.UI.Utils || {};
 /**
  * 共通ユーティリティ関数
  * UI操作に関する汎用メソッドを提供します
  * 
- * @namespace UIUtils
+ * @namespace UI.Utils
  */
-window.UIUtils = {
+Object.assign(window.UI.Utils, {
     /**
      * 要素の表示/非表示を切り替えます
      * @param {HTMLElement} element - 対象要素
      * @param {boolean} show - 表示するかどうか
      */
-    toggleVisibility: (element, show) => {
+    toggleVisibility: function(element, show) {
         if (!element) return;
         if (show) {
             element.classList.remove('hidden');
@@ -24,17 +26,17 @@ window.UIUtils = {
      * @param {string} modalId - モーダル要素のID
      * @param {boolean} show - 表示するかどうか
      */
-    toggleModal: (modalId, show) => {
-        const modal = UICache.get(modalId);
+    toggleModal: function(modalId, show) {
+        const modal = window.UI.Cache.get(modalId);
         if (!modal) return;
         
         if (show) {
             modal.classList.add('show');
-            document.addEventListener('keydown', UIUtils._escapeKeyHandler);
+            document.addEventListener('keydown', this._escapeKeyHandler);
             document.body.style.overflow = 'hidden';
         } else {
             modal.classList.remove('show');
-            document.removeEventListener('keydown', UIUtils._escapeKeyHandler);
+            document.removeEventListener('keydown', this._escapeKeyHandler);
             document.body.style.overflow = '';
         }
     },
@@ -43,11 +45,11 @@ window.UIUtils = {
      * ESCキーが押されたときのハンドラー
      * @private
      */
-    _escapeKeyHandler: (e) => {
+    _escapeKeyHandler: function(e) {
         if (e.key === 'Escape') {
             const visibleModal = document.querySelector('.modal.show');
             if (visibleModal) {
-                UIUtils.toggleModal(visibleModal.id, false);
+                this.toggleModal(visibleModal.id, false);
             }
         }
     },
@@ -56,7 +58,6 @@ window.UIUtils = {
      * 要素を作成して属性を設定します
      * @param {string} tag - HTML要素タグ名
      * @param {Object} props - 属性オブジェクト
-     * @returns {HTMLElement} 作成された要素
      */
     createElement: (tag, props = {}) => {
         if (!tag) return null;
@@ -95,14 +96,7 @@ window.UIUtils = {
         
         return element;
     },
-    
-    /**
-     * 指定されたミリ秒だけ遅延するPromiseを返します
-     * @param {number} ms - 遅延するミリ秒
-     * @returns {Promise} - 遅延を表すPromise
-     */
-    delay: (ms) => new Promise(resolve => setTimeout(resolve, ms)),
-    
+        
     /**
      * 要素のサイズを滑らかに変更します
      * @param {HTMLElement} element - 対象要素
@@ -110,7 +104,7 @@ window.UIUtils = {
      * @param {number} duration - アニメーション時間（ms）
      * @returns {Promise} - アニメーション完了時に解決するPromise
      */
-    animateHeight: async (element, targetHeight, duration = 300) => {
+    animateHeight: function(element, targetHeight, duration = 300) {
         if (!element) return;
         
         const startHeight = element.clientHeight;
@@ -149,4 +143,4 @@ window.UIUtils = {
         textarea.style.height = 'auto';
         textarea.style.height = `${textarea.scrollHeight}px`;
     }
-};
+});

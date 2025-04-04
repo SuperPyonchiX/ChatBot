@@ -23,7 +23,7 @@ window.EventHandlers = {
         });
         
         // テキストエリアの入力イベント（自動リサイズ）
-        window.Elements.userInput.addEventListener('input', () => window.UIUtils.autoResizeTextarea(window.Elements.userInput));
+        window.Elements.userInput.addEventListener('input', () => window.UI.Utils.autoResizeTextarea(window.Elements.userInput));
 
         // 新しいチャットボタン
         window.Elements.newChatButton.addEventListener('click', window.Chat.Actions.createNewConversation.bind(window.Chat.Actions));
@@ -57,25 +57,25 @@ window.EventHandlers = {
         // システムプロンプト設定
         window.Elements.openSystemPromptSettings.addEventListener('click', () => {
             window.Elements.settingsMenu.style.display = 'none';
-            window.Modal.SystemPrompt.showSystemPromptModal(
+            window.UI.Core.Modal.showSystemPromptModal(
                 window.AppState.systemPrompt, 
                 window.AppState.promptTemplates, 
-                window.Modal.Handlers.onTemplateSelect, 
-                window.Modal.Handlers.onTemplateDelete
+                window.UI.Core.Modal.Handlers.onTemplateSelect, 
+                window.UI.Core.Modal.Handlers.onTemplateDelete
             );
         });
         
         // API設定
         window.Elements.openApiSettings.addEventListener('click', () => {
             window.Elements.settingsMenu.style.display = 'none';
-            window.Modal.ApiSettings.showApiKeyModal(window.AppState.apiSettings);
+            window.UI.Core.Modal.showApiKeyModal(window.AppState.apiSettings);
         });
         
         // 高度なプロンプト管理
         if (window.Elements.openPromptManager) {
             window.Elements.openPromptManager.addEventListener('click', () => {
                 window.Elements.settingsMenu.style.display = 'none';
-                window.Modal.PromptManager.showPromptManagerModal();
+                window.UI.Core.Modal.showPromptManagerModal();
             });
         }
     },
@@ -122,21 +122,21 @@ window.EventHandlers = {
             
             window.AppState.systemPrompt = window.Elements.systemPromptInput.value.trim();
             window.Storage.saveSystemPrompt(window.AppState.systemPrompt);
-            window.Modal.SystemPrompt.hideSystemPromptModal();
+            window.UI.Core.Modal.hideSystemPromptModal();
         });
         
         // システムプロンプトキャンセル
-        window.Elements.cancelSystemPrompt.addEventListener('click', window.Modal.SystemPrompt.hideSystemPromptModal);
+        window.Elements.cancelSystemPrompt.addEventListener('click', window.UI.Core.Modal.hideSystemPromptModal);
         
         // 新しいテンプレート保存
-        window.Elements.saveNewTemplate.addEventListener('click', window.Modal.Handlers.saveNewTemplate.bind(window.Modal.Handlers));
+        window.Elements.saveNewTemplate.addEventListener('click', window.UI.Core.Modal.Handlers.saveNewTemplate.bind(window.UI.Core.Modal.Handlers));
 
         // 高度なプロンプト管理へ切り替え
         const switchToPromptManagerBtn = document.getElementById('switchToPromptManager');
         if (switchToPromptManagerBtn) {
             switchToPromptManagerBtn.addEventListener('click', () => {
-                window.Modal.SystemPrompt.hideSystemPromptModal();
-                window.Modal.PromptManager.showPromptManagerModal();
+                window.UI.Core.Modal.hideSystemPromptModal();
+                window.UI.Core.Modal.showPromptManagerModal();
             });
         }
     },
@@ -149,14 +149,14 @@ window.EventHandlers = {
             !window.Elements.openaiRadio || !window.Elements.azureRadio) return;
         
         // APIキー保存
-        window.Elements.saveApiKey.addEventListener('click', window.Modal.Handlers.saveApiSettings);
+        window.Elements.saveApiKey.addEventListener('click', window.UI.Core.Modal.Handlers.saveApiSettings);
         
         // APIキーキャンセル
-        window.Elements.cancelApiKey.addEventListener('click', window.Modal.ApiSettings.hideApiKeyModal);
+        window.Elements.cancelApiKey.addEventListener('click', window.UI.Core.Modal.hideApiKeyModal);
         
         // APIタイプ切り替え
-        window.Elements.openaiRadio.addEventListener('change', window.Modal.ApiSettings.toggleAzureSettings);
-        window.Elements.azureRadio.addEventListener('change', window.Modal.ApiSettings.toggleAzureSettings);
+        window.Elements.openaiRadio.addEventListener('change', window.UI.Core.Modal.toggleAzureSettings);
+        window.Elements.azureRadio.addEventListener('change', window.UI.Core.Modal.toggleAzureSettings);
     },
 
     /**
@@ -166,10 +166,10 @@ window.EventHandlers = {
         if (!window.Elements.saveRenameChat || !window.Elements.cancelRenameChat) return;
         
         // 保存ボタン
-        window.Elements.saveRenameChat.addEventListener('click', window.Modal.Handlers.saveRenamedChat);
+        window.Elements.saveRenameChat.addEventListener('click', window.UI.Core.Modal.Handlers.saveRenamedChat);
         
         // キャンセルボタン
-        window.Elements.cancelRenameChat.addEventListener('click', window.Modal.RenameChat.hideRenameChatModal);
+        window.Elements.cancelRenameChat.addEventListener('click', window.UI.Core.Modal.hideRenameChatModal);
     },
 
     /**
@@ -180,7 +180,7 @@ window.EventHandlers = {
         const closePromptManagerBtn = document.getElementById('closePromptManager');
         if (closePromptManagerBtn) {
             closePromptManagerBtn.addEventListener('click', () => {
-                window.Modal.PromptManager.hidePromptManagerModal();
+                window.UI.Core.Modal.hidePromptManagerModal();
             });
         }
 
@@ -188,12 +188,12 @@ window.EventHandlers = {
         const switchToSystemPromptBtn = document.getElementById('switchToSystemPrompt');
         if (switchToSystemPromptBtn) {
             switchToSystemPromptBtn.addEventListener('click', () => {
-                window.Modal.PromptManager.hidePromptManagerModal();
-                window.Modal.SystemPrompt.showSystemPromptModal(
+                window.UI.Core.Modal.hidePromptManagerModal();
+                window.UI.Core.Modal.showSystemPromptModal(
                     window.AppState.systemPrompt,
                     window.AppState.promptTemplates,
-                    window.Modal.Handlers.onTemplateSelect,
-                    window.Modal.Handlers.onTemplateDelete
+                    window.UI.Core.Modal.Handlers.onTemplateSelect,
+                    window.UI.Core.Modal.Handlers.onTemplateDelete
                 );
             });
         }
@@ -202,7 +202,7 @@ window.EventHandlers = {
         const addPromptButton = document.getElementById('addPromptButton');
         if (addPromptButton) {
             addPromptButton.addEventListener('click', () => {
-                window.Modal.PromptManager.showPromptEditModal(null);
+                window.UI.Core.Modal.showPromptEditModal(null);
             });
         }
     },
@@ -214,7 +214,7 @@ window.EventHandlers = {
         // エラーアクションのイベント委任
         document.addEventListener('click', function(e) {
             if (e.target && e.target.id === 'showApiSettings') {
-                window.Modal.ApiSettings.showApiKeyModal(window.AppState.apiSettings);
+                window.UI.Core.Modal.showApiKeyModal(window.AppState.apiSettings);
             }
         });
         
@@ -234,9 +234,9 @@ window.EventHandlers = {
             if (e.key === 'Escape') {
                 // 開いているモーダルを閉じる
                 const modals = [
-                    { id: 'systemPromptModal', hide: window.Modal.SystemPrompt.hideSystemPromptModal },
-                    { id: 'apiKeyModal', hide: window.Modal.ApiSettings.hideApiKeyModal },
-                    { id: 'renameChatModal', hide: window.Modal.RenameChat.hideRenameChatModal }
+                    { id: 'systemPromptModal', hide: window.UI.Core.Modal.hideSystemPromptModal },
+                    { id: 'apiKeyModal', hide: window.UI.Core.Modal.hideApiKeyModal },
+                    { id: 'renameChatModal', hide: window.UI.Core.Modal.hideRenameChatModal }
                 ];
                 
                 modals.forEach(modal => {

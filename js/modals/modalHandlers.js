@@ -1,16 +1,16 @@
-window.Modal = window.Modal || {};
-window.Modal.Handlers = window.Modal.Handlers || {};
-
+window.UI = window.UI || {};
+window.UI.Core = window.UI.Core || {};
+window.UI.Core.Modal = window.UI.Core.Modal || {};
+window.UI.Core.Modal.Handlers = window.UI.Core.Modal.Handlers || {};
 /**
- * modalHandlers.js
- * モーダル関連のイベントハンドラーを管理するモジュール
+ * モーダルのイベントハンドラー
+ * @namespace UI.Core.Modal.Handlers
  */
-
-Object.assign(window.Modal.Handlers, {
+Object.assign(window.UI.Core.Modal.Handlers, {
     /**
      * API設定を保存します
      */
-    saveApiSettings() {
+    saveApiSettings: function() {
         if (!window.Elements.apiKeyInput || !window.Elements.openaiRadio || !window.Elements.azureRadio) return;
         
         // API種別を設定
@@ -49,11 +49,12 @@ Object.assign(window.Modal.Handlers, {
 
         // ローカルストレージに保存
         window.Storage.saveApiSettings(window.AppState.apiSettings);
-        window.Modal.ApiSettings.hideApiKeyModal();
+        window.UI.Core.Notification.show('API設定を保存しました', 'success');
+        window.UI.Core.Modal.hideApiKeyModal();
     },
-
+    
     /**
-     * チャット名を保存します
+     * チャット名の変更を保存します
      */
     saveRenamedChat() {
         if (!window.Elements.renameChatModal || !window.Elements.chatTitleInput) return;
@@ -70,37 +71,40 @@ Object.assign(window.Modal.Handlers, {
                 window.Chat.Actions.renderChatHistory();
             }
         }
-        
-        // モーダルを閉じる
-        window.Modal.RenameChat.hideRenameChatModal();
-    },
 
+        // モーダルを閉じる
+                window.UI.Core.Modal.hideRenameChatModal();
+    },
+    
     /**
-     * 新規テンプレートとして保存します
+     * 新しいテンプレートを保存します
      */
-    saveNewTemplate() {
+    saveNewTemplate: function() {
         const templateName = document.getElementById('newTemplateName').value.trim();
         const templateCategory = document.getElementById('newTemplateCategory').value.trim();
         const systemPrompt = document.getElementById('systemPromptInput').value.trim();
         
         if (!templateName || !systemPrompt) {
-            window.UI.notify('テンプレート名とプロンプト内容を入力してください', 'error');
+            window.UI.Core.Notification.show('テンプレート名と内容を入力してください', 'error');
             return;
         }
 
         if (!templateCategory) {
-            window.UI.notify('カテゴリを入力してください', 'error');
+            window.UI.Core.Notification.show('カテゴリを入力してください', 'error');
+            return;
+        }
+
+        const templates = window.AppState.promptTemplates;
+        
+        // 重複チェック
+        if (templates[templateName]) {
+            window.UI.Core.Notification.show('同じ名前のテンプレートが既に存在します', 'error');
             return;
         }
         
-        const templates = window.AppState.promptTemplates;
-        if (templates[templateName]) {
-            window.UI.notify('同じ名前のテンプレートが既に存在します', 'error');
-            return;
-        }
-                
         // テンプレートを保存
         templates[templateName] = systemPrompt;
+        window.AppState.promptTemplates = templates;
         window.Storage.savePromptTemplates(templates);
         
         // 入力をクリア
@@ -108,15 +112,15 @@ Object.assign(window.Modal.Handlers, {
         document.getElementById('newTemplateCategory').value = '';
         
         // テンプレート一覧を更新
-        window.Modal.SystemPrompt.updateTemplateList(templates, this.onTemplateSelect, this.onTemplateDelete);
+        window.UI.Core.Modal.updateTemplateList(templates, this.onTemplateSelect, this.onTemplateDelete);
         
-        window.UI.notify('新規テンプレートを保存しました', 'success');
+        window.UI.Core.Notification.show('テンプレートを保存しました', 'success');
     },
-
+    
     /**
-     * テンプレート選択時の処理
+     * テンプレート選択時のハンドラー
      */
-    onTemplateSelect(templateName) {
+    onTemplateSelect: function(templateName) {
         if (!window.Elements.systemPromptInput) return;
         
         const template = window.AppState.promptTemplates[templateName];
@@ -124,19 +128,20 @@ Object.assign(window.Modal.Handlers, {
             window.Elements.systemPromptInput.value = template;
         }
     },
-
+    
     /**
-     * テンプレート削除時の処理
+     * テンプレート削除時のハンドラー
      */
-    onTemplateDelete(templateName) {
+    onTemplateDelete: function(templateName) {
         if (confirm(`テンプレート "${templateName}" を削除してもよろしいですか？`)) {
             delete window.AppState.promptTemplates[templateName];
-            window.Storage.savePromptTemplates(window.AppState.promptTemplates);
-            window.Modal.SystemPrompt.updateTemplateList(
+            window.Storage.savePromptTemplates(window.AppState.promptTemplates); 
+            window.UI.Core.Modal.updateTemplateList(
                 window.AppState.promptTemplates, 
                 this.onTemplateSelect, 
                 this.onTemplateDelete
             );
         }
+        window.UI.Core.Notification.show('テンプレートを削除しました', 'success');
     }
 });
