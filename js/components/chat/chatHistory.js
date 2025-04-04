@@ -1,9 +1,11 @@
+window.Chat = window.Chat || {};
+window.Chat.History = window.Chat.History || {};
 /**
  * chatHistory.js
  * 会話履歴の管理機能を提供します
  */
 
-window.ChatHistory = (function() {
+Object.assign(window.Chat.History, (function() {
     return {
         /**
          * 会話を表示する
@@ -24,12 +26,12 @@ window.ChatHistory = (function() {
                         : this._processContentArray(message.content);
                     
                     const displayContent = this._cleanFileContent(content);
-                    await window.ChatRenderer.addUserMessage(displayContent, chatMessages, [], message.timestamp);
+                    await window.Chat.Renderer.addUserMessage(displayContent, chatMessages, [], message.timestamp);
                 } else if (message.role === 'assistant') {
                     const content = typeof message.content === 'string' 
                         ? message.content 
                         : this._processContentArray(message.content);
-                    await window.ChatRenderer.addBotMessage(content, chatMessages, message.timestamp, false);
+                    await window.Chat.Renderer.addBotMessage(content, chatMessages, message.timestamp, false);
                 }
             }
             
@@ -105,7 +107,7 @@ window.ChatHistory = (function() {
             chatHistory.innerHTML = '';
             
             if (conversations.length === 0) {
-                const emptyState = window.ChatUI.createElement('div', {
+                const emptyState = window.Chat.UI.createElement('div', {
                     classList: 'empty-history',
                     innerHTML: `
                         <p>会話履歴がありません</p>
@@ -148,23 +150,23 @@ window.ChatHistory = (function() {
                 return document.createElement('div');
             }
             
-            const categorySection = window.ChatUI.createElement('div', {
+            const categorySection = window.Chat.UI.createElement('div', {
                 classList: 'chat-category',
                 attributes: {
                     'data-category': promptKey
                 }
             });
             
-            const categoryHeader = window.ChatUI.createElement('div', { classList: 'category-header' });
-            const toggleIcon = window.ChatUI.createElement('i', {
+            const categoryHeader = window.Chat.UI.createElement('div', { classList: 'category-header' });
+            const toggleIcon = window.Chat.UI.createElement('i', {
                 classList: ['fas', isExpanded ? 'fa-chevron-down' : 'fa-chevron-right']
             });
             
-            const categoryName = window.ChatUI.createElement('span', {
+            const categoryName = window.Chat.UI.createElement('span', {
                 textContent: promptKey
             });
             
-            const countBadge = window.ChatUI.createElement('span', {
+            const countBadge = window.Chat.UI.createElement('span', {
                 classList: 'category-count',
                 textContent: groupConversations.length
             });
@@ -173,7 +175,7 @@ window.ChatHistory = (function() {
             categoryHeader.appendChild(categoryName);
             categoryHeader.appendChild(countBadge);
             
-            const conversationList = window.ChatUI.createElement('div', { classList: 'category-conversations' });
+            const conversationList = window.Chat.UI.createElement('div', { classList: 'category-conversations' });
             if (!isExpanded) {
                 conversationList.style.display = 'none';
             }
@@ -230,14 +232,14 @@ window.ChatHistory = (function() {
                 return document.createElement('div');
             }
             
-            const historyItem = window.ChatUI.createElement('div', {
+            const historyItem = window.Chat.UI.createElement('div', {
                 classList: 'history-item',
                 attributes: {
                     'data-id': conversation.id
                 }
             });
             
-            const itemContent = window.ChatUI.createElement('div', {
+            const itemContent = window.Chat.UI.createElement('div', {
                 classList: 'history-item-content',
                 innerHTML: `
                     <i class="fas fa-comments"></i>
@@ -245,9 +247,9 @@ window.ChatHistory = (function() {
                 `
             });
             
-            const actionButtons = window.ChatUI.createElement('div', { classList: 'history-item-actions' });
+            const actionButtons = window.Chat.UI.createElement('div', { classList: 'history-item-actions' });
             
-            const editButton = window.ChatUI.createElement('button', {
+            const editButton = window.Chat.UI.createElement('button', {
                 classList: ['history-action-button', 'edit-button'],
                 innerHTML: '<i class="fas fa-edit"></i>',
                 attributes: {
@@ -262,7 +264,7 @@ window.ChatHistory = (function() {
                 }
             });
             
-            const deleteButton = window.ChatUI.createElement('button', {
+            const deleteButton = window.Chat.UI.createElement('button', {
                 classList: ['history-action-button', 'delete-button'],
                 innerHTML: '<i class="fas fa-trash"></i>',
                 attributes: {
@@ -376,4 +378,4 @@ window.ChatHistory = (function() {
             }
         }
     };
-})();
+})());

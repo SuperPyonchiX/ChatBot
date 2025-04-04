@@ -1,9 +1,11 @@
+window.Chat = window.Chat || {};
+window.Chat.Renderer = window.Chat.Renderer || {};
 /**
  * chatRenderer.js
  * チャットメッセージのレンダリング機能を提供します
  */
 
-window.ChatRenderer = (function() {
+Object.assign(window.Chat.Renderer, (function() {
     return {
         /**
          * ユーザーメッセージを追加する
@@ -14,7 +16,7 @@ window.ChatRenderer = (function() {
             const msgTimestamp = timestamp || Date.now();
             const fragment = document.createDocumentFragment();
             
-            const messageDiv = window.ChatUI.createElement('div', {
+            const messageDiv = window.Chat.UI.createElement('div', {
                 classList: ['message', 'user'],
                 attributes: {
                     'data-timestamp': msgTimestamp.toString(),
@@ -23,12 +25,12 @@ window.ChatRenderer = (function() {
                 }
             });
             
-            const contentDiv = window.ChatUI.createElement('div', { classList: 'message-content' });
+            const contentDiv = window.Chat.UI.createElement('div', { classList: 'message-content' });
             const copyButton = this._createCopyButton(message || '');
             
             try {
                 const renderedMarkdown = await window.Markdown.renderMarkdown(message || '');
-                const markdownContent = window.ChatUI.createElement('div', {
+                const markdownContent = window.Chat.UI.createElement('div', {
                     classList: 'markdown-content',
                     innerHTML: renderedMarkdown
                 });
@@ -37,7 +39,7 @@ window.ChatRenderer = (function() {
                 contentDiv.appendChild(markdownContent);
                 
                 if (attachments && attachments.length > 0) {
-                    contentDiv.appendChild(window.AttachmentViewer.createAttachmentsElement(attachments));
+                    contentDiv.appendChild(window.Chat.AttachmentViewer.createAttachmentsElement(attachments));
                 }
                 
                 messageDiv.appendChild(contentDiv);
@@ -48,7 +50,7 @@ window.ChatRenderer = (function() {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             } catch (e) {
                 console.error('ユーザーメッセージのMarkdown解析エラー:', e);
-                const markdownContent = window.ChatUI.createElement('div', {
+                const markdownContent = window.Chat.UI.createElement('div', {
                     classList: 'markdown-content',
                     textContent: message || ''
                 });
@@ -69,7 +71,7 @@ window.ChatRenderer = (function() {
             if (!chatMessages) return;
             
             const msgTimestamp = timestamp || Date.now();
-            const messageDiv = window.ChatUI.createElement('div', {
+            const messageDiv = window.Chat.UI.createElement('div', {
                 classList: ['message', 'bot'],
                 attributes: {
                     'data-timestamp': msgTimestamp.toString(),
@@ -78,9 +80,9 @@ window.ChatRenderer = (function() {
                 }
             });
             
-            const contentDiv = window.ChatUI.createElement('div', { classList: 'message-content' });
+            const contentDiv = window.Chat.UI.createElement('div', { classList: 'message-content' });
             const copyButton = this._createCopyButton(message || '');
-            const messageContent = window.ChatUI.createElement('div', { classList: 'markdown-content' });
+            const messageContent = window.Chat.UI.createElement('div', { classList: 'markdown-content' });
             
             if (animate) {
                 messageContent.innerHTML = '';
@@ -121,7 +123,7 @@ window.ChatRenderer = (function() {
             if (!chatMessages) return null;
             
             const msgTimestamp = timestamp || Date.now();
-            const messageDiv = window.ChatUI.createElement('div', {
+            const messageDiv = window.Chat.UI.createElement('div', {
                 classList: ['message', 'bot'],
                 attributes: {
                     'data-timestamp': msgTimestamp.toString(),
@@ -130,8 +132,8 @@ window.ChatRenderer = (function() {
                 }
             });
             
-            const contentDiv = window.ChatUI.createElement('div', { classList: 'message-content' });
-            const messageContent = window.ChatUI.createElement('div', {
+            const contentDiv = window.Chat.UI.createElement('div', { classList: 'message-content' });
+            const messageContent = window.Chat.UI.createElement('div', {
                 classList: 'markdown-content',
                 innerHTML: '<p>Thinking<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>'
             });
@@ -360,4 +362,4 @@ window.ChatRenderer = (function() {
             }, 1500);
         }
     };
-})();
+})());

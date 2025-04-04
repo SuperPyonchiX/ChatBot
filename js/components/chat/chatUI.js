@@ -1,9 +1,11 @@
+window.Chat = window.Chat || {};
+window.Chat.UI = window.Chat.UI || {};
 /**
  * chatUI.js
  * チャットUIの基本機能を提供します
  */
 
-window.ChatUI = (function() {
+Object.assign(window.Chat.UI, (function() {
     // プライベート変数とキャッシングメカニズム
     const _cache = {
         elements: new Map(),
@@ -104,4 +106,4 @@ window.ChatUI = (function() {
             }
         }
     };
-})();
+})());

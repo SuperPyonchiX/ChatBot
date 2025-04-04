@@ -1,9 +1,11 @@
+window.Chat = window.Chat || {};
+window.Chat.Actions = window.Chat.Actions || {};
 /**
  * chatActions.js
  * チャット関連のアクション（メッセージ送信、会話管理など）を担当するモジュール
  */
 
-window.ChatActions = {
+Object.assign(window.Chat.Actions, {
     /**
      * メッセージを送信します
      */
@@ -137,7 +139,7 @@ window.ChatActions = {
             };
 
             // ユーザーメッセージを表示
-            await window.ChatRenderer.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
+            await window.Chat.Renderer.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
             conversation.messages.push(userMessage);
 
             // チャットタイトルの更新
@@ -156,7 +158,7 @@ window.ChatActions = {
 
             const botTimestamp = Date.now();
             // ストリーミング用のボットメッセージを表示
-            const { messageDiv, contentContainer } = window.ChatRenderer.addStreamingBotMessage(chatMessages, botTimestamp);
+            const { messageDiv, contentContainer } = window.Chat.Renderer.addStreamingBotMessage(chatMessages, botTimestamp);
 
             let fullResponseText = '';
             let isFirstChunk = true;
@@ -171,12 +173,12 @@ window.ChatActions = {
                     onChunk: (chunk) => {
                         fullResponseText += chunk;
                         // ストリーミング中のメッセージ更新
-                        window.ChatRenderer.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
+                        window.Chat.Renderer.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
                         isFirstChunk = false;
                     },
                     onComplete: (fullText) => {
                         // ストリーミング完了時の処理
-                        window.ChatRenderer.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
+                        window.Chat.Renderer.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
                         fullResponseText = fullText;
                     }
                 }
@@ -248,7 +250,7 @@ window.ChatActions = {
         
         if (window.Elements.chatMessages && window.Elements.modelSelect) {
             // 会話を表示
-            window.ChatHistory.displayConversation(newConversation, window.Elements.chatMessages, window.Elements.modelSelect);
+            window.Chat.History.displayConversation(newConversation, window.Elements.chatMessages, window.Elements.modelSelect);
         }
     },
 
@@ -259,7 +261,7 @@ window.ChatActions = {
         if (!window.Elements.chatHistory) return;
         
         // チャット履歴を更新
-        window.ChatHistory.renderChatHistory(
+        window.Chat.History.renderChatHistory(
             window.AppState.conversations, 
             window.AppState.currentConversationId, 
             window.Elements.chatHistory, 
@@ -279,11 +281,11 @@ window.ChatActions = {
         window.Storage.saveCurrentConversationId(window.AppState.currentConversationId);
         
         // アクティブチャットを更新
-        window.ChatHistory.updateActiveChatInHistory(window.AppState.currentConversationId);
+        window.Chat.History.updateActiveChatInHistory(window.AppState.currentConversationId);
         
         if (window.Elements.chatMessages && window.Elements.modelSelect) {
             // 会話を表示
-            window.ChatHistory.displayConversation(
+            window.Chat.History.displayConversation(
                 window.AppState.getConversationById(window.AppState.currentConversationId),
                 window.Elements.chatMessages,
                 window.Elements.modelSelect
@@ -320,7 +322,7 @@ window.ChatActions = {
                 
                 if (window.Elements.chatMessages && window.Elements.modelSelect) {
                     // 会話を表示
-                    window.ChatHistory.displayConversation(
+                    window.Chat.History.displayConversation(
                         window.AppState.getConversationById(window.AppState.currentConversationId),
                         window.Elements.chatMessages,
                         window.Elements.modelSelect
@@ -354,4 +356,4 @@ window.ChatActions = {
             this.createNewConversation();
         }
     }
-};
+});

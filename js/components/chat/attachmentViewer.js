@@ -1,9 +1,11 @@
+window.Chat = window.Chat || {};
+window.Chat.AttachmentViewer = window.Chat.AttachmentViewer || {};
 /**
  * attachmentViewer.js
  * 添付ファイルの表示機能を提供します
  */
 
-window.AttachmentViewer = (function() {
+Object.assign(window.Chat.AttachmentViewer, (function() {
     return {
         /**
          * 添付ファイル表示要素を作成
@@ -13,7 +15,7 @@ window.AttachmentViewer = (function() {
                 return document.createElement('div');
             }
             
-            const attachmentsDiv = window.ChatUI.createElement('div', { 
+            const attachmentsDiv = window.Chat.UI.createElement('div', { 
                 classList: 'message-attachments'
             });
             
@@ -52,11 +54,11 @@ window.AttachmentViewer = (function() {
          * @private
          */
         _createImagePreview: function(attachment) {
-            const imgContainer = window.ChatUI.createElement('div', {
+            const imgContainer = window.Chat.UI.createElement('div', {
                 classList: 'attachment-image-container'
             });
             
-            const img = window.ChatUI.createElement('img', {
+            const img = window.Chat.UI.createElement('img', {
                 classList: 'attachment-image',
                 attributes: {
                     src: attachment.data,
@@ -77,24 +79,24 @@ window.AttachmentViewer = (function() {
          * @private
          */
         _createPdfPreview: function(attachment) {
-            const pdfContainer = window.ChatUI.createElement('div', {
+            const pdfContainer = window.Chat.UI.createElement('div', {
                 classList: 'attachment-pdf-container'
             });
             
-            const pdfPreview = window.ChatUI.createElement('div', {
+            const pdfPreview = window.Chat.UI.createElement('div', {
                 classList: 'pdf-preview'
             });
             
-            const pdfIcon = window.ChatUI.createElement('i', {
+            const pdfIcon = window.Chat.UI.createElement('i', {
                 classList: ['fas', 'fa-file-pdf']
             });
             
-            const pdfName = window.ChatUI.createElement('span', {
+            const pdfName = window.Chat.UI.createElement('span', {
                 classList: 'attachment-file-name',
                 textContent: attachment.name || 'PDF文書'
             });
             
-            const previewButton = window.ChatUI.createElement('button', {
+            const previewButton = window.Chat.UI.createElement('button', {
                 classList: 'pdf-preview-button',
                 textContent: 'プレビュー'
             });
@@ -116,15 +118,15 @@ window.AttachmentViewer = (function() {
          * @private
          */
         _createOfficePreview: function(attachment) {
-            const officeContainer = window.ChatUI.createElement('div', {
+            const officeContainer = window.Chat.UI.createElement('div', {
                 classList: 'attachment-office-container'
             });
             
-            const officePreview = window.ChatUI.createElement('div', {
+            const officePreview = window.Chat.UI.createElement('div', {
                 classList: 'office-preview'
             });
             
-            const officeIcon = window.ChatUI.createElement('i');
+            const officeIcon = window.Chat.UI.createElement('i');
             if (attachment.mimeType) {
                 if (attachment.mimeType.includes('word')) {
                     officeIcon.className = 'fas fa-file-word';
@@ -139,12 +141,12 @@ window.AttachmentViewer = (function() {
                 officeIcon.className = 'fas fa-file';
             }
             
-            const officeName = window.ChatUI.createElement('span', {
+            const officeName = window.Chat.UI.createElement('span', {
                 classList: 'attachment-file-name',
                 textContent: attachment.name || 'Officeファイル'
             });
             
-            const contentButton = window.ChatUI.createElement('button', {
+            const contentButton = window.Chat.UI.createElement('button', {
                 classList: 'office-content-button',
                 textContent: 'プレビュー'
             });
@@ -166,20 +168,20 @@ window.AttachmentViewer = (function() {
          * @private
          */
         _createFilePreview: function(attachment) {
-            const fileContainer = window.ChatUI.createElement('div', {
+            const fileContainer = window.Chat.UI.createElement('div', {
                 classList: 'attachment-file-container'
             });
             
-            const fileIcon = window.ChatUI.createElement('i', {
+            const fileIcon = window.Chat.UI.createElement('i', {
                 classList: ['fas', 'fa-file']
             });
             
-            const fileName = window.ChatUI.createElement('span', {
+            const fileName = window.Chat.UI.createElement('span', {
                 classList: 'attachment-file-name',
                 textContent: attachment.name || '添付ファイル'
             });
             
-            const previewButton = window.ChatUI.createElement('button', {
+            const previewButton = window.Chat.UI.createElement('button', {
                 classList: 'file-preview-button',
                 textContent: 'プレビュー'
             });
@@ -211,28 +213,28 @@ window.AttachmentViewer = (function() {
                 return;
             }
             
-            const overlay = window.ChatUI.createElement('div', {
+            const overlay = window.Chat.UI.createElement('div', {
                 classList: 'text-file-overlay'
             });
             
-            const contentViewer = window.ChatUI.createElement('div', {
+            const contentViewer = window.Chat.UI.createElement('div', {
                 classList: 'text-file-viewer'
             });
             
-            const textContent = window.ChatUI.createElement('pre', {
+            const textContent = window.Chat.UI.createElement('pre', {
                 classList: 'text-file-content',
                 innerHTML: this._formatTextContent(content, name)
             });
             
-            const titleBar = window.ChatUI.createElement('div', {
+            const titleBar = window.Chat.UI.createElement('div', {
                 classList: 'text-file-title-bar'
             });
             
-            const titleText = window.ChatUI.createElement('span', {
+            const titleText = window.Chat.UI.createElement('span', {
                 textContent: name || 'テキストファイル'
             });
             
-            const closeBtn = window.ChatUI.createElement('button', {
+            const closeBtn = window.Chat.UI.createElement('button', {
                 classList: 'overlay-close-btn',
                 innerHTML: '<i class="fas fa-times"></i>'
             });
@@ -315,15 +317,15 @@ window.AttachmentViewer = (function() {
                 return;
             }
             
-            const overlay = window.ChatUI.createElement('div', {
+            const overlay = window.Chat.UI.createElement('div', {
                 classList: 'pdf-overlay'
             });
             
-            const pdfViewer = window.ChatUI.createElement('div', {
+            const pdfViewer = window.Chat.UI.createElement('div', {
                 classList: 'pdf-viewer'
             });
             
-            const pdfObject = window.ChatUI.createElement('object', {
+            const pdfObject = window.Chat.UI.createElement('object', {
                 attributes: {
                     type: 'application/pdf',
                     data: src,
@@ -332,19 +334,19 @@ window.AttachmentViewer = (function() {
                 }
             });
             
-            const fallback = window.ChatUI.createElement('p', {
+            const fallback = window.Chat.UI.createElement('p', {
                 innerHTML: `<a href="${src}" target="_blank">PDFを表示できません。こちらをクリックして開いてください。</a>`
             });
             
-            const titleBar = window.ChatUI.createElement('div', {
+            const titleBar = window.Chat.UI.createElement('div', {
                 classList: 'pdf-title-bar'
             });
             
-            const titleText = window.ChatUI.createElement('span', {
+            const titleText = window.Chat.UI.createElement('span', {
                 textContent: name || 'PDF文書'
             });
             
-            const closeBtn = window.ChatUI.createElement('button', {
+            const closeBtn = window.Chat.UI.createElement('button', {
                 classList: 'overlay-close-btn',
                 innerHTML: '<i class="fas fa-times"></i>'
             });
@@ -384,28 +386,28 @@ window.AttachmentViewer = (function() {
                 return;
             }
             
-            const overlay = window.ChatUI.createElement('div', {
+            const overlay = window.Chat.UI.createElement('div', {
                 classList: 'office-overlay'
             });
             
-            const contentViewer = window.ChatUI.createElement('div', {
+            const contentViewer = window.Chat.UI.createElement('div', {
                 classList: 'office-content-viewer'
             });
             
-            const textContent = window.ChatUI.createElement('pre', {
+            const textContent = window.Chat.UI.createElement('pre', {
                 classList: 'office-text-content',
                 textContent: content
             });
             
-            const titleBar = window.ChatUI.createElement('div', {
+            const titleBar = window.Chat.UI.createElement('div', {
                 classList: 'office-title-bar'
             });
             
-            const titleText = window.ChatUI.createElement('span', {
+            const titleText = window.Chat.UI.createElement('span', {
                 textContent: name || 'ファイル内容'
             });
             
-            const closeBtn = window.ChatUI.createElement('button', {
+            const closeBtn = window.Chat.UI.createElement('button', {
                 classList: 'overlay-close-btn',
                 innerHTML: '<i class="fas fa-times"></i>'
             });
@@ -441,30 +443,30 @@ window.AttachmentViewer = (function() {
                 return;
             }
             
-            const overlay = window.ChatUI.createElement('div', {
+            const overlay = window.Chat.UI.createElement('div', {
                 classList: 'image-overlay'
             });
             
-            const imageViewer = window.ChatUI.createElement('div', {
+            const imageViewer = window.Chat.UI.createElement('div', {
                 classList: 'image-viewer'
             });
             
-            const image = window.ChatUI.createElement('img', {
+            const image = window.Chat.UI.createElement('img', {
                 attributes: {
                     src: src,
                     alt: name || '画像'
                 }
             });
             
-            const titleBar = window.ChatUI.createElement('div', {
+            const titleBar = window.Chat.UI.createElement('div', {
                 classList: 'image-title-bar'
             });
             
-            const titleText = window.ChatUI.createElement('span', {
+            const titleText = window.Chat.UI.createElement('span', {
                 textContent: name || '画像'
             });
             
-            const closeBtn = window.ChatUI.createElement('button', {
+            const closeBtn = window.Chat.UI.createElement('button', {
                 classList: 'overlay-close-btn',
                 innerHTML: '<i class="fas fa-times"></i>'
             });
@@ -487,4 +489,4 @@ window.AttachmentViewer = (function() {
             document.body.appendChild(overlay);
         }
     };
-})();
+})());

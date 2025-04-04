@@ -355,8 +355,8 @@ window.FileHandler = {
                 
                 // 画像クリックで拡大表示
                 img.addEventListener('click', function() {
-                    if (window.AttachmentViewer && typeof window.AttachmentViewer._showFullSizeImage === 'function') {
-                        window.AttachmentViewer._showFullSizeImage(e.target.result, file.name);
+                    if (window.Chat.AttachmentViewer && typeof window.Chat.AttachmentViewer._showFullSizeImage === 'function') {
+                        window.Chat.AttachmentViewer._showFullSizeImage(e.target.result, file.name);
                     }
                 });
                 
@@ -927,7 +927,7 @@ window.FileHandler = {
                     }
                     
                     // 新しい添付ファイル要素を作成して追加（すべてのファイルを一度に）
-                    const attachmentsElement = window.AttachmentViewer.createAttachmentsElement(files, parseInt(messageId));
+                    const attachmentsElement = window.Chat.AttachmentViewer.createAttachmentsElement(files, parseInt(messageId));
                     messageContent.appendChild(attachmentsElement);
                 }
             }
@@ -1403,7 +1403,7 @@ window.FileHandler = {
                 }
                 
                 // 新しい添付ファイル要素を作成して追加
-                const attachmentsElement = window.AttachmentViewer.createAttachmentsElement(files, fileTimestamp);
+                const attachmentsElement = window.Chat.AttachmentViewer.createAttachmentsElement(files, fileTimestamp);
                 messageContent.appendChild(attachmentsElement);
             }
         } else if (messages.length > 0) {
@@ -1418,7 +1418,7 @@ window.FileHandler = {
                 }
                 
                 // 新しい添付ファイル要素を作成して追加
-                const attachmentsElement = window.AttachmentViewer.createAttachmentsElement(files, fileTimestamp);
+                const attachmentsElement = window.Chat.AttachmentViewer.createAttachmentsElement(files, fileTimestamp);
                 messageContent.appendChild(attachmentsElement);
             }
         }

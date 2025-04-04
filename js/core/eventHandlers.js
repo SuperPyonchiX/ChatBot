@@ -12,13 +12,13 @@ window.EventHandlers = {
             !window.Elements.newChatButton || !window.Elements.clearHistoryButton) return;
         
         // 送信ボタンのクリックイベント
-        window.Elements.sendButton.addEventListener('click', window.ChatActions.sendMessage.bind(window.ChatActions));
+        window.Elements.sendButton.addEventListener('click', window.Chat.Actions.sendMessage.bind(window.Chat.Actions));
 
         // テキストエリアのEnterキーイベント（Shift+Enterで改行）
         window.Elements.userInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                window.ChatActions.sendMessage();
+                window.Chat.Actions.sendMessage();
             }
         });
         
@@ -26,10 +26,10 @@ window.EventHandlers = {
         window.Elements.userInput.addEventListener('input', () => window.UIUtils.autoResizeTextarea(window.Elements.userInput));
 
         // 新しいチャットボタン
-        window.Elements.newChatButton.addEventListener('click', window.ChatActions.createNewConversation.bind(window.ChatActions));
+        window.Elements.newChatButton.addEventListener('click', window.Chat.Actions.createNewConversation.bind(window.Chat.Actions));
 
         // 履歴クリアボタン
-        window.Elements.clearHistoryButton.addEventListener('click', window.ChatActions.clearAllHistory.bind(window.ChatActions));
+        window.Elements.clearHistoryButton.addEventListener('click', window.Chat.Actions.clearAllHistory.bind(window.Chat.Actions));
     },
 
     /**
