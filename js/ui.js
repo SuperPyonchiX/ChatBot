@@ -838,16 +838,6 @@ const UIPerfMonitor = {
     }
 };
 
-// UIメソッドをパフォーマンス監視とエラーハンドリングでラップ
-Object.keys(window.UI).forEach(key => {
-    if (typeof window.UI[key] === 'function' && !key.startsWith('_')) {
-        window.UI[key] = UIPerfMonitor.safeExec(
-            UIPerfMonitor.measure(window.UI[key], `UI.${key}`),
-            `UI.${key}`
-        );
-    }
-});
-
 // UIモジュールに追加機能を拡張
 Object.assign(window.UI, {
     /**
