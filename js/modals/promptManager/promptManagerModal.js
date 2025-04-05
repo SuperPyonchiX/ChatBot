@@ -212,12 +212,12 @@ Object.assign(window.UI.Core.Modal, {
         
         promptItem.querySelector('.system-prompt-button').addEventListener('click', (e) => {
             e.stopPropagation();
-            this._setAsSystemPrompt(prompt.id);
+            window.UI.Core.Modal.setPromptAsSystemPrompt(prompt.id);
         });
         
         promptItem.querySelector('.system-prompt-save-button').addEventListener('click', (e) => {
             e.stopPropagation();
-            this._saveAsTemplate(prompt.id);
+            window.UI.Core.Modal.savePromptAsSystemPromptTemplate(prompt.id);
         });
         
         promptItem.querySelector('.delete-prompt-button').addEventListener('click', (e) => {
@@ -313,44 +313,6 @@ Object.assign(window.UI.Core.Modal, {
         }
     },
 
-    /**
-     * プロンプトをシステムプロンプトとして設定する
-     * @private
-     */
-    _setAsSystemPrompt: function(promptId) {
-        try {
-            const customVariables = {};
-            const systemPrompt = window.SystemPromptManager.setAsSystemPrompt(promptId, customVariables);
-            window.UI.Core.Notification.show('システムプロンプトを更新しました', 'success');
-            this.hidePromptManagerModal();
-        } catch (error) {
-            console.error('システムプロンプトの設定に失敗しました:', error);
-            window.UI.Core.Notification.show('システムプロンプトの設定に失敗しました', 'error');
-        }
-    },
-
-    /**
-     * プロンプトをシステムプロンプトとして保存する
-     * @private
-     */
-    _saveAsTemplate: function(promptId) {
-        const promptName = prompt('システムプロンプト名を入力してください:');
-        if (!promptName) return;
-        
-        try {
-            const success = window.SystemPromptManager.saveAsSystemPromptTemplate(promptId, promptName);
-            
-            if (success) {
-                window.UI.Core.Notification.show(`システムプロンプト「${promptName}」を保存しました`, 'success');
-            } else {
-                window.UI.Core.Notification.show('システムプロンプトの保存に失敗しました', 'error');
-            }
-        } catch (error) {
-            console.error('システムプロンプトの保存中にエラーが発生しました:', error);
-            window.UI.Core.Notification.show(`エラー: ${error.message}`, 'error');
-        }
-    },
-    
     /**
      * カテゴリを編集する
      * @private

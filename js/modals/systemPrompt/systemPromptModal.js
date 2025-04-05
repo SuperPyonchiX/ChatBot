@@ -170,5 +170,49 @@ Object.assign(window.UI.Core.Modal, {
                 click: () => onSelect(promptName)
             }
         });
+    },
+
+    /**
+     * プロンプトをシステムプロンプトとして設定する
+     * @public
+     * @param {string} promptId - プロンプトID
+     */
+    setPromptAsSystemPrompt: function(promptId) {
+        try {
+            const customVariables = {};
+            const systemPrompt = window.SystemPromptManager.setAsSystemPrompt(promptId, customVariables);
+            window.UI.Core.Notification.show('システムプロンプトを更新しました', 'success');
+            
+            // プロンプトマネージャーモーダルを閉じる（表示されている場合）
+            if (this.hidePromptManagerModal) {
+                this.hidePromptManagerModal();
+            }
+        } catch (error) {
+            console.error('システムプロンプトの設定に失敗しました:', error);
+            window.UI.Core.Notification.show('システムプロンプトの設定に失敗しました', 'error');
+        }
+    },
+
+    /**
+     * プロンプトをシステムプロンプトテンプレートとして保存する
+     * @public
+     * @param {string} promptId - プロンプトID
+     */
+    savePromptAsSystemPromptTemplate: function(promptId) {
+        const promptName = prompt('システムプロンプト名を入力してください:');
+        if (!promptName) return;
+        
+        try {
+            const success = window.SystemPromptManager.saveAsSystemPromptTemplate(promptId, promptName);
+            
+            if (success) {
+                window.UI.Core.Notification.show(`システムプロンプト「${promptName}」を保存しました`, 'success');
+            } else {
+                window.UI.Core.Notification.show('システムプロンプトの保存に失敗しました', 'error');
+            }
+        } catch (error) {
+            console.error('システムプロンプトの保存中にエラーが発生しました:', error);
+            window.UI.Core.Notification.show(`エラー: ${error.message}`, 'error');
+        }
     }
 });
