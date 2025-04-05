@@ -1,0 +1,203 @@
+/* プロンプトマネージャー関連のスタイル */
+.prompt-manager-modal {
+    max-width: var(--prompt-manager-width);
+    width: var(--modal-width);
+    max-height: 80vh;
+}
+
+.prompt-manager-container {
+    display: flex;
+    height: var(--prompt-manager-height);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-md);
+    background-color: var(--background-primary);
+}
+
+.prompt-manager-sidebar {
+    width: var(--prompt-sidebar-width);
+    background-color: var(--background-primary);
+    border-right: 1px solid var(--border-color);
+    padding: var(--spacing-sm);
+    overflow-y: auto;
+}
+
+.prompt-manager-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: var(--background-primary);
+}
+
+.prompt-list-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.prompt-search {
+    flex: 1;
+    margin: 0 var(--spacing-md);
+}
+
+.prompt-search input {
+    width: 100%;
+    padding: var(--prompt-search-padding);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+    background-color: var(--background-secondary);
+    color: var(--text-primary);
+}
+
+.prompts-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+}
+
+.prompt-categories-list {
+    margin-bottom: var(--spacing-md);
+}
+
+/* プロンプトマネージャー特有のカテゴリースタイル */
+.prompt-categories-list .category-item {
+    padding: var(--spacing-sm) var(--spacing-sm);
+    cursor: pointer;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-xs);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color var(--transition-fast);
+    background-color: var(--background-secondary);
+    color: var(--text-primary);
+}
+
+.prompt-categories-list .category-item:hover {
+    background-color: var(--background-tertiary);
+}
+
+.prompt-categories-list .category-item.active {
+    background-color: var(--background-quaternary);
+    color: var(--text-primary);
+}
+
+.category-actions {
+    margin-top: var(--spacing-sm);
+    display: flex;
+    justify-content: center;
+}
+
+.prompt-item {
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast) ease;
+    background-color: var(--background-secondary);
+}
+
+.prompt-item:hover {
+    border-color: var(--border-color-hover);
+    box-shadow: var(--shadow-sm);
+    background-color: var(--background-tertiary);
+}
+
+.prompt-item-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+}
+
+.prompt-item-name {
+    font-weight: bold;
+    font-size: var(--prompt-item-name-size);
+    color: var(--text-primary);
+}
+
+.prompt-item-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: var(--button-opacity-default);
+    transition: opacity var(--transition-fast);
+    padding: var(--spacing-xs) var(--spacing-xs);
+    margin-left: var(--spacing-xs);
+    color: var(--text-tertiary);
+}
+
+.prompt-item-actions button:hover {
+    opacity: 1;
+}
+
+.prompt-item-description {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.prompt-item-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
+.prompt-tag {
+    background-color: var(--background-quaternary);
+    color: var(--text-primary);
+    padding: var(--prompt-tag-padding);
+    border-radius: var(--prompt-tag-radius);
+    font-size: var(--font-size-xs);
+}
+
+/* Variable help text */
+.variable-help-text {
+    background-color: var(--background-secondary);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    border: 1px solid var(--border-color);
+}
+
+.variable-help-text code {
+    background-color: var(--background-tertiary);
+    padding: var(--spacing-xs) var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+    font-family: var(--font-family-code);
+    color: var(--text-primary);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .prompt-manager-container {
+        flex-direction: column;
+        height: var(--prompt-manager-mobile-height);
+    }
+    
+    .prompt-manager-sidebar {
+        width: 100%;
+        height: var(--prompt-mobile-sidebar-height);
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .prompt-list-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .prompt-search {
+        margin: var(--spacing-sm) 0;
+    }
+    
+    .prompt-manager-modal {
+        padding: var(--spacing-sm);
+    }
+}
+

@@ -1,0 +1,207 @@
+/* モーダルの基本スタイル */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--modal-overlay-bg);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background-color: var(--background-secondary);
+    color: var(--text-primary);
+    padding: var(--modal-content-padding);
+    border-radius: var(--border-radius-lg);
+    width: var(--modal-width);
+    max-width: var(--modal-max-width-default);
+    box-shadow: var(--modal-shadow);
+}
+
+/* 確認ダイアログのスタイル */
+.custom-confirm-dialog .modal-content {
+    max-width: var(--modal-max-width-small);
+}
+
+.custom-confirm-dialog .modal-header {
+    margin-bottom: var(--spacing-md);
+}
+
+.custom-confirm-dialog .modal-body {
+    margin-bottom: var(--spacing-lg);
+}
+
+.custom-confirm-dialog .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+}
+
+/* モーダルボタンエリアのスタイル */
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-lg);
+}
+
+/* システムプロンプト設定のモーダル用スタイル */
+.system-prompt-container {
+    display: flex;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.system-prompt-sidebar {
+    width: var(--modal-template-sidebar-width);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.system-prompt-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* テンプレート関連のスタイル */
+.template-list-area {
+    height: 100%;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+    margin: var(--spacing-xs) 0 var(--spacing-lg) 0;
+    background-color: var(--background-primary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color);
+    max-height: var(--modal-max-height-template);
+}
+
+.template-category {
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+}
+
+.template-category-header {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-sm);
+    background-color: var(--background-secondary);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color var(--transition-fast) ease;
+    font-weight: bold;
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-xs) 0;
+    color: var(--text-primary);
+}
+
+.template-category-header:hover {
+    background-color: var(--background-tertiary);
+}
+
+.template-category-header i {
+    margin-right: var(--template-header-icon-size);
+    transition: transform var(--transition-fast) ease;
+}
+
+.template-category-header .category-title {
+    font-weight: 600;
+    font-size: var(--font-size-md);
+    color: var(--text-primary);
+}
+
+.template-category-header .category-count {
+    margin-left: auto;
+    background-color: var(--background-tertiary);
+    color: var(--text-secondary);
+    padding: var(--template-count-padding);
+    border-radius: var(--border-radius-xl);
+    font-size: var(--font-size-xs);
+}
+
+.template-category.collapsed .template-list {
+    display: none;
+}
+
+.template-category.collapsed .template-category-header i {
+    transform: rotate(-90deg);
+}
+
+.template-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--template-gap);
+    padding: var(--spacing-md);
+    background-color: var(--background-primary);
+    transition: max-height var(--transition-normal) ease;
+}
+
+.template-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--template-item-padding);
+    margin-bottom: var(--spacing-sm);
+    background-color: var(--background-secondary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all var(--transition-fast) ease;
+}
+
+.template-item:last-child {
+    margin-bottom: 0;
+}
+
+.template-item:hover {
+    background-color: var(--background-tertiary);
+    border-color: var(--border-color);
+    transform: translateY(var(--template-translate-y));
+}
+
+.template-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+}
+
+.template-delete-button {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    cursor: pointer;
+    opacity: 0;
+    transition: all var(--transition-fast) ease;
+}
+
+.template-item:hover .template-delete-button {
+    opacity: var(--button-opacity-default);
+}
+
+.template-delete-button:hover {
+    opacity: 1;
+    color: var(--error-color);
+}
+
+.template-list-title {
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-lg);
+    color: var(--text-primary);
+    padding-left: var(--spacing-xs);
+}

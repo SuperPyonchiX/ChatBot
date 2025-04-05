@@ -1,0 +1,37 @@
+/* 設定メニュー */
+.settings-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.settings-menu {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background-color: var(--background-secondary);
+    min-width: var(--settings-menu-min-width);
+    box-shadow: var(--settings-menu-shadow);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    z-index: 1000;
+    margin-bottom: var(--settings-menu-margin);
+}
+
+.settings-menu.show {
+    display: block;
+}
+
+.settings-menu button {
+    width: 100%;
+    padding: var(--settings-menu-padding);
+    border: none;
+    background: none;
+    color: var(--text-primary);
+    text-align: left;
+    transition: background-color var(--transition-fast);
+}
+
+.settings-menu button:hover {
+    background-color: var(--background-quaternary);
+}

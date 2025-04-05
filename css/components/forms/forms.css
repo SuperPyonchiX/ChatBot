@@ -1,0 +1,118 @@
+/* フォーム要素のスタイル */
+.form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    font-weight: var(--form-label-weight);
+    color: var(--text-primary);
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group textarea {
+    width: 100%;
+    padding: var(--form-input-padding);
+    border: 1px solid var(--form-input-border);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+    background-color: var(--form-input-bg);
+    color: var(--text-primary);
+}
+
+.form-group textarea {
+    min-height: var(--form-textarea-min-height);
+    resize: vertical;
+}
+
+/* チャット入力エリア */
+.input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    position: relative;
+    background-color: var(--background-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-sm);
+}
+
+#userInput {
+    flex: 1;
+    border: none;
+    padding: var(--spacing-sm);
+    resize: none;
+    font-size: var(--font-size-md);
+    outline: none;
+    overflow-y: auto;
+    max-height: 150px;
+    line-height: 1.4;
+    background-color: transparent;
+    color: var(--text-primary);
+}
+
+/* モデルセレクター */
+.model-selector select {
+    padding: var(--model-selector-padding-y) var(--model-selector-padding-x);
+    border-radius: var(--border-radius-sm);
+    background-color: var(--form-input-bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--form-input-border);
+    outline: none;
+    cursor: pointer;
+}
+
+.model-selector select:hover {
+    background-color: var(--background-quaternary);
+}
+
+/* Azure モデルエンドポイント設定 */
+.azure-model-endpoints {
+    max-height: var(--form-max-height);
+    overflow-y: auto;
+    border: 1px solid var(--form-input-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    background-color: var(--form-input-bg);
+}
+
+.azure-model-endpoints .form-group {
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--form-input-border);
+}
+
+.azure-model-endpoints .form-group:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.azure-model-endpoints label {
+    font-weight: var(--form-label-weight);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+}
+
+.azure-model-endpoints input[type="text"] {
+    width: 100%;
+    padding: var(--form-input-padding);
+    border: 1px solid var(--form-input-border);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+    background-color: var(--form-input-bg-secondary);
+    color: var(--text-primary);
+}
+
+.hidden {
+    display: none;
+}
+
+/* ラジオボタングループ */
+.radio-group {
+    display: flex;
+    gap: var(--spacing-md);
+}

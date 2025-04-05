@@ -8,11 +8,24 @@
     <title>ChatBot</title>
     <link rel="icon" href="icon/ChatBot.png" type="image/png">
     <!-- CSS ファイル -->
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/chat.css">
-    <link rel="stylesheet" href="css/markdown.css">
+    <link rel="stylesheet" href="css/base/variables.css">
+    <link rel="stylesheet" href="css/base/base.css">
+    <link rel="stylesheet" href="css/layouts/layout.css">
+    <!-- Components CSS -->
+    <link rel="stylesheet" href="css/components/buttons/buttons.css">
+    <link rel="stylesheet" href="css/components/chat/chat-category.css">
+    <link rel="stylesheet" href="css/components/forms/forms.css">
+    <link rel="stylesheet" href="css/components/modals/modals.css">
+    <link rel="stylesheet" href="css/components/settings/settings-menu.css">
+    <link rel="stylesheet" href="css/components/prompt/prompt-manager.css">
+    <link rel="stylesheet" href="css/components/prompt/prompt-suggestions.css">
+    <link rel="stylesheet" href="css/components/code/code-execution.css">
+    <link rel="stylesheet" href="css/components/animations/typing.css">
+    <link rel="stylesheet" href="css/components/file-preview/pdf-preview.css">
+    <link rel="stylesheet" href="css/components/file-preview/office-preview.css">
+    <link rel="stylesheet" href="css/components/file-preview/text-preview.css">
+    <link rel="stylesheet" href="css/components/chat/chat.css">
+    <link rel="stylesheet" href="css/components/chat/markdown.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
     
@@ -118,7 +131,6 @@
         });
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js"></script>
-    <script src="js/lib/JSCPP.es5.min.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -224,8 +236,8 @@
                 </div>
             </div>
             <div class="modal-buttons">
-                <button id="saveApiKey">保存</button>
-                <button id="cancelApiKey">キャンセル</button>
+                <button id="saveApiKey" class="primary-button">保存</button>
+                <button id="cancelApiKey" class="primary-button">キャンセル</button>
             </div>
         </div>
     </div>
@@ -239,8 +251,8 @@
                 <input type="text" id="chatTitleInput" placeholder="チャットタイトル">
             </div>
             <div class="modal-buttons">
-                <button id="saveRenameChat">保存</button>
-                <button id="cancelRenameChat">キャンセル</button>
+                <button id="saveRenameChat" class="primary-button">保存</button>
+                <button id="cancelRenameChat" class="primary-button">キャンセル</button>
             </div>
         </div>
     </div>
@@ -258,26 +270,24 @@
                 </div>
                 <div class="system-prompt-main">
                     <div class="form-group">
-                        <label for="systemPromptInput">システムプロンプト:</label>
-                        <textarea id="systemPromptInput" rows="15" placeholder="システムプロンプトを入力..."></textarea>
-                    </div>
-                    <div class="form-group">
+                        <div class="form-group">
+                            <label for="systemPromptInput">システムプロンプト:</label>
+                            <textarea id="systemPromptInput" rows="15" placeholder="システムプロンプトを入力..."></textarea>
+                        </div>
+                        <label for="newTemplateCategory">カテゴリ:</label>
+                        <input type="text" id="newTemplateCategory" placeholder="カテゴリ名を入力">
                         <label for="newTemplateName">新規テンプレート名:</label>
                         <input type="text" id="newTemplateName" placeholder="新しいテンプレート名">
                         <div style="margin-top: 10px;">
-                            <label for="newTemplateCategory">カテゴリ:</label>
-                            <select id="newTemplateCategory" style="width: 100%; padding: 8px; margin-bottom: 10px; background-color: #2d2d2d; color: #e0e0e0; border: 1px solid #404040; border-radius: 4px;">
-                                <!-- カテゴリオプションはJSで動的に生成 -->
-                            </select>
                             <button id="saveNewTemplate" class="secondary-button">新規テンプレートとして保存</button>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-buttons">
-                <button id="saveSystemPrompt">保存</button>
-                <button id="cancelSystemPrompt">キャンセル</button>
-                <button id="switchToPromptManager" class="secondary-button">ユーザープロンプト管理へ</button>
+                <button id="saveSystemPrompt" class="primary-button">保存</button>
+                <button id="cancelSystemPrompt" class="primary-button">キャンセル</button>
+                <button id="switchToPromptManager" class="primary-button">ユーザープロンプト管理へ</button>
             </div>
         </div>
     </div>
@@ -293,7 +303,7 @@
                         <!-- カテゴリ一覧はJSで動的に生成 -->
                     </div>
                     <div class="category-actions">
-                        <button id="addCategoryButton" class="small-button">
+                        <button id="addCategoryButton" class="secondary-button">
                             <i class="fas fa-plus"></i> カテゴリ追加
                         </button>
                     </div>
@@ -304,7 +314,7 @@
                         <div class="prompt-search">
                             <input type="text" id="promptSearchInput" placeholder="プロンプト検索...">
                         </div>
-                        <button id="addPromptButton" class="primary-button">
+                        <button id="addPromptButton" class="secondary-button">
                             <i class="fas fa-plus"></i> 新規プロンプト
                         </button>
                     </div>
@@ -314,8 +324,8 @@
                 </div>
             </div>
             <div class="modal-buttons">
-                <button id="closePromptManager">閉じる</button>
-                <button id="switchToSystemPrompt" class="secondary-button">システムプロンプト設定へ</button>
+                <button id="closePromptManager" class="primary-button">閉じる</button>
+                <button id="switchToSystemPrompt" class="primary-button">システムプロンプト設定へ</button>
             </div>
         </div>
     </div>
@@ -354,24 +364,62 @@
                 </div>
             </div>
             <div class="modal-buttons">
-                <button id="savePromptEdit">保存</button>
-                <button id="cancelPromptEdit">キャンセル</button>
+                <button id="savePromptEdit" class="primary-button">保存</button>
+                <button id="cancelPromptEdit" class="secondary-button">キャンセル</button>
             </div>
         </div>
     </div>
 
     <!-- JSファイルを読み込む -->
-    <script src="js/config.js"></script>
-    <script src="js/cryptoHelper.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/chat.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/promptManager.js"></script>
-    <script src="js/promptSuggestions.js"></script>
-    <script src="js/fileHandler.js"></script>
-    <script src="js/markdown.js"></script>
-    <script src="js/codeExecutor.js"></script>
-    <script src="js/api.js"></script>
+    <script src="js/lib/JSCPP.es5.min.js"></script>
+    <script src="js/core/config.js"></script>
+    <script src="js/utils/cryptoHelper.js"></script>
+    <script src="js/core/storage.js"></script>
+
+    <!-- Core -->
+    <script src="js/core/uiCache.js"></script>
+    <script src="js/core/uiUtils.js"></script>
+    <script src="js/core/domElements.js"></script>
+    <script src="js/core/appState.js"></script>
+    <script src="js/core/ui.js"></script>
+    <script src="js/core/eventHandlers.js"></script>
+
+    <!-- Utils -->
+    <script src="js/utils/fileHandler.js"></script>
+    <script src="js/utils/fileValidator.js"></script>
+    <script src="js/utils/fileReader.js"></script>
+    <script src="js/utils/fileConverter.js"></script>
+
+    <!-- Components -->
+    <script src="js/components/fileAttachment/fileAttachmentUI.js"></script>
+    <script src="js/components/fileAttachment/attachmentViewer.js"></script>
+
+    <script src="js/core/api.js"></script>
+    <script src="js/utils/markdown.js"></script>
+    <script src="js/core/userprompts/promptManager.js"></script>
+    <script src="js/core/userprompts/promptSuggestions.js"></script>
+    <script src="js/core/executors/codeExecutor.js"></script>
+    
+    <!-- コンポーネント関連のファイル -->
+    <script src="js/components/chat/chatUI.js"></script>
+    <script src="js/components/chat/chatRenderer.js"></script>
+    <script src="js/components/chat/chatHistory.js"></script>
+    <script src="js/components/chat/chatActions.js"></script>
+    <script src="js/components/chat/chatAttachmentViewer.js"></script>
+    <script src="js/components/fileAttachment/fileAttachment.js"></script>
+    <script src="js/components/sidebar/sidebar.js"></script>
+    
+    <!-- モーダル関連のファイル -->
+    <script src="js/modals/modalHandlers.js"></script>
+    <script src="js/modals/apiSettings/apiSettingsModal.js"></script>
+    <script src="js/modals/renameChat/renameChatModal.js"></script>
+    <script src="js/modals/systemPrompt/systemPromptModal.js"></script>
+    <script src="js/modals/promptManager/promptManagerModal.js"></script>
+    
+    <!-- ユーティリティ関連のファイル -->
+    <script src="js/utils/shareUtils.js"></script>
+    
+    <!-- メインアプリケーションファイル -->
     <script src="main.js"></script>
 </body>
 </html>

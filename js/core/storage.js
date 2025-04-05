@@ -266,7 +266,7 @@ window.Storage = {
         
         // デフォルトのテンプレートと結合して返す
         // デフォルトのテンプレートが常に優先されるようにする
-        return { ...window.CONFIG.PROMPTS.TEMPLATES, ...customTemplates };
+        return { ...Object.assign({}, ...Object.values(window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES)), ...customTemplates };
     },
 
     /**

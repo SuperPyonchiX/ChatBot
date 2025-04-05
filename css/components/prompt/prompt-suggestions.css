@@ -1,0 +1,59 @@
+/* プロンプト候補表示用スタイル */
+.prompt-suggestions {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    width: 100%;
+    max-height: var(--suggestions-max-height);
+    overflow-y: auto;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--suggestion-shadow);
+    z-index: 100;
+    display: none;
+}
+
+.prompt-suggestions.show {
+    display: block;
+}
+
+.prompt-suggestion-item {
+    padding: var(--suggestions-padding);
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color var(--transition-fast);
+}
+
+.prompt-suggestion-item:hover,
+.prompt-suggestion-item.selected {
+    background-color: var(--background-quaternary);
+}
+
+.prompt-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.prompt-suggestion-name {
+    font-weight: 600;
+    margin-bottom: var(--suggestion-name-margin);
+    color: var(--text-primary);
+}
+
+.prompt-suggestion-description {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.prompt-category-label {
+    display: inline-block;
+    font-size: var(--font-size-xs);
+    padding: var(--suggestion-label-padding);
+    border-radius: var(--border-radius-sm);
+    margin-right: var(--suggestion-label-margin);
+    background-color: var(--border-color-hover);
+    color: var(--text-primary);
+}

@@ -1,0 +1,52 @@
+/* Thinking アニメーション */
+.typing-dots {
+    display: inline-block;
+}
+
+.typing-dots span {
+    display: inline-block;
+    animation: typingDot var(--animation-duration-slow) infinite;
+    opacity: 0;
+    margin: 0 var(--spacing-xs);
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typingDot {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.typing-indicator {
+    padding: var(--spacing-md);
+    background-color: var(--background-secondary);
+    border-radius: var(--border-radius-lg);
+}
+
+.typing-indicator p {
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    margin: 0;
+}
+
+/* 実行中のスピナーアニメーション */
+.executing-spinner {
+    display: inline-block;
+    width: var(--spinner-size-sm);
+    height: var(--spinner-size-sm);
+    border-radius: 50%;
+    border: var(--spinner-border-width) solid var(--spinner-overlay-color);
+    border-top-color: var(--spinner-primary-color);
+    animation: spin var(--animation-duration-normal) linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

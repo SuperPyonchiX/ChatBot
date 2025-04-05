@@ -1,0 +1,144 @@
+/* ボタンの基本スタイル */
+.new-chat-button {
+    width: 100%;
+    padding: var(--spacing-sm);
+    background-color: var(--button-bg-hover-sidebar);
+    color: var(--text-primary);
+    border: 1px solid var(--button-border-sidebar);
+    border-radius: var(--border-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    transition: background-color var(--transition-fast);
+}
+
+.new-chat-button:hover {
+    background-color: var(--button-bg-active-sidebar);
+}
+
+.history-action-button {
+    background: none;
+    border: none;
+    color: var(--button-history-text);
+    padding: var(--spacing-xs);
+    margin-right: var(--spacing-xs);
+    opacity: var(--button-opacity-default);
+    transition: opacity var(--transition-fast);
+}
+
+.history-action-button:hover {
+    opacity: 1;
+}
+
+/* サイドバーフッターボタン */
+.clear-history-button, .settings-button {
+    width: var(--button-size-md);
+    height: var(--button-size-md);
+    background: none;
+    color: var(--button-history-text);
+    border: 1px solid var(--button-border-sidebar);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.clear-history-button:hover, .settings-button:hover {
+    background-color: var(--button-bg-hover-sidebar);
+    transform: scale(var(--button-scale-hover));
+}
+
+/* 送信ボタン */
+#sendButton {
+    background-color: var(--background-quaternary);
+    color: var(--button-text-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    width: var(--button-size-md);
+    height: var(--button-size-md);
+    margin-left: var(--spacing-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color var(--transition-fast);
+}
+
+#sendButton:hover {
+    background-color: var(--border-color-hover);
+}
+
+#sendButton:disabled {
+    background-color: var(--background-secondary);
+    border-color: var(--background-tertiary);
+    color: var(--button-disabled-text);
+    cursor: not-allowed;
+}
+
+/* プロンプトマネージャーボタン */
+.small-button {
+    background-color: var(--background-quaternary);
+    color: var(--button-text-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-xs) var(--spacing-md);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+    font-size: var(--font-size-sm);
+}
+
+.small-button:hover {
+    background-color: var(--border-color-hover);
+}
+
+.primary-button {
+    background-color: var(--primary-color);
+    color: var(--button-text-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    /* height: 36px; */
+    transition: background-color var(--transition-fast);
+}
+
+.primary-button:hover {
+    background-color: var(--border-color-hover);
+}
+
+/* セカンダリーボタン */
+.secondary-button {
+    background-color: var(--background-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--button-text-color);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.secondary-button:hover {
+    background-color: var(--background-quaternary);
+}
+
+/* コード実行ボタン */
+.code-execute-button {
+    width: var(--button-size-sm);
+    height: var(--button-size-sm);
+    background-color: var(--execute-button-bg);
+    color: var(--text-primary);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.code-execute-button:hover {
+    background-color: var(--execute-button-bg-hover);
+}
