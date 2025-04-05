@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
             window.Markdown.initializeMarkdown();
         })
         .catch(err => console.error('Failed to load Marked.js:', err));
+        
+    // Prism.jsコンポーネントの読み込み
+    _loadPrismComponents();
 
     /**
      * アプリケーションを初期化します
@@ -135,5 +138,82 @@ document.addEventListener('DOMContentLoaded', function() {
             // 添付ファイルを表示
             window.UI.Components.FileAttachment.displaySavedAttachments(window.AppState.currentConversationId, window.Elements.chatMessages);
         }
+    }
+
+    /**
+     * Prism.jsの各言語コンポーネントを動的に読み込みます
+     * 
+     * @function _loadPrismComponents
+     * @private
+     */
+    function _loadPrismComponents() {
+        const prismComponents = [
+            // 基本コンポーネント (他の言語の基本となるもの)
+            'prism-clike.min.js',
+            'prism-markup.min.js',
+            
+            // 一般的な言語
+            'prism-javascript.min.js',
+            'prism-css.min.js',
+            'prism-python.min.js',
+            'prism-json.min.js',
+            'prism-typescript.min.js',
+            'prism-c.min.js',
+            'prism-cpp.min.js',
+            'prism-csharp.min.js',
+            'prism-java.min.js',
+            'prism-go.min.js',
+            'prism-rust.min.js',
+            'prism-sql.min.js',
+            'prism-bash.min.js',
+            
+            // Visual Basic系言語 (依存関係の順序に注意)
+            'prism-basic.min.js',            // Basic言語の基本コンポーネント
+            'prism-visual-basic.min.js',     // Visual Basic
+            'prism-vbnet.min.js'             // VB.NET
+        ];
+        
+        const plugins = [
+            // 'prism-toolbar.min.js',
+            // 'prism-copy-to-clipboard.min.js',
+            // 'prism-line-numbers.min.js',
+            // 'prism-show-language.min.js'
+        ];
+        
+        const loadScript = (src) => {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.crossOrigin = "anonymous";
+                script.referrerPolicy = "no-referrer";
+                script.onload = () => resolve();
+                script.onerror = (e) => reject(e);
+                document.head.appendChild(script);
+            });
+        };
+        
+        // コンポーネントの読み込み
+        Promise.all(
+            prismComponents.map(component => 
+                loadScript(`https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/${component}`)
+            )
+        )
+        .then(() => {
+            console.log('Prism language components loaded successfully');
+            // プラグインの読み込み
+            return Promise.all(
+                plugins.map(plugin => 
+                    loadScript(`https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/${plugin}`)
+                )
+            );
+        })
+        .then(() => {
+            console.log('Prism plugins loaded successfully');
+            // Prismの初期化（クライアント側のHTMLをハイライト）
+            if (typeof Prism !== 'undefined') {
+                Prism.highlightAll();
+            }
+        })
+        .catch(err => console.error('Failed to load Prism components:', err));
     }
 });

@@ -47,88 +47,11 @@
     <!-- JSZip ライブラリ (PPTX, DOCX解析用) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
-    <script>
-        // PDF.jsのワーカーを設定
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    </script>
-    
     <!-- Prism.js ランタイム読み込み用スクリプト -->
     <script>
-        // 必要なPrism.jsコンポーネントを動的に読み込む関数
-        function loadPrismComponents() {
-            // コンポーネントを依存関係順に並べる
-            const components = [
-                // 基本コンポーネント (他の言語の基本となるもの)
-                'prism-clike.min.js',
-                'prism-markup.min.js',
-                
-                // 一般的な言語
-                'prism-javascript.min.js',
-                'prism-css.min.js',
-                'prism-python.min.js',
-                'prism-json.min.js',
-                'prism-typescript.min.js',
-                'prism-c.min.js',
-                'prism-cpp.min.js',
-                'prism-csharp.min.js',
-                'prism-java.min.js',
-                'prism-go.min.js',
-                'prism-rust.min.js',
-                'prism-sql.min.js',
-                'prism-bash.min.js',
-                
-                // Visual Basic系言語 (依存関係の順序に注意)
-                'prism-basic.min.js',            // Basic言語の基本コンポーネント
-                'prism-visual-basic.min.js',     // Visual Basic
-                'prism-vbnet.min.js'             // VB.NET
-            ];
-            
-            const loadComponent = (index) => {
-                if (index >= components.length) {
-                    // すべてのコンポーネント読み込み完了後にプラグイン読み込み
-                    const script = document.createElement('script');
-                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js';
-                    script.crossOrigin = 'anonymous';
-                    script.referrerPolicy = 'no-referrer';
-                    script.onload = () => {
-                        if (typeof Prism !== 'undefined') {
-                            Prism.highlightAll();
-                        }
-                    };
-                    document.head.appendChild(script);
-                    return;
-                }
-                
-                const script = document.createElement('script');
-                script.src = `https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/${components[index]}`;
-                script.crossOrigin = 'anonymous';
-                script.referrerPolicy = 'no-referrer';
-                script.onload = () => loadComponent(index + 1);
-                script.onerror = () => {
-                    console.warn(`Failed to load Prism component: ${components[index]}`);
-                    loadComponent(index + 1); // エラーが発生しても次のコンポーネントへ進む
-                };
-                document.head.appendChild(script);
-            };
-            
-            // 最初のコンポーネント読み込み開始
-            loadComponent(0);
-        }
-        
-        // DOM読み込み完了後に実行
-        document.addEventListener('DOMContentLoaded', function() {
-            // Prism.jsコンポーネント読み込み
-            loadPrismComponents();
-            
-            // ライブラリ読み込み状態ログ
-            if (typeof Prism !== 'undefined') {
-                console.log('Prism.js初期化完了');
-            }
-            
-            if (typeof marked !== 'undefined') {
-                console.log('Marked.js読み込み完了');
-            }
-        });
+        // DOM読み込み完了後に実行されるPrism関連の初期化はmain.jsに移動しました
+        // ここではPrism.jsのワーカー設定のみ行います
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js"></script>
 </head>
