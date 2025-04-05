@@ -17,7 +17,11 @@ Object.assign(window.UI.Core.Modal, {
         window.UI.Utils.toggleModal('systemPromptModal', true);
         window.UI.Cache.get('systemPromptInput').value = systemPrompt;
         
-        this.updateList(systemPromptTemplates, onSelect, onDelete);
+        // バインドされたコールバック関数を保存
+        this._boundOnSelect = onSelect.bind(window.UI.Core.Modal.Handlers);
+        this._boundOnDelete = onDelete.bind(window.UI.Core.Modal.Handlers);
+        
+        this.updateList(systemPromptTemplates);
     },
     
     /**
@@ -30,10 +34,8 @@ Object.assign(window.UI.Core.Modal, {
     /**
      * システムプロンプト一覧を表示します
      * @param {Object} systemPromptTemplates - システムプロンプト集
-     * @param {Function} onSelect - システムプロンプト選択時のコールバック
-     * @param {Function} onDelete - システムプロンプト削除時のコールバック
      */
-    updateList: function(systemPromptTemplates, onSelect, onDelete) {
+    updateList: function(systemPromptTemplates) {
         const listArea = window.UI.Cache.get('systemPromptListArea');
         if (!listArea) return;
         
@@ -61,10 +63,6 @@ Object.assign(window.UI.Core.Modal, {
         // カテゴリの表示順序を設定
         const defaultCategories = Object.keys(window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORIES);
         const sortedCategories = [...defaultCategories];
-        console.log('systemPromptTemplates: ', systemPromptTemplates);
-        console.log('categorizedPrompts: ', categorizedPrompts);
-        console.log('defaultCategories: ', defaultCategories);
-        console.log('sortedCategories: ', sortedCategories);
         // 設定されていないカテゴリを追加
         Object.keys(categorizedPrompts).forEach(category => {
             if (!sortedCategories.includes(category)) {
@@ -112,7 +110,7 @@ Object.assign(window.UI.Core.Modal, {
             categorizedPrompts[category]
                 .sort((a, b) => a.name.localeCompare(b.name, 'ja'))
                 .forEach(prompt => {
-                    const item = this._createPromptItem(prompt, onSelect, onDelete);
+                    const item = this._createPromptItem(prompt);
                     promptList.appendChild(item);
                 });
             
@@ -129,7 +127,7 @@ Object.assign(window.UI.Core.Modal, {
      * システムプロンプト項目要素を作成します
      * @private
      */
-    _createPromptItem: function(prompt, onSelect, onDelete) {
+    _createPromptItem: function(prompt) {
         const promptItem = document.createElement('div');
         promptItem.className = 'system-prompt-item';
         
@@ -172,58 +170,20 @@ Object.assign(window.UI.Core.Modal, {
             deleteButton.title = 'システムプロンプトを削除';
             deleteButton.addEventListener('click', (e) => {
                 e.stopPropagation();
-                onDelete(prompt.name);
+                if (this._boundOnDelete) {
+                    this._boundOnDelete(prompt.name);
+                }
             });
             promptItem.appendChild(deleteButton);
         }
 
         // クリックイベントの設定
-        promptItem.addEventListener('click', () => onSelect(prompt.name));
+        promptItem.addEventListener('click', () => {
+            if (this._boundOnSelect) {
+                this._boundOnSelect(prompt.name);
+            }
+        });
         
         return promptItem;
-    },
-
-    /**
-     * プロンプトをシステムプロンプトとして設定する
-     * @public
-     * @param {string} promptId - プロンプトID
-     */
-    setPromptAsSystemPrompt: function(promptId) {
-        try {
-            const customVariables = {};
-            const systemPrompt = window.SystemPromptManager.setAsSystemPrompt(promptId, customVariables);
-            window.UI.Core.Notification.show('システムプロンプトを更新しました', 'success');
-            
-            // プロンプトマネージャーモーダルを閉じる（表示されている場合）
-            if (this.hidePromptManagerModal) {
-                this.hidePromptManagerModal();
-            }
-        } catch (error) {
-            console.error('システムプロンプトの設定に失敗しました:', error);
-            window.UI.Core.Notification.show('システムプロンプトの設定に失敗しました', 'error');
-        }
-    },
-
-    /**
-     * プロンプトをシステムプロンプトテンプレートとして保存する
-     * @public
-     * @param {string} promptId - プロンプトID
-     */
-    savePromptAsSystemPromptTemplate: function(promptId) {
-        const promptName = prompt('システムプロンプト名を入力してください:');
-        if (!promptName) return;
-        
-        try {
-            const success = window.SystemPromptManager.saveAsSystemPromptTemplate(promptId, promptName);
-            
-            if (success) {
-                window.UI.Core.Notification.show(`システムプロンプト「${promptName}」を保存しました`, 'success');
-            } else {
-                window.UI.Core.Notification.show('システムプロンプトの保存に失敗しました', 'error');
-            }
-        } catch (error) {
-            console.error('システムプロンプトの保存中にエラーが発生しました:', error);
-            window.UI.Core.Notification.show(`エラー: ${error.message}`, 'error');
-        }
     }
 });

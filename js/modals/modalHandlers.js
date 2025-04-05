@@ -145,8 +145,8 @@ Object.assign(window.UI.Core.Modal.Handlers, {
             // システムプロンプト一覧を更新
             window.UI.Core.Modal.updateList(
                 window.AppState.systemPromptTemplates, 
-                this.onTemplateSelect, 
-                this.onTemplateDelete
+                this.onTemplateSelect.bind(this), 
+                this.onTemplateDelete.bind(this)
             );
             window.UI.Core.Notification.show('システムプロンプトを削除しました', 'success');
         }

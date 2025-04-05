@@ -277,7 +277,6 @@ window.Storage = {
             });
         });
         
-        console.log('{ ...defaultPrompts, ...customTemplates }: ', { ...defaultPrompts, ...customTemplates });
         // デフォルトのテンプレートとカスタムテンプレートを結合
         return { ...defaultPrompts, ...customTemplates };
     },

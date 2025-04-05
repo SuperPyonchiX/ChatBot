@@ -171,12 +171,6 @@ Object.assign(window.UI.Core.Modal, {
                         <button class="use-prompt-button" title="プロンプトを使用">
                             <i class="fas fa-arrow-right"></i>
                         </button>
-                        <button class="system-prompt-button" title="システムプロンプトとして設定">
-                            <i class="fas fa-cog"></i>
-                        </button>
-                        <button class="system-prompt-save-button" title="システムプロンプトとして保存">
-                            <i class="fas fa-save"></i>
-                        </button>
                         <button class="delete-prompt-button" title="削除">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -209,17 +203,7 @@ Object.assign(window.UI.Core.Modal, {
             e.stopPropagation();
             this._usePrompt(prompt.id);
         });
-        
-        promptItem.querySelector('.system-prompt-button').addEventListener('click', (e) => {
-            e.stopPropagation();
-            window.UI.Core.Modal.setPromptAsSystemPrompt(prompt.id);
-        });
-        
-        promptItem.querySelector('.system-prompt-save-button').addEventListener('click', (e) => {
-            e.stopPropagation();
-            window.UI.Core.Modal.savePromptAsSystemPromptTemplate(prompt.id);
-        });
-        
+                
         promptItem.querySelector('.delete-prompt-button').addEventListener('click', (e) => {
             e.stopPropagation();
             this._deletePrompt(prompt.id);
