@@ -6,6 +6,12 @@ window.UI.Core.Modal = window.UI.Core.Modal || {};
  * プロンプトマネージャー機能
  */
 Object.assign(window.UI.Core.Modal, {
+    // イベントリスナーの参照を保持する変数
+    _promptEditListeners: {
+        save: null,
+        cancel: null
+    },
+
     /**
      * プロンプトマネージャーモーダルを表示します
      */
@@ -427,10 +433,11 @@ Object.assign(window.UI.Core.Modal, {
         const contentInput = window.UI.Cache.get('promptContentInput');
 
         if (prompt) {
-            nameInput.value = prompt.name || '';
-            tagsInput.value = prompt.tags ? prompt.tags.join(', ') : '';
+            // 既存のプロンプトを編集する場合
+            nameInput.value = prompt.name;
+            tagsInput.value = prompt.tags.join(',');
             descriptionInput.value = prompt.description || '';
-            contentInput.value = prompt.content || '';
+            contentInput.value = prompt.content;
             modal.dataset.promptId = prompt.id;
         } else {
             // 新規プロンプトの場合は空にする
@@ -451,13 +458,26 @@ Object.assign(window.UI.Core.Modal, {
         const saveButton = window.UI.Cache.get('savePromptEdit');
         const cancelButton = window.UI.Cache.get('cancelPromptEdit');
 
-        // 既存のイベントリスナーを削除
-        saveButton.replaceWith(saveButton.cloneNode(true));
-        cancelButton.replaceWith(cancelButton.cloneNode(true));
+        if (saveButton && cancelButton) {
+            // 既存のイベントリスナーを削除
+            if (this._promptEditListeners.save) {
+                saveButton.removeEventListener('click', this._promptEditListeners.save);
+            }
+            if (this._promptEditListeners.cancel) {
+                cancelButton.removeEventListener('click', this._promptEditListeners.cancel);
+            }
 
-        // 新しいイベントリスナーを追加
-        window.UI.Cache.get('savePromptEdit').addEventListener('click', () => this._savePromptEdit(modal));
-        window.UI.Cache.get('cancelPromptEdit').addEventListener('click', () => this.hidePromptEditModal());
+            // 新しいイベントリスナーを保存
+            const self = this;
+            this._promptEditListeners.save = () => self._savePromptEdit(modal);
+            this._promptEditListeners.cancel = () => self.hidePromptEditModal();
+
+            // イベントリスナーを設定
+            saveButton.addEventListener('click', this._promptEditListeners.save);
+            cancelButton.addEventListener('click', this._promptEditListeners.cancel);
+        } else {
+            console.error('保存またはキャンセルボタンが見つかりません');
+        }
     },
 
     /**
@@ -518,7 +538,7 @@ Object.assign(window.UI.Core.Modal, {
 
         // バリデーション
         if (!name || !content) {
-            window.UI.Core.Notification.show('名前とプロンプト内容は必須です', 'error');
+                window.UI.Core.Notification.show('名前とプロンプト内容は必須です', 'error');
             return;
         }
 
