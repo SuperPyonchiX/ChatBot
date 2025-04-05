@@ -320,7 +320,7 @@ Object.assign(window.UI.Core.Modal, {
     _setAsSystemPrompt: function(promptId) {
         try {
             const customVariables = {};
-            const systemPrompt = window.PromptManager.setAsSystemPrompt(promptId, customVariables);
+            const systemPrompt = window.SystemPromptManager.setAsSystemPrompt(promptId, customVariables);
             window.UI.Core.Notification.show('システムプロンプトを更新しました', 'success');
             this.hidePromptManagerModal();
         } catch (error) {
@@ -338,7 +338,7 @@ Object.assign(window.UI.Core.Modal, {
         if (!promptName) return;
         
         try {
-            const success = window.PromptManager.saveAsSystemPromptTemplate(promptId, promptName);
+            const success = window.SystemPromptManager.saveAsSystemPromptTemplate(promptId, promptName);
             
             if (success) {
                 window.UI.Core.Notification.show(`システムプロンプト「${promptName}」を保存しました`, 'success');
