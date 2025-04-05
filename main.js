@@ -9,7 +9,7 @@
  * @module Main
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // 初期化
     _init();
 
@@ -71,12 +71,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (window.AppState.conversations.length > 0) {
-            window.Chat.Actions.renderChatHistory();
+            ChatActions.renderChatHistory();
         }
 
         // 新しい会話を作成または既存の会話を読み込む
         if (window.AppState.conversations.length === 0) {
-            window.Chat.Actions.createNewConversation();
+            ChatActions.createNewConversation();
         } else {
             _loadCurrentConversation();
         }
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
             !window.AppState.getConversationById(window.AppState.currentConversationId)) {
             window.AppState.currentConversationId = window.AppState.conversations[0]?.id;
             if (!window.AppState.currentConversationId) {
-                window.Chat.Actions.createNewConversation();
+                ChatActions.createNewConversation();
                 return;
             }
         }

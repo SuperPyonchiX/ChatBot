@@ -4,12 +4,11 @@ window.Chat.Actions = window.Chat.Actions || {};
  * chatActions.js
  * チャット関連のアクション（メッセージ送信、会話管理など）を担当するモジュール
  */
-
-Object.assign(window.Chat.Actions, {
+class ChatActions {
     /**
      * メッセージを送信します
      */
-    async sendMessage() {
+    static async sendMessage() {
         const currentConversation = window.AppState.getConversationById(window.AppState.currentConversationId);
         if (!currentConversation || !window.Elements.userInput || !window.Elements.chatMessages) return;
         
@@ -88,7 +87,7 @@ Object.assign(window.Chat.Actions, {
                 window.Elements.sendButton.disabled = false;
             }
         }
-    },
+    }
 
     /**
      * メッセージを処理して送信する
@@ -100,7 +99,7 @@ Object.assign(window.Chat.Actions, {
      * @param {Array} attachments - 添付ファイル配列
      * @returns {Promise<Object>} 送信結果
      */
-    async processAndSendMessage(userInput, chatMessages, conversation, apiSettings, systemPrompt, attachments = []) {
+    static async processAndSendMessage(userInput, chatMessages, conversation, apiSettings, systemPrompt, attachments = []) {
         if (!userInput || !chatMessages || !conversation) {
             return { error: 'Invalid parameters' };
         }
@@ -197,7 +196,7 @@ Object.assign(window.Chat.Actions, {
             console.error('メッセージ送信処理中にエラーが発生しました:', error);
             return { titleUpdated: false, error: error.message || '内部エラーが発生しました' };
         }
-    },
+    }
 
     /**
      * 添付ファイルの内容を処理する
@@ -205,7 +204,7 @@ Object.assign(window.Chat.Actions, {
      * @param {Array} attachments - 添付ファイルの配列
      * @returns {Promise<string>} 処理された添付ファイルの内容
      */
-    async _processAttachments(attachments) {
+    static async _processAttachments(attachments) {
         if (!attachments || !Array.isArray(attachments)) {
             return '';
         }
@@ -222,12 +221,12 @@ Object.assign(window.Chat.Actions, {
             }
         }
         return content;
-    },
+    }
 
     /**
      * 新しい会話を作成します
      */
-    createNewConversation() {
+    static createNewConversation() {
         const newConversation = {
             id: Date.now().toString(),
             title: '新しいチャット',
@@ -252,12 +251,12 @@ Object.assign(window.Chat.Actions, {
             // 会話を表示
             window.Chat.History.displayConversation(newConversation, window.Elements.chatMessages, window.Elements.modelSelect);
         }
-    },
+    }
 
     /**
      * 会話履歴を表示します
      */
-    renderChatHistory() {
+    static renderChatHistory() {
         if (!window.Elements.chatHistory) return;
         
         // チャット履歴を更新
@@ -269,12 +268,12 @@ Object.assign(window.Chat.Actions, {
             window.UI.Core.Modal.showRenameChatModal, 
             this.deleteConversation.bind(this)
         );
-    },
+    }
 
     /**
      * 会話を切り替えます
      */
-    switchConversation(conversationId) {
+    static switchConversation(conversationId) {
         if (!conversationId) return;
         
         window.AppState.currentConversationId = conversationId;
@@ -294,12 +293,12 @@ Object.assign(window.Chat.Actions, {
             // 添付ファイルを表示
             window.UI.Components.FileAttachment.displaySavedAttachments(window.AppState.currentConversationId, window.Elements.chatMessages);
         }
-    },
+    }
 
     /**
      * 会話を削除します
      */
-    deleteConversation(conversationId) {
+    static deleteConversation(conversationId) {
         // 確認ダイアログを表示
         if (!confirm('このチャットを削除してもよろしいですか？')) return;
             
@@ -337,12 +336,12 @@ Object.assign(window.Chat.Actions, {
         
         // チャット履歴の表示を更新
         this.renderChatHistory();
-    },
+    }
 
     /**
      * すべての履歴をクリアします
      */
-    clearAllHistory() {
+    static clearAllHistory() {
         if (confirm('すべての会話履歴を削除してもよろしいですか？')) {
             // すべての添付ファイルを削除
             window.AppState.conversations.forEach(conversation => {
@@ -356,4 +355,6 @@ Object.assign(window.Chat.Actions, {
             this.createNewConversation();
         }
     }
-});
+}
+
+window.Chat.Actions = ChatActions;
