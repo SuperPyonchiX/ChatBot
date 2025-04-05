@@ -529,7 +529,7 @@ window.Markdown = {
      * @param {string} language - コードの言語
      */
     _handleExecuteButtonClick: async function(button, codeBlock, language) {
-        if (!button || !codeBlock || !language || !window.CodeExecutor) {
+        if (!button || !codeBlock || !language || typeof CodeExecutor === 'undefined') {
             console.error('コード実行に必要な要素が見つかりません');
             return;
         }
@@ -734,7 +734,7 @@ window.Markdown = {
             };
             
             // CodeExecutorを使用してコードを実行
-            const result = await window.CodeExecutor.executeCode(code, language, outputCallback);
+            const result = await CodeExecutor.executeCode(code, language, outputCallback);
             
             // スクロール位置は自動調整しない
             

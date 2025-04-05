@@ -2,7 +2,7 @@
  * codeExecutor.js
  * コードスニペット実行機能を提供します
  */
-window.CodeExecutor = {
+class CodeExecutor {
     /**
      * コードを実行する
      * @param {string} code - 実行するコード
@@ -10,7 +10,7 @@ window.CodeExecutor = {
      * @param {Function} [outputCallback] - リアルタイム出力用コールバック関数
      * @returns {Promise<Object>} 実行結果
      */
-    executeCode: async function(code, language, outputCallback) {
+    static async executeCode(code, language, outputCallback) {
         if (!code || !language) {
             return { error: '実行するコードまたは言語が指定されていません' };
         }
@@ -41,14 +41,14 @@ window.CodeExecutor = {
                 errorDetail: error.stack 
             };
         }
-    },
+    }
 
     /**
      * 実行結果の表示用HTML要素を生成する
      * @param {Object} executionResult - 実行結果オブジェクト
      * @returns {HTMLElement} 結果表示用のHTML要素
      */
-    createResultElement: function(executionResult) {
+    static createResultElement(executionResult) {
         if (!executionResult) {
             return document.createElement('div');
         }
@@ -180,4 +180,4 @@ window.CodeExecutor = {
         
         return resultContainer;
     }
-};
+}
