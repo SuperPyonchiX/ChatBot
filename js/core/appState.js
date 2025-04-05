@@ -7,7 +7,7 @@ window.AppState = (function() {
     // プライベート変数
     let _apiSettings = null;
     let _systemPrompt = '';
-    let _promptTemplates = {};
+    let _systemPromptTemplates = {};
     let _conversations = [];
     let _currentConversationId = null;
     let _currentAttachments = [];
@@ -20,7 +20,7 @@ window.AppState = (function() {
             if (window.Storage) {
                 _apiSettings = window.Storage.loadApiSettings() || {};
                 _systemPrompt = window.Storage.loadSystemPrompt() || '';
-                _promptTemplates = window.Storage.loadSystemPromptTemplates() || {};
+                _systemPromptTemplates = window.Storage.loadSystemPromptTemplates() || {};
                 _conversations = window.Storage.loadConversations() || [];
                 _currentConversationId = window.Storage.loadCurrentConversationId() || null;
             } else {
@@ -46,8 +46,8 @@ window.AppState = (function() {
         get systemPrompt() { return _systemPrompt; },
         set systemPrompt(value) { _systemPrompt = value; },
         
-        get systemPromptTemplates() { return _promptTemplates; },
-        set systemPromptTemplates(value) { _promptTemplates = value; },
+        get systemPromptTemplates() { return _systemPromptTemplates; },
+        set systemPromptTemplates(value) { _systemPromptTemplates = value; },
         
         get currentAttachments() { return _currentAttachments; },
         set currentAttachments(value) { _currentAttachments = value; },

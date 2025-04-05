@@ -103,8 +103,13 @@ Object.assign(window.UI.Core.Modal.Handlers, {
         }
         
         // システムプロンプトを保存
-        templates[systemPromptName] = systemPrompt;
-        window.AppState.systemPromptTemplates = templates;
+        templates[systemPromptName] = {
+            content: systemPrompt,
+            category: templateCategory,
+            description: '',
+            tags: []
+        };
+        
         window.Storage.saveSystemPromptTemplates(templates);
         
         // 入力をクリア
@@ -112,8 +117,7 @@ Object.assign(window.UI.Core.Modal.Handlers, {
         window.UI.Cache.get('newTemplateCategory').value = '';
         
         // システムプロンプト一覧を更新
-        window.UI.Core.Modal.updateTemplateList(templates, this.onTemplateSelect, this.onTemplateDelete);
-        
+        window.UI.Core.Modal.updateList(templates, this.onTemplateSelect, this.onTemplateDelete);
         window.UI.Core.Notification.show('システムプロンプトを保存しました', 'success');
     },
     
@@ -125,7 +129,8 @@ Object.assign(window.UI.Core.Modal.Handlers, {
         
         const prompt = window.AppState.systemPromptTemplates[promptName];
         if (prompt) {
-            window.Elements.systemPromptInput.value = prompt;
+            window.Elements.systemPromptInput.value = prompt.content;
+            window.Elements.systemPromptInput.dispatchEvent(new Event('input'));
         }
     },
     
@@ -135,13 +140,15 @@ Object.assign(window.UI.Core.Modal.Handlers, {
     onTemplateDelete: function(promptName) {
         if (confirm(`システムプロンプト "${promptName}" を削除してもよろしいですか？`)) {
             delete window.AppState.systemPromptTemplates[promptName];
-            window.Storage.saveSystemPromptTemplates(window.AppState.systemPromptTemplates); 
-            window.UI.Core.Modal.updateTemplateList(
+            window.Storage.saveSystemPromptTemplates(window.AppState.systemPromptTemplates);
+            
+            // システムプロンプト一覧を更新
+            window.UI.Core.Modal.updateList(
                 window.AppState.systemPromptTemplates, 
                 this.onTemplateSelect, 
                 this.onTemplateDelete
             );
+            window.UI.Core.Notification.show('システムプロンプトを削除しました', 'success');
         }
-        window.UI.Core.Notification.show('システムプロンプトを削除しました', 'success');
     }
 });

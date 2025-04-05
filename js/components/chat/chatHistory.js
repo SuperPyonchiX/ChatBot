@@ -331,10 +331,10 @@ Object.assign(window.Chat.History, (function() {
         _getPromptCategory: function(promptText) {
             if (!promptText) return '未分類';
             
-            const templates = window.Storage.loadSystemPromptTemplates();
+            const templates = window.AppState.systemPromptTemplates;
             
             for (const templateName in templates) {
-                if (templates[templateName] === promptText) {
+                if (templates[templateName].content === promptText) {
                     return templateName;
                 }
             }

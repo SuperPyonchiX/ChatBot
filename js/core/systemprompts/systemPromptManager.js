@@ -37,9 +37,10 @@ window.SystemPromptManager = (function() {
      * @public
      * @param {string} promptId - プロンプトID
      * @param {string} templateName - テンプレート名
+     * @param {string} category - カテゴリ名
      * @returns {boolean} 保存成功時true
      */
-    function saveAsSystemPromptTemplate(promptId, templateName) {
+    function saveAsSystemPromptTemplate(promptId, templateName, category = '基本') {
         if (!promptId || !templateName) return false;
         
         const library = window.PromptManager.loadPromptLibrary();
@@ -50,17 +51,26 @@ window.SystemPromptManager = (function() {
         }
         
         // プロンプトテンプレートを読み込む
-        const systemPromptTemplates = window.Storage.loadSystemPromptTemplates();
+        const systemPromptTemplates = window.AppState.systemPromptTemplates || {};
         
         // テンプレートに追加
-        systemPromptTemplates[templateName] = prompt.content;
+        systemPromptTemplates[templateName] = {
+            content: prompt.content,
+            category: category,
+            tags: prompt.tags || [],
+            description: prompt.description || ''
+        };
         
         // 保存
         window.Storage.saveSystemPromptTemplates(systemPromptTemplates);
         
         // イベント発火
         const event = new CustomEvent('prompt-template-added', { 
-            detail: { templateName, content: prompt.content } 
+            detail: { 
+                templateName, 
+                content: prompt.content,
+                category: category
+            } 
         });
         document.dispatchEvent(event);
         
@@ -79,20 +89,20 @@ window.SystemPromptManager = (function() {
         }
         
         // テンプレートを読み込む
-        const systemPromptTemplates = window.Storage.loadSystemPromptTemplates();
+        const systemPromptTemplates = window.AppState.systemPromptTemplates;;
         
-        const templateContent = systemPromptTemplates[templateName];
-        if (!templateContent) {
+        const template = systemPromptTemplates[templateName];
+        if (!template) {
             throw new Error(`テンプレート "${templateName}" が見つかりません`);
         }
         
         // プロンプトとして追加
         return window.PromptManager.addPrompt({
             name: `${templateName} (システムプロンプト)`,
-            content: templateContent,
-            description: 'システムプロンプトテンプレートからインポート',
-            category: 'system',
-            tags: ['システムプロンプト', templateName]
+            content: template.content,
+            description: template.description || 'システムプロンプトテンプレートからインポート',
+            category: template.category || 'system',
+            tags: template.tags || ['システムプロンプト', templateName]
         });
     }
 
@@ -113,18 +123,34 @@ window.SystemPromptManager = (function() {
         defaultOption.textContent = 'テンプレートを選択...';
         templateSelector.appendChild(defaultOption);
         
-        // テンプレートを取得して選択肢を追加
-        const templates = window.Storage.loadSystemPromptTemplates();
+        // テンプレートを取得
+        const templates = window.AppState.systemPromptTemplates;;
         
         if (templates && typeof templates === 'object') {
-            // テンプレートをアルファベット順にソート
-            const sortedTemplateNames = Object.keys(templates).sort();
+            // カテゴリごとにテンプレートをグループ化
+            const categorizedTemplates = {};
+            Object.entries(templates).forEach(([name, template]) => {
+                const category = template.category || '基本';
+                if (!categorizedTemplates[category]) {
+                    categorizedTemplates[category] = [];
+                }
+                categorizedTemplates[category].push({ name, ...template });
+            });
             
-            sortedTemplateNames.forEach(templateName => {
-                const option = document.createElement('option');
-                option.value = templateName;
-                option.textContent = templateName;
-                templateSelector.appendChild(option);
+            // カテゴリごとにoptgroupを作成
+            Object.entries(categorizedTemplates).forEach(([category, templateList]) => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = category;
+                
+                // カテゴリ内のテンプレートをアルファベット順にソート
+                templateList.sort((a, b) => a.name.localeCompare(b.name, 'ja')).forEach(template => {
+                    const option = document.createElement('option');
+                    option.value = template.name;
+                    option.textContent = template.name;
+                    optgroup.appendChild(option);
+                });
+                
+                templateSelector.appendChild(optgroup);
             });
         }
         
@@ -133,22 +159,23 @@ window.SystemPromptManager = (function() {
             const selectedTemplate = event.target.value;
             if (!selectedTemplate) return;
             
-            const templates = window.Storage.loadSystemPromptTemplates();
+            const templates = window.AppState.systemPromptTemplates;
             if (templates && templates[selectedTemplate]) {
                 // システムプロンプトの更新
-                setAsSystemPrompt(selectedTemplate, templates[selectedTemplate]);
+                const template = templates[selectedTemplate];
+                setAsSystemPrompt(selectedTemplate, { content: template.content });
                 
                 // UIの更新
                 const promptInput = document.querySelector('#system-prompt-input');
                 if (promptInput) {
-                    promptInput.value = templates[selectedTemplate];
+                    promptInput.value = template.content;
                     promptInput.dispatchEvent(new Event('input'));
                 }
                 
                 // セレクターをリセット
                 event.target.value = '';
                 
-                console.log(`テンプレート "${selectedTemplate}" を適用しました`);
+                console.log(`テンプレート "${selectedTemplate}" (${template.category}) を適用しました`);
             }
         });
     }

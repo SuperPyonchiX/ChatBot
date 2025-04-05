@@ -8,8 +8,6 @@ window.UI.Core.Modal = window.UI.Core.Modal || {};
 Object.assign(window.UI.Core.Modal, {
     /**
      * システムプロンプト設定モーダルを表示します
-     * システムプロンプト編集モーダルを表示し、一覧も更新します
-     * 
      * @param {string} systemPrompt - 現在のシステムプロンプト
      * @param {Object} systemPromptTemplates - システムプロンプト集
      * @param {Function} onSelect - システムプロンプト選択時のコールバック
@@ -31,11 +29,9 @@ Object.assign(window.UI.Core.Modal, {
     
     /**
      * システムプロンプト一覧を表示します
-     * システムプロンプトの一覧を表示し、選択/削除機能を提供します
-     * 
      * @param {Object} systemPromptTemplates - システムプロンプト集
-     * @param {Function} onSelect - システムプロンプト選択時のコールバック関数
-     * @param {Function} onDelete - システムプロンプト削除時のコールバック関数
+     * @param {Function} onSelect - システムプロンプト選択時のコールバック
+     * @param {Function} onDelete - システムプロンプト削除時のコールバック
      */
     updateList: function(systemPromptTemplates, onSelect, onDelete) {
         const listArea = window.UI.Cache.get('systemPromptListArea');
@@ -49,27 +45,26 @@ Object.assign(window.UI.Core.Modal, {
 
         // カテゴリごとにプロンプトを整理
         const categorizedPrompts = {};
-        Object.entries(systemPromptTemplates).forEach(([promptName, content]) => {
-            // configファイルからカテゴリを取得
-            let category = '';
-            for (const [cat, items] of Object.entries(window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORIES)) {
-                if (items[promptName]) {
-                    category = cat;
-                    break;
-                }
-            }
-            // カテゴリがない場合は「その他」に分類
-            if (!category) category = 'その他';
-            
+        Object.entries(systemPromptTemplates).forEach(([promptName, template]) => {
+            const category = template.category || '基本';
             if (!categorizedPrompts[category]) {
                 categorizedPrompts[category] = [];
             }
-            categorizedPrompts[category].push({name: promptName, content: content});
+            categorizedPrompts[category].push({
+                name: promptName,
+                content: template.content,
+                description: template.description || '',
+                tags: template.tags || []
+            });
         });
         
-        // カテゴリの表示順序を取得
-        const categoryOrder = window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORY_ORDER || [];
-        const sortedCategories = [...categoryOrder];
+        // カテゴリの表示順序を設定
+        const defaultCategories = Object.keys(window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORIES);
+        const sortedCategories = [...defaultCategories];
+        console.log('systemPromptTemplates: ', systemPromptTemplates);
+        console.log('categorizedPrompts: ', categorizedPrompts);
+        console.log('defaultCategories: ', defaultCategories);
+        console.log('sortedCategories: ', sortedCategories);
         // 設定されていないカテゴリを追加
         Object.keys(categorizedPrompts).forEach(category => {
             if (!sortedCategories.includes(category)) {
@@ -115,9 +110,9 @@ Object.assign(window.UI.Core.Modal, {
             
             // カテゴリ内のプロンプトをソート
             categorizedPrompts[category]
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .forEach(({name: promptName}) => {
-                    const item = this._createPromptItem(promptName, onSelect, onDelete);
+                .sort((a, b) => a.name.localeCompare(b.name, 'ja'))
+                .forEach(prompt => {
+                    const item = this._createPromptItem(prompt, onSelect, onDelete);
                     promptList.appendChild(item);
                 });
             
@@ -134,42 +129,58 @@ Object.assign(window.UI.Core.Modal, {
      * システムプロンプト項目要素を作成します
      * @private
      */
-    _createPromptItem: function(promptName, onSelect, onDelete) {
-        // 削除ボタン（デフォルトプロンプトと設定ファイルで定義されたプロンプト以外のみ）
-        const children = [
-            window.UI.Utils.createElement('span', {
-                textContent: promptName,
-                classList: ['system-prompt-name']
-            })
-        ];
+    _createPromptItem: function(prompt, onSelect, onDelete) {
+        const promptItem = document.createElement('div');
+        promptItem.className = 'system-prompt-item';
         
-        // プロンプト名がデフォルトプロンプトかどうかを判定
-        const isConfigPrompt = Object.values(window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORIES)
-                                    .some(category => Object.keys(category).includes(promptName));
-
-        // デフォルトプロンプトとconfig.jsで定義されたプロンプト以外に削除ボタンを表示
-        if (!isConfigPrompt) {
-            children.push(window.UI.Utils.createElement('button', {
-                classList: ['system-prompt-delete-button'],
-                innerHTML: '<i class="fas fa-trash"></i>',
-                title: 'システムプロンプトを削除',
-                events: {
-                    click: (e) => {
-                        e.stopPropagation();
-                        onDelete(promptName);
-                    }
-                }
-            }));
+        // プロンプト名
+        const nameElement = document.createElement('span');
+        nameElement.className = 'system-prompt-name';
+        nameElement.textContent = prompt.name;
+        promptItem.appendChild(nameElement);
+        
+        // 説明文が存在する場合は表示
+        if (prompt.description) {
+            const descElement = document.createElement('div');
+            descElement.className = 'system-prompt-description';
+            descElement.textContent = prompt.description;
+            promptItem.appendChild(descElement);
         }
         
-        // プロンプト項目
-        return window.UI.Utils.createElement('div', {
-            classList: ['system-prompt-item'],
-            children,
-            events: {
-                click: () => onSelect(promptName)
-            }
-        });
+        // タグの表示
+        if (prompt.tags && prompt.tags.length > 0) {
+            const tagsElement = document.createElement('div');
+            tagsElement.className = 'system-prompt-tags';
+            prompt.tags.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'system-prompt-tag';
+                tagElement.textContent = tag;
+                tagsElement.appendChild(tagElement);
+            });
+            promptItem.appendChild(tagsElement);
+        }
+
+        // デフォルトプロンプトかどうかを判定
+        const isDefaultPrompt = Object.values(window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORIES)
+            .some(category => Object.keys(category).includes(prompt.name));
+
+        // デフォルトプロンプト以外に削除ボタンを表示
+        if (!isDefaultPrompt) {
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'system-prompt-delete-button';
+            deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteButton.title = 'システムプロンプトを削除';
+            deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                onDelete(prompt.name);
+            });
+            promptItem.appendChild(deleteButton);
+        }
+
+        // クリックイベントの設定
+        promptItem.addEventListener('click', () => onSelect(prompt.name));
+        
+        return promptItem;
     },
 
     /**

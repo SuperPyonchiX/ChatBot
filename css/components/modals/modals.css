@@ -100,11 +100,6 @@
     border-bottom: 1px solid var(--border-color);
     cursor: pointer;
     transition: background-color var(--transition-fast) ease;
-    font-weight: bold;
-    font-size: var(--font-size-lg);
-    margin-bottom: var(--spacing-sm);
-    padding: var(--spacing-xs) 0;
-    color: var(--text-primary);
 }
 
 .system-prompt-category-header:hover {
@@ -129,6 +124,8 @@
     padding: var(--system-prompt-count-padding);
     border-radius: var(--border-radius-xl);
     font-size: var(--font-size-xs);
+    min-width: 20px;
+    text-align: center;
 }
 
 .system-prompt-category.collapsed .system-prompt-list {
@@ -140,18 +137,11 @@
 }
 
 .system-prompt-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--system-prompt-gap);
     padding: var(--spacing-md);
     background-color: var(--background-primary);
-    transition: max-height var(--transition-normal) ease;
 }
 
 .system-prompt-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding: var(--system-prompt-item-padding);
     margin-bottom: var(--spacing-sm);
     background-color: var(--background-secondary);
@@ -159,6 +149,7 @@
     border: 1px solid transparent;
     cursor: pointer;
     transition: all var(--transition-fast) ease;
+    position: relative;
 }
 
 .system-prompt-item:last-child {
@@ -172,19 +163,40 @@
 }
 
 .system-prompt-name {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: block;
+    font-weight: 500;
     color: var(--text-primary);
-    font-size: var(--font-size-md);
+    margin-bottom: var(--spacing-xs);
+}
+
+.system-prompt-description {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.system-prompt-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
+.system-prompt-tag {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    background-color: var(--background-quaternary);
+    padding: 2px 8px;
+    border-radius: var(--border-radius-sm);
 }
 
 .system-prompt-delete-button {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
     background: none;
     border: none;
     color: var(--text-tertiary);
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-xs);
     cursor: pointer;
     opacity: 0;
     transition: all var(--transition-fast) ease;

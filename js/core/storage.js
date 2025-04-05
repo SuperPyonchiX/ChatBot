@@ -264,9 +264,22 @@ window.Storage = {
         // カスタムテンプレートを読み込む
         const customTemplates = this._getItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT_TEMPLATES, {}, true);
         
-        // デフォルトのテンプレートと結合して返す
-        // デフォルトのテンプレートが常に優先されるようにする
-        return { ...Object.assign({}, ...Object.values(window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORIES)), ...customTemplates };
+        // デフォルトのテンプレートを構築
+        const defaultPrompts = {};
+        Object.entries(window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORIES).forEach(([category, templates]) => {
+            Object.entries(templates).forEach(([systemPromptName, systemPrompt]) => {
+                defaultPrompts[systemPromptName] = {
+                    content: systemPrompt,
+                    category: category,
+                    description: '',
+                    tags: []
+                };
+            });
+        });
+        
+        console.log('{ ...defaultPrompts, ...customTemplates }: ', { ...defaultPrompts, ...customTemplates });
+        // デフォルトのテンプレートとカスタムテンプレートを結合
+        return { ...defaultPrompts, ...customTemplates };
     },
 
     /**
@@ -275,7 +288,18 @@ window.Storage = {
      */
     saveSystemPromptTemplates: function(templates) {
         if (!templates || typeof templates !== 'object') return;
-        this._setItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT_TEMPLATES, templates);
+        
+        try {
+            // AppStateの更新
+            if (typeof window.AppState.systemPromptTemplates === 'function') {
+                window.AppState.systemPromptTemplates(templates);
+            }
+            
+            // ストレージへの保存
+            this._setItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT_TEMPLATES, templates);
+        } catch (error) {
+            console.error('システムプロンプトテンプレートの保存に失敗しました:', error);
+        }
     },
 
     /**
@@ -287,7 +311,7 @@ window.Storage = {
     addSystemPromptTemplate: function(name, prompt) {
         if (!name || !prompt) return false;
         
-        const templates = this.loadSystemPromptTemplates();
+        const templates = this.loadSystemPromptTemplates() || {};
         templates[name] = prompt;
         this.saveSystemPromptTemplates(templates);
         return true;
