@@ -77,15 +77,15 @@ Object.assign(window.UI.Core.Modal.Handlers, {
     },
     
     /**
-     * 新しいテンプレートを保存します
+     * 新しいシステムプロンプトを保存します
      */
-    saveNewTemplate: function() {
-        const templateName =window.UI.Cache.get('newTemplateName').value.trim();
-        const templateCategory =window.UI.Cache.get('newTemplateCategory').value.trim();
-        const systemPrompt =window.UI.Cache.get('systemPromptInput').value.trim();
+    saveNewSystemPrompt: function() {
+        const systemPromptName = window.UI.Cache.get('newSystemPromptName').value.trim();
+        const templateCategory = window.UI.Cache.get('newTemplateCategory').value.trim();
+        const systemPrompt = window.UI.Cache.get('systemPromptInput').value.trim();
         
-        if (!templateName || !systemPrompt) {
-            window.UI.Core.Notification.show('テンプレート名と内容を入力してください', 'error');
+        if (!systemPromptName || !systemPrompt) {
+            window.UI.Core.Notification.show('システムプロンプト名と内容を入力してください', 'error');
             return;
         }
 
@@ -94,54 +94,54 @@ Object.assign(window.UI.Core.Modal.Handlers, {
             return;
         }
 
-        const templates = window.AppState.promptTemplates;
+        const templates = window.AppState.systemPromptTemplates;
         
         // 重複チェック
-        if (templates[templateName]) {
-            window.UI.Core.Notification.show('同じ名前のテンプレートが既に存在します', 'error');
+        if (templates[systemPromptName]) {
+            window.UI.Core.Notification.show('同じ名前のシステムプロンプトが既に存在します', 'error');
             return;
         }
         
-        // テンプレートを保存
-        templates[templateName] = systemPrompt;
-        window.AppState.promptTemplates = templates;
-        window.Storage.savePromptTemplates(templates);
+        // システムプロンプトを保存
+        templates[systemPromptName] = systemPrompt;
+        window.AppState.systemPromptTemplates = templates;
+        window.Storage.saveSystemPromptTemplates(templates);
         
         // 入力をクリア
-       window.UI.Cache.get('newTemplateName').value = '';
-       window.UI.Cache.get('newTemplateCategory').value = '';
+        window.UI.Cache.get('newSystemPromptName').value = '';
+        window.UI.Cache.get('newTemplateCategory').value = '';
         
-        // テンプレート一覧を更新
+        // システムプロンプト一覧を更新
         window.UI.Core.Modal.updateTemplateList(templates, this.onTemplateSelect, this.onTemplateDelete);
         
-        window.UI.Core.Notification.show('テンプレートを保存しました', 'success');
+        window.UI.Core.Notification.show('システムプロンプトを保存しました', 'success');
     },
     
     /**
-     * テンプレート選択時のハンドラー
+     * システムプロンプト選択時のハンドラー
      */
-    onTemplateSelect: function(templateName) {
+    onTemplateSelect: function(promptName) {
         if (!window.Elements.systemPromptInput) return;
         
-        const template = window.AppState.promptTemplates[templateName];
-        if (template) {
-            window.Elements.systemPromptInput.value = template;
+        const prompt = window.AppState.systemPromptTemplates[promptName];
+        if (prompt) {
+            window.Elements.systemPromptInput.value = prompt;
         }
     },
     
     /**
-     * テンプレート削除時のハンドラー
+     * システムプロンプト削除時のハンドラー
      */
-    onTemplateDelete: function(templateName) {
-        if (confirm(`テンプレート "${templateName}" を削除してもよろしいですか？`)) {
-            delete window.AppState.promptTemplates[templateName];
-            window.Storage.savePromptTemplates(window.AppState.promptTemplates); 
+    onTemplateDelete: function(promptName) {
+        if (confirm(`システムプロンプト "${promptName}" を削除してもよろしいですか？`)) {
+            delete window.AppState.systemPromptTemplates[promptName];
+            window.Storage.saveSystemPromptTemplates(window.AppState.systemPromptTemplates); 
             window.UI.Core.Modal.updateTemplateList(
-                window.AppState.promptTemplates, 
+                window.AppState.systemPromptTemplates, 
                 this.onTemplateSelect, 
                 this.onTemplateDelete
             );
         }
-        window.UI.Core.Notification.show('テンプレートを削除しました', 'success');
+        window.UI.Core.Notification.show('システムプロンプトを削除しました', 'success');
     }
 });

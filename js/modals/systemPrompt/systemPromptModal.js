@@ -8,18 +8,18 @@ window.UI.Core.Modal = window.UI.Core.Modal || {};
 Object.assign(window.UI.Core.Modal, {
     /**
      * システムプロンプト設定モーダルを表示します
-     * システムプロンプト編集モーダルを表示し、テンプレート一覧も更新します
+     * システムプロンプト編集モーダルを表示し、一覧も更新します
      * 
      * @param {string} systemPrompt - 現在のシステムプロンプト
-     * @param {Object} promptTemplates - プロンプトテンプレート集
-     * @param {Function} onTemplateSelect - テンプレート選択時のコールバック
-     * @param {Function} onTemplateDelete - テンプレート削除時のコールバック
+     * @param {Object} systemPromptTemplates - システムプロンプト集
+     * @param {Function} onSelect - システムプロンプト選択時のコールバック
+     * @param {Function} onDelete - システムプロンプト削除時のコールバック
      */
-    showSystemPromptModal: function(systemPrompt, promptTemplates, onTemplateSelect, onTemplateDelete) {
+    showSystemPromptModal: function(systemPrompt, systemPromptTemplates, onSelect, onDelete) {
         window.UI.Utils.toggleModal('systemPromptModal', true);
         window.UI.Cache.get('systemPromptInput').value = systemPrompt;
         
-        this.updateTemplateList(promptTemplates, onTemplateSelect, onTemplateDelete);
+        this.updateList(systemPromptTemplates, onSelect, onDelete);
     },
     
     /**
@@ -30,30 +30,30 @@ Object.assign(window.UI.Core.Modal, {
     },
     
     /**
-     * テンプレート一覧を表示します
-     * システムプロンプトテンプレートの一覧を表示し、選択/削除機能を提供します
+     * システムプロンプト一覧を表示します
+     * システムプロンプトの一覧を表示し、選択/削除機能を提供します
      * 
-     * @param {Object} promptTemplates - プロンプトテンプレート集
-     * @param {Function} onTemplateSelect - テンプレート選択時のコールバック関数
-     * @param {Function} onTemplateDelete - テンプレート削除時のコールバック関数
+     * @param {Object} systemPromptTemplates - システムプロンプト集
+     * @param {Function} onSelect - システムプロンプト選択時のコールバック関数
+     * @param {Function} onDelete - システムプロンプト削除時のコールバック関数
      */
-    updateTemplateList: function(promptTemplates, onTemplateSelect, onTemplateDelete) {
-        const templateListArea = window.UI.Cache.get('templateListArea');
-        if (!templateListArea) return;
+    updateList: function(systemPromptTemplates, onSelect, onDelete) {
+        const listArea = window.UI.Cache.get('systemPromptListArea');
+        if (!listArea) return;
         
-        // テンプレート一覧をクリア
-        templateListArea.innerHTML = '';
+        // 一覧をクリア
+        listArea.innerHTML = '';
         
         // DocumentFragmentを使用してDOM操作を最適化
         const fragment = document.createDocumentFragment();
 
-        // カテゴリごとにテンプレートを整理
-        const categorizedTemplates = {};
-        Object.entries(promptTemplates).forEach(([templateName, content]) => {
+        // カテゴリごとにプロンプトを整理
+        const categorizedPrompts = {};
+        Object.entries(systemPromptTemplates).forEach(([promptName, content]) => {
             // configファイルからカテゴリを取得
             let category = '';
-            for (const [cat, templates] of Object.entries(window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES)) {
-                if (templates[templateName]) {
+            for (const [cat, items] of Object.entries(window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORIES)) {
+                if (items[promptName]) {
                     category = cat;
                     break;
                 }
@@ -61,28 +61,28 @@ Object.assign(window.UI.Core.Modal, {
             // カテゴリがない場合は「その他」に分類
             if (!category) category = 'その他';
             
-            if (!categorizedTemplates[category]) {
-                categorizedTemplates[category] = [];
+            if (!categorizedPrompts[category]) {
+                categorizedPrompts[category] = [];
             }
-            categorizedTemplates[category].push({name: templateName, content: content});
+            categorizedPrompts[category].push({name: promptName, content: content});
         });
         
         // カテゴリの表示順序を取得
-        const categoryOrder = window.CONFIG.PROMPTS.TEMPLATES.CATEGORY_ORDER || [];
+        const categoryOrder = window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORY_ORDER || [];
         const sortedCategories = [...categoryOrder];
         // 設定されていないカテゴリを追加
-        Object.keys(categorizedTemplates).forEach(category => {
+        Object.keys(categorizedPrompts).forEach(category => {
             if (!sortedCategories.includes(category)) {
                 sortedCategories.push(category);
             }
         });
         
-        // カテゴリごとにテンプレートを表示
+        // カテゴリごとにシステムプロンプトを表示
         sortedCategories.forEach(category => {
-            if (!categorizedTemplates[category]) return;
+            if (!categorizedPrompts[category]) return;
             
             const categoryElement = document.createElement('div');
-            categoryElement.className = 'template-category';
+            categoryElement.className = 'system-prompt-category';
             
             // 保存された展開状態を復元
             const isCategoryCollapsed = window.Storage.loadCategoryState(category);
@@ -92,11 +92,11 @@ Object.assign(window.UI.Core.Modal, {
             
             // カテゴリヘッダー
             const categoryHeader = document.createElement('div');
-            categoryHeader.className = 'template-category-header';
+            categoryHeader.className = 'system-prompt-category-header';
             categoryHeader.innerHTML = `
                 <i class="fas fa-chevron-down"></i>
                 <span class="category-title">${category}</span>
-                <span class="category-count">${categorizedTemplates[category].length}</span>
+                <span class="category-count">${categorizedPrompts[category].length}</span>
             `;
             
             // カテゴリヘッダーのクリックイベント
@@ -109,65 +109,65 @@ Object.assign(window.UI.Core.Modal, {
                 );
             });
             
-            // テンプレートリスト
-            const templateList = document.createElement('div');
-            templateList.className = 'template-list';
+            // システムプロンプトリスト
+            const promptList = document.createElement('div');
+            promptList.className = 'system-prompt-list';
             
-            // カテゴリ内のテンプレートをソート
-            categorizedTemplates[category]
+            // カテゴリ内のプロンプトをソート
+            categorizedPrompts[category]
                 .sort((a, b) => a.name.localeCompare(b.name))
-                .forEach(({name: templateName}) => {
-                    const item = this._createTemplateItem(templateName, onTemplateSelect, onTemplateDelete);
-                    templateList.appendChild(item);
+                .forEach(({name: promptName}) => {
+                    const item = this._createPromptItem(promptName, onSelect, onDelete);
+                    promptList.appendChild(item);
                 });
             
             categoryElement.appendChild(categoryHeader);
-            categoryElement.appendChild(templateList);
+            categoryElement.appendChild(promptList);
             fragment.appendChild(categoryElement);
         });
         
         // 一度のDOM操作でフラグメントを追加
-        templateListArea.appendChild(fragment);
+        listArea.appendChild(fragment);
     },
 
     /**
-     * テンプレート項目要素を作成します
+     * システムプロンプト項目要素を作成します
      * @private
      */
-    _createTemplateItem: function(templateName, onTemplateSelect, onTemplateDelete) {
-        // 削除ボタン（デフォルトテンプレートと設定ファイルで定義されたテンプレート以外のみ）
+    _createPromptItem: function(promptName, onSelect, onDelete) {
+        // 削除ボタン（デフォルトプロンプトと設定ファイルで定義されたプロンプト以外のみ）
         const children = [
             window.UI.Utils.createElement('span', {
-                textContent: templateName,
-                classList: ['template-name']
+                textContent: promptName,
+                classList: ['system-prompt-name']
             })
         ];
         
-        // テンプレート名がデフォルトテンプレートかどうかを判定
-        const isConfigTemplate = Object.values(window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES)
-                                    .some(category => Object.keys(category).includes(templateName));
+        // プロンプト名がデフォルトプロンプトかどうかを判定
+        const isConfigPrompt = Object.values(window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORIES)
+                                    .some(category => Object.keys(category).includes(promptName));
 
-        // デフォルトテンプレートとconfig.jsで定義されたテンプレート以外に削除ボタンを表示
-        if (!isConfigTemplate) {
+        // デフォルトプロンプトとconfig.jsで定義されたプロンプト以外に削除ボタンを表示
+        if (!isConfigPrompt) {
             children.push(window.UI.Utils.createElement('button', {
-                classList: ['template-delete-button'],
+                classList: ['system-prompt-delete-button'],
                 innerHTML: '<i class="fas fa-trash"></i>',
-                title: 'テンプレートを削除',
+                title: 'システムプロンプトを削除',
                 events: {
                     click: (e) => {
                         e.stopPropagation();
-                        onTemplateDelete(templateName);
+                        onDelete(promptName);
                     }
                 }
             }));
         }
         
-        // テンプレート項目
+        // プロンプト項目
         return window.UI.Utils.createElement('div', {
-            classList: ['template-item'],
+            classList: ['system-prompt-item'],
             children,
             events: {
-                click: () => onTemplateSelect(templateName)
+                click: () => onSelect(promptName)
             }
         });
     }

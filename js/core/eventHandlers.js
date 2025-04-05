@@ -59,7 +59,7 @@ window.EventHandlers = {
             window.Elements.settingsMenu.style.display = 'none';
             window.UI.Core.Modal.showSystemPromptModal(
                 window.AppState.systemPrompt, 
-                window.AppState.promptTemplates, 
+                window.AppState.systemPromptTemplates, 
                 window.UI.Core.Modal.Handlers.onTemplateSelect, 
                 window.UI.Core.Modal.Handlers.onTemplateDelete
             );
@@ -114,7 +114,7 @@ window.EventHandlers = {
      */
     setupSystemPromptModal() {
         if (!window.Elements.saveSystemPrompt || !window.Elements.cancelSystemPrompt || 
-            !window.Elements.saveNewTemplate) return;
+            !window.Elements.saveNewSystemPrompt) return;
         
         // システムプロンプト保存
         window.Elements.saveSystemPrompt.addEventListener('click', () => {
@@ -128,8 +128,8 @@ window.EventHandlers = {
         // システムプロンプトキャンセル
         window.Elements.cancelSystemPrompt.addEventListener('click', window.UI.Core.Modal.hideSystemPromptModal);
         
-        // 新しいテンプレート保存
-        window.Elements.saveNewTemplate.addEventListener('click', window.UI.Core.Modal.Handlers.saveNewTemplate.bind(window.UI.Core.Modal.Handlers));
+        // 新しいシステムプロンプト保存
+        window.Elements.saveNewSystemPrompt.addEventListener('click', window.UI.Core.Modal.Handlers.saveNewSystemPrompt.bind(window.UI.Core.Modal.Handlers));
 
         // 高度なプロンプト管理へ切り替え
         const switchToPromptManagerBtn =window.UI.Cache.get('switchToPromptManager');
@@ -191,7 +191,7 @@ window.EventHandlers = {
                 window.UI.Core.Modal.hidePromptManagerModal();
                 window.UI.Core.Modal.showSystemPromptModal(
                     window.AppState.systemPrompt,
-                    window.AppState.promptTemplates,
+                    window.AppState.systemPromptTemplates,
                     window.UI.Core.Modal.Handlers.onTemplateSelect,
                     window.UI.Core.Modal.Handlers.onTemplateDelete
                 );

@@ -42,7 +42,7 @@ window.Elements = (function() {
         
         // システムプロンプト関連
         'systemPromptModal', 'systemPromptInput', 'saveSystemPrompt',
-        'cancelSystemPrompt', 'saveNewTemplate', 'newTemplateName', 'newTemplateCategory',
+        'cancelSystemPrompt', 'saveNewSystemPrompt', 'newSystemPromptName', 'newTemplateCategory',
         
         // API設定関連
         'apiKeyModal', 'saveApiKey', 'cancelApiKey', 'openaiRadio', 'azureRadio',

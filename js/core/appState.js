@@ -20,7 +20,7 @@ window.AppState = (function() {
             if (window.Storage) {
                 _apiSettings = window.Storage.loadApiSettings() || {};
                 _systemPrompt = window.Storage.loadSystemPrompt() || '';
-                _promptTemplates = window.Storage.loadPromptTemplates() || {};
+                _promptTemplates = window.Storage.loadSystemPromptTemplates() || {};
                 _conversations = window.Storage.loadConversations() || [];
                 _currentConversationId = window.Storage.loadCurrentConversationId() || null;
             } else {
@@ -46,8 +46,8 @@ window.AppState = (function() {
         get systemPrompt() { return _systemPrompt; },
         set systemPrompt(value) { _systemPrompt = value; },
         
-        get promptTemplates() { return _promptTemplates; },
-        set promptTemplates(value) { _promptTemplates = value; },
+        get systemPromptTemplates() { return _promptTemplates; },
+        set systemPromptTemplates(value) { _promptTemplates = value; },
         
         get currentAttachments() { return _currentAttachments; },
         set currentAttachments(value) { _currentAttachments = value; },

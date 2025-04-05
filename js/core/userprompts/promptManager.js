@@ -29,15 +29,10 @@ window.PromptManager = (function() {
             description: '文章作成や編集用のプロンプト',
             order: 2
         },
-        'system': {
-            name: 'システム設定',
-            description: 'システムプロンプト用のテンプレート',
-            order: 3
-        },
         'custom': {
             name: 'カスタム',
             description: 'ユーザー定義のプロンプト',
-            order: 4
+            order: 3
         }
     };
 
@@ -674,13 +669,13 @@ window.PromptManager = (function() {
         }
         
         // プロンプトテンプレートを読み込む
-        const promptTemplates = window.Storage.loadPromptTemplates();
+        const systemPromptTemplates = window.Storage.loadSystemPromptTemplates();
         
         // テンプレートに追加
-        promptTemplates[templateName] = prompt.content;
+        systemPromptTemplates[templateName] = prompt.content;
         
         // 保存
-        window.Storage.savePromptTemplates(promptTemplates);
+        window.Storage.saveSystemPromptTemplates(systemPromptTemplates);
         
         // イベント発火
         const event = new CustomEvent('prompt-template-added', { 
@@ -703,9 +698,9 @@ window.PromptManager = (function() {
         }
         
         // テンプレートを読み込む
-        const promptTemplates = window.Storage.loadPromptTemplates();
+        const systemPromptTemplates = window.Storage.loadSystemPromptTemplates();
         
-        const templateContent = promptTemplates[templateName];
+        const templateContent = systemPromptTemplates[templateName];
         if (!templateContent) {
             throw new Error(`テンプレート "${templateName}" が見つかりません`);
         }
@@ -806,7 +801,7 @@ window.PromptManager = (function() {
         templateSelector.appendChild(defaultOption);
         
         // テンプレートを取得して選択肢を追加
-        const templates = window.Storage.loadPromptTemplates();
+        const templates = window.Storage.loadSystemPromptTemplates();
         
         if (templates && typeof templates === 'object') {
             // テンプレートをアルファベット順にソート
@@ -825,7 +820,7 @@ window.PromptManager = (function() {
             const selectedTemplate = event.target.value;
             if (!selectedTemplate) return;
             
-            const templates = window.Storage.loadPromptTemplates();
+            const templates = window.Storage.loadSystemPromptTemplates();
             if (templates && templates[selectedTemplate]) {
                 // システムプロンプトの更新
                 setAsSystemPrompt(selectedTemplate, templates[selectedTemplate]);

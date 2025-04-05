@@ -174,7 +174,7 @@ Object.assign(window.UI.Core.Modal, {
                         <button class="system-prompt-button" title="システムプロンプトとして設定">
                             <i class="fas fa-cog"></i>
                         </button>
-                        <button class="template-save-button" title="テンプレートとして保存">
+                        <button class="system-prompt-save-button" title="システムプロンプトとして保存">
                             <i class="fas fa-save"></i>
                         </button>
                         <button class="delete-prompt-button" title="削除">
@@ -215,7 +215,7 @@ Object.assign(window.UI.Core.Modal, {
             this._setAsSystemPrompt(prompt.id);
         });
         
-        promptItem.querySelector('.template-save-button').addEventListener('click', (e) => {
+        promptItem.querySelector('.system-prompt-save-button').addEventListener('click', (e) => {
             e.stopPropagation();
             this._saveAsTemplate(prompt.id);
         });
@@ -330,23 +330,23 @@ Object.assign(window.UI.Core.Modal, {
     },
 
     /**
-     * プロンプトをテンプレートとして保存する
+     * プロンプトをシステムプロンプトとして保存する
      * @private
      */
     _saveAsTemplate: function(promptId) {
-        const templateName = prompt('テンプレート名を入力してください:');
-        if (!templateName) return;
+        const promptName = prompt('システムプロンプト名を入力してください:');
+        if (!promptName) return;
         
         try {
-            const success = window.PromptManager.saveAsSystemPromptTemplate(promptId, templateName);
+            const success = window.PromptManager.saveAsSystemPromptTemplate(promptId, promptName);
             
             if (success) {
-                window.UI.Core.Notification.show(`テンプレート「${templateName}」を保存しました`, 'success');
+                window.UI.Core.Notification.show(`システムプロンプト「${promptName}」を保存しました`, 'success');
             } else {
-                window.UI.Core.Notification.show('テンプレートの保存に失敗しました', 'error');
+                window.UI.Core.Notification.show('システムプロンプトの保存に失敗しました', 'error');
             }
         } catch (error) {
-            console.error('テンプレートの保存中にエラーが発生しました:', error);
+            console.error('システムプロンプトの保存中にエラーが発生しました:', error);
             window.UI.Core.Notification.show(`エラー: ${error.message}`, 'error');
         }
     },

@@ -126,7 +126,7 @@ window.CONFIG = {
             API_TYPE: 'apiType',
             AZURE_ENDPOINT_PREFIX: 'azureEndpoint_',
             SYSTEM_PROMPT: 'systemPrompt',
-            PROMPT_TEMPLATES: 'promptTemplates',
+            SYSTEM_PROMPT_TEMPLATES: 'systemPromptTemplates',
             CATEGORY_STATES: 'categoryStates',
             CONVERSATIONS: 'conversations',
             CURRENT_CONVERSATION_ID: 'currentConversationId',
@@ -140,13 +140,13 @@ window.CONFIG = {
     /**
      * プロンプト関連の設定
      */
-    PROMPTS: {
+    SYSTEM_PROMPTS: {
         // デフォルトのシステムプロンプト
         DEFAULT_SYSTEM_PROMPT: 'あなたは親切で誠実なAIアシスタントです。ユーザーの要求に対して、簡潔かつ有益な回答を提供してください。',
         
         // システムプロンプトテンプレート
         TEMPLATES: {
-            // テンプレートのカテゴリ定義
+            // システムプロンプトのカテゴリ定義
             CATEGORIES: {
                 '基本': {
                     'デフォルト': 'あなたは親切で誠実なAIアシスタントです。ユーザーの要求に対して、簡潔かつ有益な回答を提供してください。',

@@ -150,7 +150,7 @@ Object.assign(window.Chat.Actions, {
             }
 
             // APIリクエストの処理
-            const effectiveSystemPrompt = systemPrompt || window.CONFIG.PROMPTS.DEFAULT_SYSTEM_PROMPT;
+            const effectiveSystemPrompt = systemPrompt || window.CONFIG.SYSTEM_PROMPTS.DEFAULT_SYSTEM_PROMPT;
             const messagesWithSystem = [
                 { role: 'system', content: effectiveSystemPrompt },
                 ...conversation.messages.filter(m => m.role !== 'system')

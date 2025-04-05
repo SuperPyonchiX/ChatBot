@@ -244,7 +244,7 @@ window.Storage = {
      * @returns {string} システムプロンプト
      */
     loadSystemPrompt: function() {
-        return this._getItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT, window.CONFIG.PROMPTS.DEFAULT_SYSTEM_PROMPT);
+        return this._getItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT, window.CONFIG.SYSTEM_PROMPTS.DEFAULT_SYSTEM_PROMPT);
     },
 
     /**
@@ -257,54 +257,54 @@ window.Storage = {
     },
 
     /**
-     * プロンプトテンプレートを読み込む
+     * システムプロンプトテンプレートを読み込む
      * @returns {Object} プロンプトテンプレートのオブジェクト
      */
-    loadPromptTemplates: function() {
+    loadSystemPromptTemplates: function() {
         // カスタムテンプレートを読み込む
-        const customTemplates = this._getItem(window.CONFIG.STORAGE.KEYS.PROMPT_TEMPLATES, {}, true);
+        const customTemplates = this._getItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT_TEMPLATES, {}, true);
         
         // デフォルトのテンプレートと結合して返す
         // デフォルトのテンプレートが常に優先されるようにする
-        return { ...Object.assign({}, ...Object.values(window.CONFIG.PROMPTS.TEMPLATES.CATEGORIES)), ...customTemplates };
+        return { ...Object.assign({}, ...Object.values(window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORIES)), ...customTemplates };
     },
 
     /**
-     * プロンプトテンプレートを保存
+     * システムプロンプトテンプレートを保存
      * @param {Object} templates - プロンプトテンプレートのオブジェクト
      */
-    savePromptTemplates: function(templates) {
+    saveSystemPromptTemplates: function(templates) {
         if (!templates || typeof templates !== 'object') return;
-        this._setItem(window.CONFIG.STORAGE.KEYS.PROMPT_TEMPLATES, templates);
+        this._setItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT_TEMPLATES, templates);
     },
 
     /**
-     * テンプレートを追加
+     * システムプロンプトテンプレートを追加
      * @param {string} name - テンプレート名
      * @param {string} prompt - プロンプト内容
      * @returns {boolean} 保存成功時はtrue
      */
-    addTemplate: function(name, prompt) {
+    addSystemPromptTemplate: function(name, prompt) {
         if (!name || !prompt) return false;
         
-        const templates = this.loadPromptTemplates();
+        const templates = this.loadSystemPromptTemplates();
         templates[name] = prompt;
-        this.savePromptTemplates(templates);
+        this.saveSystemPromptTemplates(templates);
         return true;
     },
 
     /**
-     * テンプレートを削除
+     * システムプロンプトテンプレートを削除
      * @param {string} name - 削除するテンプレート名
      * @returns {boolean} 削除成功時はtrue
      */
-    removeTemplate: function(name) {
+    removeSystemPromptTemplate: function(name) {
         if (!name) return false;
         
-        const templates = this.loadPromptTemplates();
+        const templates = this.loadSystemPromptTemplates();
         if (templates[name]) {
             delete templates[name];
-            this.savePromptTemplates(templates);
+            this.saveSystemPromptTemplates(templates);
             return true;
         }
         return false;

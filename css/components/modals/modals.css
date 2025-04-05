@@ -73,8 +73,8 @@
     flex-direction: column;
 }
 
-/* テンプレート関連のスタイル */
-.template-list-area {
+/* システムプロンプト設定関連のスタイル */
+.system-prompt-list-area {
     height: 100%;
     overflow-y: auto;
     padding: var(--spacing-sm);
@@ -82,17 +82,17 @@
     background-color: var(--background-primary);
     border-radius: var(--border-radius-md);
     border: 1px solid var(--border-color);
-    max-height: var(--modal-max-height-template);
+    max-height: var(--modal-max-height-system-prompt);
 }
 
-.template-category {
+.system-prompt-category {
     margin-bottom: var(--spacing-lg);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     overflow: hidden;
 }
 
-.template-category-header {
+.system-prompt-category-header {
     display: flex;
     align-items: center;
     padding: var(--spacing-sm);
@@ -107,52 +107,52 @@
     color: var(--text-primary);
 }
 
-.template-category-header:hover {
+.system-prompt-category-header:hover {
     background-color: var(--background-tertiary);
 }
 
-.template-category-header i {
-    margin-right: var(--template-header-icon-size);
+.system-prompt-category-header i {
+    margin-right: var(--system-prompt-header-icon-size);
     transition: transform var(--transition-fast) ease;
 }
 
-.template-category-header .category-title {
+.system-prompt-category-header .category-title {
     font-weight: 600;
     font-size: var(--font-size-md);
     color: var(--text-primary);
 }
 
-.template-category-header .category-count {
+.system-prompt-category-header .category-count {
     margin-left: auto;
     background-color: var(--background-tertiary);
     color: var(--text-secondary);
-    padding: var(--template-count-padding);
+    padding: var(--system-prompt-count-padding);
     border-radius: var(--border-radius-xl);
     font-size: var(--font-size-xs);
 }
 
-.template-category.collapsed .template-list {
+.system-prompt-category.collapsed .system-prompt-list {
     display: none;
 }
 
-.template-category.collapsed .template-category-header i {
+.system-prompt-category.collapsed .system-prompt-category-header i {
     transform: rotate(-90deg);
 }
 
-.template-list {
+.system-prompt-list {
     display: flex;
     flex-direction: column;
-    gap: var(--template-gap);
+    gap: var(--system-prompt-gap);
     padding: var(--spacing-md);
     background-color: var(--background-primary);
     transition: max-height var(--transition-normal) ease;
 }
 
-.template-item {
+.system-prompt-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--template-item-padding);
+    padding: var(--system-prompt-item-padding);
     margin-bottom: var(--spacing-sm);
     background-color: var(--background-secondary);
     border-radius: var(--border-radius-md);
@@ -161,17 +161,17 @@
     transition: all var(--transition-fast) ease;
 }
 
-.template-item:last-child {
+.system-prompt-item:last-child {
     margin-bottom: 0;
 }
 
-.template-item:hover {
+.system-prompt-item:hover {
     background-color: var(--background-tertiary);
     border-color: var(--border-color);
-    transform: translateY(var(--template-translate-y));
+    transform: translateY(var(--system-prompt-translate-y));
 }
 
-.template-name {
+.system-prompt-name {
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -180,7 +180,7 @@
     font-size: var(--font-size-md);
 }
 
-.template-delete-button {
+.system-prompt-delete-button {
     background: none;
     border: none;
     color: var(--text-tertiary);
@@ -190,16 +190,16 @@
     transition: all var(--transition-fast) ease;
 }
 
-.template-item:hover .template-delete-button {
+.system-prompt-item:hover .system-prompt-delete-button {
     opacity: var(--button-opacity-default);
 }
 
-.template-delete-button:hover {
+.system-prompt-delete-button:hover {
     opacity: 1;
     color: var(--error-color);
 }
 
-.template-list-title {
+.system-prompt-list-title {
     margin-bottom: var(--spacing-sm);
     font-size: var(--font-size-lg);
     color: var(--text-primary);

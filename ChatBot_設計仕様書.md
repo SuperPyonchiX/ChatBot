@@ -407,8 +407,8 @@ sequenceDiagram
     Storage-->>Main: apiSettings
     Main->>Storage: loadSystemPrompt()
     Storage-->>Main: systemPrompt
-    Main->>Storage: loadPromptTemplates()
-    Storage-->>Main: promptTemplates
+    Main->>Storage: loadSystemPromptTemplates()
+    Storage-->>Main: systemPromptTemplates
     
     Main->>UI: createSidebarToggle()
     Main->>UI: initializeModelSelect()
@@ -537,7 +537,7 @@ sequenceDiagram
     alt システムプロンプト設定
         User->>Main: システムプロンプト設定クリック
         Main->>UI: showSystemPromptModal()
-        Main->>Main: loadPromptTemplates()
+        Main->>Main: loadSystemPromptTemplates()
         User->>Main: プロンプト編集
         User->>Main: 保存ボタンクリック
         Main->>Storage: saveSystemPrompt()

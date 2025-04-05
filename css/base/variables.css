@@ -118,15 +118,15 @@
     --modal-width: 90%;
     --modal-max-width-default: 1000px;
     --modal-max-width-small: 400px;
-    --modal-max-height-template: 400px;
+    --modal-max-height-system-prompt: 400px;
     --modal-template-sidebar-width: 300px;
     
-    /* テンプレート */
-    --template-item-padding: 10px 12px;
-    --template-header-icon-size: 10px;
-    --template-count-padding: 2px 6px;
-    --template-gap: 8px;
-    --template-translate-y: -1px;
+    /* システムプロンプト設定 */
+    --system-prompt-item-padding: 10px 12px;
+    --system-prompt-header-icon-size: 10px;
+    --system-prompt-count-padding: 2px 6px;
+    --system-prompt-gap: 8px;
+    --system-prompt-translate-y: -1px;
 
     /* プロンプトマネージャー */
     --prompt-manager-width: 900px;
