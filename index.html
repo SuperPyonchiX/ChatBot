@@ -294,7 +294,16 @@
     </div>
 
     <!-- JSファイルを読み込む -->
+    <!-- 実行環境関連のファイル -->
     <script src="js/lib/JSCPP.es5.min.js"></script>
+    <script src="js/core/executors/utils/ExecutorUtils.js"></script>
+    <script src="js/core/executors/languages/JavaScriptExecutor.js"></script>
+    <script src="js/core/executors/languages/HTMLExecutor.js"></script>
+    <script src="js/core/executors/languages/PythonExecutor.js"></script>
+    <script src="js/core/executors/languages/CPPExecutor.js"></script>
+    <script src="js/core/executors/codeExecutor.js"></script>
+
+    <!-- Core -->
     <script src="js/core/config.js"></script>
     <script src="js/utils/cryptoHelper.js"></script>
     <script src="js/core/storage.js"></script>
@@ -322,7 +331,6 @@
     <script src="js/core/systemprompts/systemPromptManager.js"></script>
     <script src="js/core/userprompts/promptManager.js"></script>
     <script src="js/core/userprompts/promptSuggestions.js"></script>
-    <script src="js/core/executors/codeExecutor.js"></script>
     
     <!-- コンポーネント関連のファイル -->
     <script src="js/components/chat/chatUI.js"></script>
