@@ -65,10 +65,7 @@ window.FileHandler = {
             event.target.value = '';
             return;
         }
-        console.log('選択されたファイル:', validFiles);
-        console.log('this.selectedFiles:', this.selectedFiles);
         this.selectedFiles = [...this.selectedFiles, ...validFiles];
-        console.log('更新後this.selectedFiles:', this.selectedFiles);
 
         // UI更新はFileAttachmentUIに委譲
         window.FileAttachmentUI.updatePreview(this.selectedFiles);
