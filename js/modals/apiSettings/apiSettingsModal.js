@@ -1,17 +1,35 @@
-window.UI = window.UI || {};
-window.UI.Core = window.UI.Core || {};
-window.UI.Core.Modal = window.UI.Core.Modal || {};
-
 /**
- * API設定モーダル
- * @namespace UI.Core.Modal
+ * API設定モーダルを管理するクラス
+ * @class ApiSettingsModal
  */
-Object.assign(window.UI.Core.Modal, {
+class ApiSettingsModal {
+    static #instance = null;
+
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {ApiSettingsModal} ApiSettingsModalのインスタンス
+     */
+    static get getInstance() {
+        if (!ApiSettingsModal.#instance) {
+            ApiSettingsModal.#instance = new ApiSettingsModal();
+        }
+        return ApiSettingsModal.#instance;
+    }
+
+    /**
+     * コンストラクタ - privateなので直接newはできません
+     */
+    constructor() {
+        if (ApiSettingsModal.#instance) {
+            throw new Error('ApiSettingsModalクラスは直接インスタンス化できません。getInstance()を使用してください。');
+        }
+    }
+
     /**
      * API設定モーダルを表示します
      * @param {Object} apiSettings - API設定オブジェクト
      */
-    showApiKeyModal: function(apiSettings) {
+    showApiKeyModal(apiSettings) {
         UIUtils.getInstance.toggleModal('apiKeyModal', true);
         
         // 必要な要素を一度に取得
@@ -46,19 +64,19 @@ Object.assign(window.UI.Core.Modal, {
             UIUtils.getInstance.toggleVisibility(elements.openaiSettings, true);
             UIUtils.getInstance.toggleVisibility(elements.azureSettings, false);
         }
-    },
+    }
     
     /**
      * API設定モーダルを非表示にします
      */
-    hideApiKeyModal: function() {
+    hideApiKeyModal() {
         UIUtils.getInstance.toggleModal('apiKeyModal', false);
-    },
+    }
     
     /**
      * Azure設定の表示/非表示を切り替えます
      */
-    toggleAzureSettings: function() {
+    toggleAzureSettings() {
         const openaiSettings = UICache.getInstance.get('openaiSettings');
         const azureSettings = UICache.getInstance.get('azureSettings');
         const azureRadio = UICache.getInstance.get('azureRadio');
@@ -66,4 +84,9 @@ Object.assign(window.UI.Core.Modal, {
         UIUtils.getInstance.toggleVisibility(openaiSettings, !azureRadio.checked);
         UIUtils.getInstance.toggleVisibility(azureSettings, azureRadio.checked);
     }
-});
+}
+
+// グローバルアクセスのために window.UI.Core.Modal に設定
+window.UI = window.UI || {};
+window.UI.Core = window.UI.Core || {};
+window.UI.Core.Modal = ApiSettingsModal.getInstance;

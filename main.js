@@ -33,12 +33,12 @@ document.addEventListener('DOMContentLoaded', async function() {
      */
     function _init() {
         // UI初期化
-        if (window.UI && window.UI.initialize) {
-            window.UI.initialize();
+        if (UI.getInstance && UI.getInstance.initialize) {
+            UI.getInstance.initialize();
         } else {
             console.warn('UI.initializeが見つかりません');
             // フォールバック: サイドバートグルボタンを個別に作成
-            if (window.UI && Sidebar.getInstance.createSidebarToggle) {
+            if (UI.getInstance && Sidebar.getInstance.createSidebarToggle) {
                 Sidebar.getInstance.createSidebarToggle();
             }
         }
@@ -47,8 +47,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         PromptManager.getInstance;
         
         // プロンプトマネージャーのUIイベント設定
-        if (window.UI && window.UI.setupPromptManagerEvents) {
-            window.UI.setupPromptManagerEvents();
+        if (UI.getInstance && UI.getInstance.setupPromptManagerEvents) {
+            UI.getInstance.setupPromptManagerEvents();
         }
         
         _loadConversations();
@@ -100,8 +100,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         EventHandlers.getInstance.setupGlobalEvents();
         
         // プロンプト候補表示機能を初期化
-        if (window.UI && window.UI.initPromptSuggestions) {
-            window.UI.initPromptSuggestions();
+        if (UI.getInstance && UI.getInstance.initPromptSuggestions) {
+            UI.getInstance.initPromptSuggestions();
         }
     }
 

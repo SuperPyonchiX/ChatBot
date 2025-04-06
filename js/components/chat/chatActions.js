@@ -289,7 +289,7 @@ class ChatActions {
             window.AppState.currentConversationId, 
             window.Elements.chatHistory, 
             this.switchConversation.bind(this), 
-            window.UI.Core.Modal.showRenameChatModal, 
+            UI.getInstance.Core.Modal.showRenameChatModal, 
             this.deleteConversation.bind(this)
         );
     }

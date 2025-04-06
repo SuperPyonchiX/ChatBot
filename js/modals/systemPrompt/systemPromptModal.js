@@ -1,11 +1,30 @@
-window.UI = window.UI || {};
-window.UI.Core = window.UI.Core || {};
-window.UI.Core.Modal = window.UI.Core.Modal || {};
-
 /**
- * システムプロンプトモーダル
+ * システムプロンプトモーダルを管理するクラス
+ * @class SystemPromptModal
  */
-Object.assign(window.UI.Core.Modal, {
+class SystemPromptModal {
+    static #instance = null;
+
+    /**
+     * コンストラクタ - privateなので直接newはできません
+     */
+    constructor() {
+        if (SystemPromptModal.#instance) {
+            throw new Error('SystemPromptModalクラスは直接インスタンス化できません。getInstance()を使用してください。');
+        }
+    }
+
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {SystemPromptModal} SystemPromptModalのインスタンス
+     */
+    static get getInstance() {
+        if (!SystemPromptModal.#instance) {
+            SystemPromptModal.#instance = new SystemPromptModal();
+        }
+        return SystemPromptModal.#instance;
+    }
+
     /**
      * システムプロンプト設定モーダルを表示します
      * @param {string} systemPrompt - 現在のシステムプロンプト
@@ -13,29 +32,29 @@ Object.assign(window.UI.Core.Modal, {
      * @param {Function} onSelect - システムプロンプト選択時のコールバック
      * @param {Function} onDelete - システムプロンプト削除時のコールバック
      */
-    showSystemPromptModal: function(systemPrompt, systemPromptTemplates, onSelect, onDelete) {
+    showSystemPromptModal(systemPrompt, systemPromptTemplates, onSelect, onDelete) {
         UIUtils.getInstance.toggleModal('systemPromptModal', true);
         UICache.getInstance.get('systemPromptInput').value = systemPrompt;
         
         // バインドされたコールバック関数を保存
-        this._boundOnSelect = onSelect.bind(window.UI.Core.Modal.Handlers);
-        this._boundOnDelete = onDelete.bind(window.UI.Core.Modal.Handlers);
+        this._boundOnSelect = onSelect.bind(ModalHandlers.getInstance);
+        this._boundOnDelete = onDelete.bind(ModalHandlers.getInstance);
         
         this.updateList(systemPromptTemplates);
-    },
-    
+    }
+
     /**
      * システムプロンプトモーダルを非表示にします
      */
-    hideSystemPromptModal: function() {
+    hideSystemPromptModal() {
         UIUtils.getInstance.toggleModal('systemPromptModal', false);
-    },
-    
+    }
+
     /**
      * システムプロンプト一覧を表示します
      * @param {Object} systemPromptTemplates - システムプロンプト集
      */
-    updateList: function(systemPromptTemplates) {
+    updateList(systemPromptTemplates) {
         const listArea = UICache.getInstance.get('systemPromptListArea');
         if (!listArea) return;
         
@@ -121,13 +140,13 @@ Object.assign(window.UI.Core.Modal, {
         
         // 一度のDOM操作でフラグメントを追加
         listArea.appendChild(fragment);
-    },
+    }
 
     /**
      * システムプロンプト項目要素を作成します
      * @private
      */
-    _createPromptItem: function(prompt) {
+    _createPromptItem(prompt) {
         const promptItem = document.createElement('div');
         promptItem.className = 'system-prompt-item';
         
@@ -186,4 +205,9 @@ Object.assign(window.UI.Core.Modal, {
         
         return promptItem;
     }
-});
+}
+
+// グローバルアクセスのために window.UI.Core.Modal に設定
+window.UI = window.UI || {};
+window.UI.Core = window.UI.Core || {};
+window.UI.Core.Modal = SystemPromptModal.getInstance;

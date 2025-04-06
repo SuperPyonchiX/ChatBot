@@ -346,7 +346,7 @@ class PromptSuggestions {
         }
         
         // テキストエリアのサイズを自動調整
-        if (window.UI && UIUtils.getInstance.autoResizeTextarea) {
+        if (UI.getInstance && UIUtils.getInstance.autoResizeTextarea) {
             UIUtils.getInstance.autoResizeTextarea(this.#inputElement);
         }
         

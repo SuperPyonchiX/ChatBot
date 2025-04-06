@@ -1,16 +1,34 @@
-window.UI = window.UI || {};
-window.UI.Core = window.UI.Core || {};
-window.UI.Core.Modal = window.UI.Core.Modal || {};
-window.UI.Core.Modal.Handlers = window.UI.Core.Modal.Handlers || {};
 /**
- * モーダルのイベントハンドラー
- * @namespace UI.Core.Modal.Handlers
+ * モーダルのイベントハンドラークラス
+ * @class ModalHandlers
  */
-Object.assign(window.UI.Core.Modal.Handlers, {
+class ModalHandlers {
+    static #instance = null;
+
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {ModalHandlers} ModalHandlersのインスタンス
+     */
+    static get getInstance() {
+        if (!ModalHandlers.#instance) {
+            ModalHandlers.#instance = new ModalHandlers();
+        }
+        return ModalHandlers.#instance;
+    }
+
+    /**
+     * コンストラクタ - privateなので直接newはできません
+     */
+    constructor() {
+        if (ModalHandlers.#instance) {
+            throw new Error('ModalHandlersクラスは直接インスタンス化できません。getInstance()を使用してください。');
+        }
+    }
+
     /**
      * API設定を保存します
      */
-    saveApiSettings: function() {
+    saveApiSettings() {
         if (!window.Elements.apiKeyInput || !window.Elements.openaiRadio || !window.Elements.azureRadio) return;
         
         // API種別を設定
@@ -50,8 +68,8 @@ Object.assign(window.UI.Core.Modal.Handlers, {
         // ローカルストレージに保存
         Storage.getInstance.saveApiSettings(window.AppState.apiSettings);
         window.UI.Core.Notification.show('API設定を保存しました', 'success');
-        window.UI.Core.Modal.hideApiKeyModal();
-    },
+        ApiSettingsModal.getInstance.hideApiKeyModal();
+    }
     
     /**
      * チャット名の変更を保存します
@@ -73,13 +91,13 @@ Object.assign(window.UI.Core.Modal.Handlers, {
         }
 
         // モーダルを閉じる
-                window.UI.Core.Modal.hideRenameChatModal();
-    },
+        window.UI.Core.Modal.hideRenameChatModal();
+    }
     
     /**
      * 新しいシステムプロンプトを保存します
      */
-    saveNewSystemPrompt: function() {
+    saveNewSystemPrompt() {
         const systemPromptName = UICache.getInstance.get('newSystemPromptName').value.trim();
         const templateCategory = UICache.getInstance.get('newTemplateCategory').value.trim();
         const systemPrompt = UICache.getInstance.get('systemPromptInput').value.trim();
@@ -117,14 +135,15 @@ Object.assign(window.UI.Core.Modal.Handlers, {
         UICache.getInstance.get('newTemplateCategory').value = '';
         
         // システムプロンプト一覧を更新
-        window.UI.Core.Modal.updateList(templates, this.onTemplateSelect, this.onTemplateDelete);
+        SystemPromptModal.getInstance.updateList(templates, this.onTemplateSelect.bind(this), this.onTemplateDelete.bind(this));
         window.UI.Core.Notification.show('システムプロンプトを保存しました', 'success');
-    },
+    }
     
     /**
      * システムプロンプト選択時のハンドラー
+     * @param {string} promptName - プロンプト名
      */
-    onTemplateSelect: function(promptName) {
+    onTemplateSelect(promptName) {
         if (!window.Elements.systemPromptInput) return;
         
         const prompt = window.AppState.systemPromptTemplates[promptName];
@@ -132,18 +151,19 @@ Object.assign(window.UI.Core.Modal.Handlers, {
             window.Elements.systemPromptInput.value = prompt.content;
             window.Elements.systemPromptInput.dispatchEvent(new Event('input'));
         }
-    },
+    }
     
     /**
      * システムプロンプト削除時のハンドラー
+     * @param {string} promptName - プロンプト名
      */
-    onTemplateDelete: function(promptName) {
+    onTemplateDelete(promptName) {
         if (confirm(`システムプロンプト "${promptName}" を削除してもよろしいですか？`)) {
             delete window.AppState.systemPromptTemplates[promptName];
             Storage.getInstance.saveSystemPromptTemplates(window.AppState.systemPromptTemplates);
             
             // システムプロンプト一覧を更新
-            window.UI.Core.Modal.updateList(
+            SystemPromptModal.getInstance.updateList(
                 window.AppState.systemPromptTemplates, 
                 this.onTemplateSelect.bind(this), 
                 this.onTemplateDelete.bind(this)
@@ -151,4 +171,4 @@ Object.assign(window.UI.Core.Modal.Handlers, {
             window.UI.Core.Notification.show('システムプロンプトを削除しました', 'success');
         }
     }
-});
+}
