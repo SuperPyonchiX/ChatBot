@@ -3,8 +3,27 @@
  * ファイル添付のUI管理機能を提供します
  */
 
-window.FileAttachmentUI = {
-    updatePreview: function(files) {
+class FileAttachmentUI {
+    static #instance = null;
+    
+    constructor() {
+        if (FileAttachmentUI.#instance) {
+            return FileAttachmentUI.#instance;
+        }
+        FileAttachmentUI.#instance = this;
+    }
+
+    /**
+     * シングルトンインスタンスを取得
+     */
+    static get getInstance() {
+        if (!FileAttachmentUI.#instance) {
+            FileAttachmentUI.#instance = new FileAttachmentUI();
+        }
+        return FileAttachmentUI.#instance;
+    }
+
+    updatePreview(files) {
         const previewArea = this._getOrCreatePreviewArea();
         if (!previewArea) {
             console.error('プレビューエリアを作成できませんでした');
@@ -12,9 +31,9 @@ window.FileAttachmentUI = {
         }
         
         this._createFilePreviewItems(files, previewArea);
-    },
+    }
 
-    clearPreview: function() {
+    clearPreview() {
         // FileHandler側のプレビュー
         const inputWrapper = document.querySelector('.input-wrapper');
         if (inputWrapper) {
@@ -30,9 +49,9 @@ window.FileAttachmentUI = {
             attachmentPreviewArea.innerHTML = '';
             attachmentPreviewArea.style.display = 'none';
         }
-    },
+    }
 
-    _getOrCreatePreviewArea: function() {
+    _getOrCreatePreviewArea() {
         try {
             const inputWrapper = document.querySelector('.input-wrapper');
             if (!inputWrapper) {
@@ -60,9 +79,9 @@ window.FileAttachmentUI = {
             console.error('プレビューエリア作成エラー:', error);
             return null;
         }
-    },
+    }
 
-    _createFilePreviewItems: function(files, previewArea) {
+    _createFilePreviewItems(files, previewArea) {
         if (!previewArea || !files || !Array.isArray(files)) return;
         
         files.forEach((file, currentIndex) => {
@@ -85,9 +104,9 @@ window.FileAttachmentUI = {
             
             previewArea.appendChild(fileItem);
         });
-    },
+    }
 
-    _createFilePreview: function(file, fileItem) {
+    _createFilePreview(file, fileItem) {
         if (!file || !fileItem) return;
         
         // ファイルアイコンを表示するデフォルト要素
@@ -140,9 +159,9 @@ window.FileAttachmentUI = {
             fileTypeIcon.innerHTML = '<i class="fas fa-file fa-2x"></i>';
             fileItem.appendChild(fileTypeIcon);
         }
-    },
+    }
 
-    _createImagePreview: function(file, fileItem) {
+    _createImagePreview(file, fileItem) {
         if (!file || !fileItem) return;
         
         const reader = new FileReader();
@@ -196,9 +215,9 @@ window.FileAttachmentUI = {
         };
         
         reader.readAsDataURL(file);
-    },
+    }
 
-    _createFileInfo: function(file, fileItem) {
+    _createFileInfo(file, fileItem) {
         if (!file || !fileItem) return;
         
         const fileInfo = document.createElement('div');
@@ -218,9 +237,9 @@ window.FileAttachmentUI = {
         if (removeButton) {
             this._setupRemoveButtonHandler(removeButton, fileItem);
         }
-    },
+    }
 
-    _truncateFileName: function(fileName, maxLength = 20) {
+    _truncateFileName(fileName, maxLength = 20) {
         if (!fileName) return '';
         
         if (fileName.length <= maxLength) {
@@ -232,9 +251,9 @@ window.FileAttachmentUI = {
         const truncatedName = nameWithoutExt.substring(0, maxLength - extension.length - 3);
         
         return `${truncatedName}...${extension}`;
-    },
+    }
 
-    _formatFileSize: function(sizeInBytes) {
+    _formatFileSize(sizeInBytes) {
         if (sizeInBytes < 1024) {
             return sizeInBytes + 'B';
         } else if (sizeInBytes < 1024 * 1024) {
@@ -242,9 +261,9 @@ window.FileAttachmentUI = {
         } else {
             return (sizeInBytes / (1024 * 1024)).toFixed(1) + 'MB';
         }
-    },
+    }
 
-    _setupRemoveButtonHandler: function(removeButton, fileItem) {
+    _setupRemoveButtonHandler(removeButton, fileItem) {
         if (!removeButton || !fileItem) return;
         
         removeButton.addEventListener('click', e => {
@@ -275,9 +294,9 @@ window.FileAttachmentUI = {
                 console.error('ファイル削除処理エラー:', error);
             }
         });
-    },
+    }
 
-    _updateFileIndices: function() {
+    _updateFileIndices() {
         const fileItems = document.querySelectorAll('.file-preview-item');
         
         fileItems.forEach((item, index) => {
@@ -288,4 +307,4 @@ window.FileAttachmentUI = {
             item.dataset.fileIndex = index.toString();
         });
     }
-};
+}

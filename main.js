@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             );
             
             // 添付ファイルを表示
-            window.UI.Components.FileAttachment.displaySavedAttachments(window.AppState.currentConversationId, window.Elements.chatMessages);
+            FileAttachment.getInstance.displaySavedAttachments(window.AppState.currentConversationId, window.Elements.chatMessages);
         }
     }
 

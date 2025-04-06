@@ -47,12 +47,12 @@ class ChatHistory {
                 
                 // ファイル内容を除去
                 const displayContent = this._cleanFileContent(content);
-                await ChatRenderer.addUserMessage(displayContent, chatMessages, [], message.timestamp);
+                await ChatRenderer.getInstance.addUserMessage(displayContent, chatMessages, [], message.timestamp);
             } else if (message.role === 'assistant') {
                 const content = typeof message.content === 'string' 
                     ? message.content 
                     : this._processContentArray(message.content);
-                await ChatRenderer.addBotMessage(content, chatMessages, message.timestamp, false);
+                await ChatRenderer.getInstance.addBotMessage(content, chatMessages, message.timestamp, false);
             }
         }
         
@@ -67,7 +67,7 @@ class ChatHistory {
         }
         
         // 添付ファイルの表示
-        window.UI.Components.FileAttachment.displaySavedAttachments(conversation.id, chatMessages);
+        FileAttachment.getInstance.displaySavedAttachments(conversation.id, chatMessages);
         
         if (typeof Prism !== 'undefined') {
             try {

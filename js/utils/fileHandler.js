@@ -68,7 +68,7 @@ window.FileHandler = {
         this.selectedFiles = [...this.selectedFiles, ...validFiles];
 
         // UI更新はFileAttachmentUIに委譲
-        window.FileAttachmentUI.updatePreview(this.selectedFiles);
+        FileAttachmentUI.getInstance.updatePreview(this.selectedFiles);
 
         // 添付完了イベントを発火
         this.notifyAttachmentComplete(this.selectedFiles);
@@ -95,7 +95,7 @@ window.FileHandler = {
 
     clearSelectedFiles: function() {
         this.selectedFiles = [];
-        window.FileAttachmentUI.clearPreview();
+        FileAttachmentUI.getInstance.clearPreview();
         this.savedAttachments = [];
         document.dispatchEvent(new CustomEvent('attachment-removed'));
     }

@@ -2,12 +2,35 @@
  * chatRenderer.js
  * チャットメッセージのレンダリング機能を提供します
  */
-
 class ChatRenderer {
+    // シングルトンインスタンス
+    static #instance = null;
+
+    /**
+     * プライベートコンストラクタ
+     * @private
+     */
+    constructor() {
+        if (ChatRenderer.#instance) {
+            throw new Error('ChatRendererクラスは直接インスタンス化できません。ChatRenderer.instanceを使用してください。');
+        }
+    }
+
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {ChatRenderer} ChatRendererのシングルトンインスタンス
+     */
+    static get getInstance() {
+        if (!ChatRenderer.#instance) {
+            ChatRenderer.#instance = new ChatRenderer();
+        }
+        return ChatRenderer.#instance;
+    }
+
     /**
      * ユーザーメッセージを追加する
      */
-    static async addUserMessage(message, chatMessages, attachments = [], timestamp = null) {
+    async addUserMessage(message, chatMessages, attachments = [], timestamp = null) {
         if (!chatMessages) return;
         
         const msgTimestamp = timestamp || Date.now();
@@ -64,7 +87,7 @@ class ChatRenderer {
     /**
      * ボットメッセージを追加する
      */
-    static async addBotMessage(message, chatMessages, timestamp = null, animate = true) {
+    async addBotMessage(message, chatMessages, timestamp = null, animate = true) {
         if (!chatMessages) return;
         
         const msgTimestamp = timestamp || Date.now();
@@ -116,7 +139,7 @@ class ChatRenderer {
     /**
      * ストリーミング用のボットメッセージを追加する
      */
-    static addStreamingBotMessage(chatMessages, timestamp = null) {
+    addStreamingBotMessage(chatMessages, timestamp = null) {
         if (!chatMessages) return null;
         
         const msgTimestamp = timestamp || Date.now();
@@ -149,7 +172,7 @@ class ChatRenderer {
     /**
      * ストリーミング中にボットメッセージを更新する
      */
-    static async updateStreamingBotMessage(container, chunk, currentFullText, isFirstChunk = false) {
+    async updateStreamingBotMessage(container, chunk, currentFullText, isFirstChunk = false) {
         if (!container) return;
         
         try {
@@ -176,7 +199,7 @@ class ChatRenderer {
     /**
      * ストリーミングが完了したらボットメッセージを完成させる
      */
-    static async finalizeStreamingBotMessage(messageDiv, container, fullText) {
+    async finalizeStreamingBotMessage(messageDiv, container, fullText) {
         if (!messageDiv || !container) return;
         
         try {
@@ -214,7 +237,7 @@ class ChatRenderer {
      * コードブロックのフォーマットとハイライトを適用する
      * @private
      */
-    static _applyCodeFormatting(messageDiv) {
+    _applyCodeFormatting(messageDiv) {
         if (!messageDiv) return;
         
         requestAnimationFrame(() => {
@@ -233,7 +256,7 @@ class ChatRenderer {
      * タイピングアニメーションを実行する
      * @private
      */
-    static async _animateTyping(message, container) {
+    async _animateTyping(message, container) {
         if (!message || !container) return;
         
         const typingConfig = window.CONFIG?.UI?.TYPING_EFFECT || {};
@@ -298,7 +321,7 @@ class ChatRenderer {
      * コピーボタンを作成する
      * @private
      */
-    static _createCopyButton(textToCopy) {
+    _createCopyButton(textToCopy) {
         const copyButton = document.createElement('button');
         copyButton.classList.add('copy-button');
         copyButton.title = 'コピーする';
@@ -327,7 +350,7 @@ class ChatRenderer {
      * コピー成功時の表示を更新
      * @private
      */
-    static _showCopySuccess(button) {
+    _showCopySuccess(button) {
         if (!button) return;
         
         button.classList.add('copied');
@@ -345,7 +368,7 @@ class ChatRenderer {
      * コピー失敗時の表示を更新
      * @private
      */
-    static _showCopyError(button) {
+    _showCopyError(button) {
         if (!button) return;
         
         button.classList.add('error');

@@ -43,7 +43,7 @@ class ChatActions {
             }
             
             // FileHandlerから現在の添付ファイルを取得
-            const apiAttachments = await window.UI.Components.FileAttachment.getAttachmentsForAPI();
+            const apiAttachments = await FileAttachment.getInstance.getAttachmentsForAPI();
             
             // 添付ファイルの参照を保持
             const attachmentsToSend = apiAttachments.length > 0 ? apiAttachments : window.AppState.currentAttachments;
@@ -60,7 +60,7 @@ class ChatActions {
             
             const attachmentPreviewArea = document.querySelector('.attachment-preview-area');
             if (attachmentPreviewArea) {
-                window.UI.Components.FileAttachment.clearAttachments(attachmentPreviewArea);
+                FileAttachment.getInstance.clearAttachments(attachmentPreviewArea);
             }
             
             // ストリーミングメソッドを使用してメッセージを送信
@@ -92,7 +92,7 @@ class ChatActions {
                     const timestamp = window.FileHandler.attachmentTimestamp || 
                                     (latestUserMessage ? latestUserMessage.timestamp : Date.now());
                     
-                    window.UI.Components.FileAttachment.saveAttachmentsForConversation(
+                    FileAttachment.getInstance.saveAttachmentsForConversation(
                         currentConversation.id, 
                         attachmentsToSend
                     );
@@ -162,7 +162,7 @@ class ChatActions {
             };
 
             // ユーザーメッセージを表示
-            await ChatRenderer.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
+            await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
             conversation.messages.push(userMessage);
 
             // チャットタイトルの更新
@@ -181,7 +181,7 @@ class ChatActions {
 
             const botTimestamp = Date.now();
             // ストリーミング用のボットメッセージを表示
-            const { messageDiv, contentContainer } = ChatRenderer.addStreamingBotMessage(chatMessages, botTimestamp);
+            const { messageDiv, contentContainer } = ChatRenderer.getInstance.addStreamingBotMessage(chatMessages, botTimestamp);
 
             let fullResponseText = '';
             let isFirstChunk = true;
@@ -196,12 +196,12 @@ class ChatActions {
                     onChunk: (chunk) => {
                         fullResponseText += chunk;
                         // ストリーミング中のメッセージ更新
-                        ChatRenderer.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
+                        ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
                         isFirstChunk = false;
                     },
                     onComplete: (fullText) => {
                         // ストリーミング完了時の処理
-                        ChatRenderer.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
+                        ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
                         fullResponseText = fullText;
                     }
                 }
@@ -315,7 +315,7 @@ class ChatActions {
             );
             
             // 添付ファイルを表示
-            window.UI.Components.FileAttachment.displaySavedAttachments(window.AppState.currentConversationId, window.Elements.chatMessages);
+            FileAttachment.getInstance.displaySavedAttachments(window.AppState.currentConversationId, window.Elements.chatMessages);
         }
     }
 

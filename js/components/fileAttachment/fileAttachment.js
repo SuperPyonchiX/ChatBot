@@ -1,10 +1,26 @@
-window.UI = window.UI || {};
-window.UI.Components = window.UI.Components || {};
-window.UI.Components.FileAttachment = window.UI.Components.FileAttachment || {};
 /**
- * ファイル添付関連の機能
+ * ファイル添付関連の機能を管理するクラス
  */
-Object.assign(window.UI.Components.FileAttachment, {
+class FileAttachment {
+    static #instance = null;
+    
+    constructor() {
+        if (FileAttachment.#instance) {
+            return FileAttachment.#instance;
+        }
+        FileAttachment.#instance = this;
+    }
+
+    /**
+     * シングルトンインスタンスを取得
+     */
+    static get getInstance() {
+        if (!FileAttachment.#instance) {
+            FileAttachment.#instance = new FileAttachment();
+        }
+        return FileAttachment.#instance;
+    }
+
     /**
      * ファイル添付ボタンと添付ファイル表示エリアを作成します
      * チャット入力エリアにファイル添付機能を追加します
@@ -13,7 +29,7 @@ Object.assign(window.UI.Components.FileAttachment, {
      * @param {Function} onFileAttached - ファイル添付時のコールバック関数
      * @returns {Object} 作成した要素のオブジェクト
      */
-    createFileAttachmentUI: function(chatInputContainer, onFileAttached) {
+    createFileAttachmentUI(chatInputContainer, onFileAttached) {
         if (!chatInputContainer) return {};
         
         // ファイル入力要素（非表示）
@@ -64,7 +80,7 @@ Object.assign(window.UI.Components.FileAttachment, {
         );
         
         return { fileInput, attachButton, attachmentPreviewArea };
-    },
+    }
 
     /**
      * 添付ファイルのプレビューを表示します
@@ -74,7 +90,7 @@ Object.assign(window.UI.Components.FileAttachment, {
      * @param {File} file - 添付ファイル
      * @param {string} base64Data - Base64エンコードされたファイルデータ
      */
-    showAttachmentPreview: function(previewArea, file, base64Data) {
+    showAttachmentPreview(previewArea, file, base64Data) {
         if (!previewArea || !file) return;
         
         previewArea.innerHTML = '';
@@ -121,7 +137,7 @@ Object.assign(window.UI.Components.FileAttachment, {
         });
         
         previewArea.appendChild(previewItem);
-    },
+    }
 
     /**
      * 添付ファイルをクリアします
@@ -129,18 +145,18 @@ Object.assign(window.UI.Components.FileAttachment, {
      * 
      * @param {HTMLElement} previewArea - プレビュー表示エリア
      */
-    clearAttachments: function(previewArea) {
+    clearAttachments(previewArea) {
         if (previewArea) {
             previewArea.innerHTML = '';
             previewArea.style.display = 'none';
         }
-    },
+    }
 
     /**
      * Azure OpenAI API用の添付ファイル形式に変換
      * @returns {Promise<Array>} API用に変換された添付ファイル配列
      */
-    getAttachmentsForAPI: async function() {
+    async getAttachmentsForAPI() {
         if (!window.FileHandler.selectedFiles || window.FileHandler.selectedFiles.length === 0) {
             return [];
         }
@@ -153,14 +169,14 @@ Object.assign(window.UI.Components.FileAttachment, {
             console.error('API用添付ファイル変換エラー:', error);
             return [];
         }
-    },
+    }
 
     /**
      * 会話用の添付ファイルを保存する
      * @param {string} conversationId - 会話ID
      * @param {Array<Object>} attachments - 添付ファイルの配列
      */
-    saveAttachmentsForConversation: function(conversationId, attachments) {
+    saveAttachmentsForConversation(conversationId, attachments) {
         if (!conversationId || !attachments || !Array.isArray(attachments)) return;
         
         try {
@@ -207,14 +223,14 @@ Object.assign(window.UI.Components.FileAttachment, {
         } catch (error) {
             console.error('[ERROR] 添付ファイルの保存中にエラーが発生しました:', error);
         }
-    },
+    }
 
     /**
      * 会話の添付ファイルを読み込む
      * @param {string} conversationId - 会話ID
      * @returns {Object} タイムスタンプと添付ファイルの配列を含むオブジェクト
      */
-    loadAttachmentsForConversation: function(conversationId) {
+    loadAttachmentsForConversation(conversationId) {
         if (!conversationId) return { files: [] };
         
         try {
@@ -233,14 +249,14 @@ Object.assign(window.UI.Components.FileAttachment, {
             console.error('[ERROR] 添付ファイルの読み込み中にエラーが発生しました:', error);
             return { files: [] };
         }
-    },
+    }
 
     /**
      * メッセージごとに添付ファイルを表示
      * @param {string} conversationId - 会話ID
      * @param {HTMLElement} chatMessages - チャットメッセージ表示エリア
      */
-    displaySavedAttachments: function(conversationId, chatMessages) {
+    displaySavedAttachments(conversationId, chatMessages) {
         if (!conversationId || !chatMessages) return;
         
         try {
@@ -266,7 +282,7 @@ Object.assign(window.UI.Components.FileAttachment, {
                 if (!file || !file.timestamp) continue;
                 
                 // バイナリ検索的アプローチでタイムスタンプが最も近いメッセージを効率的に見つける
-                let bestMatchIndex = this._findClosestMessageIndex(sortedMessages, file.timestamp);
+                let bestMatchIndex = this.#findClosestMessageIndex(sortedMessages, file.timestamp);
                 
                 if (bestMatchIndex >= 0 && bestMatchIndex < sortedMessages.length) {
                     const messageId = sortedMessages[bestMatchIndex].element.dataset.timestamp;
@@ -304,7 +320,7 @@ Object.assign(window.UI.Components.FileAttachment, {
         } catch (error) {
             console.error('[ERROR] 保存された添付ファイルの表示中にエラーが発生しました:', error);
         }
-    },
+    }
 
     /**
      * タイムスタンプに最も近いメッセージのインデックスを効率的に検索
@@ -313,7 +329,7 @@ Object.assign(window.UI.Components.FileAttachment, {
      * @param {number} timestamp - 検索するタイムスタンプ
      * @returns {number} 最も近いメッセージのインデックス
      */
-    _findClosestMessageIndex: function(messages, timestamp) {
+    #findClosestMessageIndex(messages, timestamp) {
         if (!messages || messages.length === 0) return -1;
         
         // 配列が小さい場合は線形探索
@@ -360,4 +376,4 @@ Object.assign(window.UI.Components.FileAttachment, {
         
         return leftDiff <= rightDiff ? left : right;
     }
-});
+}
