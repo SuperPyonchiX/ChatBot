@@ -28,70 +28,7 @@ class Storage {
         return Storage.#instance;
     }
 
-    /**
-     * LocalStorageが利用可能かどうかを確認
-     * @private
-     * @returns {boolean} LocalStorageが利用可能な場合はtrue
-     */
-    #isLocalStorageAvailable() {
-        try {
-            const test = '__storage_test__';
-            localStorage.setItem(test, test);
-            localStorage.removeItem(test);
-            return true;
-        } catch (e) {
-            return false;
-        }
-    }
-
-    /**
-     * 保存前にセンシティブデータを暗号化する
-     * @private
-     * @param {string} key - 保存するキー
-     * @param {*} value - 保存する値
-     * @returns {*} 必要に応じて暗号化された値
-     */
-    #encryptSensitiveData(key, value) {
-        const sensitiveKeys = [
-            window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY,
-            window.CONFIG.STORAGE.KEYS.AZURE_API_KEY
-        ];
-        
-        if (key.startsWith(window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX)) {
-            sensitiveKeys.push(key);
-        }
-        
-        if (sensitiveKeys.includes(key) && value) {
-            return window.CryptoHelper.encrypt(value);
-        }
-        
-        return value;
-    }
-    
-    /**
-     * 読み込み後にセンシティブデータを復号化する
-     * @private
-     * @param {string} key - 読み込むキー
-     * @param {*} value - 読み込んだ値
-     * @returns {*} 必要に応じて復号化された値
-     */
-    #decryptSensitiveData(key, value) {
-        const sensitiveKeys = [
-            window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY,
-            window.CONFIG.STORAGE.KEYS.AZURE_API_KEY
-        ];
-        
-        if (key.startsWith(window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX)) {
-            sensitiveKeys.push(key);
-        }
-        
-        if (sensitiveKeys.includes(key) && window.CryptoHelper.isEncrypted(value)) {
-            return window.CryptoHelper.decrypt(value);
-        }
-        
-        return value;
-    }
-
+    // Public API Methods ///////////////////////////////////////////////////////
     /**
      * ローカルストレージにアイテムを保存
      * @private
@@ -134,22 +71,6 @@ class Storage {
     }
 
     /**
-     * ストレージ容量不足時に古いデータを削除
-     * @private
-     */
-    #cleanupOldData() {
-        try {
-            const conversations = this.loadConversations();
-            if (conversations.length > 10) {
-                const newConversations = conversations.slice(0, 10);
-                this.saveConversations(newConversations);
-            }
-        } catch (error) {
-            console.error('古いデータのクリーンアップに失敗しました', error);
-        }
-    }
-
-    /**
      * ローカルストレージからアイテムを取得
      * @private
      * @param {string} key - 取得するキー
@@ -185,39 +106,6 @@ class Storage {
             return defaultValue;
         }
     }
-
-    /**
-     * 添付ファイルを最適化
-     * @private
-     * @param {Array<Object>} attachments - 添付ファイルの配列
-     * @returns {Array<Object>} 最適化された添付ファイルの配列
-     */
-    #optimizeAttachments(attachments) {
-        if (!Array.isArray(attachments)) return [];
-        
-        return attachments.map(attachment => {
-            if (!attachment) return null;
-            
-            const optimized = {
-                type: attachment.type,
-                name: attachment.name,
-                mimeType: attachment.mimeType,
-                size: attachment.size,
-                timestamp: attachment.timestamp || Date.now()
-            };
-            
-            if (attachment.data) {
-                optimized.data = attachment.data;
-            }
-            if (attachment.content) {
-                optimized.content = attachment.content;
-            }
-            
-            return optimized;
-        }).filter(Boolean);
-    }
-
-    // Public API Methods
 
     /**
      * サイドバーの状態を保存
@@ -656,7 +544,116 @@ class Storage {
             return { used: 0, total: 0, percentage: 0 };
         }
     }
-}
 
-// Storageインスタンスをグローバルに公開
-window.Storage = Storage.getInstance;
+    // Private Methods ///////////////////////////////////////////////////////
+    /**
+     * LocalStorageが利用可能かどうかを確認
+     * @private
+     * @returns {boolean} LocalStorageが利用可能な場合はtrue
+     */
+    #isLocalStorageAvailable() {
+        try {
+            const test = '__storage_test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    /**
+     * 保存前にセンシティブデータを暗号化する
+     * @private
+     * @param {string} key - 保存するキー
+     * @param {*} value - 保存する値
+     * @returns {*} 必要に応じて暗号化された値
+     */
+    #encryptSensitiveData(key, value) {
+        const sensitiveKeys = [
+            window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY,
+            window.CONFIG.STORAGE.KEYS.AZURE_API_KEY
+        ];
+        
+        if (key.startsWith(window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX)) {
+            sensitiveKeys.push(key);
+        }
+        
+        if (sensitiveKeys.includes(key) && value) {
+            return window.CryptoHelper.encrypt(value);
+        }
+        
+        return value;
+    }
+    
+    /**
+     * 読み込み後にセンシティブデータを復号化する
+     * @private
+     * @param {string} key - 読み込むキー
+     * @param {*} value - 読み込んだ値
+     * @returns {*} 必要に応じて復号化された値
+     */
+    #decryptSensitiveData(key, value) {
+        const sensitiveKeys = [
+            window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY,
+            window.CONFIG.STORAGE.KEYS.AZURE_API_KEY
+        ];
+        
+        if (key.startsWith(window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX)) {
+            sensitiveKeys.push(key);
+        }
+        
+        if (sensitiveKeys.includes(key) && window.CryptoHelper.isEncrypted(value)) {
+            return window.CryptoHelper.decrypt(value);
+        }
+        
+        return value;
+    }
+
+    /**
+     * ストレージ容量不足時に古いデータを削除
+     * @private
+     */
+    #cleanupOldData() {
+        try {
+            const conversations = this.loadConversations();
+            if (conversations.length > 10) {
+                const newConversations = conversations.slice(0, 10);
+                this.saveConversations(newConversations);
+            }
+        } catch (error) {
+            console.error('古いデータのクリーンアップに失敗しました', error);
+        }
+    }
+
+    /**
+     * 添付ファイルを最適化
+     * @private
+     * @param {Array<Object>} attachments - 添付ファイルの配列
+     * @returns {Array<Object>} 最適化された添付ファイルの配列
+     */
+    #optimizeAttachments(attachments) {
+        if (!Array.isArray(attachments)) return [];
+        
+        return attachments.map(attachment => {
+            if (!attachment) return null;
+            
+            const optimized = {
+                type: attachment.type,
+                name: attachment.name,
+                mimeType: attachment.mimeType,
+                size: attachment.size,
+                timestamp: attachment.timestamp || Date.now()
+            };
+            
+            if (attachment.data) {
+                optimized.data = attachment.data;
+            }
+            if (attachment.content) {
+                optimized.content = attachment.content;
+            }
+            
+            return optimized;
+        }).filter(Boolean);
+    }
+}
