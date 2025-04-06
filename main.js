@@ -14,10 +14,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     _init();
 
     // 外部ライブラリの読み込み - Markdown用
-    window.Markdown.loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js')
+    Markdown.getInstance.loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js')
         .then(() => {
             console.log('Marked.js loaded successfully');
-            window.Markdown.initializeMarkdown();
+            Markdown.getInstance.initializeMarkdown();
         })
         .catch(err => console.error('Failed to load Marked.js:', err));
         

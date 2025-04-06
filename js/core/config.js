@@ -198,5 +198,10 @@ window.CONFIG = {
             // タイピングエフェクトを有効にするかどうか
             ENABLED: true
         }
-    }
+    },
+
+    /**
+     * 実行可能な言語リスト
+     */
+    EXECUTABLE_LANGUAGES: ['javascript', 'js', 'python', 'py', 'html', 'cpp', 'c++']
 };

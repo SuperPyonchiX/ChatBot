@@ -303,25 +303,7 @@ class ChatAttachmentViewer {
             default: langClass = 'language-plaintext';
         }
         
-        return `<code class="${langClass}">${this._escapeHtml(content)}</code>`;
-    }
-
-    /**
-     * HTMLの特殊文字をエスケープ
-     * @private
-     */
-    _escapeHtml(text) {
-        if (!text) return '';
-        
-        const escape = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;'
-        };
-        
-        return text.replace(/[&<>"']/g, char => escape[char]);
+        return `<code class="${langClass}">${Markdown.getInstance.escapeHtml(content)}</code>`;
     }
 
     /**
