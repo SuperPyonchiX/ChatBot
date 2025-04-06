@@ -1,32 +1,46 @@
-window.UI = window.UI || {};
-window.UI.Utils = window.UI.Utils || {};
-/**
- * 共通ユーティリティ関数
- * UI操作に関する汎用メソッドを提供します
- * 
- * @namespace UI.Utils
- */
-Object.assign(window.UI.Utils, {
+class UIUtils {
+    // シングルトンインスタンス
+    static #instance = null;
+
+    constructor() {
+        if (UIUtils.#instance) {
+            return UIUtils.#instance;
+        }
+        this.elements = {};
+        UIUtils.#instance = this;
+    }
+
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {UIUtils} UIUtilsのインスタンス
+     */
+    static get getInstance() {
+        if (!UIUtils.#instance) {
+            UIUtils.#instance = new UIUtils();
+        }
+        return UIUtils.#instance;
+    }
+
     /**
      * 要素の表示/非表示を切り替えます
      * @param {HTMLElement} element - 対象要素
      * @param {boolean} show - 表示するかどうか
      */
-    toggleVisibility: function(element, show) {
+    toggleVisibility(element, show) {
         if (!element) return;
         if (show) {
             element.classList.remove('hidden');
         } else {
             element.classList.add('hidden');
         }
-    },
+    }
     
     /**
      * モーダルの表示/非表示を切り替えます
      * @param {string} modalId - モーダル要素のID
      * @param {boolean} show - 表示するかどうか
      */
-    toggleModal: function(modalId, show) {
+    toggleModal(modalId, show) {
         const modal = UICache.getInstance.get(modalId);
         if (!modal) return;
         
@@ -39,27 +53,28 @@ Object.assign(window.UI.Utils, {
             document.removeEventListener('keydown', this._escapeKeyHandler);
             document.body.style.overflow = '';
         }
-    },
-    
+    }
+
     /**
      * ESCキーが押されたときのハンドラー
      * @private
+     * @param {KeyboardEvent} e - キーボードイベント
      */
-    _escapeKeyHandler: function(e) {
+    _escapeKeyHandler(e) {
         if (e.key === 'Escape') {
             const visibleModal = document.querySelector('.modal.show');
             if (visibleModal) {
                 this.toggleModal(visibleModal.id, false);
             }
         }
-    },
+    }
     
     /**
      * 要素を作成して属性を設定します
      * @param {string} tag - HTML要素タグ名
      * @param {Object} props - 属性オブジェクト
      */
-    createElement: (tag, props = {}) => {
+    createElement(tag, props) {
         if (!tag) return null;
         
         const element = document.createElement(tag);
@@ -95,7 +110,7 @@ Object.assign(window.UI.Utils, {
         });
         
         return element;
-    },
+    }
         
     /**
      * 要素のサイズを滑らかに変更します
@@ -104,7 +119,7 @@ Object.assign(window.UI.Utils, {
      * @param {number} duration - アニメーション時間（ms）
      * @returns {Promise} - アニメーション完了時に解決するPromise
      */
-    animateHeight: function(element, targetHeight, duration = 300) {
+    animateHeight(element, targetHeight, duration = 300) {
         if (!element) return;
         
         const startHeight = element.clientHeight;
@@ -129,7 +144,7 @@ Object.assign(window.UI.Utils, {
             
             requestAnimationFrame(updateHeight);
         });
-    },
+    }
 
     /**
      * テキストエリアの高さを自動調整します
@@ -138,9 +153,9 @@ Object.assign(window.UI.Utils, {
      * @param {HTMLTextAreaElement} textarea - 対象のテキストエリア要素
      * @returns {void}
      */
-    autoResizeTextarea: (textarea) => {
+    autoResizeTextarea(textarea) {
         if (!textarea) return;
         textarea.style.height = 'auto';
         textarea.style.height = `${textarea.scrollHeight}px`;
     }
-});
+}

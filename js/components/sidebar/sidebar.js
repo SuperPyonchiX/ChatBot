@@ -26,12 +26,12 @@ class Sidebar {
      * 画面サイズに応じてサイドバーの表示/非表示を切り替えるボタンを配置します
      */
     createSidebarToggle() {
-        const sidebarEl = window.UI.Cache.get('.sidebar', true);
-        const appContainer = window.UI.Cache.get('.app-container', true);
+        const sidebarEl = UICache.getInstance.get('.sidebar', true);
+        const appContainer = UICache.getInstance.get('.app-container', true);
         
         // トグルボタンの表示エリアと、トグルボタンを作成
-        const toggleArea = window.UI.Utils.createElement('div', { classList: ['sidebar-toggle-area'] });
-        const toggleButton = window.UI.Utils.createElement('button', { 
+        const toggleArea = UIUtils.getInstance.createElement('div', { classList: ['sidebar-toggle-area'] });
+        const toggleButton = UIUtils.getInstance.createElement('button', { 
             classList: ['sidebar-toggle'],
             innerHTML: '<i class="fas fa-bars"></i>'
         });
@@ -47,7 +47,7 @@ class Sidebar {
         // イベントリスナーをまとめて設定
         toggleButton.addEventListener('click', () => this._toggleSidebarState(sidebarEl, toggleButton));
         
-        window.UI.Cache.get('.chat-container', true).addEventListener('click', () => {
+        UICache.getInstance.get('.chat-container', true).addEventListener('click', () => {
             if (window.innerWidth <= 576 && sidebarEl.classList.contains('show')) {
                 sidebarEl.classList.remove('show');
             }

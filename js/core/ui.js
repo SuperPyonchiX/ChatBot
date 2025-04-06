@@ -70,7 +70,7 @@ window.UI = {
                 
                 let notificationContainer = document.querySelector('.notification-container');
                 if (!notificationContainer) {
-                    notificationContainer = window.UI.Utils.createElement('div', {
+                    notificationContainer = UIUtils.getInstance.createElement('div', {
                         classList: ['notification-container']
                     });
                     document.body.appendChild(notificationContainer);
@@ -83,12 +83,12 @@ window.UI = {
                     error: '<i class="fas fa-times-circle"></i>'
                 };
                 
-                const notification = window.UI.Utils.createElement('div', {
+                const notification = UIUtils.getInstance.createElement('div', {
                     classList: ['notification', `notification-${type}`],
                     innerHTML: `${icons[type] || icons.info} <span>${message}</span>`
                 });
                 
-                const closeButton = window.UI.Utils.createElement('button', {
+                const closeButton = UIUtils.getInstance.createElement('button', {
                     classList: ['notification-close'],
                     innerHTML: '<i class="fas fa-times"></i>',
                     events: {
@@ -143,29 +143,29 @@ window.UI = {
                         document.body.removeChild(existingDialog);
                     }
                     
-                    const dialog = window.UI.Utils.createElement('div', {
+                    const dialog = UIUtils.getInstance.createElement('div', {
                         classList: ['modal', 'custom-confirm-dialog']
                     });
                     
-                    const dialogContent = window.UI.Utils.createElement('div', {
+                    const dialogContent = UIUtils.getInstance.createElement('div', {
                         classList: ['modal-content']
                     });
                     
-                    const header = window.UI.Utils.createElement('div', {
+                    const header = UIUtils.getInstance.createElement('div', {
                         classList: ['modal-header'],
                         innerHTML: `<h2>${title}</h2>`
                     });
                     
-                    const body = window.UI.Utils.createElement('div', {
+                    const body = UIUtils.getInstance.createElement('div', {
                         classList: ['modal-body'],
                         innerHTML: `<p>${message}</p>`
                     });
                     
-                    const footer = window.UI.Utils.createElement('div', {
+                    const footer = UIUtils.getInstance.createElement('div', {
                         classList: ['modal-footer']
                     });
                     
-                    const cancelButton = window.UI.Utils.createElement('button', {
+                    const cancelButton = UIUtils.getInstance.createElement('button', {
                         classList: ['modal-button', 'cancel-button'],
                         textContent: cancelText,
                         events: {
@@ -179,7 +179,7 @@ window.UI = {
                         }
                     });
                     
-                    const confirmButton = window.UI.Utils.createElement('button', {
+                    const confirmButton = UIUtils.getInstance.createElement('button', {
                         classList: ['modal-button', 'confirm-button'],
                         textContent: confirmText,
                         events: {
@@ -371,10 +371,6 @@ window.UI = {
             }
         }
     },
-
-    Components: {},  // 既存のSidebarとChatコンポーネントはこちらに移動
-    Utils: window.UI.Utils || {},  // 既存のUIUtils
-    Cache: UICache.getInstance || {},  // 既存のUICache
 
     /**
      * アプリケーションの初期化処理を行います

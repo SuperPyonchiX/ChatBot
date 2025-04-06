@@ -14,7 +14,7 @@ Object.assign(window.UI.Core.Modal, {
      * @param {Function} onDelete - システムプロンプト削除時のコールバック
      */
     showSystemPromptModal: function(systemPrompt, systemPromptTemplates, onSelect, onDelete) {
-        window.UI.Utils.toggleModal('systemPromptModal', true);
+        UIUtils.getInstance.toggleModal('systemPromptModal', true);
         UICache.getInstance.get('systemPromptInput').value = systemPrompt;
         
         // バインドされたコールバック関数を保存
@@ -28,7 +28,7 @@ Object.assign(window.UI.Core.Modal, {
      * システムプロンプトモーダルを非表示にします
      */
     hideSystemPromptModal: function() {
-        window.UI.Utils.toggleModal('systemPromptModal', false);
+        UIUtils.getInstance.toggleModal('systemPromptModal', false);
     },
     
     /**

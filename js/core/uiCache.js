@@ -3,12 +3,16 @@
  * 同じ要素への参照を複数回取得する際のパフォーマンスを向上させます
  */
 class UICache {
+
+    // シングルトンインスタンス
+    static #instance = null;
+
     constructor() {
-        if (UICache._instance) {
-            return UICache._instance;
+        if (UICache.#instance) {
+            return UICache.#instance;
         }
         this.elements = {};
-        UICache._instance = this;
+        UICache.#instance = this;
     }
 
     /**
@@ -16,10 +20,10 @@ class UICache {
      * @returns {UICache} UICacheのインスタンス
      */
     static get getInstance() {
-        if (!UICache._instance) {
-            UICache._instance = new UICache();
+        if (!UICache.#instance) {
+            UICache.#instance = new UICache();
         }
-        return UICache._instance;
+        return UICache.#instance;
     }
 
     /**

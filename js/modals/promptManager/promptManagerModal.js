@@ -225,7 +225,7 @@ Object.assign(window.UI.Core.Modal, {
             const userInput = UICache.getInstance.get('userInput');
             if (userInput) {
                 userInput.value = promptText;
-                window.UI.Utils.autoResizeTextarea(userInput);
+                UIUtils.getInstance.autoResizeTextarea(userInput);
             }
             
             this.hidePromptManagerModal();

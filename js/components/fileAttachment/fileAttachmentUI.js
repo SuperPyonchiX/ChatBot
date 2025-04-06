@@ -66,7 +66,7 @@ class FileAttachmentUI {
             if (!previewArea) {
                 previewArea = document.createElement('div');
                 previewArea.classList.add('file-preview');
-                const userInput = window.UI.Cache.get('userInput');
+                const userInput = UICache.getInstance.get('userInput');
                 if (userInput) {
                     inputWrapper.insertBefore(previewArea, userInput);
                 } else {

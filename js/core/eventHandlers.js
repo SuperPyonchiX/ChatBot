@@ -46,7 +46,7 @@ class EventHandlers {
         });
         
         // テキストエリアの入力イベント（自動リサイズ）
-        window.Elements.userInput.addEventListener('input', () => window.UI.Utils.autoResizeTextarea(window.Elements.userInput));
+        window.Elements.userInput.addEventListener('input', () => UIUtils.getInstance.autoResizeTextarea(window.Elements.userInput));
 
         // 新しいチャットボタン
         window.Elements.newChatButton.addEventListener('click', ChatActions.getInstance.createNewConversation.bind(ChatActions.getInstance));

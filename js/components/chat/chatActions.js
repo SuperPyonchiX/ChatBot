@@ -136,7 +136,7 @@ class ChatActions {
 
             // ユーザー入力をクリア
             userInput.value = '';
-            window.UI.Utils.autoResizeTextarea(userInput);
+            UIUtils.getInstance.autoResizeTextarea(userInput);
 
             let titleUpdated = false;
             const timestamp = Date.now();

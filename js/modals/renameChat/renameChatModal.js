@@ -25,7 +25,7 @@ Object.assign(window.UI.Core.Modal, {
         modalEl.dataset.conversationId = conversation.id;
         
         // モーダルを表示
-        window.UI.Utils.toggleModal('renameChatModal', true);
+        UIUtils.getInstance.toggleModal('renameChatModal', true);
         
         // フォーカスを設定
         setTimeout(() => {
@@ -38,6 +38,6 @@ Object.assign(window.UI.Core.Modal, {
      * チャット名変更モーダルを非表示にします
      */
     hideRenameChatModal: function() {
-        window.UI.Utils.toggleModal('renameChatModal', false);
+        UIUtils.getInstance.toggleModal('renameChatModal', false);
     }
 });
