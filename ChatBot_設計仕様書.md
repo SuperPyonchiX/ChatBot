@@ -670,10 +670,12 @@ ChatBotアプリケーションのUI設計は、直感的な操作性、レス�
 |  |        |  |                         |  |
 |  | 新規   |  |                         |  |
 |  | チャット|  |                         |  |
+|  |        |  |                         |  |
+|  | 設定   |  |                         |  |
 |  |        |  +-------------------------+  |
-|  | 設定   |  | ファイル添付 | モデル選択 |  |
-|  |        |  +-------------------------+  |
-|  +--------+  | メッセージ入力          |  |
+|  +--------+  | ファイル添付 | モデル選択 |  |
+|              +-------------------------+  |
+|              | メッセージ入力          |  |
 |              +-------------------------+  |
 +-------------------------------------------+
 ```
@@ -1240,109 +1242,400 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     participant User as ユーザー
-    participant Main as main.js
+    participant UI as UI
     participant ChatActions as ChatActions
+    participant ChatRenderer as ChatRenderer
     participant FileAttachment as FileAttachment
+    participant FileHandler as FileHandler
     participant AIAPI as AIAPI
     participant Storage as Storage
+    participant Markdown as Markdown
     
-    User->>Main: メッセージ送信ボタンクリック
-    activate Main
-    Main->>ChatActions: sendMessage()
+    User->>UI: メッセージ送信ボタンクリック
+    activate UI
+    UI->>ChatActions: sendMessage()
     activate ChatActions
-    ChatActions->>FileAttachment: getAttachmentsForAPI()
-    FileAttachment-->>ChatActions: attachments
     
-    ChatActions->>ChatActions: ユーザーメッセージ追加
-    ChatActions->>ChatActions: 入力欄クリア
-    ChatActions->>FileAttachment: clearAttachments()
-    
-    ChatActions->>AIAPI: sendMessageStream()
-    activate AIAPI
-    AIAPI->>AIAPI: processAttachments()
-    
-    alt OpenAI API
-        AIAPI->>AIAPI: performOpenAIRequest()
-    else Azure API
-        AIAPI->>AIAPI: performAzureRequest()
+    alt メッセージが空の場合
+        ChatActions-->>UI: 処理終了
+    else メッセージまたは添付ファイルがある場合
+        ChatActions->>FileAttachment: getAttachmentsForAPI()
+        activate FileAttachment
+        FileAttachment->>FileHandler: selectedFiles取得
+        FileAttachment->>FileConverter: convertFilesToAttachments()
+        FileAttachment-->>ChatActions: 処理済み添付ファイル
+        deactivate FileAttachment
+        
+        ChatActions->>ChatRenderer: renderUserMessage()
+        activate ChatRenderer
+        ChatRenderer->>Markdown: renderMarkdown()
+        Markdown-->>ChatRenderer: レンダリング済みHTML
+        ChatRenderer-->>ChatActions: メッセージ表示完了
+        deactivate ChatRenderer
+        
+        ChatActions->>FileAttachment: clearAttachments()
+        ChatActions->>FileHandler: clearSelectedFiles()
+        
+        ChatActions->>AIAPI: sendMessageStream()
+        activate AIAPI
+        AIAPI->>AIAPI: processAttachments()
+        
+        alt OpenAI API
+            AIAPI->>AIAPI: performOpenAIRequest()
+        else Azure API
+            AIAPI->>AIAPI: performAzureRequest()
+        end
+        
+        AIAPI-->>ChatActions: ストリーミング開始
+        
+        ChatActions->>ChatRenderer: renderBotMessage()
+        activate ChatRenderer
+        ChatRenderer-->>ChatActions: 空のメッセージ枠生成完了
+        deactivate ChatRenderer
+        
+        loop ストリーミングレスポンス
+            AIAPI-->>ChatActions: パーシャルレスポンス
+            ChatActions->>ChatRenderer: updateStreamingMessage()
+            ChatRenderer->>Markdown: renderMarkdown()
+            Markdown-->>ChatRenderer: レンダリング済みHTML
+        end
+        
+        AIAPI-->>ChatActions: 完了レスポンス
+        deactivate AIAPI
+        
+        ChatActions->>Storage: saveConversations()
+        ChatActions->>UIUtils: autoResizeTextarea()
+        
+        alt 添付ファイルあり
+            ChatActions->>FileAttachment: saveAttachmentsForConversation()
+            activate FileAttachment
+            FileAttachment->>Storage: saveAttachments()
+            FileAttachment-->>ChatActions: 保存完了
+            deactivate FileAttachment
+        end
+        
+        ChatActions-->>UI: 送信ボタン再有効化
     end
-    
-    loop ストリーミングレスポンス
-        AIAPI-->>ChatActions: パーシャルレスポンス
-        ChatActions->>ChatActions: updateStreamingMessage()
-    end
-    
-    AIAPI-->>ChatActions: 完了レスポンス
-    deactivate AIAPI
-    
-    ChatActions->>Storage: saveConversations()
-    ChatActions->>FileAttachment: saveAttachmentsForConversation()
     deactivate ChatActions
-    deactivate Main
+    deactivate UI
 ```
 
-### 新規会話作成シーケンス
+### システムプロンプト設定と適用シーケンス
 
 ```mermaid
 sequenceDiagram
     participant User as ユーザー
-    participant Main as main.js
-    participant ChatActions as ChatActions
-    participant ChatHistory as ChatHistory
-    participant Storage as Storage
-    
-    User->>Main: 新規チャットボタンクリック
-    Main->>ChatActions: createNewConversation()
-    activate ChatActions
-    
-    ChatActions->>ChatActions: 新規会話オブジェクト作成
-    ChatActions->>Storage: saveConversations()
-    Storage-->>ChatActions: 保存完了
-    
-    ChatActions->>Storage: saveCurrentConversationId()
-    ChatActions->>ChatHistory: renderChatHistory()
-    activate ChatHistory
-    ChatHistory->>ChatHistory: 履歴リスト更新
-    deactivate ChatHistory
-    
-    ChatActions->>ChatHistory: displayConversation()
-    activate ChatHistory
-    ChatHistory->>ChatHistory: 会話表示
-    deactivate ChatHistory
-    
-    deactivate ChatActions
-```
-
-### システムプロンプト設定シーケンス
-
-```mermaid
-sequenceDiagram
-    participant User as ユーザー
+    participant Settings as 設定メニュー
     participant EventHandlers as EventHandlers
     participant SystemPromptModal as SystemPromptModal
+    participant UICache as UICache
     participant ModalHandlers as ModalHandlers
     participant Storage as Storage
+    participant AppState as AppState
     participant UI as UI
     
-    User->>EventHandlers: システムプロンプト設定クリック
-    EventHandlers->>SystemPromptModal: showSystemPromptModal()
-    activate SystemPromptModal
+    User->>Settings: システムプロンプト設定クリック
+    activate Settings
+    Settings->>EventHandlers: openSystemPromptSettings
+    deactivate Settings
     
-    SystemPromptModal->>SystemPromptModal: モーダル表示
+    activate EventHandlers
+    EventHandlers->>SystemPromptModal: showSystemPromptModal()
+    deactivate EventHandlers
+    
+    activate SystemPromptModal
+    SystemPromptModal->>UICache: get('systemPromptModal')
+    UICache-->>SystemPromptModal: モーダル要素
+    SystemPromptModal->>UICache: get('systemPromptInput')
+    UICache-->>SystemPromptModal: 入力エリア要素
+    SystemPromptModal->>SystemPromptModal: 現在値を設定
+    
     SystemPromptModal->>SystemPromptModal: updateList()
+    SystemPromptModal->>UICache: get('systemPromptListArea')
+    UICache-->>SystemPromptModal: リスト表示エリア要素
+    SystemPromptModal->>Storage: loadCategoryState()
+    Storage-->>SystemPromptModal: カテゴリの展開状態
+    SystemPromptModal-->>User: モーダル表示
     deactivate SystemPromptModal
     
-    User->>SystemPromptModal: プロンプト編集
-    User->>SystemPromptModal: 保存ボタンクリック
-    SystemPromptModal->>ModalHandlers: saveSystemPrompt
-    activate ModalHandlers
+    User->>SystemPromptModal: テンプレート選択
+    activate SystemPromptModal
+    SystemPromptModal->>ModalHandlers: onTemplateSelect()
+    deactivate SystemPromptModal
     
+    activate ModalHandlers
+    ModalHandlers->>UICache: get('systemPromptInput')
+    UICache-->>ModalHandlers: 入力エリア要素
+    ModalHandlers->>ModalHandlers: テンプレート内容を設定
+    deactivate ModalHandlers
+    
+    User->>SystemPromptModal: 保存ボタンクリック
+    activate SystemPromptModal
+    SystemPromptModal->>ModalHandlers: saveSystemPrompt()
+    deactivate SystemPromptModal
+    
+    activate ModalHandlers
+    ModalHandlers->>UICache: get('systemPromptInput')
+    UICache-->>ModalHandlers: 入力エリア要素
+    ModalHandlers->>AppState: systemPrompt更新
     ModalHandlers->>Storage: saveSystemPrompt()
     Storage-->>ModalHandlers: 保存完了
     
     ModalHandlers->>SystemPromptModal: hideSystemPromptModal()
-    ModalHandlers->>UI: Notification.show()
+    activate SystemPromptModal
+    SystemPromptModal->>UICache: get('systemPromptModal')
+    UICache-->>SystemPromptModal: モーダル要素
+    SystemPromptModal->>SystemPromptModal: モーダルを非表示
+    deactivate SystemPromptModal
+    
+    ModalHandlers->>UI: Core.Notification.show()
+    activate UI
+    UI-->>User: 保存完了通知
+    deactivate UI
+    
     deactivate ModalHandlers
+```
+
+### 会話切り替えシーケンス
+
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant ChatHistory as 会話履歴
+    participant ChatActions as ChatActions
+    participant AppState as AppState
+    participant Storage as Storage
+    participant ChatHistory as ChatHistory
+    participant ChatRenderer as ChatRenderer
+    participant FileAttachment as FileAttachment
+    
+    User->>ChatHistory: 会話クリック
+    activate ChatHistory
+    ChatHistory->>ChatActions: #switchConversation()
+    deactivate ChatHistory
+    
+    activate ChatActions
+    ChatActions->>AppState: currentConversationId更新
+    ChatActions->>Storage: saveCurrentConversationId()
+    
+    ChatActions->>ChatHistory: updateActiveChatInHistory()
+    activate ChatHistory
+    ChatHistory->>ChatHistory: アクティブチャットの表示更新
+    deactivate ChatHistory
+    
+    ChatActions->>ChatHistory: displayConversation()
+    activate ChatHistory
+    ChatHistory->>ChatHistory: メッセージコンテナをクリア
+    
+    loop 会話内の各メッセージ
+        alt ユーザーメッセージ
+            ChatHistory->>ChatRenderer: renderUserMessage()
+            activate ChatRenderer
+            ChatRenderer->>Markdown: renderMarkdown()
+            Markdown-->>ChatRenderer: レンダリング済みHTML
+            ChatRenderer-->>ChatHistory: 表示完了
+            deactivate ChatRenderer
+        else ボットメッセージ
+            ChatHistory->>ChatRenderer: renderBotMessage()
+            activate ChatRenderer
+            ChatRenderer->>Markdown: renderMarkdown()
+            Markdown-->>ChatRenderer: レンダリング済みHTML
+            ChatRenderer-->>ChatHistory: 表示完了
+            deactivate ChatRenderer
+        end
+    end
+    
+    ChatHistory->>UIUtils: scrollToBottom()
+    ChatHistory-->>ChatActions: 表示完了
+    deactivate ChatHistory
+    
+    ChatActions->>FileAttachment: displaySavedAttachments()
+    activate FileAttachment
+    FileAttachment->>Storage: loadAttachments()
+    Storage-->>FileAttachment: 添付ファイルデータ
+    
+    loop 添付ファイルごと
+        FileAttachment->>FileAttachment: #findClosestMessageIndex()
+        FileAttachment->>ChatAttachmentViewer: createAttachmentsElement()
+        activate ChatAttachmentViewer
+        ChatAttachmentViewer->>ChatAttachmentViewer: 添付ファイル要素作成
+        ChatAttachmentViewer-->>FileAttachment: 添付ファイル表示要素
+        deactivate ChatAttachmentViewer
+    end
+    
+    FileAttachment-->>ChatActions: 添付ファイル表示完了
+    deactivate FileAttachment
+    
+    deactivate ChatActions
+```
+
+### ファイル添付処理シーケンス
+
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant UI as UI要素
+    participant FileHandler as FileHandler
+    participant FileValidator as FileValidator
+    participant FileAttachmentUI as FileAttachmentUI
+    participant FileConverter as FileConverter
+    participant AppState as AppState
+    
+    User->>UI: ファイル選択ボタンクリック
+    UI->>User: ファイル選択ダイアログ表示
+    User->>UI: ファイル選択
+    UI->>FileHandler: handleFileSelect(event)
+    
+    activate FileHandler
+    FileHandler->>FileValidator: validateFiles()
+    activate FileValidator
+    
+    loop 各ファイルをチェック
+        FileValidator->>FileValidator: checkFileType()
+        FileValidator->>FileValidator: checkFileSize()
+        FileValidator->>FileValidator: checkFileExtension()
+    end
+    
+    FileValidator-->>FileHandler: 検証結果
+    deactivate FileValidator
+    
+    alt ファイル検証エラー
+        FileHandler->>UI: Core.Notification.show()
+        UI-->>User: エラー通知表示
+    else ファイル検証成功
+        FileHandler->>FileHandler: selectedFiles配列に追加
+        FileHandler->>FileAttachmentUI: updatePreview()
+        
+        activate FileAttachmentUI
+        FileAttachmentUI->>FileAttachmentUI: #getOrCreatePreviewArea()
+        FileAttachmentUI->>FileAttachmentUI: #createFilePreviewItems()
+        
+        loop 各ファイルのプレビュー生成
+            alt 画像ファイル
+                FileAttachmentUI->>FileAttachmentUI: #createImagePreview()
+            else その他のファイル
+                FileAttachmentUI->>FileAttachmentUI: #createFilePreview()
+            end
+            FileAttachmentUI->>FileAttachmentUI: #createFileInfo()
+            FileAttachmentUI->>FileAttachmentUI: #setupRemoveButtonHandler()
+        end
+        
+        FileAttachmentUI-->>FileHandler: プレビュー表示完了
+        deactivate FileAttachmentUI
+        
+        FileHandler->>FileHandler: notifyAttachmentComplete()
+        FileHandler->>FileConverter: convertFilesToAttachments()
+        
+        activate FileConverter
+        loop 各ファイルの変換
+            alt 画像ファイル
+                FileConverter->>FileConverter: #convertImageToAttachment()
+            else テキストファイル
+                FileConverter->>FileConverter: #convertTextToAttachment()
+            else その他のファイル
+                FileConverter->>FileConverter: #convertFileToAttachment()
+            end
+        end
+        FileConverter-->>FileHandler: 変換済み添付ファイル
+        deactivate FileConverter
+        
+        FileHandler->>document: dispatchEvent('file-attached')
+        document->>AppState: currentAttachments更新
+    end
+    
+    FileHandler->>UI: ファイル入力フィールドをクリア
+    deactivate FileHandler
+```
+
+### 会話履歴管理シーケンス
+
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant ChatHistory as 会話履歴表示
+    participant ChatActions as ChatActions
+    participant Storage as Storage
+    participant UI as UI
+    participant RenameChatModal as RenameChatModal
+    participant ModalHandlers as ModalHandlers
+    
+    Note over User, ModalHandlers: 会話の名前変更
+    
+    User->>ChatHistory: 名前変更ボタンクリック
+    activate ChatHistory
+    ChatHistory->>RenameChatModal: showRenameChatModal()
+    deactivate ChatHistory
+    
+    activate RenameChatModal
+    RenameChatModal->>RenameChatModal: モーダル表示準備
+    RenameChatModal-->>User: 名前変更モーダル表示
+    deactivate RenameChatModal
+    
+    User->>RenameChatModal: 新しい名前入力
+    User->>RenameChatModal: 保存ボタンクリック
+    
+    activate RenameChatModal
+    RenameChatModal->>ModalHandlers: saveRenamedChat()
+    deactivate RenameChatModal
+    
+    activate ModalHandlers
+    ModalHandlers->>AppState: 会話タイトルを更新
+    ModalHandlers->>Storage: saveConversations()
+    ModalHandlers->>ChatActions: renderChatHistory()
+    
+    activate ChatActions
+    ChatActions->>ChatHistory: renderChatHistory()
+    activate ChatHistory
+    ChatHistory->>ChatHistory: 履歴リスト更新
+    ChatHistory-->>ChatActions: 更新完了
+    deactivate ChatHistory
+    deactivate ChatActions
+    
+    ModalHandlers->>RenameChatModal: hideRenameChatModal()
+    deactivate ModalHandlers
+    
+    Note over User, ModalHandlers: 会話の削除
+    
+    User->>ChatHistory: 削除ボタンクリック
+    activate ChatHistory
+    ChatHistory->>ChatActions: #deleteConversation()
+    deactivate ChatHistory
+    
+    activate ChatActions
+    ChatActions->>UI: Core.Modal.confirm()
+    activate UI
+    UI-->>User: 削除確認ダイアログ
+    deactivate UI
+    
+    User->>UI: 確認ボタンクリック
+    activate UI
+    UI-->>ChatActions: 削除承認
+    deactivate UI
+    
+    ChatActions->>AppState: conversations配列から削除
+    
+    alt 履歴が空になった場合
+        ChatActions->>ChatActions: createNewConversation()
+    else 他の会話がある場合
+        ChatActions->>AppState: 他の会話を選択
+    end
+    
+    ChatActions->>Storage: saveConversations()
+    ChatActions->>Storage: saveCurrentConversationId()
+    ChatActions->>ChatActions: renderChatHistory()
+    
+    activate ChatHistory
+    ChatHistory->>ChatHistory: 履歴リスト更新
+    ChatHistory-->>ChatActions: 更新完了
+    deactivate ChatHistory
+    
+    ChatActions->>ChatHistory: displayConversation()
+    activate ChatHistory
+    ChatHistory->>ChatHistory: 現在の会話を表示
+    ChatHistory-->>ChatActions: 表示完了
+    deactivate ChatHistory
+    
+    deactivate ChatActions
 ```
 
 ## APIインターフェース
