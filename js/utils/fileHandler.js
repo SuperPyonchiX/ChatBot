@@ -94,7 +94,7 @@ class FileHandler {
         if (files.length === 0) return;
         
         // 検証はFileValidatorに委譲
-        const validFiles = window.FileValidator.validateFiles(files);
+        const validFiles = FileValidator.getInstance.validateFiles(files);
         
         if (validFiles.length === 0) {
             event.target.value = '';

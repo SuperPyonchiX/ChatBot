@@ -1,10 +1,37 @@
 /**
  * fileValidator.js
  * ファイルのバリデーション機能を提供します
+ * @class FileValidator
  */
+class FileValidator {
+    static #instance = null;
 
-window.FileValidator = {
-    validateFiles: function(files) {
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {FileValidator} FileValidatorのインスタンス
+     */
+    static get getInstance() {
+        if (!FileValidator.#instance) {
+            FileValidator.#instance = new FileValidator();
+        }
+        return FileValidator.#instance;
+    }
+
+    /**
+     * コンストラクタ - privateなので直接newはできません
+     */
+    constructor() {
+        if (FileValidator.#instance) {
+            throw new Error('FileValidatorクラスは直接インスタンス化できません。getInstance()を使用してください。');
+        }
+    }
+
+    /**
+     * ファイルの配列を検証します
+     * @param {File[]} files - 検証するファイルの配列
+     * @returns {File[]} 有効なファイルの配列
+     */
+    validateFiles(files) {
         if (!files || !Array.isArray(files)) return [];
         
         const validFiles = [];
@@ -33,9 +60,15 @@ window.FileValidator = {
         }
         
         return validFiles;
-    },
+    }
 
-    _isFileTypeAllowed: function(file) {
+    /**
+     * ファイルの種類が許可されているかを確認します
+     * @private
+     * @param {File} file - 確認するファイル
+     * @returns {boolean} 許可されている場合はtrue
+     */
+    _isFileTypeAllowed(file) {
         if (!file) return false;
         
         const fileName = file.name;
@@ -67,4 +100,4 @@ window.FileValidator = {
                 
         return false;
     }
-};
+}
