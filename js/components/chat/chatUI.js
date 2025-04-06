@@ -1,20 +1,26 @@
-window.UI = window.UI || {};
-window.UI.Components = window.UI.Components || {};
-window.UI.Components.Chat = window.UI.Components.Chat || {};
 /**
  * ChatUI.js
  * チャットUIの基本機能を提供します
- * @namespace UI.Components.Chat
  */
-Object.assign(window.UI.Components.Chat, (function() {
-    // プライベート変数とキャッシングメカニズム
-    const _cache = {
+class ChatUI {
+    // プライベートフィールド
+    static #cache = {
         elements: new Map(),
         templates: new Map()
     };
 
-    // DOM要素を作成するヘルパー関数
-    const _createElement = function(tag, options = {}) {
+    /**
+     * DOM要素を作成します
+     * @param {string} tag - 作成する要素のタグ名
+     * @param {Object} options - 要素のオプション
+     * @param {string|string[]} [options.classList] - 追加するクラス名
+     * @param {Object} [options.attributes] - 設定する属性
+     * @param {string} [options.innerHTML] - 設定するHTML
+     * @param {string} [options.textContent] - 設定するテキスト
+     * @param {HTMLElement[]} [options.children] - 追加する子要素
+     * @returns {HTMLElement} 作成されたDOM要素
+     */
+    static createElement(tag, options = {}) {
         const element = document.createElement(tag);
         
         if (options.classList) {
@@ -50,40 +56,39 @@ Object.assign(window.UI.Components.Chat, (function() {
         }
         
         return element;
-    };
+    }
 
-    return {
-        /**
-         * DOM要素を作成します
-         */
-        createElement: _createElement,
-        
-        /**
-         * キャッシュされた要素を取得または作成します
-         */
-        getCachedElement: function(key, creator) {
-            if (!_cache.elements.has(key)) {
-                _cache.elements.set(key, creator());
-            }
-            return _cache.elements.get(key);
-        },
-        
-        /**
-         * テンプレートをキャッシュから取得または作成します
-         */
-        getCachedTemplate: function(key, template) {
-            if (!_cache.templates.has(key)) {
-                _cache.templates.set(key, template);
-            }
-            return _cache.templates.get(key);
-        },
-        
-        /**
-         * キャッシュをクリアします
-         */
-        clearCache: function() {
-            _cache.elements.clear();
-            _cache.templates.clear();
+    /**
+     * キャッシュされた要素を取得または作成します
+     * @param {string} key - キャッシュのキー
+     * @param {Function} creator - 要素を作成する関数
+     * @returns {HTMLElement} キャッシュされた要素または新しく作成された要素
+     */
+    static getCachedElement(key, creator) {
+        if (!this.#cache.elements.has(key)) {
+            this.#cache.elements.set(key, creator());
         }
-    };
-})());
+        return this.#cache.elements.get(key);
+    }
+
+    /**
+     * テンプレートをキャッシュから取得または作成します
+     * @param {string} key - キャッシュのキー
+     * @param {string} template - テンプレート文字列
+     * @returns {string} キャッシュされたテンプレートまたは新しいテンプレート
+     */
+    static getCachedTemplate(key, template) {
+        if (!this.#cache.templates.has(key)) {
+            this.#cache.templates.set(key, template);
+        }
+        return this.#cache.templates.get(key);
+    }
+
+    /**
+     * キャッシュをクリアします
+     */
+    static clearCache() {
+        this.#cache.elements.clear();
+        this.#cache.templates.clear();
+    }
+}
