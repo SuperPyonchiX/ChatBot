@@ -734,7 +734,7 @@ window.Markdown = {
             };
             
             // CodeExecutorを使用してコードを実行
-            const result = await CodeExecutor.executeCode(code, language, outputCallback);
+            const result = await CodeExecutor.getInstance.executeCode(code, language, outputCallback);
             
             // スクロール位置は自動調整しない
             

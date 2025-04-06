@@ -81,38 +81,4 @@ class ChatUI {
         
         return element;
     }
-
-    /**
-     * キャッシュされた要素を取得または作成します
-     * @param {string} key - キャッシュのキー
-     * @param {Function} creator - 要素を作成する関数
-     * @returns {HTMLElement} キャッシュされた要素または新しく作成された要素
-     */
-    getCachedElement(key, creator) {
-        if (!this.#cache.elements.has(key)) {
-            this.#cache.elements.set(key, creator());
-        }
-        return this.#cache.elements.get(key);
-    }
-
-    /**
-     * テンプレートをキャッシュから取得または作成します
-     * @param {string} key - キャッシュのキー
-     * @param {string} template - テンプレート文字列
-     * @returns {string} キャッシュされたテンプレートまたは新しいテンプレート
-     */
-    getCachedTemplate(key, template) {
-        if (!this.#cache.templates.has(key)) {
-            this.#cache.templates.set(key, template);
-        }
-        return this.#cache.templates.get(key);
-    }
-
-    /**
-     * キャッシュをクリアします
-     */
-    clearCache() {
-        this.#cache.elements.clear();
-        this.#cache.templates.clear();
-    }
 }

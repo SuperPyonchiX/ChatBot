@@ -3,6 +3,25 @@
  * コードスニペット実行機能を提供します
  */
 class CodeExecutor {
+    static #instance = null;
+    
+    constructor() {
+        if (CodeExecutor.#instance) {
+            return CodeExecutor.#instance;
+        }
+        CodeExecutor.#instance = this;
+    }
+
+    /**
+     * シングルトンインスタンスを取得
+     */
+    static get getInstance() {
+        if (!CodeExecutor.#instance) {
+            CodeExecutor.#instance = new CodeExecutor();
+        }
+        return CodeExecutor.#instance;
+    }
+
     /**
      * コードを実行する
      * @param {string} code - 実行するコード
@@ -10,7 +29,7 @@ class CodeExecutor {
      * @param {Function} [outputCallback] - リアルタイム出力用コールバック関数
      * @returns {Promise<Object>} 実行結果
      */
-    static async executeCode(code, language, outputCallback) {
+    async executeCode(code, language, outputCallback) {
         if (!code || !language) {
             return { error: '実行するコードまたは言語が指定されていません' };
         }
@@ -48,7 +67,7 @@ class CodeExecutor {
      * @param {Object} executionResult - 実行結果オブジェクト
      * @returns {HTMLElement} 結果表示用のHTML要素
      */
-    static createResultElement(executionResult) {
+    createResultElement(executionResult) {
         if (!executionResult) {
             return document.createElement('div');
         }
