@@ -168,9 +168,9 @@ window.FileAttachmentUI = {
                 
                 // 画像クリックで拡大表示
                 img.addEventListener('click', () => {
-                    window.Chat.AttachmentViewer?._showFullSizeImage?.(e.target.result, file.name);
+                    ChatAttachmentViewer._showFullSizeImage?.(e.target.result, file.name);
                 });
-                
+
                 fileItem.appendChild(img);
             } catch (error) {
                 console.error('画像プレビュー表示エラー:', error);

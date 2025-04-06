@@ -39,7 +39,7 @@ Object.assign(window.Chat.Renderer, (function() {
                 contentDiv.appendChild(markdownContent);
                 
                 if (attachments && attachments.length > 0) {
-                    contentDiv.appendChild(window.Chat.AttachmentViewer.createAttachmentsElement(attachments));
+                    contentDiv.appendChild(ChatAttachmentViewer.createAttachmentsElement(attachments));
                 }
                 
                 messageDiv.appendChild(contentDiv);
