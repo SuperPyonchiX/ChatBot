@@ -2,9 +2,26 @@
  * api.js
  * OpenAIおよびAzure OpenAI APIとの通信機能を提供します
  */
+class AIAPI {
+    static #instance = null;
 
-// グローバルスコープに関数を公開
-window.API = {
+    constructor() {
+        if (AIAPI.#instance) {
+            return AIAPI.#instance;
+        }
+        AIAPI.#instance = this;
+    }
+
+    /**
+     * シングルトンインスタンスを取得
+     */
+    static get getInstance() {
+        if (!AIAPI.#instance) {
+            AIAPI.#instance = new AIAPI();
+        }
+        return AIAPI.#instance;
+    }
+
     /**
      * OpenAIまたはAzure OpenAI APIを呼び出して応答を得る
      * @param {Array} messages - 会話メッセージの配列
@@ -17,22 +34,22 @@ window.API = {
      * @returns {Promise<string>} APIからの応答テキスト（ストリーミングの場合は空文字列）
      * @throws {Error} API設定やリクエストに問題があった場合
      */
-    callOpenAIAPI: async function(messages, model, attachments = [], options = {}) {
+    async callOpenAIAPI(messages, model, attachments = [], options = {}) {
         try {
             // API設定を確認
-            this._validateAPISettings();
-            this._validateModelSettings(model);
+            this.#validateAPISettings();
+            this.#validateModelSettings(model);
             
             // 添付ファイルがある場合はメッセージを処理
-            const processedMessages = this._processAttachments(messages, attachments);
+            const processedMessages = this.#processAttachments(messages, attachments);
             
             // APIリクエストの準備
-            const { endpoint, headers, body, useStream } = this._prepareAPIRequest(processedMessages, model, options.stream);
+            const { endpoint, headers, body, useStream } = this.#prepareAPIRequest(processedMessages, model, options.stream);
             
             // ストリーミングモードの場合
             if (useStream) {
                 // ストリーミングモードでAPIリクエストを実行
-                return await this._executeStreamAPIRequest(
+                return await this.#executeStreamAPIRequest(
                     endpoint, 
                     headers, 
                     body, 
@@ -41,7 +58,7 @@ window.API = {
                 );
             } else {
                 // 通常モードでAPIリクエストを実行（リトライロジック付き）
-                return await this._executeAPIRequestWithRetry(endpoint, headers, body);
+                return await this.#executeAPIRequestWithRetry(endpoint, headers, body);
             }
         } catch (error) {
             console.error('API呼び出しエラー:', error);
@@ -61,14 +78,14 @@ window.API = {
             
             throw error;
         }
-    },
+    }
 
     /**
      * API設定を検証する
      * @private
      * @throws {Error} API設定に問題があった場合
      */
-    _validateAPISettings: function() {
+    #validateAPISettings() {
         if (!window.apiSettings) {
             throw new Error('API設定が見つかりません。設定画面でAPIキーを設定してください。');
         }
@@ -90,7 +107,7 @@ window.API = {
                 throw new Error('OpenAI APIキーが設定されていません。設定画面でAPIキーを入力してください。');
             }
         }
-    },
+    }
 
     /**
      * モデル設定を検証する
@@ -98,7 +115,7 @@ window.API = {
      * @param {string} model - 使用するモデル名
      * @throws {Error} モデル設定に問題があった場合
      */
-    _validateModelSettings: function(model) {
+    #validateModelSettings(model) {
         if (!model) {
             throw new Error('モデルが指定されていません。設定画面でモデルを選択してください。');
         }
@@ -114,11 +131,11 @@ window.API = {
             }
             
             // URLの形式を検証
-            if (!this._isValidUrl(azureEndpoint)) {
+            if (!this.#isValidUrl(azureEndpoint)) {
                 throw new Error(`モデル "${model}" のAzure OpenAIエンドポイントのURLが無効です。正しいURLを入力してください。`);
             }
         }
-    },
+    }
     
     /**
      * 有効なURLかどうかをチェック
@@ -126,14 +143,14 @@ window.API = {
      * @param {string} url - 検証するURL
      * @returns {boolean} URLが有効な場合はtrue
      */
-    _isValidUrl: function(url) {
+    #isValidUrl(url) {
         try {
             const urlObj = new URL(url);
             return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
         } catch (e) {
             return false;
         }
-    },
+    }
 
     /**
      * 添付ファイルを処理してメッセージに統合する
@@ -142,7 +159,7 @@ window.API = {
      * @param {Array} attachments - 添付ファイルの配列
      * @returns {Array} 処理されたメッセージ配列
      */
-    _processAttachments: function(messages, attachments) {
+    #processAttachments(messages, attachments) {
         if (!Array.isArray(messages) || messages.length === 0) {
             throw new Error('有効なメッセージが指定されていません');
         }
@@ -215,7 +232,7 @@ window.API = {
         }
 
         return processedMessages;
-    },
+    }
     
     /**
      * ファイルサイズを読みやすい形式に変換
@@ -223,7 +240,7 @@ window.API = {
      * @param {number} sizeInBytes - バイト単位のサイズ
      * @returns {string} 変換されたサイズ文字列
      */
-    _formatFileSize: function(sizeInBytes) {
+    #formatFileSize(sizeInBytes) {
         if (!sizeInBytes) return '不明';
         
         if (sizeInBytes < 1024) {
@@ -233,7 +250,7 @@ window.API = {
         } else {
             return (sizeInBytes / (1024 * 1024)).toFixed(1) + 'MB';
         }
-    },
+    }
 
     /**
      * APIリクエストの設定を準備する
@@ -243,12 +260,12 @@ window.API = {
      * @param {boolean} useStream - ストリーミングを使用するかどうか
      * @returns {Object} エンドポイント、ヘッダー、ボディを含むオブジェクト
      */
-    _prepareAPIRequest: function(messages, model, useStream) {
+    #prepareAPIRequest(messages, model, useStream) {
         let endpoint, headers = {}, body = {};
         
         if (window.apiSettings.apiType === 'openai') {
             // OpenAI API
-            endpoint = window.CONFIG.API.ENDPOINTS.OPENAI;
+            endpoint = window.CONFIG.AIAPI.ENDPOINTS.OPENAI;
             
             headers = {
                 'Authorization': `Bearer ${window.apiSettings.openaiApiKey}`,
@@ -258,8 +275,8 @@ window.API = {
             body = {
                 model: model,
                 messages: messages,
-                temperature: window.CONFIG.API.DEFAULT_PARAMS.temperature,
-                max_tokens: window.CONFIG.API.DEFAULT_PARAMS.max_tokens
+                temperature: window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature,
+                max_tokens: window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens
             };
         } else {
             // Azure OpenAI API
@@ -267,7 +284,7 @@ window.API = {
             
             // エンドポイントにクエリパラメータがない場合は追加
             if (endpoint && !endpoint.includes('?')) {
-                endpoint += `?api-version=${window.CONFIG.API.AZURE_API_VERSION}`;
+                endpoint += `?api-version=${window.CONFIG.AIAPI.AZURE_API_VERSION}`;
             }
             
             headers = {
@@ -277,8 +294,8 @@ window.API = {
             
             body = {
                 messages: messages,
-                temperature: window.CONFIG.API.DEFAULT_PARAMS.temperature,
-                max_tokens: window.CONFIG.API.DEFAULT_PARAMS.max_tokens
+                temperature: window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature,
+                max_tokens: window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens
             };
         }
         
@@ -298,7 +315,7 @@ window.API = {
             body: JSON.stringify(body),
             useStream
         };
-    },
+    }
 
     /**
      * リトライロジックを使用してAPIリクエストを実行
@@ -309,17 +326,17 @@ window.API = {
      * @returns {Promise<string>} APIからの応答テキスト
      * @throws {Error} すべてのリトライに失敗した場合
      */
-    _executeAPIRequestWithRetry: async function(endpoint, headers, body) {
+    async #executeAPIRequestWithRetry(endpoint, headers, body) {
         let lastError = null;
         let retryCount = 0;
         
         // リトライ時の待機時間を計算（指数バックオフ）
         const getRetryDelay = (retryCount) => Math.min(1000 * Math.pow(2, retryCount), 10000);
         
-        while (retryCount <= window.CONFIG.API.MAX_RETRIES) {
+        while (retryCount <= window.CONFIG.AIAPI.MAX_RETRIES) {
             try {
                 // タイムアウト付きでリクエストを実行
-                return await this._executeAPIRequest(endpoint, headers, body);
+                return await this.#executeAPIRequest(endpoint, headers, body);
             } catch (error) {
                 lastError = error;
                 
@@ -338,13 +355,13 @@ window.API = {
                 }
                 
                 // 最大リトライ回数に達した場合は失敗
-                if (retryCount >= window.CONFIG.API.MAX_RETRIES) {
+                if (retryCount >= window.CONFIG.AIAPI.MAX_RETRIES) {
                     break;
                 }
                 
                 // リトライ前に待機
                 const delay = getRetryDelay(retryCount);
-                console.warn(`APIリクエスト失敗 (${error.message})。${delay}ms後にリトライします (${retryCount + 1}/${window.CONFIG.API.MAX_RETRIES})`);
+                console.warn(`APIリクエスト失敗 (${error.message})。${delay}ms後にリトライします (${retryCount + 1}/${window.CONFIG.AIAPI.MAX_RETRIES})`);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 
                 retryCount++;
@@ -353,7 +370,7 @@ window.API = {
         
         // すべてのリトライに失敗した場合
         throw lastError || new Error('APIリクエストに失敗しました');
-    },
+    }
 
     /**
      * APIリクエストを実行して応答を処理する
@@ -364,13 +381,13 @@ window.API = {
      * @returns {Promise<string>} APIからの応答テキスト
      * @throws {Error} リクエストに失敗した場合
      */
-    _executeAPIRequest: async function(endpoint, headers, body) {
+    async #executeAPIRequest(endpoint, headers, body) {
         let response = null;
         
         try {
             // AbortControllerを使用してタイムアウトを設定
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), window.CONFIG.API.TIMEOUT_MS);
+            const timeoutId = setTimeout(() => controller.abort(), window.CONFIG.AIAPI.TIMEOUT_MS);
             
             const startTime = Date.now();
             
@@ -436,55 +453,8 @@ window.API = {
             
             throw error;
         }
-    },
+    }
     
-    /**
-     * 画像ファイルをbase64エンコードする
-     * @param {File} file - 画像ファイル
-     * @returns {Promise<string>} base64エンコードされた画像データ
-     */
-    encodeImageToBase64: function(file) {
-        return new Promise((resolve, reject) => {
-            if (!file || !(file instanceof File)) {
-                reject(new Error('有効なファイルが指定されていません'));
-                return;
-            }
-            
-            // サイズチェック
-            if (file.size > window.CONFIG.FILE.MAX_FILE_SIZE) {
-                reject(new Error(`ファイルサイズが大きすぎます (${this._formatFileSize(file.size)}). 最大サイズは${this._formatFileSize(window.CONFIG.FILE.MAX_FILE_SIZE)}です。`));
-                return;
-            }
-            
-            // タイプチェック
-            if (!file.type.startsWith('image/')) {
-                reject(new Error(`ファイルタイプ ${file.type} は画像ではありません`));
-                return;
-            }
-            
-            const reader = new FileReader();
-            
-            // タイムアウト設定
-            const timeoutId = setTimeout(() => {
-                reader.abort();
-                reject(new Error('ファイル読み込みがタイムアウトしました'));
-            }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
-            
-            reader.onload = () => {
-                clearTimeout(timeoutId);
-                resolve(reader.result);
-            };
-            
-            reader.onerror = (error) => {
-                clearTimeout(timeoutId);
-                console.error('ファイルのエンコードに失敗しました:', error);
-                reject(new Error('ファイルの読み込みに失敗しました'));
-            };
-            
-            reader.readAsDataURL(file);
-        });
-    },
-
     /**
      * ストリーミングモードでAPIリクエストを実行
      * @private
@@ -496,7 +466,7 @@ window.API = {
      * @returns {Promise<string>} 常に空文字を返す（実際の結果はコールバックで処理）
      * @throws {Error} リクエストに失敗した場合
      */
-    _executeStreamAPIRequest: async function(endpoint, headers, bodyStr, onChunk, onComplete) {
+    async #executeStreamAPIRequest(endpoint, headers, bodyStr, onChunk, onComplete) {
         if (typeof onChunk !== 'function') {
             throw new Error('ストリーミングモードでは onChunk コールバック関数が必要です');
         }
@@ -512,7 +482,7 @@ window.API = {
             
             // AbortControllerを使用してタイムアウトを設定
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), window.CONFIG.API.TIMEOUT_MS);
+            const timeoutId = setTimeout(() => controller.abort(), window.CONFIG.AIAPI.TIMEOUT_MS);
             
             const startTime = Date.now();
             
@@ -608,5 +578,52 @@ window.API = {
             
             throw error;
         }
-    },
-};
+    }
+
+    /**
+     * 画像ファイルをbase64エンコードする
+     * @param {File} file - 画像ファイル
+     * @returns {Promise<string>} base64エンコードされた画像データ
+     */
+    encodeImageToBase64(file) {
+        return new Promise((resolve, reject) => {
+            if (!file || !(file instanceof File)) {
+                reject(new Error('有効なファイルが指定されていません'));
+                return;
+            }
+            
+            // サイズチェック
+            if (file.size > window.CONFIG.FILE.MAX_FILE_SIZE) {
+                reject(new Error(`ファイルサイズが大きすぎます (${this.#formatFileSize(file.size)}). 最大サイズは${this.#formatFileSize(window.CONFIG.FILE.MAX_FILE_SIZE)}です。`));
+                return;
+            }
+            
+            // タイプチェック
+            if (!file.type.startsWith('image/')) {
+                reject(new Error(`ファイルタイプ ${file.type} は画像ではありません`));
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            // タイムアウト設定
+            const timeoutId = setTimeout(() => {
+                reader.abort();
+                reject(new Error('ファイル読み込みがタイムアウトしました'));
+            }, window.CONFIG.FILE.FILE_READ_TIMEOUT);
+            
+            reader.onload = () => {
+                clearTimeout(timeoutId);
+                resolve(reader.result);
+            };
+            
+            reader.onerror = (error) => {
+                clearTimeout(timeoutId);
+                console.error('ファイルのエンコードに失敗しました:', error);
+                reject(new Error('ファイルの読み込みに失敗しました'));
+            };
+            
+            reader.readAsDataURL(file);
+        });
+    }
+}

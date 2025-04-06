@@ -8,7 +8,7 @@ window.CONFIG = {
     /**
      * APIリクエストの設定
      */
-    API: {
+    AIAPI: {
         // リトライ回数
         MAX_RETRIES: 3,
         
