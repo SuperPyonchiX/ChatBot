@@ -46,26 +46,12 @@ class UIUtils {
         
         if (show) {
             modal.classList.add('show');
-            document.addEventListener('keydown', this._escapeKeyHandler);
+            document.addEventListener('keydown', this.#escapeKeyHandler);
             document.body.style.overflow = 'hidden';
         } else {
             modal.classList.remove('show');
-            document.removeEventListener('keydown', this._escapeKeyHandler);
+            document.removeEventListener('keydown', this.#escapeKeyHandler);
             document.body.style.overflow = '';
-        }
-    }
-
-    /**
-     * ESCキーが押されたときのハンドラー
-     * @private
-     * @param {KeyboardEvent} e - キーボードイベント
-     */
-    _escapeKeyHandler(e) {
-        if (e.key === 'Escape') {
-            const visibleModal = document.querySelector('.modal.show');
-            if (visibleModal) {
-                this.toggleModal(visibleModal.id, false);
-            }
         }
     }
     
@@ -157,5 +143,19 @@ class UIUtils {
         if (!textarea) return;
         textarea.style.height = 'auto';
         textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+
+    /**
+     * ESCキーが押されたときのハンドラー
+     * @private
+     * @param {KeyboardEvent} e - キーボードイベント
+     */
+    #escapeKeyHandler(e) {
+        if (e.key === 'Escape') {
+            const visibleModal = document.querySelector('.modal.show');
+            if (visibleModal) {
+                this.toggleModal(visibleModal.id, false);
+            }
+        }
     }
 }

@@ -4,13 +4,6 @@
 class Sidebar {
     static #instance = null;
     
-    constructor() {
-        if (Sidebar.#instance) {
-            return Sidebar.#instance;
-        }
-        Sidebar.#instance = this;
-    }
-
     /**
      * シングルトンインスタンスを取得
      */
@@ -19,6 +12,13 @@ class Sidebar {
             Sidebar.#instance = new Sidebar();
         }
         return Sidebar.#instance;
+    }
+
+    constructor() {
+        if (Sidebar.#instance) {
+            return Sidebar.#instance;
+        }
+        Sidebar.#instance = this;
     }
 
     /**
@@ -45,7 +45,7 @@ class Sidebar {
         }
         
         // イベントリスナーをまとめて設定
-        toggleButton.addEventListener('click', () => this._toggleSidebarState(sidebarEl, toggleButton));
+        toggleButton.addEventListener('click', () => this.#toggleSidebarState(sidebarEl, toggleButton));
         
         UICache.getInstance.get('.chat-container', true).addEventListener('click', () => {
             if (window.innerWidth <= 576 && sidebarEl.classList.contains('show')) {
@@ -68,7 +68,7 @@ class Sidebar {
      * サイドバーの状態をトグルします
      * @private
      */
-    _toggleSidebarState(sidebar, toggleButton) {
+    #toggleSidebarState(sidebar, toggleButton) {
         const isNowCollapsed = sidebar.classList.contains('collapsed');
         sidebar.classList.toggle('collapsed');
         toggleButton.classList.toggle('sidebar-visible');

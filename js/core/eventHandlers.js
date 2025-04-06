@@ -123,122 +123,6 @@ class EventHandlers {
     }
 
     /**
-     * モーダル関連のイベントをセットアップします
-     */
-    setupModalEvents() {
-        this.setupSystemPromptModal();
-        this.setupApiKeyModal();
-        this.setupRenameChatModal();
-        this.setupPromptManagerModal();
-    }
-
-    /**
-     * システムプロンプトモーダルのイベントをセットアップします
-     */
-    setupSystemPromptModal() {
-        if (!window.Elements.saveSystemPrompt || !window.Elements.cancelSystemPrompt || 
-            !window.Elements.saveNewSystemPrompt) return;
-        
-        // システムプロンプト保存
-        window.Elements.saveSystemPrompt.addEventListener('click', () => {
-            if (!window.Elements.systemPromptInput) return;
-            
-            window.AppState.systemPrompt = window.Elements.systemPromptInput.value.trim();
-            Storage.getInstance.saveSystemPrompt(window.AppState.systemPrompt);
-            SystemPromptModal.getInstance.hideSystemPromptModal();
-        });
-        
-        // システムプロンプトキャンセル
-        window.Elements.cancelSystemPrompt.addEventListener('click', SystemPromptModal.getInstance.hideSystemPromptModal.bind(SystemPromptModal.getInstance));
-        
-        // 新しいシステムプロンプト保存
-        window.Elements.saveNewSystemPrompt.addEventListener('click', ModalHandlers.getInstance.saveNewSystemPrompt.bind(SystemPromptModal.getInstance));
-
-        // 高度なプロンプト管理へ切り替え
-        const switchToPromptManagerBtn = UICache.getInstance.get('switchToPromptManager');
-        if (switchToPromptManagerBtn) {
-            switchToPromptManagerBtn.addEventListener('click', () => {
-                SystemPromptModal.getInstance.hideSystemPromptModal();
-                PromptManagerModal.getInstance.showPromptManagerModal();
-            });
-        }
-    }
-
-    /**
-     * APIキーモーダルのイベントをセットアップします
-     */
-    setupApiKeyModal() {
-        if (!window.Elements.saveApiKey || !window.Elements.cancelApiKey || 
-            !window.Elements.openaiRadio || !window.Elements.azureRadio) return;
-        
-        // APIキー保存
-        window.Elements.saveApiKey.addEventListener('click', ModalHandlers.getInstance.saveApiSettings);
-        
-        // APIキーキャンセル
-        window.Elements.cancelApiKey.addEventListener('click', ApiSettingsModal.getInstance.hideApiKeyModal);
-        
-        // APIタイプ切り替え
-        window.Elements.openaiRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleAzureSettings);
-        window.Elements.azureRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleAzureSettings);
-    }
-
-    /**
-     * チャット名変更モーダルのイベントをセットアップします
-     */
-    setupRenameChatModal() {
-        if (!window.Elements.saveRenameChat || !window.Elements.cancelRenameChat) return;
-        
-        // 保存ボタン
-        window.Elements.saveRenameChat.addEventListener('click', ModalHandlers.getInstance.saveRenamedChat);
-        
-        // キャンセルボタン
-        window.Elements.cancelRenameChat.addEventListener('click', RenameChatModal.getInstance.hideRenameChatModal);
-    }
-
-    /**
-     * プロンプト管理モーダルのイベントをセットアップします
-     */
-    setupPromptManagerModal() {
-        // 閉じるボタンのイベントハンドラー
-        const closePromptManagerBtn = UICache.getInstance.get('closePromptManager');
-        if (closePromptManagerBtn) {
-            closePromptManagerBtn.addEventListener('click', () => {
-                PromptManagerModal.getInstance.hidePromptManagerModal();
-            });
-        }
-
-        // システムプロンプト設定への切り替えボタンのイベントハンドラー
-        const switchToSystemPromptBtn = UICache.getInstance.get('switchToSystemPrompt');
-        if (switchToSystemPromptBtn) {
-            switchToSystemPromptBtn.addEventListener('click', () => {
-                PromptManagerModal.getInstance.hidePromptManagerModal();
-                SystemPromptModal.getInstance.showSystemPromptModal(
-                    window.AppState.systemPrompt,
-                    window.AppState.systemPromptTemplates,
-                    ModalHandlers.getInstance.onTemplateSelect,
-                    ModalHandlers.getInstance.onTemplateDelete
-                );
-            });
-        }
-
-        // カテゴリ追加ボタンのイベントハンドラー
-        const addCategoryBtn = UICache.getInstance.get('addCategoryButton');
-        if (addCategoryBtn) {
-            addCategoryBtn.addEventListener('click', () => {
-                PromptManagerModal.getInstance._handleAddCategory();
-            });
-        }
-
-        // 新規プロンプト追加ボタンのイベントハンドラー
-        const addPromptButton = UICache.getInstance.get('addPromptButton');
-        if (addPromptButton) {
-            addPromptButton.addEventListener('click', () => {
-                PromptManagerModal.getInstance.showPromptEditModal(null);
-            });
-        }
-    }
-
-    /**
      * グローバルなイベントをセットアップします
      */
     setupGlobalEvents() {
@@ -278,5 +162,121 @@ class EventHandlers {
                 });
             }
         });
+    }
+
+    /**
+     * モーダル関連のイベントをセットアップします
+     */
+    setupModalEvents() {
+        this.#setupSystemPromptModal();
+        this.#setupApiKeyModal();
+        this.#setupRenameChatModal();
+        this.#setupPromptManagerModal();
+    }
+
+    /**
+     * システムプロンプトモーダルのイベントをセットアップします
+     */
+    #setupSystemPromptModal() {
+        if (!window.Elements.saveSystemPrompt || !window.Elements.cancelSystemPrompt || 
+            !window.Elements.saveNewSystemPrompt) return;
+        
+        // システムプロンプト保存
+        window.Elements.saveSystemPrompt.addEventListener('click', () => {
+            if (!window.Elements.systemPromptInput) return;
+            
+            window.AppState.systemPrompt = window.Elements.systemPromptInput.value.trim();
+            Storage.getInstance.saveSystemPrompt(window.AppState.systemPrompt);
+            SystemPromptModal.getInstance.hideSystemPromptModal();
+        });
+        
+        // システムプロンプトキャンセル
+        window.Elements.cancelSystemPrompt.addEventListener('click', SystemPromptModal.getInstance.hideSystemPromptModal.bind(SystemPromptModal.getInstance));
+        
+        // 新しいシステムプロンプト保存
+        window.Elements.saveNewSystemPrompt.addEventListener('click', ModalHandlers.getInstance.saveNewSystemPrompt.bind(SystemPromptModal.getInstance));
+
+        // 高度なプロンプト管理へ切り替え
+        const switchToPromptManagerBtn = UICache.getInstance.get('switchToPromptManager');
+        if (switchToPromptManagerBtn) {
+            switchToPromptManagerBtn.addEventListener('click', () => {
+                SystemPromptModal.getInstance.hideSystemPromptModal();
+                PromptManagerModal.getInstance.showPromptManagerModal();
+            });
+        }
+    }
+
+    /**
+     * APIキーモーダルのイベントをセットアップします
+     */
+    #setupApiKeyModal() {
+        if (!window.Elements.saveApiKey || !window.Elements.cancelApiKey || 
+            !window.Elements.openaiRadio || !window.Elements.azureRadio) return;
+        
+        // APIキー保存
+        window.Elements.saveApiKey.addEventListener('click', ModalHandlers.getInstance.saveApiSettings);
+        
+        // APIキーキャンセル
+        window.Elements.cancelApiKey.addEventListener('click', ApiSettingsModal.getInstance.hideApiKeyModal);
+        
+        // APIタイプ切り替え
+        window.Elements.openaiRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleAzureSettings);
+        window.Elements.azureRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleAzureSettings);
+    }
+
+    /**
+     * チャット名変更モーダルのイベントをセットアップします
+     */
+    #setupRenameChatModal() {
+        if (!window.Elements.saveRenameChat || !window.Elements.cancelRenameChat) return;
+        
+        // 保存ボタン
+        window.Elements.saveRenameChat.addEventListener('click', ModalHandlers.getInstance.saveRenamedChat);
+        
+        // キャンセルボタン
+        window.Elements.cancelRenameChat.addEventListener('click', RenameChatModal.getInstance.hideRenameChatModal);
+    }
+
+    /**
+     * プロンプト管理モーダルのイベントをセットアップします
+     */
+    #setupPromptManagerModal() {
+        // 閉じるボタンのイベントハンドラー
+        const closePromptManagerBtn = UICache.getInstance.get('closePromptManager');
+        if (closePromptManagerBtn) {
+            closePromptManagerBtn.addEventListener('click', () => {
+                PromptManagerModal.getInstance.hidePromptManagerModal();
+            });
+        }
+
+        // システムプロンプト設定への切り替えボタンのイベントハンドラー
+        const switchToSystemPromptBtn = UICache.getInstance.get('switchToSystemPrompt');
+        if (switchToSystemPromptBtn) {
+            switchToSystemPromptBtn.addEventListener('click', () => {
+                PromptManagerModal.getInstance.hidePromptManagerModal();
+                SystemPromptModal.getInstance.showSystemPromptModal(
+                    window.AppState.systemPrompt,
+                    window.AppState.systemPromptTemplates,
+                    ModalHandlers.getInstance.onTemplateSelect,
+                    ModalHandlers.getInstance.onTemplateDelete
+                );
+            });
+        }
+
+        // カテゴリ追加ボタンのイベントハンドラー
+        const addCategoryBtn = UICache.getInstance.get('addCategoryButton');
+        if (addCategoryBtn) {
+            addCategoryBtn.addEventListener('click', () => {
+                PromptManagerModal.getInstance.handleAddCategory();
+            });
+        }
+
+        // 新規プロンプト追加ボタンのイベントハンドラー
+        const addPromptButton = UICache.getInstance.get('addPromptButton');
+        if (addPromptButton) {
+            addPromptButton.addEventListener('click', () => {
+                PromptManagerModal.getInstance.showPromptEditModal(null);
+            });
+        }
     }
 }

@@ -46,7 +46,7 @@ class FileValidator {
             }
             
             // MIMEタイプを確認
-            if (!this._isFileTypeAllowed(file)) {
+            if (!this.#isFileTypeAllowed(file)) {
                 errors.push(`"${file.name}"は対応していないファイル形式です`);
                 return;
             }
@@ -68,7 +68,7 @@ class FileValidator {
      * @param {File} file - 確認するファイル
      * @returns {boolean} 許可されている場合はtrue
      */
-    _isFileTypeAllowed(file) {
+    #isFileTypeAllowed(file) {
         if (!file) return false;
         
         const fileName = file.name;

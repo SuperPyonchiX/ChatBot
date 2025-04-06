@@ -7,16 +7,6 @@ class ChatAttachmentViewer {
     static #instance = null;
 
     /**
-     * プライベートコンストラクタ
-     * @private
-     */
-    constructor() {
-        if (ChatAttachmentViewer.#instance) {
-            throw new Error('ChatAttachmentViewerクラスは直接インスタンス化できません。ChatAttachmentViewer.instanceを使用してください。');
-        }
-    }
-
-    /**
      * シングルトンインスタンスを取得します
      * @returns {ChatAttachmentViewer} ChatAttachmentViewerのシングルトンインスタンス
      */
@@ -25,6 +15,16 @@ class ChatAttachmentViewer {
             ChatAttachmentViewer.#instance = new ChatAttachmentViewer();
         }
         return ChatAttachmentViewer.#instance;
+    }
+
+    /**
+     * プライベートコンストラクタ
+     * @private
+     */
+    constructor() {
+        if (ChatAttachmentViewer.#instance) {
+            throw new Error('ChatAttachmentViewerクラスは直接インスタンス化できません。ChatAttachmentViewer.instanceを使用してください。');
+        }
     }
 
     /**
@@ -48,16 +48,16 @@ class ChatAttachmentViewer {
             if (!attachment || !attachment.type) return;
             
             if (attachment.type === 'image' && attachment.data) {
-                const imgContainer = this._createImagePreview(attachment);
+                const imgContainer = this.#createImagePreview(attachment);
                 attachmentsDiv.appendChild(imgContainer);
             } else if (attachment.type === 'pdf' && attachment.data) {
-                const pdfContainer = this._createPdfPreview(attachment);
+                const pdfContainer = this.#createPdfPreview(attachment);
                 attachmentsDiv.appendChild(pdfContainer);
             } else if (attachment.type === 'office' && attachment.data) {
-                const officeContainer = this._createOfficePreview(attachment);
+                const officeContainer = this.#createOfficePreview(attachment);
                 attachmentsDiv.appendChild(officeContainer);
             } else if (attachment.type === 'file' && attachment.name) {
-                const fileContainer = this._createFilePreview(attachment);
+                const fileContainer = this.#createFilePreview(attachment);
                 attachmentsDiv.appendChild(fileContainer);
             }
         });
@@ -70,10 +70,69 @@ class ChatAttachmentViewer {
     }
 
     /**
+     * 画像をフルサイズで表示
+     * @private
+     */
+    showFullSizeImage(src, name) {
+        if (!src) return;
+        
+        const existingOverlay = document.querySelector('.image-overlay');
+        if (existingOverlay) {
+            document.body.removeChild(existingOverlay);
+            return;
+        }
+        
+        const overlay = ChatUI.getInstance.createElement('div', {
+            classList: 'image-overlay'
+        });
+        
+        const imageViewer = ChatUI.getInstance.createElement('div', {
+            classList: 'image-viewer'
+        });
+        
+        const image = ChatUI.getInstance.createElement('img', {
+            attributes: {
+                src: src,
+                alt: name || '画像'
+            }
+        });
+        
+        const titleBar = ChatUI.getInstance.createElement('div', {
+            classList: 'image-title-bar'
+        });
+        
+        const titleText = ChatUI.getInstance.createElement('span', {
+            textContent: name || '画像'
+        });
+        
+        const closeBtn = ChatUI.getInstance.createElement('button', {
+            classList: 'overlay-close-btn',
+            innerHTML: '<i class="fas fa-times"></i>'
+        });
+        
+        closeBtn.addEventListener('click', () => {
+            document.body.removeChild(overlay);
+        });
+        
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                document.body.removeChild(overlay);
+            }
+        });
+        
+        titleBar.appendChild(titleText);
+        titleBar.appendChild(closeBtn);
+        imageViewer.appendChild(image);
+        overlay.appendChild(titleBar);
+        overlay.appendChild(imageViewer);
+        document.body.appendChild(overlay);
+    }
+
+    /**
      * 画像プレビューを作成
      * @private
      */
-    _createImagePreview(attachment) {
+    #createImagePreview(attachment) {
         const imgContainer = ChatUI.getInstance.createElement('div', {
             classList: 'attachment-image-container'
         });
@@ -98,7 +157,7 @@ class ChatAttachmentViewer {
      * PDFプレビューを作成
      * @private
      */
-    _createPdfPreview(attachment) {
+    #createPdfPreview(attachment) {
         const pdfContainer = ChatUI.getInstance.createElement('div', {
             classList: 'attachment-pdf-container'
         });
@@ -122,7 +181,7 @@ class ChatAttachmentViewer {
         });
         
         previewButton.addEventListener('click', () => {
-            this._showPDFPreview(attachment.data, attachment.name);
+            this.#showPDFPreview(attachment.data, attachment.name);
         });
         
         pdfPreview.appendChild(pdfIcon);
@@ -137,7 +196,7 @@ class ChatAttachmentViewer {
      * Officeファイルプレビューを作成
      * @private
      */
-    _createOfficePreview(attachment) {
+    #createOfficePreview(attachment) {
         const officeContainer = ChatUI.getInstance.createElement('div', {
             classList: 'attachment-office-container'
         });
@@ -172,7 +231,7 @@ class ChatAttachmentViewer {
         });
         
         contentButton.addEventListener('click', () => {
-            this._showOfficeContent(attachment.content, attachment.name);
+            this.#showOfficeContent(attachment.content, attachment.name);
         });
         
         officePreview.appendChild(officeIcon);
@@ -187,7 +246,7 @@ class ChatAttachmentViewer {
      * ファイルプレビューを作成
      * @private
      */
-    _createFilePreview(attachment) {
+    #createFilePreview(attachment) {
         const fileContainer = ChatUI.getInstance.createElement('div', {
             classList: 'attachment-file-container'
         });
@@ -207,7 +266,7 @@ class ChatAttachmentViewer {
         });
         
         previewButton.addEventListener('click', () => {
-            this._showTextFileContent(attachment.content, attachment.name);
+            this.#showTextFileContent(attachment.content, attachment.name);
         });
         
         fileContainer.appendChild(fileIcon);
@@ -221,7 +280,7 @@ class ChatAttachmentViewer {
      * テキストファイルの内容を表示
      * @private
      */
-    _showTextFileContent(content, name) {
+    #showTextFileContent(content, name) {
         if (!content) {
             alert('ファイルの内容を表示できません。');
             return;
@@ -243,7 +302,7 @@ class ChatAttachmentViewer {
         
         const textContent = ChatUI.getInstance.createElement('pre', {
             classList: 'text-file-content',
-            innerHTML: this._formatTextContent(content, name)
+            innerHTML: this.#formatTextContent(content, name)
         });
         
         const titleBar = ChatUI.getInstance.createElement('div', {
@@ -285,7 +344,7 @@ class ChatAttachmentViewer {
      * テキストファイルの内容をフォーマット
      * @private
      */
-    _formatTextContent(content, fileName) {
+    #formatTextContent(content, fileName) {
         if (!content) return '';
         
         const ext = fileName ? fileName.split('.').pop().toLowerCase() : '';
@@ -310,7 +369,7 @@ class ChatAttachmentViewer {
      * PDFプレビューを表示
      * @private
      */
-    _showPDFPreview(src, name) {
+    #showPDFPreview(src, name) {
         if (!src) return;
         
         const existingOverlay = document.querySelector('.pdf-overlay');
@@ -376,7 +435,7 @@ class ChatAttachmentViewer {
      * Officeファイルの内容を表示
      * @private
      */
-    _showOfficeContent(content, name) {
+    #showOfficeContent(content, name) {
         if (!content) {
             alert('ファイルの内容を表示できません。');
             return;
@@ -429,65 +488,6 @@ class ChatAttachmentViewer {
         contentViewer.appendChild(textContent);
         overlay.appendChild(titleBar);
         overlay.appendChild(contentViewer);
-        document.body.appendChild(overlay);
-    }
-
-    /**
-     * 画像をフルサイズで表示
-     * @private
-     */
-    showFullSizeImage(src, name) {
-        if (!src) return;
-        
-        const existingOverlay = document.querySelector('.image-overlay');
-        if (existingOverlay) {
-            document.body.removeChild(existingOverlay);
-            return;
-        }
-        
-        const overlay = ChatUI.getInstance.createElement('div', {
-            classList: 'image-overlay'
-        });
-        
-        const imageViewer = ChatUI.getInstance.createElement('div', {
-            classList: 'image-viewer'
-        });
-        
-        const image = ChatUI.getInstance.createElement('img', {
-            attributes: {
-                src: src,
-                alt: name || '画像'
-            }
-        });
-        
-        const titleBar = ChatUI.getInstance.createElement('div', {
-            classList: 'image-title-bar'
-        });
-        
-        const titleText = ChatUI.getInstance.createElement('span', {
-            textContent: name || '画像'
-        });
-        
-        const closeBtn = ChatUI.getInstance.createElement('button', {
-            classList: 'overlay-close-btn',
-            innerHTML: '<i class="fas fa-times"></i>'
-        });
-        
-        closeBtn.addEventListener('click', () => {
-            document.body.removeChild(overlay);
-        });
-        
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                document.body.removeChild(overlay);
-            }
-        });
-        
-        titleBar.appendChild(titleText);
-        titleBar.appendChild(closeBtn);
-        imageViewer.appendChild(image);
-        overlay.appendChild(titleBar);
-        overlay.appendChild(imageViewer);
         document.body.appendChild(overlay);
     }
 }

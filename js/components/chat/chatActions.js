@@ -1,5 +1,3 @@
-window.Chat = window.Chat || {};
-window.Chat.Actions = window.Chat.Actions || {};
 /**
  * chatActions.js
  * チャット関連のアクション（メッセージ送信、会話管理など）を担当するモジュール
@@ -7,16 +5,6 @@ window.Chat.Actions = window.Chat.Actions || {};
 class ChatActions {
     // シングルトンインスタンス
     static #instance = null;
-
-    /**
-     * プライベートコンストラクタ
-     * @private
-     */
-    constructor() {
-        if (ChatActions.#instance) {
-            throw new Error('ChatActionsクラスは直接インスタンス化できません。ChatActions.instanceを使用してください。');
-        }
-    }
 
     /**
      * シングルトンインスタンスを取得します
@@ -27,6 +15,16 @@ class ChatActions {
             ChatActions.#instance = new ChatActions();
         }
         return ChatActions.#instance;
+    }
+
+    /**
+     * プライベートコンストラクタ
+     * @private
+     */
+    constructor() {
+        if (ChatActions.#instance) {
+            throw new Error('ChatActionsクラスは直接インスタンス化できません。ChatActions.instanceを使用してください。');
+        }
     }
 
     /**
@@ -64,7 +62,7 @@ class ChatActions {
             }
             
             // ストリーミングメソッドを使用してメッセージを送信
-            const result = await this.processAndSendMessage(
+            const result = await this.#processAndSendMessage(
                 window.Elements.userInput, 
                 window.Elements.chatMessages, 
                 currentConversation, 
@@ -114,6 +112,71 @@ class ChatActions {
     }
 
     /**
+     * 新しい会話を作成します
+     */
+    createNewConversation() {
+        const newConversation = {
+            id: Date.now().toString(),
+            title: '新しいチャット',
+            messages: [
+                {
+                    role: 'system',
+                    content: window.AppState.systemPrompt || ''
+                }
+            ],
+            model: window.AppState.getCurrentModel()
+        };
+        
+        window.AppState.conversations.unshift(newConversation);
+        Storage.getInstance.saveConversations(window.AppState.conversations);
+        
+        window.AppState.currentConversationId = newConversation.id;
+        Storage.getInstance.saveCurrentConversationId(window.AppState.currentConversationId);
+        
+        this.renderChatHistory();
+        
+        if (window.Elements.chatMessages && window.Elements.modelSelect) {
+            // 会話を表示
+            ChatHistory.getInstance.displayConversation(newConversation, window.Elements.chatMessages, window.Elements.modelSelect);
+        }
+    }
+
+    /**
+     * 会話履歴を表示します
+     */
+    renderChatHistory() {
+        if (!window.Elements.chatHistory) return;
+        
+        // チャット履歴を更新
+        ChatHistory.getInstance.renderChatHistory(
+            window.AppState.conversations, 
+            window.AppState.currentConversationId, 
+            window.Elements.chatHistory, 
+            this.#switchConversation.bind(this), 
+            RenameChatModal.getInstance.showRenameChatModal, 
+            this.#deleteConversation.bind(this)
+        );
+    }
+
+    /**
+     * すべての履歴をクリアします
+     */
+    clearAllHistory() {
+        if (confirm('すべての会話履歴を削除してもよろしいですか？')) {
+            // すべての添付ファイルを削除
+            window.AppState.conversations.forEach(conversation => {
+                if (conversation.id) {
+                    Storage.getInstance.removeAttachments(conversation.id);
+                }
+            });
+            
+            window.AppState.conversations = [];
+            Storage.getInstance.saveConversations(window.AppState.conversations);
+            this.createNewConversation();
+        }
+    }
+
+    /**
      * メッセージを処理して送信する
      * @param {Object} userInput - ユーザー入力要素
      * @param {HTMLElement} chatMessages - チャットメッセージ要素
@@ -123,7 +186,7 @@ class ChatActions {
      * @param {Array} attachments - 添付ファイル配列
      * @returns {Promise<Object>} 送信結果
      */
-    async processAndSendMessage(userInput, chatMessages, conversation, apiSettings, systemPrompt, attachments = []) {
+    async #processAndSendMessage(userInput, chatMessages, conversation, apiSettings, systemPrompt, attachments = []) {
         if (!userInput || !chatMessages || !conversation) {
             return { error: 'Invalid parameters' };
         }
@@ -151,7 +214,7 @@ class ChatActions {
                     timestamp: timestamp
                 }));
 
-                attachmentContent = await this._processAttachments(attachments);
+                attachmentContent = await this.#processAttachments(attachments);
             }
 
             // ユーザーメッセージを作成と表示
@@ -228,7 +291,7 @@ class ChatActions {
      * @param {Array} attachments - 添付ファイルの配列
      * @returns {Promise<string>} 処理された添付ファイルの内容
      */
-    async _processAttachments(attachments) {
+    async #processAttachments(attachments) {
         if (!attachments || !Array.isArray(attachments)) {
             return '';
         }
@@ -248,56 +311,9 @@ class ChatActions {
     }
 
     /**
-     * 新しい会話を作成します
-     */
-    createNewConversation() {
-        const newConversation = {
-            id: Date.now().toString(),
-            title: '新しいチャット',
-            messages: [
-                {
-                    role: 'system',
-                    content: window.AppState.systemPrompt || ''
-                }
-            ],
-            model: window.AppState.getCurrentModel()
-        };
-        
-        window.AppState.conversations.unshift(newConversation);
-        Storage.getInstance.saveConversations(window.AppState.conversations);
-        
-        window.AppState.currentConversationId = newConversation.id;
-        Storage.getInstance.saveCurrentConversationId(window.AppState.currentConversationId);
-        
-        this.renderChatHistory();
-        
-        if (window.Elements.chatMessages && window.Elements.modelSelect) {
-            // 会話を表示
-            ChatHistory.getInstance.displayConversation(newConversation, window.Elements.chatMessages, window.Elements.modelSelect);
-        }
-    }
-
-    /**
-     * 会話履歴を表示します
-     */
-    renderChatHistory() {
-        if (!window.Elements.chatHistory) return;
-        
-        // チャット履歴を更新
-        ChatHistory.getInstance.renderChatHistory(
-            window.AppState.conversations, 
-            window.AppState.currentConversationId, 
-            window.Elements.chatHistory, 
-            this.switchConversation.bind(this), 
-            RenameChatModal.getInstance.showRenameChatModal, 
-            this.deleteConversation.bind(this)
-        );
-    }
-
-    /**
      * 会話を切り替えます
      */
-    switchConversation(conversationId) {
+    #switchConversation(conversationId) {
         if (!conversationId) return;
         
         window.AppState.currentConversationId = conversationId;
@@ -322,7 +338,7 @@ class ChatActions {
     /**
      * 会話を削除します
      */
-    deleteConversation(conversationId) {
+    #deleteConversation(conversationId) {
         // 確認ダイアログを表示
         if (!confirm('このチャットを削除してもよろしいですか？')) return;
             
@@ -360,23 +376,5 @@ class ChatActions {
         
         // チャット履歴の表示を更新
         this.renderChatHistory();
-    }
-
-    /**
-     * すべての履歴をクリアします
-     */
-    clearAllHistory() {
-        if (confirm('すべての会話履歴を削除してもよろしいですか？')) {
-            // すべての添付ファイルを削除
-            window.AppState.conversations.forEach(conversation => {
-                if (conversation.id) {
-                    Storage.getInstance.removeAttachments(conversation.id);
-                }
-            });
-            
-            window.AppState.conversations = [];
-            Storage.getInstance.saveConversations(window.AppState.conversations);
-            this.createNewConversation();
-        }
     }
 }

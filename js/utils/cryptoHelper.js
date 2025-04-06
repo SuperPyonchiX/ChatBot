@@ -30,86 +30,6 @@ class CryptoHelper {
     }
 
     /**
-     * AES暗号化のためのキー導出関数（PBKDF2ベース）
-     * @private
-     */
-    _deriveKeyFromPassphrase(passphrase) {
-        // パスフレーズとソルトから簡易的なキーを生成
-        let key = '';
-        const combo = passphrase + this.ENCRYPTION_SALT;
-        
-        // 簡易ハッシュ関数
-        for (let i = 0; i < combo.length; i++) {
-            key += (combo.charCodeAt(i) * 7) % 256;
-        }
-        
-        // キーを32文字に調整（AES-256用）
-        while (key.length < 32) {
-            key += key;
-        }
-        
-        return key.slice(0, 32);
-    }
-    
-    /**
-     * 文字列をUTF-8バイト配列に変換
-     * @private
-     */
-    _stringToBytes(str) {
-        const bytes = [];
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            bytes.push(char & 0xFF);
-        }
-        return bytes;
-    }
-    
-    /**
-     * バイト配列をUTF-8文字列に変換
-     * @private
-     */
-    _bytesToString(bytes) {
-        let str = '';
-        for (let i = 0; i < bytes.length; i++) {
-            str += String.fromCharCode(bytes[i]);
-        }
-        return str;
-    }
-    
-    /**
-     * XORベースの簡易暗号化（AES-256の代わり）
-     * @private
-     */
-    _xorEncrypt(data, key) {
-        const dataBytes = this._stringToBytes(data);
-        const keyBytes = this._stringToBytes(key);
-        const encryptedBytes = [];
-        
-        for (let i = 0; i < dataBytes.length; i++) {
-            const keyByte = keyBytes[i % keyBytes.length];
-            encryptedBytes.push(dataBytes[i] ^ keyByte);
-        }
-        
-        return encryptedBytes;
-    }
-    
-    /**
-     * XORベースの簡易復号化
-     * @private
-     */
-    _xorDecrypt(encryptedBytes, key) {
-        const keyBytes = this._stringToBytes(key);
-        const decryptedBytes = [];
-        
-        for (let i = 0; i < encryptedBytes.length; i++) {
-            const keyByte = keyBytes[i % keyBytes.length];
-            decryptedBytes.push(encryptedBytes[i] ^ keyByte);
-        }
-        
-        return this._bytesToString(decryptedBytes);
-    }
-
-    /**
      * 文字列を暗号化
      * @param {string} text - 暗号化する文字列
      * @param {string} [passphrase=navigator.userAgent] - 暗号化パスフレーズ
@@ -120,10 +40,10 @@ class CryptoHelper {
         
         try {
             // パスフレーズからキーを導出
-            const key = this._deriveKeyFromPassphrase(passphrase);
+            const key = this.#deriveKeyFromPassphrase(passphrase);
             
             // XOR暗号化
-            const encryptedBytes = this._xorEncrypt(text, key);
+            const encryptedBytes = this.#xorEncrypt(text, key);
             
             // Base64エンコード
             const base64 = btoa(String.fromCharCode.apply(null, encryptedBytes));
@@ -162,10 +82,10 @@ class CryptoHelper {
             }
             
             // パスフレーズからキーを導出
-            const key = this._deriveKeyFromPassphrase(passphrase);
+            const key = this.#deriveKeyFromPassphrase(passphrase);
             
             // 復号化
-            return this._xorDecrypt(encryptedBytes, key);
+            return this.#xorDecrypt(encryptedBytes, key);
         } catch (error) {
             console.error('復号化エラー:', error);
             // エラー時は暗号文をそのまま返す（プレフィックスは削除）
@@ -181,7 +101,84 @@ class CryptoHelper {
     isEncrypted(text) {
         return text && typeof text === 'string' && text.startsWith('ENC:');
     }
-}
 
-// グローバルアクセスのために window.CryptoHelper に設定
-window.CryptoHelper = CryptoHelper.getInstance;
+    /**
+     * AES暗号化のためのキー導出関数（PBKDF2ベース）
+     * @private
+     */
+    #deriveKeyFromPassphrase(passphrase) {
+        // パスフレーズとソルトから簡易的なキーを生成
+        let key = '';
+        const combo = passphrase + this.ENCRYPTION_SALT;
+        
+        // 簡易ハッシュ関数
+        for (let i = 0; i < combo.length; i++) {
+            key += (combo.charCodeAt(i) * 7) % 256;
+        }
+        
+        // キーを32文字に調整（AES-256用）
+        while (key.length < 32) {
+            key += key;
+        }
+        
+        return key.slice(0, 32);
+    }
+    
+    /**
+     * 文字列をUTF-8バイト配列に変換
+     * @private
+     */
+    #stringToBytes(str) {
+        const bytes = [];
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            bytes.push(char & 0xFF);
+        }
+        return bytes;
+    }
+    
+    /**
+     * バイト配列をUTF-8文字列に変換
+     * @private
+     */
+    #bytesToString(bytes) {
+        let str = '';
+        for (let i = 0; i < bytes.length; i++) {
+            str += String.fromCharCode(bytes[i]);
+        }
+        return str;
+    }
+    
+    /**
+     * XORベースの簡易暗号化（AES-256の代わり）
+     * @private
+     */
+    #xorEncrypt(data, key) {
+        const dataBytes = this.#stringToBytes(data);
+        const keyBytes = this.#stringToBytes(key);
+        const encryptedBytes = [];
+        
+        for (let i = 0; i < dataBytes.length; i++) {
+            const keyByte = keyBytes[i % keyBytes.length];
+            encryptedBytes.push(dataBytes[i] ^ keyByte);
+        }
+        
+        return encryptedBytes;
+    }
+    
+    /**
+     * XORベースの簡易復号化
+     * @private
+     */
+    #xorDecrypt(encryptedBytes, key) {
+        const keyBytes = this.#stringToBytes(key);
+        const decryptedBytes = [];
+        
+        for (let i = 0; i < encryptedBytes.length; i++) {
+            const keyByte = keyBytes[i % keyBytes.length];
+            decryptedBytes.push(encryptedBytes[i] ^ keyByte);
+        }
+        
+        return this.#bytesToString(decryptedBytes);
+    }
+}

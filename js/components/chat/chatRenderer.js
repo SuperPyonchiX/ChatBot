@@ -7,16 +7,6 @@ class ChatRenderer {
     static #instance = null;
 
     /**
-     * プライベートコンストラクタ
-     * @private
-     */
-    constructor() {
-        if (ChatRenderer.#instance) {
-            throw new Error('ChatRendererクラスは直接インスタンス化できません。ChatRenderer.instanceを使用してください。');
-        }
-    }
-
-    /**
      * シングルトンインスタンスを取得します
      * @returns {ChatRenderer} ChatRendererのシングルトンインスタンス
      */
@@ -25,6 +15,16 @@ class ChatRenderer {
             ChatRenderer.#instance = new ChatRenderer();
         }
         return ChatRenderer.#instance;
+    }
+
+    /**
+     * プライベートコンストラクタ
+     * @private
+     */
+    constructor() {
+        if (ChatRenderer.#instance) {
+            throw new Error('ChatRendererクラスは直接インスタンス化できません。ChatRenderer.instanceを使用してください。');
+        }
     }
 
     /**

@@ -36,13 +36,13 @@ class FileConverter {
             return Promise.resolve([]);
         }
         
-        return Promise.all(files.map(file => this._convertFileToAttachment(file)));
+        return Promise.all(files.map(file => this.#convertFileToAttachment(file)));
     }
 
     /**
      * プライベートメソッドはそのまま移行
      */
-    async _convertFileToAttachment(file) {
+    async #convertFileToAttachment(file) {
         try {
             if (!file) {
                 throw new Error('有効なファイルが指定されていません');
@@ -62,7 +62,7 @@ class FileConverter {
             // PDFファイルの場合
             else if (file.type === 'application/pdf') {
                 const dataUrl = await FileReaderUtil.getInstance.readFileAsDataURL(file);
-                const extractedText = await this._extractTextFromPDF(file);
+                const extractedText = await this.#extractTextFromPDF(file);
                 
                 return {
                     type: 'pdf',
@@ -74,9 +74,9 @@ class FileConverter {
                 };
             }
             // Office関連ファイルの場合
-            else if (this._isOfficeFile(file.type)) {
+            else if (this.#isOfficeFile(file.type)) {
                 const dataUrl = await FileReaderUtil.getInstance.readFileAsDataURL(file);
-                const extractedText = await this._extractTextFromOfficeFile(file);
+                const extractedText = await this.#extractTextFromOfficeFile(file);
                 
                 return {
                     type: 'office',
@@ -90,7 +90,7 @@ class FileConverter {
             // その他のファイルの場合
             else {
                 const dataUrl = await FileReaderUtil.getInstance.readFileAsDataURL(file);
-                const textContent = await this._readFileAsText(file);
+                const textContent = await this.#readFileAsText(file);
                 let extractedText = `=== ${file.type}ファイル「${file.name}」の内容 ===\n\n`;
                 extractedText += textContent;
                 
@@ -113,12 +113,12 @@ class FileConverter {
         }
     }
 
-    _isOfficeFile(mimeType) {
+    #isOfficeFile(mimeType) {
         if (!mimeType) return false;
         return window.CONFIG.FILE.ALLOWED_FILE_TYPES.office?.includes(mimeType) ?? false;
     }
 
-    async _extractTextFromPDF(file) {
+    async #extractTextFromPDF(file) {
         try {
             const arrayBuffer = await FileReaderUtil.getInstance.readFileAsArrayBuffer(file);
             const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
@@ -141,24 +141,24 @@ class FileConverter {
         }
     }
 
-    async _extractTextFromOfficeFile(file) {
+    async #extractTextFromOfficeFile(file) {
         try {
             if (file.type.includes('excel') || file.type.includes('sheet')) {
-                return await this._extractTextFromExcelFile(file);
+                return await this.#extractTextFromExcelFile(file);
             } else if (file.type.includes('powerpoint') || file.type.includes('presentation')) {
-                return await this._extractTextFromPowerPointFile(file);
+                return await this.#extractTextFromPowerPointFile(file);
             } else if (file.type.includes('word') || file.type.includes('document')) {
-                return await this._extractTextFromWordFile(file);
+                return await this.#extractTextFromWordFile(file);
             }
             
             throw new Error('未対応のOfficeファイル形式です');
         } catch (error) {
             console.error('Officeファイルテキスト抽出エラー:', error);
-            return `${this._getOfficeFileTypeName(file.type)}ファイル「${file.name}」からのテキスト抽出に失敗しました。`;
+            return `${this.#getOfficeFileTypeName(file.type)}ファイル「${file.name}」からのテキスト抽出に失敗しました。`;
         }
     }
 
-    async _extractTextFromExcelFile(file) {
+    async #extractTextFromExcelFile(file) {
         if (typeof XLSX === 'undefined') {
             return `Excelファイル「${file.name}」からのテキスト抽出に失敗しました。\nSheetJSライブラリが見つかりません。`;
         }
@@ -192,7 +192,7 @@ class FileConverter {
         return extractedText;
     }
 
-    async _extractTextFromPowerPointFile(file) {
+    async #extractTextFromPowerPointFile(file) {
         try {
             const arrayBuffer = await FileReaderUtil.getInstance.readFileAsArrayBuffer(file);
             const zip = await JSZip.loadAsync(arrayBuffer);
@@ -213,7 +213,7 @@ class FileConverter {
             
             for (const slideEntry of slideEntries) {
                 const xmlContent = await zip.file(slideEntry.entry.name).async("text");
-                const slideText = this._extractTextFromXML(xmlContent);
+                const slideText = this.#extractTextFromXML(xmlContent);
                 
                 if (slideText) {
                     result.push(`--- スライド ${slideEntry.number} ---\n${slideText}`);
@@ -232,7 +232,7 @@ class FileConverter {
         }
     }
 
-    _extractTextFromXML(xmlContent) {
+    #extractTextFromXML(xmlContent) {
         try {
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
@@ -253,7 +253,7 @@ class FileConverter {
         }
     }
 
-    async _extractTextFromWordFile(file) {
+    async #extractTextFromWordFile(file) {
         if (typeof mammoth === 'undefined') {
             return `Wordファイル「${file.name}」からのテキスト抽出に失敗しました。\nmammoth.jsライブラリが見つかりません。`;
         }
@@ -269,7 +269,7 @@ class FileConverter {
         }
     }
 
-    _readFileAsText(file) {
+    #readFileAsText(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = e => resolve(e.target.result);
@@ -278,7 +278,7 @@ class FileConverter {
         });
     }
 
-    _getOfficeFileTypeName(mimeType) {
+    #getOfficeFileTypeName(mimeType) {
         if (!mimeType) return 'Office';
         
         if (mimeType.includes('word')) return 'Word';

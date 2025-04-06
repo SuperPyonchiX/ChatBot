@@ -585,7 +585,7 @@ class AIAPI {
      * @param {File} file - 画像ファイル
      * @returns {Promise<string>} base64エンコードされた画像データ
      */
-    encodeImageToBase64(file) {
+    #encodeImageToBase64(file) {
         return new Promise((resolve, reject) => {
             if (!file || !(file instanceof File)) {
                 reject(new Error('有効なファイルが指定されていません'));

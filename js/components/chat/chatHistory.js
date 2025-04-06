@@ -7,16 +7,6 @@ class ChatHistory {
     static #instance = null;
 
     /**
-     * プライベートコンストラクタ
-     * @private
-     */
-    constructor() {
-        if (ChatHistory.#instance) {
-            throw new Error('ChatHistoryクラスは直接インスタンス化できません。ChatHistory.instanceを使用してください。');
-        }
-    }
-
-    /**
      * シングルトンインスタンスを取得します
      * @returns {ChatHistory} ChatHistoryのシングルトンインスタンス
      */
@@ -25,6 +15,16 @@ class ChatHistory {
             ChatHistory.#instance = new ChatHistory();
         }
         return ChatHistory.#instance;
+    }
+
+    /**
+     * プライベートコンストラクタ
+     * @private
+     */
+    constructor() {
+        if (ChatHistory.#instance) {
+            throw new Error('ChatHistoryクラスは直接インスタンス化できません。ChatHistory.instanceを使用してください。');
+        }
     }
 
     /**
@@ -43,15 +43,15 @@ class ChatHistory {
             if (message.role === 'user') {
                 let content = typeof message.content === 'string' 
                     ? message.content 
-                    : this._processContentArray(message.content);
+                    : this.#processContentArray(message.content);
                 
                 // ファイル内容を除去
-                const displayContent = this._cleanFileContent(content);
+                const displayContent = this.#cleanFileContent(content);
                 await ChatRenderer.getInstance.addUserMessage(displayContent, chatMessages, [], message.timestamp);
             } else if (message.role === 'assistant') {
                 const content = typeof message.content === 'string' 
                     ? message.content 
-                    : this._processContentArray(message.content);
+                    : this.#processContentArray(message.content);
                 await ChatRenderer.getInstance.addBotMessage(content, chatMessages, message.timestamp, false);
             }
         }
@@ -79,40 +79,6 @@ class ChatHistory {
     }
 
     /**
-     * ファイルの内容をクリーンアップする
-     * @private
-     */
-    _cleanFileContent(content) {
-        if (!content) return '';
-        
-        // === ファイル名「...」の内容 === 以降のテキストをすべて削除
-        return content.replace(/===\s+.*?ファイル「.*?」の内容\s+===[\s\S]*$/g, '').trim();
-    }
-
-    /**
-     * 配列型のコンテンツを処理する
-     * @private
-     */
-    _processContentArray(content) {
-        if (typeof content === 'string') return content;
-        if (!Array.isArray(content)) return '';
-        
-        let result = '';
-        
-        for (const item of content) {
-            if (!item || !item.type) continue;
-            
-            if (item.type === 'text' && item.text) {
-                result += item.text;
-            } else if (item.type === 'image_url' && item.image_url && item.image_url.url) {
-                result += `\n![画像](${item.image_url.url})\n`;
-            }
-        }
-        
-        return result;
-    }
-
-    /**
      * 会話履歴を表示する
      */
     renderChatHistory(conversations, currentConversationId, chatHistory, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
@@ -132,7 +98,7 @@ class ChatHistory {
             return;
         }
         
-        const promptGroups = this._groupConversationsByPrompt(conversations);
+        const promptGroups = this.#groupConversationsByPrompt(conversations);
         
         Object.entries(promptGroups).forEach(([promptKey, groupConversations]) => {
             if (!Array.isArray(groupConversations) || groupConversations.length === 0) return;
@@ -140,7 +106,7 @@ class ChatHistory {
             const categoryStates = Storage.getInstance.loadCategoryStates();
             const isExpanded = categoryStates[promptKey] !== false;
             
-            const categorySection = this._createCategorySection(
+            const categorySection = this.#createCategorySection(
                 promptKey, 
                 groupConversations,
                 isExpanded,
@@ -156,10 +122,75 @@ class ChatHistory {
     }
 
     /**
+     * アクティブなチャットを更新する
+     */
+    updateActiveChatInHistory(currentConversationId) {
+        if (!currentConversationId) return;
+        
+        try {
+            const historyItems = document.querySelectorAll('.history-item');
+            historyItems.forEach(item => {
+                if (item.dataset.id === currentConversationId) {
+                    item.classList.add('active');
+                    
+                    const categorySection = item.closest('.chat-category');
+                    if (categorySection) {
+                        const conversationList = categorySection.querySelector('.category-conversations');
+                        const toggleIcon = categorySection.querySelector('.category-header .fas');
+                        const promptKey = categorySection.dataset.category;
+                        
+                        if (conversationList && toggleIcon && promptKey && conversationList.style.display === 'none') {
+                            this.#toggleCategoryExpansion(toggleIcon, conversationList, promptKey);
+                        }
+                    }
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        } catch (error) {
+            console.error('アクティブチャットの更新中にエラーが発生しました:', error);
+        }
+    }
+
+    /**
+     * ファイルの内容をクリーンアップする
+     * @private
+     */
+    #cleanFileContent(content) {
+        if (!content) return '';
+        
+        // === ファイル名「...」の内容 === 以降のテキストをすべて削除
+        return content.replace(/===\s+.*?ファイル「.*?」の内容\s+===[\s\S]*$/g, '').trim();
+    }
+
+    /**
+     * 配列型のコンテンツを処理する
+     * @private
+     */
+    #processContentArray(content) {
+        if (typeof content === 'string') return content;
+        if (!Array.isArray(content)) return '';
+        
+        let result = '';
+        
+        for (const item of content) {
+            if (!item || !item.type) continue;
+            
+            if (item.type === 'text' && item.text) {
+                result += item.text;
+            } else if (item.type === 'image_url' && item.image_url && item.image_url.url) {
+                result += `\n![画像](${item.image_url.url})\n`;
+            }
+        }
+        
+        return result;
+    }
+
+    /**
      * カテゴリーセクションを作成する
      * @private
      */
-    _createCategorySection(promptKey, groupConversations, isExpanded, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
+    #createCategorySection(promptKey, groupConversations, isExpanded, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
         if (!promptKey || !Array.isArray(groupConversations)) {
             return document.createElement('div');
         }
@@ -196,13 +227,13 @@ class ChatHistory {
         
         categoryHeader.addEventListener('click', (e) => {
             e.stopPropagation();
-            this._toggleCategoryExpansion(toggleIcon, conversationList, promptKey);
+            this.#toggleCategoryExpansion(toggleIcon, conversationList, promptKey);
         });
         
         groupConversations.forEach(conversation => {
             if (!conversation) return;
             
-            const historyItem = this._createHistoryItem(
+            const historyItem = this.#createHistoryItem(
                 conversation, 
                 onSwitchConversation, 
                 onShowRenameModal, 
@@ -221,7 +252,7 @@ class ChatHistory {
      * カテゴリー展開/折りたたみを切り替え
      * @private
      */
-    _toggleCategoryExpansion(toggleIcon, conversationList, promptKey) {
+    #toggleCategoryExpansion(toggleIcon, conversationList, promptKey) {
         if (!toggleIcon || !conversationList || !promptKey) return;
         
         const isNowExpanded = toggleIcon.classList.contains('fa-chevron-down');
@@ -241,7 +272,7 @@ class ChatHistory {
      * 履歴アイテムを作成する
      * @private
      */
-    _createHistoryItem(conversation, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
+    #createHistoryItem(conversation, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
         if (!conversation || !conversation.id) {
             return document.createElement('div');
         }
@@ -312,7 +343,7 @@ class ChatHistory {
      * 会話をシステムプロンプトでグループ化する
      * @private
      */
-    _groupConversationsByPrompt(conversations) {
+    #groupConversationsByPrompt(conversations) {
         if (!Array.isArray(conversations)) {
             return { '未分類': [] };
         }
@@ -326,7 +357,7 @@ class ChatHistory {
             
             const systemMessage = conversation.messages?.find(m => m?.role === 'system');
             if (systemMessage && systemMessage.content) {
-                systemPrompt = this._getPromptCategory(systemMessage.content);
+                systemPrompt = this.#getPromptCategory(systemMessage.content);
             }
             
             if (!groups[systemPrompt]) {
@@ -347,7 +378,7 @@ class ChatHistory {
      * システムプロンプトからカテゴリを判定する
      * @private
      */
-    _getPromptCategory(promptText) {
+    #getPromptCategory(promptText) {
         if (!promptText) return '未分類';
         
         const templates = window.AppState.systemPromptTemplates;
@@ -359,36 +390,5 @@ class ChatHistory {
         }
         
         return '未分類';
-    }
-    
-    /**
-     * アクティブなチャットを更新する
-     */
-    updateActiveChatInHistory(currentConversationId) {
-        if (!currentConversationId) return;
-        
-        try {
-            const historyItems = document.querySelectorAll('.history-item');
-            historyItems.forEach(item => {
-                if (item.dataset.id === currentConversationId) {
-                    item.classList.add('active');
-                    
-                    const categorySection = item.closest('.chat-category');
-                    if (categorySection) {
-                        const conversationList = categorySection.querySelector('.category-conversations');
-                        const toggleIcon = categorySection.querySelector('.category-header .fas');
-                        const promptKey = categorySection.dataset.category;
-                        
-                        if (conversationList && toggleIcon && promptKey && conversationList.style.display === 'none') {
-                            this._toggleCategoryExpansion(toggleIcon, conversationList, promptKey);
-                        }
-                    }
-                } else {
-                    item.classList.remove('active');
-                }
-            });
-        } catch (error) {
-            console.error('アクティブチャットの更新中にエラーが発生しました:', error);
-        }
     }
 }

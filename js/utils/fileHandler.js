@@ -44,39 +44,12 @@ class FileHandler {
             const fileInput = UICache.getInstance.get('fileInput');
             if (!fileInput) return;
             
-            const acceptedExtensions = this.getAllowedFileExtensions();
+            const acceptedExtensions = this.#getAllowedFileExtensions();
             if (acceptedExtensions && acceptedExtensions.length > 0) {
                 fileInput.setAttribute('accept', acceptedExtensions.join(','));
             }
         } catch (error) {
             console.error('ファイル拡張子設定エラー:', error);
-        }
-    }
-
-    /**
-     * 許可されたファイル拡張子のリストを取得します
-     * @returns {string[]} 許可された拡張子の配列
-     */
-    getAllowedFileExtensions() {
-        try {
-            const extensions = [];
-            const allowedTypes = window.CONFIG.FILE.ALLOWED_FILE_TYPES;
-            const mimeToExtMap = window.CONFIG.FILE.MIME_TO_EXTENSION_MAP;
-            
-            for (const category in allowedTypes) {
-                if (!Object.prototype.hasOwnProperty.call(allowedTypes, category)) continue;
-                
-                for (const mimeType of allowedTypes[category]) {
-                    if (mimeToExtMap[mimeType]) {
-                        extensions.push(...mimeToExtMap[mimeType]);
-                    }
-                }
-            }
-            
-            return [...new Set(extensions)];
-        } catch (error) {
-            console.error('拡張子リスト生成エラー:', error);
-            return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.txt', '.md', '.csv', '.pdf', '.js', '.html', '.css', '.json'];
         }
     }
 
@@ -140,5 +113,32 @@ class FileHandler {
         FileAttachmentUI.getInstance.clearPreview();
         this.savedAttachments = [];
         document.dispatchEvent(new CustomEvent('attachment-removed'));
+    }
+
+    /**
+     * 許可されたファイル拡張子のリストを取得します
+     * @returns {string[]} 許可された拡張子の配列
+     */
+    #getAllowedFileExtensions() {
+        try {
+            const extensions = [];
+            const allowedTypes = window.CONFIG.FILE.ALLOWED_FILE_TYPES;
+            const mimeToExtMap = window.CONFIG.FILE.MIME_TO_EXTENSION_MAP;
+            
+            for (const category in allowedTypes) {
+                if (!Object.prototype.hasOwnProperty.call(allowedTypes, category)) continue;
+                
+                for (const mimeType of allowedTypes[category]) {
+                    if (mimeToExtMap[mimeType]) {
+                        extensions.push(...mimeToExtMap[mimeType]);
+                    }
+                }
+            }
+            
+            return [...new Set(extensions)];
+        } catch (error) {
+            console.error('拡張子リスト生成エラー:', error);
+            return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.txt', '.md', '.csv', '.pdf', '.js', '.html', '.css', '.json'];
+        }
     }
 }

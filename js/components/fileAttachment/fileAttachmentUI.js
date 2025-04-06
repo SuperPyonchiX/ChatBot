@@ -6,13 +6,6 @@
 class FileAttachmentUI {
     static #instance = null;
     
-    constructor() {
-        if (FileAttachmentUI.#instance) {
-            return FileAttachmentUI.#instance;
-        }
-        FileAttachmentUI.#instance = this;
-    }
-
     /**
      * シングルトンインスタンスを取得
      */
@@ -23,14 +16,21 @@ class FileAttachmentUI {
         return FileAttachmentUI.#instance;
     }
 
+    constructor() {
+        if (FileAttachmentUI.#instance) {
+            return FileAttachmentUI.#instance;
+        }
+        FileAttachmentUI.#instance = this;
+    }
+
     updatePreview(files) {
-        const previewArea = this._getOrCreatePreviewArea();
+        const previewArea = this.#getOrCreatePreviewArea();
         if (!previewArea) {
             console.error('プレビューエリアを作成できませんでした');
             return;
         }
         
-        this._createFilePreviewItems(files, previewArea);
+        this.#createFilePreviewItems(files, previewArea);
     }
 
     clearPreview() {
@@ -51,7 +51,7 @@ class FileAttachmentUI {
         }
     }
 
-    _getOrCreatePreviewArea() {
+    #getOrCreatePreviewArea() {
         try {
             const inputWrapper = document.querySelector('.input-wrapper');
             if (!inputWrapper) {
@@ -81,7 +81,7 @@ class FileAttachmentUI {
         }
     }
 
-    _createFilePreviewItems(files, previewArea) {
+    #createFilePreviewItems(files, previewArea) {
         if (!previewArea || !files || !Array.isArray(files)) return;
         
         files.forEach((file, currentIndex) => {
@@ -97,16 +97,16 @@ class FileAttachmentUI {
             fileItem.dataset.fileIndex = fileIndex.toString();
             
             // ファイルタイプに応じたプレビュー内容を設定
-            this._createFilePreview(file, fileItem);
+            this.#createFilePreview(file, fileItem);
             
             // ファイル情報とクローズボタンを追加
-            this._createFileInfo(file, fileItem, previewArea, fileIndex);
+            this.#createFileInfo(file, fileItem, previewArea, fileIndex);
             
             previewArea.appendChild(fileItem);
         });
     }
 
-    _createFilePreview(file, fileItem) {
+    #createFilePreview(file, fileItem) {
         if (!file || !fileItem) return;
         
         // ファイルアイコンを表示するデフォルト要素
@@ -116,7 +116,7 @@ class FileAttachmentUI {
         try {
             // 画像ファイルの場合
             if (file.type.startsWith('image/')) {
-                this._createImagePreview(file, fileItem);
+                this.#createImagePreview(file, fileItem);
             } 
             // PDFの場合
             else if (file.type === 'application/pdf') {
@@ -161,7 +161,7 @@ class FileAttachmentUI {
         }
     }
 
-    _createImagePreview(file, fileItem) {
+    #createImagePreview(file, fileItem) {
         if (!file || !fileItem) return;
         
         const reader = new FileReader();
@@ -217,15 +217,15 @@ class FileAttachmentUI {
         reader.readAsDataURL(file);
     }
 
-    _createFileInfo(file, fileItem) {
+    #createFileInfo(file, fileItem) {
         if (!file || !fileItem) return;
         
         const fileInfo = document.createElement('div');
         fileInfo.classList.add('file-info');
         
         fileInfo.innerHTML = `
-            <span class="file-name" title="${file.name}">${this._truncateFileName(file.name)}</span>
-            <span class="file-size">${this._formatFileSize(file.size)}</span>
+            <span class="file-name" title="${file.name}">${this.#truncateFileName(file.name)}</span>
+            <span class="file-size">${this.#formatFileSize(file.size)}</span>
             <span class="remove-file" data-index="${fileItem.dataset.fileIndex}" title="削除">
                 <i class="fas fa-times"></i>
             </span>
@@ -235,11 +235,11 @@ class FileAttachmentUI {
         // ファイル削除イベントを登録
         const removeButton = fileInfo.querySelector('.remove-file');
         if (removeButton) {
-            this._setupRemoveButtonHandler(removeButton, fileItem);
+            this.#setupRemoveButtonHandler(removeButton, fileItem);
         }
     }
 
-    _truncateFileName(fileName, maxLength = 20) {
+    #truncateFileName(fileName, maxLength = 20) {
         if (!fileName) return '';
         
         if (fileName.length <= maxLength) {
@@ -253,7 +253,7 @@ class FileAttachmentUI {
         return `${truncatedName}...${extension}`;
     }
 
-    _formatFileSize(sizeInBytes) {
+    #formatFileSize(sizeInBytes) {
         if (sizeInBytes < 1024) {
             return sizeInBytes + 'B';
         } else if (sizeInBytes < 1024 * 1024) {
@@ -263,7 +263,7 @@ class FileAttachmentUI {
         }
     }
 
-    _setupRemoveButtonHandler(removeButton, fileItem) {
+    #setupRemoveButtonHandler(removeButton, fileItem) {
         if (!removeButton || !fileItem) return;
         
         removeButton.addEventListener('click', e => {
@@ -276,7 +276,7 @@ class FileAttachmentUI {
                 FileHandler.getInstance.selectedFiles = FileHandler.getInstance.selectedFiles.filter((_, i) => i !== indexToRemove);
                 
                 fileItem.remove();
-                this._updateFileIndices();
+                this.#updateFileIndices();
                 
                 if (FileHandler.getInstance.selectedFiles.length === 0) {
                     const previewArea = document.querySelector('.file-preview');
@@ -296,7 +296,7 @@ class FileAttachmentUI {
         });
     }
 
-    _updateFileIndices() {
+    #updateFileIndices() {
         const fileItems = document.querySelectorAll('.file-preview-item');
         
         fileItems.forEach((item, index) => {

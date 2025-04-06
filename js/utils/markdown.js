@@ -76,6 +76,97 @@ class Markdown {
             return this.escapeHtml(text).replace(/\n/g, '<br>');
         }
     }
+            
+    /**
+     * 特殊文字をHTMLエスケープします
+     * @param {string} text - エスケープするテキスト
+     * @returns {string} エスケープされたテキスト
+     */
+    escapeHtml(text) {
+        if (!text) return '';
+        
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    /**
+     * 外部スクリプトを動的に読み込みます
+     * @param {string} src - スクリプトのURL
+     * @param {Object} attributes - 追加の属性
+     * @returns {Promise} スクリプト読み込み後に解決するPromise
+     */
+    loadScript(src, attributes = {}) {
+        return new Promise((resolve, reject) => {
+            // 既に読み込まれている場合はそのまま解決
+            if (document.querySelector(`script[src="${src}"]`)) {
+                resolve();
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = src;
+            
+            // 追加の属性を設定
+            Object.entries(attributes).forEach(([key, value]) => {
+                script.setAttribute(key, value);
+            });
+            
+            // イベントハンドラを設定
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`スクリプトの読み込みに失敗しました: ${src}`));
+            
+            // 読み込みタイムアウト
+            const timeoutId = setTimeout(() => {
+                reject(new Error(`スクリプトの読み込みがタイムアウトしました: ${src}`));
+            }, 10000); // 10秒
+            
+            script.onload = () => {
+                clearTimeout(timeoutId);
+                resolve();
+            };
+            
+            // DOMに追加
+            document.head.appendChild(script);
+        });
+    }
+    
+    /**
+     * マークダウンライブラリを初期化します
+     * 構文ハイライトなどの設定を行います
+     */
+    initializeMarkdown() {
+        // ライブラリのステータスを更新
+        this._libraryStatus.marked = true;
+        
+        // マークダウンが未ロードの場合は何もしない
+        if (typeof marked === 'undefined') {
+            console.warn('マークダウンライブラリが読み込まれていません。ライブラリ読み込み後にこのメソッドを呼び出してください。');
+            return;
+        }
+        
+        // マークダウンのレンダリングオプション設定
+        const options = {
+            breaks: true,        // 改行を認識
+            gfm: true,           // GitHub Flavored Markdown
+            headerIds: false,    // ヘッダーIDを無効化
+            mangle: false,       // リンクを難読化しない
+            sanitize: false,     // HTMLタグを許可
+        };
+        
+        // Prismが利用可能ならハイライト関数を設定
+        if (typeof Prism !== 'undefined') {
+            options.highlight = this.#highlightCode;
+            this._libraryStatus.prism = true;
+        }
+        
+        marked.setOptions(options);
+    }
     
     /**
      * レンダリング済みHTMLからmermaidブロックを探して処理します
@@ -409,98 +500,7 @@ class Markdown {
             return html;
         }
     }
-        
-    /**
-     * 特殊文字をHTMLエスケープします
-     * @param {string} text - エスケープするテキスト
-     * @returns {string} エスケープされたテキスト
-     */
-    escapeHtml(text) {
-        if (!text) return '';
-        
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return text.replace(/[&<>"']/g, m => map[m]);
-    }
 
-    /**
-     * 外部スクリプトを動的に読み込みます
-     * @param {string} src - スクリプトのURL
-     * @param {Object} attributes - 追加の属性
-     * @returns {Promise} スクリプト読み込み後に解決するPromise
-     */
-    loadScript(src, attributes = {}) {
-        return new Promise((resolve, reject) => {
-            // 既に読み込まれている場合はそのまま解決
-            if (document.querySelector(`script[src="${src}"]`)) {
-                resolve();
-                return;
-            }
-            
-            const script = document.createElement('script');
-            script.src = src;
-            
-            // 追加の属性を設定
-            Object.entries(attributes).forEach(([key, value]) => {
-                script.setAttribute(key, value);
-            });
-            
-            // イベントハンドラを設定
-            script.onload = () => resolve();
-            script.onerror = () => reject(new Error(`スクリプトの読み込みに失敗しました: ${src}`));
-            
-            // 読み込みタイムアウト
-            const timeoutId = setTimeout(() => {
-                reject(new Error(`スクリプトの読み込みがタイムアウトしました: ${src}`));
-            }, 10000); // 10秒
-            
-            script.onload = () => {
-                clearTimeout(timeoutId);
-                resolve();
-            };
-            
-            // DOMに追加
-            document.head.appendChild(script);
-        });
-    }
-    
-    /**
-     * マークダウンライブラリを初期化します
-     * 構文ハイライトなどの設定を行います
-     */
-    initializeMarkdown() {
-        // ライブラリのステータスを更新
-        this._libraryStatus.marked = true;
-        
-        // マークダウンが未ロードの場合は何もしない
-        if (typeof marked === 'undefined') {
-            console.warn('マークダウンライブラリが読み込まれていません。ライブラリ読み込み後にこのメソッドを呼び出してください。');
-            return;
-        }
-        
-        // マークダウンのレンダリングオプション設定
-        const options = {
-            breaks: true,        // 改行を認識
-            gfm: true,           // GitHub Flavored Markdown
-            headerIds: false,    // ヘッダーIDを無効化
-            mangle: false,       // リンクを難読化しない
-            sanitize: false,     // HTMLタグを許可
-        };
-        
-        // Prismが利用可能ならハイライト関数を設定
-        if (typeof Prism !== 'undefined') {
-            options.highlight = this.#highlightCode;
-            this._libraryStatus.prism = true;
-        }
-        
-        marked.setOptions(options);
-    }
-    
     /**
      * コードブロックの構文ハイライトを行います
      * @private

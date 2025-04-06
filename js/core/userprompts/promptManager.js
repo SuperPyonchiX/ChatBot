@@ -137,13 +137,13 @@ class PromptManager {
         // 初回実行時にデフォルトカテゴリを設定
         const categories = this.loadCategories();
         if (Object.keys(categories).length === 0) {
-            this.saveCategories(PromptManager.DEFAULT_CATEGORIES);
+            this.#saveCategories(PromptManager.DEFAULT_CATEGORIES);
         }
         
         // 変数のデフォルト値を設定
-        const variables = this.loadVariables();
+        const variables = this.#loadVariables();
         if (Object.keys(variables).length === 0) {
-            this.saveVariables({
+            this.#saveVariables({
                 'current_date': new Date().toISOString().split('T')[0],
                 'user_name': 'ユーザー'
             });
@@ -169,51 +169,12 @@ class PromptManager {
     }
 
     /**
-     * プロンプトライブラリを保存
-     * @public
-     * @param {Array} promptLibrary - プロンプトの配列
-     */
-    savePromptLibrary(promptLibrary) {
-        if (!Array.isArray(promptLibrary)) return;
-        Storage.getInstance.setItem(this.STORAGE_KEYS.PROMPT_LIBRARY, promptLibrary);
-    }
-
-    /**
      * カテゴリを読み込む
      * @public
      * @returns {Object} カテゴリオブジェクト
      */
     loadCategories() {
         return Storage.getInstance.getItem(this.STORAGE_KEYS.PROMPT_CATEGORIES, {}, true);
-    }
-
-    /**
-     * カテゴリを保存
-     * @public
-     * @param {Object} categories - カテゴリオブジェクト
-     */
-    saveCategories(categories) {
-        if (!categories || typeof categories !== 'object') return;
-        Storage.getInstance.setItem(this.STORAGE_KEYS.PROMPT_CATEGORIES, categories);
-    }
-
-    /**
-     * 変数を読み込む
-     * @public
-     * @returns {Object} 変数オブジェクト
-     */
-    loadVariables() {
-        return Storage.getInstance.getItem(this.STORAGE_KEYS.PROMPT_VARIABLES, {}, true);
-    }
-
-    /**
-     * 変数を保存
-     * @public
-     * @param {Object} variables - 変数オブジェクト
-     */
-    saveVariables(variables) {
-        if (!variables || typeof variables !== 'object') return;
-        Storage.getInstance.setItem(this.STORAGE_KEYS.PROMPT_VARIABLES, variables);
     }
 
     /**
@@ -243,7 +204,7 @@ class PromptManager {
         };
         
         library.push(newPrompt);
-        this.savePromptLibrary(library);
+        this.#savePromptLibrary(library);
         
         return promptId;
     }
@@ -277,7 +238,7 @@ class PromptManager {
         }
         
         library[index].updatedAt = Date.now();
-        this.savePromptLibrary(library);
+        this.#savePromptLibrary(library);
         
         return true;
     }
@@ -298,7 +259,7 @@ class PromptManager {
             return false; // 削除対象が見つからなかった
         }
         
-        this.savePromptLibrary(filteredLibrary);
+        this.#savePromptLibrary(filteredLibrary);
         return true;
     }
 
@@ -335,32 +296,54 @@ class PromptManager {
     }
 
     /**
-     * カテゴリを作成
+     * 新しいカテゴリを追加
      * @public
-     * @param {string} categoryKey - カテゴリキー
-     * @param {Object} categoryData - カテゴリデータ
+     * @param {string} categoryName - カテゴリ名
      * @returns {boolean} 作成成功時true
      */
-    createCategory(categoryKey, categoryData) {
-        if (!categoryKey || !categoryData || !categoryData.name) {
+    addCategory(categoryName) {
+        if (!categoryName) {
+            console.error('カテゴリ名が空です');
+            return false;
+        }
+        
+        // カテゴリキーを生成
+        const categoryKey = this.#generateCategoryKey(categoryName);
+        
+        if (!categoryKey) {
+            console.error('カテゴリ名が不正です: ', categoryName);
             return false;
         }
         
         const categories = this.loadCategories();
         
-        // 既に存在する場合は失敗
+        // 既に同じキーが存在する場合は失敗
         if (categories[categoryKey]) {
+            console.error('カテゴリキーが既に存在します: ', categoryKey);
             return false;
         }
         
-        categories[categoryKey] = {
-            name: categoryData.name,
-            description: categoryData.description || '',
-            order: categoryData.order !== undefined ? categoryData.order : Object.keys(categories).length
-        };
+        // 既に同じ名前が存在する場合は失敗（大文字小文字を区別しない）
+        const nameExists = Object.values(categories).some(cat => 
+            cat.name.toLowerCase() === categoryName.toLowerCase()
+        );
+        if (nameExists) {
+            console.error('カテゴリ名が既に存在します: ', categoryName);
+            return false;
+        }
         
-        this.saveCategories(categories);
-        return true;
+        // カテゴリを作成
+        const success = this.#createCategory(categoryKey, {
+            name: categoryName,
+            description: '',
+            order: Object.keys(categories).length
+        });
+        
+        if (!success) {
+            console.error('カテゴリの保存に失敗しました: ', categoryName);
+        }
+        
+        return success;
     }
 
     /**
@@ -397,7 +380,7 @@ class PromptManager {
             categories[categoryKey].name = updateData.name.trim();
             
             // 保存
-            this.saveCategories(categories);
+            this.#saveCategories(categories);
             
             return true;
         } catch (error) {
@@ -448,8 +431,8 @@ class PromptManager {
             delete categories[categoryKey];
             
             // 変更を保存
-            this.saveCategories(categories);
-            this.savePromptLibrary(prompts);
+            this.#saveCategories(categories);
+            this.#savePromptLibrary(prompts);
             
             return true;
         } catch (error) {
@@ -467,9 +450,9 @@ class PromptManager {
     setVariable(name, value) {
         if (!name) return;
         
-        const variables = this.loadVariables();
+        const variables = this.#loadVariables();
         variables[name] = value;
-        this.saveVariables(variables);
+        this.#saveVariables(variables);
     }
 
     /**
@@ -491,25 +474,71 @@ class PromptManager {
     }
 
     /**
-     * プロンプトを複数組み合わせる
+     * プロンプトライブラリを保存
      * @public
-     * @param {Array} promptIds - プロンプトIDの配列
-     * @param {Object} customVariables - カスタム変数（オプション）
-     * @param {string} separator - 区切り文字（デフォルトは改行2つ）
-     * @returns {string} 結合されたプロンプト
+     * @param {Array} promptLibrary - プロンプトの配列
      */
-    combinePrompts(promptIds, customVariables = {}, separator = '\n\n') {
-        if (!Array.isArray(promptIds) || promptIds.length === 0) {
-            return '';
+    #savePromptLibrary(promptLibrary) {
+        if (!Array.isArray(promptLibrary)) return;
+        Storage.getInstance.setItem(this.STORAGE_KEYS.PROMPT_LIBRARY, promptLibrary);
+    }
+
+    /**
+     * カテゴリを保存
+     * @public
+     * @param {Object} categories - カテゴリオブジェクト
+     */
+    #saveCategories(categories) {
+        if (!categories || typeof categories !== 'object') return;
+        Storage.getInstance.setItem(this.STORAGE_KEYS.PROMPT_CATEGORIES, categories);
+    }
+
+    /**
+     * 変数を読み込む
+     * @public
+     * @returns {Object} 変数オブジェクト
+     */
+    #loadVariables() {
+        return Storage.getInstance.getItem(this.STORAGE_KEYS.PROMPT_VARIABLES, {}, true);
+    }
+
+    /**
+     * 変数を保存
+     * @public
+     * @param {Object} variables - 変数オブジェクト
+     */
+    #saveVariables(variables) {
+        if (!variables || typeof variables !== 'object') return;
+        Storage.getInstance.setItem(this.STORAGE_KEYS.PROMPT_VARIABLES, variables);
+    }
+
+    /**
+     * カテゴリを作成
+     * @public
+     * @param {string} categoryKey - カテゴリキー
+     * @param {Object} categoryData - カテゴリデータ
+     * @returns {boolean} 作成成功時true
+     */
+    #createCategory(categoryKey, categoryData) {
+        if (!categoryKey || !categoryData || !categoryData.name) {
+            return false;
         }
         
-        const library = this.loadPromptLibrary();
-        const prompts = promptIds
-            .map(id => library.find(p => p.id === id))
-            .filter(Boolean)
-            .map(prompt => this.#processPromptTemplate(prompt.content, customVariables));
+        const categories = this.loadCategories();
         
-        return prompts.join(separator);
+        // 既に存在する場合は失敗
+        if (categories[categoryKey]) {
+            return false;
+        }
+        
+        categories[categoryKey] = {
+            name: categoryData.name,
+            description: categoryData.description || '',
+            order: categoryData.order !== undefined ? categoryData.order : Object.keys(categories).length
+        };
+        
+        this.#saveCategories(categories);
+        return true;
     }
 
     /**
@@ -529,7 +558,7 @@ class PromptManager {
         };
         
         // 保存済みの変数を読み込む
-        const savedVariables = this.loadVariables();
+        const savedVariables = this.#loadVariables();
         
         // すべての変数をマージ（優先順位: カスタム > システム > 保存済み）
         const allVariables = {
@@ -658,56 +687,5 @@ class PromptManager {
         }, '');
 
         return `cat_${hash}`;
-    }
-
-    /**
-     * 新しいカテゴリを追加
-     * @public
-     * @param {string} categoryName - カテゴリ名
-     * @returns {boolean} 作成成功時true
-     */
-    addCategory(categoryName) {
-        if (!categoryName) {
-            console.error('カテゴリ名が空です');
-            return false;
-        }
-        
-        // カテゴリキーを生成
-        const categoryKey = this.#generateCategoryKey(categoryName);
-        
-        if (!categoryKey) {
-            console.error('カテゴリ名が不正です: ', categoryName);
-            return false;
-        }
-        
-        const categories = this.loadCategories();
-        
-        // 既に同じキーが存在する場合は失敗
-        if (categories[categoryKey]) {
-            console.error('カテゴリキーが既に存在します: ', categoryKey);
-            return false;
-        }
-        
-        // 既に同じ名前が存在する場合は失敗（大文字小文字を区別しない）
-        const nameExists = Object.values(categories).some(cat => 
-            cat.name.toLowerCase() === categoryName.toLowerCase()
-        );
-        if (nameExists) {
-            console.error('カテゴリ名が既に存在します: ', categoryName);
-            return false;
-        }
-        
-        // カテゴリを作成
-        const success = this.createCategory(categoryKey, {
-            name: categoryName,
-            description: '',
-            order: Object.keys(categories).length
-        });
-        
-        if (!success) {
-            console.error('カテゴリの保存に失敗しました: ', categoryName);
-        }
-        
-        return success;
     }
 }

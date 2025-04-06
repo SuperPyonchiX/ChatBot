@@ -129,7 +129,7 @@ class SystemPromptModal {
             categorizedPrompts[category]
                 .sort((a, b) => a.name.localeCompare(b.name, 'ja'))
                 .forEach(prompt => {
-                    const item = this._createPromptItem(prompt);
+                    const item = this.#createPromptItem(prompt);
                     promptList.appendChild(item);
                 });
             
@@ -146,7 +146,7 @@ class SystemPromptModal {
      * システムプロンプト項目要素を作成します
      * @private
      */
-    _createPromptItem(prompt) {
+    #createPromptItem(prompt) {
         const promptItem = document.createElement('div');
         promptItem.className = 'system-prompt-item';
         
