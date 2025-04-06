@@ -491,16 +491,16 @@ class ChatRenderer {
             console.error('コード実行に必要な要素が見つかりません');
             return;
         }
-        
+
         // ボタンの元の状態を保存（スコープ問題を防ぐために関数の上部に移動）
         const originalButtonHtml = button.innerHTML || '<i class="fas fa-play"></i>';
-        
+
         try {
             // ボタンの状態を実行中に変更
             button.disabled = true;
             button.classList.add('code-executing');
             button.innerHTML = '<span class="executing-spinner"></span>';
-            
+
             // 既存の実行結果を削除
             const parentBlock = codeBlock.closest('.code-block');
             if (parentBlock) {
@@ -509,19 +509,19 @@ class ChatRenderer {
                     parentBlock.removeChild(existingResult);
                 }
             }
-            
+
             // リアルタイム出力用の要素を作成
             let resultElement = null;
             if (parentBlock) {
                 resultElement = document.createElement('div');
                 resultElement.classList.add('code-execution-result');
-                
+
                 // ステータス表示用の要素
                 const statusElement = document.createElement('div');
                 statusElement.classList.add('execution-status');
                 statusElement.textContent = '実行準備中...';
                 resultElement.appendChild(statusElement);
-                
+
                 // HTML言語の場合は特別なコンテナを用意
                 if (language === 'html') {
                     const htmlContainer = document.createElement('div');
@@ -533,169 +533,14 @@ class ChatRenderer {
                     outputElement.classList.add('realtime-output');
                     resultElement.appendChild(outputElement);
                 }
-                
+
                 parentBlock.appendChild(resultElement);
             }
-            
+
             // コードを取得して実行
             const code = codeBlock.textContent;
-            
-            // リアルタイム出力を処理するコールバック
-            const outputCallback = function(data) {
-                if (!resultElement) return;
-                
-                const statusElement = resultElement.querySelector('.execution-status');
-                const outputElement = resultElement.querySelector('.realtime-output');
-                const htmlContainer = resultElement.querySelector('.html-result-container');
-                
-                if (!statusElement) return;
-                
-                switch (data.type) {
-                    case 'status':
-                        // ステータスメッセージを更新
-                        statusElement.textContent = data.content;
-                        break;
-                        
-                    case 'output':
-                    case 'console':
-                        // 出力内容を追加（HTML以外の言語）
-                        if (outputElement) {
-                            const contentSpan = document.createElement('span');
-                            if (data.content && data.content.type) {
-                                contentSpan.classList.add(`console-${data.content.type}`);
-                                contentSpan.textContent = data.content.content;
-                            } else {
-                                contentSpan.textContent = data.content;
-                            }
-                            outputElement.appendChild(contentSpan);
-                            
-                            // 自動スクロール（出力エリア内のみ）
-                            outputElement.scrollTop = outputElement.scrollHeight;
-                        }
-                        break;
-                        
-                    case 'error':
-                        // エラーメッセージを表示
-                        const errorContent = data.content;
-                        
-                        // HTMLの場合はHTMLコンテナに、それ以外は通常の出力エリアに表示
-                        const targetElement = language === 'html' ? htmlContainer : outputElement;
-                        
-                        if (targetElement) {
-                            if (typeof errorContent === 'string') {
-                                // 文字列の場合はそのまま表示
-                                const errorSpan = document.createElement('span');
-                                errorSpan.classList.add('console-error');
-                                errorSpan.textContent = errorContent;
-                                targetElement.appendChild(errorSpan);
-                            } else if (errorContent.error) {
-                                // エラーオブジェクトの場合の処理
-                                const errorMessage = document.createElement('div');
-                                errorMessage.classList.add('console-error');
-                                errorMessage.textContent = errorContent.error || 'エラーが発生しました';
-                                targetElement.appendChild(errorMessage);
-                                
-                                // エラー詳細があれば追加
-                                if (errorContent.errorDetail) {
-                                    const errorDetail = document.createElement('pre');
-                                    errorDetail.classList.add('error-details');
-                                    errorDetail.textContent = errorContent.errorDetail;
-                                    targetElement.appendChild(errorDetail);
-                                }
-                            } else {
-                                // 未知のエラー形式の場合
-                                const errorSpan = document.createElement('span');
-                                errorSpan.classList.add('console-error');
-                                errorSpan.textContent = 'エラーが発生しました';
-                                targetElement.appendChild(errorSpan);
-                            }
-                        }
-                        
-                        // エラー時はステータスを更新
-                        statusElement.textContent = 'エラーが発生しました';
-                        statusElement.classList.add('execution-error');
-                        break;
-                        
-                    case 'result':
-                        // 最終結果が返ってきた場合
-                        if (data.content.executionTime) {
-                            const timeInfo = document.createElement('div');
-                            timeInfo.classList.add('execution-time');
-                            timeInfo.innerHTML = `<span>実行時間: ${data.content.executionTime}</span>`;
-                            resultElement.prepend(timeInfo);
-                        }
-                        
-                        // HTML結果の特別処理
-                        if (language === 'html' && data.content.type === 'html' && data.content.html) {
-                            // HTMLコンテナを空にする
-                            if (htmlContainer) {
-                                htmlContainer.innerHTML = '';
-                                
-                                // iframeを作成
-                                const iframe = document.createElement('iframe');
-                                iframe.classList.add('html-result-frame');
-                                iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads'; 
-                                iframe.style.width = '100%';
-                                iframe.style.minHeight = '300px';
-                                iframe.style.border = '1px solid #ddd';
-                                iframe.style.borderRadius = '4px';
-                                htmlContainer.appendChild(iframe);
-                                
-                                // iframeのコンテンツを設定
-                                setTimeout(() => {
-                                    try {
-                                        const doc = iframe.contentDocument || iframe.contentWindow.document;
-                                        doc.open();
-                                        doc.write(data.content.html);
-                                        doc.close();
-                                        
-                                        // iframeの高さを調整
-                                        iframe.onload = function() {
-                                            try {
-                                                const height = Math.max(300, doc.body.scrollHeight + 30);
-                                                iframe.style.height = `${height}px`;
-                                                
-                                                // コンテンツの変更を監視して高さを再調整
-                                                if (window.ResizeObserver) {
-                                                    const resizeObserver = new ResizeObserver(() => {
-                                                        const newHeight = Math.max(300, doc.body.scrollHeight + 30);
-                                                        iframe.style.height = `${newHeight}px`;
-                                                    });
-                                                    
-                                                    if (doc.body) {
-                                                        resizeObserver.observe(doc.body);
-                                                    }
-                                                }
-                                            } catch (e) {
-                                                console.error('iframe高さ調整エラー:', e);
-                                            }
-                                        };
-                                        
-                                        // すぐに高さを調整してみる
-                                        iframe.style.height = `${Math.max(300, doc.body.scrollHeight + 30)}px`;
-                                        
-                                    } catch (error) {
-                                        console.error('iframeへのHTML読み込み中にエラーが発生しました:', error);
-                                        htmlContainer.innerHTML = '<p style="color: red;">HTMLの表示に失敗しました: ' + error.message + '</p>';
-                                    }
-                                }, 0);
-                            }
-                        }
-                        
-                        // ステータス表示を削除するか成功メッセージに変更
-                        if (statusElement) {
-                            statusElement.textContent = '実行完了';
-                            statusElement.classList.add('execution-complete');
-                        }
-                        break;
-                }
-            };
-            
-            // CodeExecutorを使用してコードを実行
-            const result = await CodeExecutor.getInstance.executeCode(code, language, outputCallback);
-            
-            // スクロール位置は自動調整しない
-            
+            await CodeExecutor.getInstance.executeCode(code, language, resultElement);
+
         } catch (error) {
             console.error('コード実行中にエラーが発生しました:', error);
             
