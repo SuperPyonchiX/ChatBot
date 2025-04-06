@@ -2,14 +2,34 @@
  * PythonExecutor.js
  * Pythonコードの実行を担当するクラス
  */
-class PythonExecutor {
+class PythonExecutor extends ExecutorBase {
+    static #instance = null;
+    
+    constructor() {
+        super();
+        if (PythonExecutor.#instance) {
+            return PythonExecutor.#instance;
+        }
+        PythonExecutor.#instance = this;
+    }
+
+    /**
+     * シングルトンインスタンスを取得
+     */
+    static get getInstance() {
+        if (!PythonExecutor.#instance) {
+            PythonExecutor.#instance = new PythonExecutor();
+        }
+        return PythonExecutor.#instance;
+    }
+
     /**
      * Pythonコードを実行する
      * @param {string} code - 実行するPythonコード
      * @param {Function} [outputCallback] - リアルタイム出力用コールバック関数
      * @returns {Promise<Object>} 実行結果
      */
-    static async execute(code, outputCallback) {
+    async execute(code, outputCallback) {
         try {
             if (typeof loadPyodide === 'undefined') {
                 if (typeof outputCallback === 'function') {
@@ -18,7 +38,7 @@ class PythonExecutor {
                         content: 'Pythonランタイムを読み込んでいます...'
                     });
                 }
-                await this._loadPyodideRuntime();
+                await this._loadRuntime();
             }
             
             let output = '';
@@ -245,10 +265,10 @@ if stderr_content:
 
     /**
      * Pyodideランタイムを読み込む
-     * @private
+     * @protected
      * @returns {Promise<void>}
      */
-    static async _loadPyodideRuntime() {
+    _loadRuntime() {
         return new Promise((resolve, reject) => {
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js';

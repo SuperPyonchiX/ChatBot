@@ -1,15 +1,35 @@
 /**
  * HTMLExecutor.js
- * HTMLコードの実行を担当するクラス
+ * HTMLコードの実行（プレビュー表示）を担当するクラス
  */
-class HTMLExecutor {
+class HTMLExecutor extends ExecutorBase {
+    static #instance = null;
+    
+    constructor() {
+        super();
+        if (HTMLExecutor.#instance) {
+            return HTMLExecutor.#instance;
+        }
+        HTMLExecutor.#instance = this;
+    }
+
     /**
-     * HTMLコードを実行する
+     * シングルトンインスタンスを取得
+     */
+    static get getInstance() {
+        if (!HTMLExecutor.#instance) {
+            HTMLExecutor.#instance = new HTMLExecutor();
+        }
+        return HTMLExecutor.#instance;
+    }
+
+    /**
+     * HTMLコードを実行（プレビュー表示）する
      * @param {string} code - 実行するHTMLコード
      * @param {Function} [outputCallback] - リアルタイム出力用コールバック関数
-     * @returns {Object} 実行結果（iframeのHTMLとして表示される）
+     * @returns {Promise<Object>} 実行結果
      */
-    static async execute(code, outputCallback) {
+    async execute(code, outputCallback) {
         try {
             if (typeof outputCallback === 'function') {
                 outputCallback({
@@ -90,5 +110,14 @@ class HTMLExecutor {
             
             return errorResult;
         }
+    }
+    /**
+     * HTMLはブラウザにビルトインされているため、
+     * ランタイムのロードは不要です
+     * @protected
+     * @returns {Promise<void>}
+     */
+    _loadRuntime() {
+        return Promise.resolve();
     }
 }

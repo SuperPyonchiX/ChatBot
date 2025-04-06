@@ -2,15 +2,34 @@
  * CPPExecutor.js
  * C++コードの実行を担当するクラス
  */
+class CPPExecutor extends ExecutorBase {
+    static #instance = null;
 
-class CPPExecutor {
+    constructor() {
+        super();
+        if (CPPExecutor.#instance) {
+            return CPPExecutor.#instance;
+        }
+        CPPExecutor.#instance = this;
+    }
+
+    /**
+     * シングルトンインスタンスを取得
+     */
+    static get getInstance() {
+        if (!CPPExecutor.#instance) {
+            CPPExecutor.#instance = new CPPExecutor();
+        }
+        return CPPExecutor.#instance;
+    }
+
     /**
      * C++コードを実行する
      * @param {string} code - 実行するC++コード
      * @param {Function} [outputCallback] - リアルタイム出力用コールバック関数
      * @returns {Promise<Object>} 実行結果
      */
-    static async execute(code, outputCallback) {
+    async execute(code, outputCallback) {
         try {
             if (typeof JSCPP === 'undefined') {
                 if (typeof outputCallback === 'function') {
@@ -21,7 +40,7 @@ class CPPExecutor {
                 }
                 
                 try {
-                    await this._loadJSCPPRuntime();
+                    await this._loadRuntime();
                 } catch (loadError) {
                     const errorMsg = `C++ランタイムの読み込みに失敗しました: ${loadError.message}`;
                     console.error(errorMsg);
@@ -122,10 +141,10 @@ class CPPExecutor {
 
     /**
      * JSCPPランタイムを読み込む
-     * @private
+     * @protected
      * @returns {Promise<void>}
      */
-    static _loadJSCPPRuntime() {
+    _loadRuntime() {
         return new Promise((resolve, reject) => {
             if (typeof JSCPP !== 'undefined') {
                 console.log('JSCPPはすでに読み込まれています');
@@ -158,7 +177,7 @@ class CPPExecutor {
      * @param {string} code - 元のC++コード
      * @returns {string} 前処理後のコード
      */
-    static _preprocessCPPCode(code) {
+    _preprocessCPPCode(code) {
         let processedCode = code
             .replace(/[\u200B-\u200D\uFEFF]/g, '')
             .replace(/\r\n/g, '\n')

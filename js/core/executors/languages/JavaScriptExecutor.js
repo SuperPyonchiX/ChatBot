@@ -2,14 +2,34 @@
  * JavaScriptExecutor.js
  * JavaScriptコードの実行を担当するクラス
  */
-class JavaScriptExecutor {
+class JavaScriptExecutor extends ExecutorBase {
+    static #instance = null;
+    
+    constructor() {
+        super();
+        if (JavaScriptExecutor.#instance) {
+            return JavaScriptExecutor.#instance;
+        }
+        JavaScriptExecutor.#instance = this;
+    }
+
+    /**
+     * シングルトンインスタンスを取得
+     */
+    static get getInstance() {
+        if (!JavaScriptExecutor.#instance) {
+            JavaScriptExecutor.#instance = new JavaScriptExecutor();
+        }
+        return JavaScriptExecutor.#instance;
+    }
+
     /**
      * JavaScriptコードを実行する
      * @param {string} code - 実行するJavaScriptコード
      * @param {Function} [outputCallback] - リアルタイム出力用コールバック関数
-     * @returns {Object} 実行結果
+     * @returns {Promise<Object>} 実行結果
      */
-    static async execute(code, outputCallback) {
+    async execute(code, outputCallback) {
         try {
             const sandbox = ExecutorUtils.createSandbox();
             const consoleOutput = [];
@@ -131,5 +151,15 @@ class JavaScriptExecutor {
             
             return errorResult;
         }
+    }
+
+    /**
+     * JavaScriptはブラウザにビルトインされているため、
+     * ランタイムのロードは不要です
+     * @protected
+     * @returns {Promise<void>}
+     */
+    _loadRuntime() {
+        return Promise.resolve();
     }
 }

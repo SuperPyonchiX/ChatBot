@@ -22,15 +22,15 @@ class CodeExecutor {
             switch (language) {
                 case 'javascript':
                 case 'js':
-                    return await JavaScriptExecutor.execute(code, outputCallback);
+                    return await JavaScriptExecutor.getInstance.execute(code, outputCallback);
                 case 'html':
-                    return await HTMLExecutor.execute(code, outputCallback);
+                    return await HTMLExecutor.getInstance.execute(code, outputCallback);
                 case 'python':
                 case 'py':
-                    return await PythonExecutor.execute(code, outputCallback);
+                    return await PythonExecutor.getInstance.execute(code, outputCallback);
                 case 'cpp':
                 case 'c++':
-                    return await CPPExecutor.execute(code, outputCallback);
+                    return await CPPExecutor.getInstance.execute(code, outputCallback);
                 default:
                     return { error: `${language}の実行は現在サポートされていません` };
             }
