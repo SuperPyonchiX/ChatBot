@@ -37,10 +37,10 @@ class PromptSuggestions {
 
     /**
      * 候補表示を初期化します
-     * @param {HTMLTextAreaElement} inputElement - チャット入力要素
-     * @param {HTMLElement} suggestionsElement - 候補表示要素
      */
-    init(inputElement, suggestionsElement) {
+    init() {
+        const inputElement = UICache.getInstance.get('userInput');
+        const suggestionsElement = document.getElementById('promptSuggestions');
         if (!inputElement || !suggestionsElement) return;
         
         this.#inputElement = inputElement;
@@ -65,7 +65,7 @@ class PromptSuggestions {
         
         // フォーカスを失ったときに候補を非表示
         this.#inputElement.addEventListener('blur', () => {
-            setTimeout(() => this.hideSuggestions(), 100);
+            setTimeout(() => this.#hideSuggestions(), 100);
         });
         
         // クリックイベント（イベント委任）
@@ -143,7 +143,7 @@ class PromptSuggestions {
             case 'Escape':
                 // Escキー: 候補を閉じる
                 e.preventDefault();
-                this.hideSuggestions();
+                this.#hideSuggestions();
                 break;
                 
             case 'Tab':
@@ -182,7 +182,7 @@ class PromptSuggestions {
         this.#suggestions = suggestions.slice(0, PromptSuggestions.MAX_SUGGESTIONS);
         
         if (this.#suggestions.length === 0) {
-            this.hideSuggestions();
+            this.#hideSuggestions();
             return;
         }
         
@@ -218,7 +218,7 @@ class PromptSuggestions {
     /**
      * 候補を非表示にします
      */
-    hideSuggestions() {
+    #hideSuggestions() {
         this.#suggestionsElement.classList.remove('show');
         this.#selectedIndex = -1;
         this.#suggestions = [];
@@ -351,7 +351,7 @@ class PromptSuggestions {
         }
         
         // 候補を非表示
-        this.hideSuggestions();
+        this.#hideSuggestions();
     }
 
     /**

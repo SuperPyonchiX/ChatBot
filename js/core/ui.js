@@ -396,5 +396,6 @@ class UI {
         this.Core.TouchOptimization.setup();
         Sidebar.getInstance?.createSidebarToggle();
         this.Core.Performance.optimize();
+        PromptSuggestions.getInstance.init();
     }
 }
