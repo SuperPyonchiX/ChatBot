@@ -125,11 +125,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
 
         // 会話履歴から現在の会話を選択状態にする
-        window.Chat.History.updateActiveChatInHistory(window.AppState.currentConversationId);
+        ChatHistory.updateActiveChatInHistory(window.AppState.currentConversationId);
 
         // チャットメッセージを表示
         if (window.Elements.chatMessages && window.Elements.modelSelect) {
-            window.Chat.History.displayConversation(
+            ChatHistory.displayConversation(
                 window.AppState.getConversationById(window.AppState.currentConversationId),
                 window.Elements.chatMessages,
                 window.Elements.modelSelect

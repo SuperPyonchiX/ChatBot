@@ -249,7 +249,7 @@ class ChatActions {
         
         if (window.Elements.chatMessages && window.Elements.modelSelect) {
             // 会話を表示
-            window.Chat.History.displayConversation(newConversation, window.Elements.chatMessages, window.Elements.modelSelect);
+            ChatHistory.displayConversation(newConversation, window.Elements.chatMessages, window.Elements.modelSelect);
         }
     }
 
@@ -260,7 +260,7 @@ class ChatActions {
         if (!window.Elements.chatHistory) return;
         
         // チャット履歴を更新
-        window.Chat.History.renderChatHistory(
+        ChatHistory.renderChatHistory(
             window.AppState.conversations, 
             window.AppState.currentConversationId, 
             window.Elements.chatHistory, 
@@ -280,11 +280,11 @@ class ChatActions {
         window.Storage.saveCurrentConversationId(window.AppState.currentConversationId);
         
         // アクティブチャットを更新
-        window.Chat.History.updateActiveChatInHistory(window.AppState.currentConversationId);
+        ChatHistory.updateActiveChatInHistory(window.AppState.currentConversationId);
         
         if (window.Elements.chatMessages && window.Elements.modelSelect) {
             // 会話を表示
-            window.Chat.History.displayConversation(
+            ChatHistory.displayConversation(
                 window.AppState.getConversationById(window.AppState.currentConversationId),
                 window.Elements.chatMessages,
                 window.Elements.modelSelect
@@ -321,7 +321,7 @@ class ChatActions {
                 
                 if (window.Elements.chatMessages && window.Elements.modelSelect) {
                     // 会話を表示
-                    window.Chat.History.displayConversation(
+                    ChatHistory.displayConversation(
                         window.AppState.getConversationById(window.AppState.currentConversationId),
                         window.Elements.chatMessages,
                         window.Elements.modelSelect
