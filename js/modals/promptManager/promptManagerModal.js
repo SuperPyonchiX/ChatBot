@@ -1,21 +1,40 @@
-window.UI = window.UI || {};
-window.UI.Core = window.UI.Core || {};
-window.UI.Core.Modal = window.UI.Core.Modal || {};
-
 /**
- * プロンプトマネージャー機能
+ * プロンプトマネージャーモーダルを管理するクラス
+ * @class PromptManagerModal
  */
-Object.assign(window.UI.Core.Modal, {
-    // イベントリスナーの参照を保持する変数
-    _promptEditListeners: {
-        save: null,
-        cancel: null
-    },
+class PromptManagerModal {
+    static #instance = null;
+
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {PromptManagerModal} PromptManagerModalのインスタンス
+     */
+    static get getInstance() {
+        if (!PromptManagerModal.#instance) {
+            PromptManagerModal.#instance = new PromptManagerModal();
+        }
+        return PromptManagerModal.#instance;
+    }
+
+    /**
+     * コンストラクタ - privateなので直接newはできません
+     */
+    constructor() {
+        if (PromptManagerModal.#instance) {
+            throw new Error('PromptManagerModalクラスは直接インスタンス化できません。getInstance()を使用してください。');
+        }
+        
+        // イベントリスナーの参照を保持する変数
+        this._promptEditListeners = {
+            save: null,
+            cancel: null
+        };
+    }
 
     /**
      * プロンプトマネージャーモーダルを表示します
      */
-    showPromptManagerModal: function() {
+    showPromptManagerModal() {
         console.log('プロンプトマネージャーモーダルを表示します');
         const modal = UICache.getInstance.get('promptManagerModal');
         if (!modal) {
@@ -29,23 +48,23 @@ Object.assign(window.UI.Core.Modal, {
         // カテゴリとプロンプト一覧を更新
         this.updatePromptCategories();
         this.updatePromptsList();
-    },
+    }
     
     /**
      * プロンプトマネージャーモーダルを非表示にします
      */
-    hidePromptManagerModal: function() {
+    hidePromptManagerModal() {
         console.log('プロンプトマネージャーモーダルを閉じます');
         const modal = UICache.getInstance.get('promptManagerModal');
         if (modal) {
             modal.style.display = 'none';
         }
-    },
-    
+    }
+
     /**
      * プロンプトカテゴリ一覧を更新する
      */
-    updatePromptCategories: function() {
+    updatePromptCategories() {
         console.log('カテゴリ一覧を更新します');
         const categoriesList = UICache.getInstance.get('promptCategoriesList');
         if (!categoriesList) {
@@ -128,13 +147,13 @@ Object.assign(window.UI.Core.Modal, {
         // 初期表示時のカウントとプロンプト一覧を更新
         this._updateCategoryCounts();
         this.updatePromptsList({ category: 'all' });
-    },
+    }
 
     /**
      * プロンプト一覧を更新する
      * @param {Object} filter - フィルタリング条件
      */
-    updatePromptsList: function(filter = {}) {
+    updatePromptsList(filter = {}) {
         const promptsList = UICache.getInstance.get('promptsList');
         if (!promptsList) {
             console.error('プロンプトリスト要素が見つかりません: promptsList');
@@ -187,13 +206,13 @@ Object.assign(window.UI.Core.Modal, {
             
             promptsList.appendChild(promptItem);
         });
-    },
+    }
 
     /**
      * プロンプト項目のイベントリスナーを設定する
      * @private
      */
-    _setupPromptItemEventListeners: function(promptItem, prompt) {
+    _setupPromptItemEventListeners(promptItem, prompt) {
         promptItem.querySelector('.edit-prompt-button').addEventListener('click', (e) => {
             e.stopPropagation();
             this.showPromptEditModal(prompt);
@@ -212,13 +231,13 @@ Object.assign(window.UI.Core.Modal, {
         promptItem.addEventListener('click', () => {
             this.showPromptEditModal(prompt);
         });
-    },
+    }
     
     /**
      * プロンプトを使用する
      * @private
      */
-    _usePrompt: function(promptId) {
+    _usePrompt(promptId) {
         try {
             const promptText = PromptManager.getInstance.buildPrompt(promptId);
             
@@ -234,13 +253,13 @@ Object.assign(window.UI.Core.Modal, {
             console.error('プロンプト使用中にエラーが発生しました:', error);
             window.UI.Core.Notification.show('プロンプトの使用に失敗しました', 'error');
         }
-    },
+    }
     
     /**
      * カテゴリごとのプロンプト数を更新する
      * @private
      */
-    _updateCategoryCounts: function() {
+    _updateCategoryCounts() {
         const categories = document.querySelectorAll('.category-item');
         if (!categories.length) return;
         
@@ -266,13 +285,13 @@ Object.assign(window.UI.Core.Modal, {
                 countEl.textContent = counts[categoryKey] || 0;
             }
         });
-    },
+    }
 
     /**
      * プロンプトを削除する
      * @private
      */
-    _deletePrompt: function(promptId) {
+    _deletePrompt(promptId) {
         if (confirm('このプロンプトを削除してもよろしいですか？')) {
             try {
                 const result = PromptManager.getInstance.deletePrompt(promptId);
@@ -295,13 +314,13 @@ Object.assign(window.UI.Core.Modal, {
                 window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
             }
         }
-    },
+    }
 
     /**
      * カテゴリを編集する
      * @private
      */
-    _editCategory: function(categoryKey, currentName) {
+    _editCategory(categoryKey, currentName) {
         const newName = prompt('新しいカテゴリ名を入力してください:', currentName);
         
         if (newName && newName.trim() && newName !== currentName) {
@@ -321,13 +340,13 @@ Object.assign(window.UI.Core.Modal, {
                 window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
             }
         }
-    },
+    }
 
     /**
      * カテゴリを削除する
      * @private
      */
-    _deleteCategory: function(categoryKey) {
+    _deleteCategory(categoryKey) {
         this.confirm(
             'このカテゴリを削除してもよろしいですか？\nこのカテゴリ内のプロンプトは「一般」カテゴリに移動されます。',
             {
@@ -352,13 +371,13 @@ Object.assign(window.UI.Core.Modal, {
                 }
             }
         });
-    },
+    }
 
     /**
      * プロンプト編集モーダルを表示する
      * @param {Object} prompt - 編集するプロンプトデータ
      */
-    showPromptEditModal: function(prompt) {
+    showPromptEditModal(prompt) {
         const modal = UICache.getInstance.get('promptEditModal');
         if (!modal) {
             console.error('モーダル要素が見つかりません: promptEditModal');
@@ -424,23 +443,23 @@ Object.assign(window.UI.Core.Modal, {
         } else {
             console.error('保存またはキャンセルボタンが見つかりません');
         }
-    },
+    }
 
     /**
      * プロンプト編集モーダルを非表示にする
      */
-    hidePromptEditModal: function() {
+    hidePromptEditModal() {
         const modal = UICache.getInstance.get('promptEditModal');
         if (modal) {
             modal.style.display = 'none';
         }
-    },
+    }
 
     /**
      * カテゴリ選択肢を更新する
      * @private
      */
-    _updateCategorySelect: function(select, currentCategory) {
+    _updateCategorySelect(select, currentCategory) {
         if (!select) return;
 
         // 選択肢をクリア
@@ -462,13 +481,13 @@ Object.assign(window.UI.Core.Modal, {
             }
             select.appendChild(option);
         });
-    },
+    }
 
     /**
      * プロンプトを保存する
      * @private
      */
-    _savePromptEdit: function(modal) {
+    _savePromptEdit(modal) {
         const nameInput = UICache.getInstance.get('promptNameInput');
         const categorySelect = UICache.getInstance.get('promptCategorySelect');
         const tagsInput = UICache.getInstance.get('promptTagsInput');
@@ -524,13 +543,13 @@ Object.assign(window.UI.Core.Modal, {
             console.error('プロンプト保存中にエラーが発生しました:', error);
             window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
         }
-    },
+    }
 
     /**
      * カテゴリ追加ボタンのクリックイベントを処理する
      * @private
      */
-    _handleAddCategory: function() {
+    _handleAddCategory() {
         const categoryName = prompt('新しいカテゴリ名を入力してください:');
         if (!categoryName || !categoryName.trim()) return;
 
@@ -547,4 +566,4 @@ Object.assign(window.UI.Core.Modal, {
             window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
         }
     }
-});
+}

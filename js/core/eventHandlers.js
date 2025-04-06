@@ -98,7 +98,7 @@ class EventHandlers {
         if (window.Elements.openPromptManager) {
             window.Elements.openPromptManager.addEventListener('click', () => {
                 window.Elements.settingsMenu.style.display = 'none';
-                window.UI.Core.Modal.showPromptManagerModal();
+                PromptManagerModal.getInstance.showPromptManagerModal();
             });
         }
     }
@@ -159,7 +159,7 @@ class EventHandlers {
         if (switchToPromptManagerBtn) {
             switchToPromptManagerBtn.addEventListener('click', () => {
                 SystemPromptModal.getInstance.hideSystemPromptModal();
-                window.UI.Core.Modal.showPromptManagerModal();
+                PromptManagerModal.getInstance.showPromptManagerModal();
             });
         }
     }
@@ -203,7 +203,7 @@ class EventHandlers {
         const closePromptManagerBtn = UICache.getInstance.get('closePromptManager');
         if (closePromptManagerBtn) {
             closePromptManagerBtn.addEventListener('click', () => {
-                window.UI.Core.Modal.hidePromptManagerModal();
+                PromptManagerModal.getInstance.hidePromptManagerModal();
             });
         }
 
@@ -211,7 +211,7 @@ class EventHandlers {
         const switchToSystemPromptBtn = UICache.getInstance.get('switchToSystemPrompt');
         if (switchToSystemPromptBtn) {
             switchToSystemPromptBtn.addEventListener('click', () => {
-                window.UI.Core.Modal.hidePromptManagerModal();
+                PromptManagerModal.getInstance.hidePromptManagerModal();
                 SystemPromptModal.getInstance.showSystemPromptModal(
                     window.AppState.systemPrompt,
                     window.AppState.systemPromptTemplates,
@@ -225,7 +225,7 @@ class EventHandlers {
         const addCategoryBtn = UICache.getInstance.get('addCategoryButton');
         if (addCategoryBtn) {
             addCategoryBtn.addEventListener('click', () => {
-                window.UI.Core.Modal._handleAddCategory();
+                PromptManagerModal.getInstance._handleAddCategory();
             });
         }
 
@@ -233,7 +233,7 @@ class EventHandlers {
         const addPromptButton = UICache.getInstance.get('addPromptButton');
         if (addPromptButton) {
             addPromptButton.addEventListener('click', () => {
-                window.UI.Core.Modal.showPromptEditModal(null);
+                PromptManagerModal.getInstance.showPromptEditModal(null);
             });
         }
     }
