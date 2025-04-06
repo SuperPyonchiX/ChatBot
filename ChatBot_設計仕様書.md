@@ -858,22 +858,29 @@ ChatBotアプリケーションのUI設計は、直感的な操作性、レス�
 
 ## クラス図
 
-以下のクラス図はアプリケーションの主要クラスとその関連性を示しています。シングルトンパターンを採用している多くのクラスやコンポーネント間の依存関係を表現しています。
+以下のクラス図はアプリケーションの主要クラスとその関連性を示しています。シングルトンパターンを採用している多くのクラスやコンポーネント間の実際の依存関係を表現しています。
 
 ```mermaid
 classDiagram
+    %% コアクラス
     class UI {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +initialize()
-        +Core
+        +Core~Theme
+        +Core~Notification
+        +Core~Modal
+        +Core~Accessibility
+        +Core~TouchOptimization
     }
     
     class Storage {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
+        +setItem(key, value)
+        +getItem(key)
         +saveConversations()
         +loadConversations()
         +saveSystemPrompt()
@@ -887,26 +894,27 @@ classDiagram
     }
     
     class UIUtils {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +toggleVisibility()
         +toggleModal()
-        +createElement()
+        +createElement(tag, props)
         +autoResizeTextarea()
+        +scrollToBottom()
     }
     
     class UICache {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
-        +get()
-        +set()
+        +get(selector, useQuerySelector)
+        +set(selector, element)
         +clear()
     }
     
     class EventHandlers {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +setupChatEvents()
@@ -914,14 +922,14 @@ classDiagram
         +setupFileEvents()
         +setupGlobalEvents()
         +setupModalEvents()
-        -setupSystemPromptModal()
-        -setupApiKeyModal()
-        -setupRenameChatModal()
-        -setupPromptManagerModal()
+        -#setupSystemPromptModal()
+        -#setupApiKeyModal()
+        -#setupRenameChatModal()
+        -#setupPromptManagerModal()
     }
     
     class AIAPI {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +sendMessage()
@@ -931,8 +939,63 @@ classDiagram
         -performAzureRequest()
     }
     
+    %% チャットコンポーネント
+    class ChatActions {
+        -static #instance
+        +static getInstance()
+        -constructor()
+        +sendMessage()
+        +createNewConversation()
+        +clearAllHistory()
+        +renderChatHistory()
+        -#switchConversation()
+        -#deleteConversation()
+    }
+    
+    class ChatHistory {
+        -static #instance
+        +static getInstance()
+        -constructor()
+        +renderChatHistory()
+        +updateActiveChatInHistory()
+        +displayConversation()
+        -formatTimestamp()
+    }
+    
+    class ChatRenderer {
+        -static #instance
+        +static getInstance()
+        -constructor()
+        +renderUserMessage()
+        +renderBotMessage()
+        +clearStreamingMessage()
+        +updateStreamingMessage()
+        -highlightCode()
+    }
+    
+    class ChatAttachmentViewer {
+        -static #instance
+        +static getInstance()
+        -constructor()
+        +createAttachmentsElement()
+        +showFullSizeImage()
+        -createImageAttachment()
+        -createFileAttachment()
+        -formatTextContent()
+    }
+    
+    class ChatUI {
+        -static #instance
+        +static getInstance()
+        -constructor()
+        +createElement(tag, options)
+        +formatTimestamp()
+        +adjustScroll()
+    }
+    
+    %% ファイル関連クラス
     class FileAttachment {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +clearAttachments()
@@ -944,20 +1007,20 @@ classDiagram
     }
     
     class FileAttachmentUI {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +updatePreview()
         +clearPreview()
-        -getOrCreatePreviewArea()
-        -createFilePreviewItems()
-        -createFilePreview()
-        -createImagePreview()
-        -createFileInfo()
+        -#getOrCreatePreviewArea()
+        -#createFilePreviewItems()
+        -#createFilePreview()
+        -#createImagePreview()
+        -#createFileInfo()
     }
     
     class FileHandler {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +selectedFiles
@@ -972,7 +1035,7 @@ classDiagram
     }
     
     class FileConverter {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +convertFilesToAttachments()
@@ -981,8 +1044,28 @@ classDiagram
         -convertTextToAttachment()
     }
     
+    class FileReaderUtil {
+        -static #instance
+        +static getInstance()
+        -constructor()
+        +readAsDataURL()
+        +readAsText()
+        +readAsArrayBuffer()
+    }
+    
+    class FileValidator {
+        -static #instance
+        +static getInstance()
+        -constructor()
+        +validateFiles()
+        -checkFileType()
+        -checkFileSize()
+        -checkFileExtension()
+    }
+    
+    %% ユーティリティクラス
     class Markdown {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         -_libraryStatus
@@ -993,52 +1076,18 @@ classDiagram
         +getCodeLanguage()
     }
     
-    class ChatActions {
-        -static instance
+    class CryptoHelper {
+        -static #instance
         +static getInstance()
         -constructor()
-        +sendMessage()
-        +createNewConversation()
-        +clearAllHistory()
-        +renderChatHistory()
-        -switchConversation()
-        -deleteConversation()
+        +encrypt()
+        +decrypt()
+        -generateEncryptionKey()
     }
     
-    class ChatHistory {
-        -static instance
-        +static getInstance()
-        -constructor()
-        +renderChatHistory()
-        +updateActiveChatInHistory()
-        +displayConversation()
-        -formatTimestamp()
-    }
-    
-    class ChatRenderer {
-        -static instance
-        +static getInstance()
-        -constructor()
-        +renderUserMessage()
-        +renderBotMessage()
-        +clearStreamingMessage()
-        +updateStreamingMessage()
-        -highlightCode()
-    }
-    
-    class ChatAttachmentViewer {
-        -static instance
-        +static getInstance()
-        -constructor()
-        +createAttachmentsElement()
-        +showFullSizeImage()
-        -createImageAttachment()
-        -createFileAttachment()
-        -formatTextContent()
-    }
-    
+    %% モーダルクラス
     class ApiSettingsModal {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +showApiKeyModal()
@@ -1047,7 +1096,7 @@ classDiagram
     }
     
     class SystemPromptModal {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +showSystemPromptModal()
@@ -1057,7 +1106,7 @@ classDiagram
     }
     
     class PromptManagerModal {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +showPromptManagerModal()
@@ -1069,7 +1118,7 @@ classDiagram
     }
     
     class RenameChatModal {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +showRenameChatModal()
@@ -1077,7 +1126,7 @@ classDiagram
     }
     
     class ModalHandlers {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +saveApiSettings()
@@ -1087,6 +1136,17 @@ classDiagram
         +onTemplateDelete()
     }
     
+    %% サイドバークラス
+    class Sidebar {
+        -static #instance
+        +static getInstance()
+        -constructor()
+        +toggleSidebar()
+        +createToggleButton()
+        -handleResize()
+    }
+    
+    %% コード実行クラス
     class ExecutorBase {
         +execute(code)* 
         #_loadRuntime()*
@@ -1095,6 +1155,9 @@ classDiagram
     }
     
     class JavaScriptExecutor {
+        -static #instance
+        +static getInstance()
+        -constructor()
         +execute(code)
         #_loadRuntime()
         #_executeCode(code)
@@ -1102,6 +1165,9 @@ classDiagram
     }
     
     class PythonExecutor {
+        -static #instance
+        +static getInstance()
+        -constructor()
         +execute(code)
         #_loadRuntime()
         #_executeCode(code)
@@ -1109,6 +1175,9 @@ classDiagram
     }
     
     class CPPExecutor {
+        -static #instance
+        +static getInstance()
+        -constructor()
         +execute(code)
         #_loadRuntime()
         #_executeCode(code)
@@ -1116,6 +1185,9 @@ classDiagram
     }
     
     class HTMLExecutor {
+        -static #instance
+        +static getInstance()
+        -constructor()
         +execute(code)
         #_loadRuntime()
         #_executeCode(code)
@@ -1123,7 +1195,7 @@ classDiagram
     }
     
     class CodeExecutor {
-        -static instance
+        -static #instance
         +static getInstance()
         -constructor()
         +detectLanguage()
@@ -1131,49 +1203,83 @@ classDiagram
         -getExecutor()
     }
     
+    %% 継承関係
     ExecutorBase <|-- JavaScriptExecutor
     ExecutorBase <|-- PythonExecutor
     ExecutorBase <|-- CPPExecutor
     ExecutorBase <|-- HTMLExecutor
-    CodeExecutor --> ExecutorBase
     
-    FileAttachment --> Storage
-    FileAttachment --> FileHandler
-    FileAttachment --> ChatAttachmentViewer
-    
-    FileAttachmentUI --> FileHandler
-    FileAttachmentUI --> ChatAttachmentViewer
-    
-    ChatActions --> AIAPI
-    ChatActions --> Storage
-    ChatActions --> FileAttachment
-    ChatActions --> FileHandler
-    ChatActions --> ChatHistory
-    
-    ChatRenderer --> Markdown
-    
-    ChatHistory --> ChatRenderer
-    
-    ModalHandlers --> ApiSettingsModal
-    ModalHandlers --> SystemPromptModal
-    ModalHandlers --> RenameChatModal
-    ModalHandlers --> PromptManagerModal
-    ModalHandlers --> Storage
-    ModalHandlers --> UI
-    
-    EventHandlers --> ModalHandlers
-    EventHandlers --> ChatActions
-    EventHandlers --> FileHandler
-    EventHandlers --> ApiSettingsModal
-    EventHandlers --> SystemPromptModal
-    EventHandlers --> RenameChatModal
-    EventHandlers --> PromptManagerModal
-    
+    %% コアクラス間の関係
     UI --> UICache
     UI --> UIUtils
+    UI ..> Storage: 設定読み込み・保存
+    EventHandlers --> UICache: DOM要素取得
+    EventHandlers --> ChatActions: イベント委譲
+    EventHandlers --> FileHandler: イベント委譲
+    EventHandlers --> ModalHandlers: イベント委譲
+    
+    %% モーダル関連
+    EventHandlers --> ApiSettingsModal: モーダル表示・非表示
+    EventHandlers --> SystemPromptModal: モーダル表示・非表示
+    EventHandlers --> RenameChatModal: モーダル表示・非表示
+    EventHandlers --> PromptManagerModal: モーダル表示・非表示
+    ModalHandlers --> ApiSettingsModal: モーダル制御
+    ModalHandlers --> SystemPromptModal: モーダル制御
+    ModalHandlers --> RenameChatModal: モーダル制御
+    ModalHandlers --> PromptManagerModal: モーダル制御
+    ModalHandlers --> Storage: 設定保存
+    ModalHandlers --> UICache: DOM要素取得
+    ModalHandlers --> UI: 通知表示
+    ApiSettingsModal --> UICache: DOM要素取得
+    SystemPromptModal --> UICache: DOM要素取得
+    SystemPromptModal --> Storage: テンプレート取得
+    RenameChatModal --> UICache: DOM要素取得
+    PromptManagerModal --> UICache: DOM要素取得
+    PromptManagerModal --> Storage: テンプレート取得
+    
+    %% ファイル関連
+    FileHandler --> FileValidator: ファイル検証
+    FileHandler --> FileAttachmentUI: プレビュー更新
+    FileHandler --> FileConverter: ファイル変換
+    FileAttachment --> Storage: 添付ファイル保存・読込
+    FileAttachment --> FileHandler: ファイル情報取得
+    FileAttachment --> ChatAttachmentViewer: 添付ファイル表示
+    FileAttachmentUI --> FileHandler: ファイル情報取得
+    FileConverter --> FileReaderUtil: ファイル読込
+    
+    %% チャット関連
+    ChatActions --> AIAPI: API通信
+    ChatActions --> Storage: 会話保存・読込
+    ChatActions --> ChatHistory: 会話表示
+    ChatActions --> ChatRenderer: メッセージ表示
+    ChatActions --> FileAttachment: 添付ファイル処理
+    ChatActions --> FileHandler: ファイル処理
+    ChatActions --> UIUtils: テキストエリアリサイズ
+    ChatHistory --> UIUtils: スクロール制御
+    ChatHistory --> ChatRenderer: メッセージ表示
+    ChatRenderer --> Markdown: マークダウン処理
+    ChatRenderer --> UIUtils: DOM要素生成
+    ChatAttachmentViewer --> Markdown: コード表示処理
+    
+    %% コード実行関連
+    CodeExecutor --> JavaScriptExecutor: 実行委譲
+    CodeExecutor --> PythonExecutor: 実行委譲
+    CodeExecutor --> CPPExecutor: 実行委譲
+    CodeExecutor --> HTMLExecutor: 実行委譲
+    
+    %% API関連
+    AIAPI --> CryptoHelper: APIキー復号化
+    AIAPI --> FileConverter: 添付ファイル処理
 ```
 
-この図は主要なクラス間の関係を示していますが、すべての関係性を表現するとクラス図が複雑になりすぎるため、最も重要な依存関係のみを示しています。ほとんどのクラスがシングルトンパターンを採用しており、`getInstance()`メソッドを通じて唯一のインスタンスにアクセスする設計となっています。
+この図では、アプリケーションの主要なクラス間の実際の依存関係を表現しています。各クラスはシングルトンパターンを採用しており、`getInstance()`メソッドを通じて唯一のインスタンスにアクセスします。
+
+主な関係性の種類:
+- 実線矢印(`-->`)は、あるクラスが別のクラスを直接利用していることを示します
+- 点線矢印(`..>`)は、弱い依存関係を示します
+- 三角矢印(`<|--`)は継承関係を示します
+
+依存関係の方向は、依存元から依存先へ向かう矢印で表現しています。例えば、`ChatActions --> AIAPI`は、ChatActionsクラスがAIAPIクラスに依存していることを示します。
 
 ## フローチャート
 
