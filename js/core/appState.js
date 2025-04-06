@@ -17,12 +17,12 @@ window.AppState = (function() {
          * 初期化
          */
         initialize() {
-            if (window.Storage) {
-                _apiSettings = window.Storage.loadApiSettings() || {};
-                _systemPrompt = window.Storage.loadSystemPrompt() || '';
-                _systemPromptTemplates = window.Storage.loadSystemPromptTemplates() || {};
-                _conversations = window.Storage.loadConversations() || [];
-                _currentConversationId = window.Storage.loadCurrentConversationId() || null;
+            if (Storage.getInstance) {
+                _apiSettings = Storage.getInstance.loadApiSettings() || {};
+                _systemPrompt = Storage.getInstance.loadSystemPrompt() || '';
+                _systemPromptTemplates = Storage.getInstance.loadSystemPromptTemplates() || {};
+                _conversations = Storage.getInstance.loadConversations() || [];
+                _currentConversationId = Storage.getInstance.loadCurrentConversationId() || null;
             } else {
                 console.error('Storage module is not loaded');
                 _apiSettings = {};

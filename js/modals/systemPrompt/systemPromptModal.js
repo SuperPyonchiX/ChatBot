@@ -78,7 +78,7 @@ Object.assign(window.UI.Core.Modal, {
             categoryElement.className = 'system-prompt-category';
             
             // 保存された展開状態を復元
-            const isCategoryCollapsed = window.Storage.loadCategoryState(category);
+            const isCategoryCollapsed = Storage.getInstance.loadCategoryState(category);
             if (isCategoryCollapsed) {
                 categoryElement.classList.add('collapsed');
             }
@@ -96,7 +96,7 @@ Object.assign(window.UI.Core.Modal, {
             categoryHeader.addEventListener('click', () => {
                 categoryElement.classList.toggle('collapsed');
                 // 展開状態を保存
-                window.Storage.saveCategoryState(
+                Storage.getInstance.saveCategoryState(
                     category, 
                     categoryElement.classList.contains('collapsed')
                 );

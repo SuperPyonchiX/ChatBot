@@ -165,7 +165,7 @@ class PromptManager {
      * @returns {Array} プロンプトの配列
      */
     loadPromptLibrary() {
-        return window.Storage._getItem(this.STORAGE_KEYS.PROMPT_LIBRARY, [], true);
+        return Storage.getInstance.getItem(this.STORAGE_KEYS.PROMPT_LIBRARY, [], true);
     }
 
     /**
@@ -175,7 +175,7 @@ class PromptManager {
      */
     savePromptLibrary(promptLibrary) {
         if (!Array.isArray(promptLibrary)) return;
-        window.Storage._setItem(this.STORAGE_KEYS.PROMPT_LIBRARY, promptLibrary);
+        Storage.getInstance.setItem(this.STORAGE_KEYS.PROMPT_LIBRARY, promptLibrary);
     }
 
     /**
@@ -184,7 +184,7 @@ class PromptManager {
      * @returns {Object} カテゴリオブジェクト
      */
     loadCategories() {
-        return window.Storage._getItem(this.STORAGE_KEYS.PROMPT_CATEGORIES, {}, true);
+        return Storage.getInstance.getItem(this.STORAGE_KEYS.PROMPT_CATEGORIES, {}, true);
     }
 
     /**
@@ -194,7 +194,7 @@ class PromptManager {
      */
     saveCategories(categories) {
         if (!categories || typeof categories !== 'object') return;
-        window.Storage._setItem(this.STORAGE_KEYS.PROMPT_CATEGORIES, categories);
+        Storage.getInstance.setItem(this.STORAGE_KEYS.PROMPT_CATEGORIES, categories);
     }
 
     /**
@@ -203,7 +203,7 @@ class PromptManager {
      * @returns {Object} 変数オブジェクト
      */
     loadVariables() {
-        return window.Storage._getItem(this.STORAGE_KEYS.PROMPT_VARIABLES, {}, true);
+        return Storage.getInstance.getItem(this.STORAGE_KEYS.PROMPT_VARIABLES, {}, true);
     }
 
     /**
@@ -213,7 +213,7 @@ class PromptManager {
      */
     saveVariables(variables) {
         if (!variables || typeof variables !== 'object') return;
-        window.Storage._setItem(this.STORAGE_KEYS.PROMPT_VARIABLES, variables);
+        Storage.getInstance.setItem(this.STORAGE_KEYS.PROMPT_VARIABLES, variables);
     }
 
     /**

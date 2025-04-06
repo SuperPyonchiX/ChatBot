@@ -137,7 +137,7 @@ class ChatHistory {
         Object.entries(promptGroups).forEach(([promptKey, groupConversations]) => {
             if (!Array.isArray(groupConversations) || groupConversations.length === 0) return;
             
-            const categoryStates = window.Storage.loadCategoryStates();
+            const categoryStates = Storage.getInstance.loadCategoryStates();
             const isExpanded = categoryStates[promptKey] !== false;
             
             const categorySection = this._createCategorySection(
@@ -234,7 +234,7 @@ class ChatHistory {
             conversationList.style.display = 'block';
         }
         
-        window.Storage.saveCategoryState(promptKey, !isNowExpanded);
+        Storage.getInstance.saveCategoryState(promptKey, !isNowExpanded);
     }
     
     /**

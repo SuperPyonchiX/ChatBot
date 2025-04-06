@@ -48,7 +48,7 @@ Object.assign(window.UI.Core.Modal.Handlers, {
         window.AppState.updateGlobalSettings();
 
         // ローカルストレージに保存
-        window.Storage.saveApiSettings(window.AppState.apiSettings);
+        Storage.getInstance.saveApiSettings(window.AppState.apiSettings);
         window.UI.Core.Notification.show('API設定を保存しました', 'success');
         window.UI.Core.Modal.hideApiKeyModal();
     },
@@ -67,7 +67,7 @@ Object.assign(window.UI.Core.Modal.Handlers, {
             const conversation = window.AppState.getConversationById(conversationId);
             if (conversation) {
                 conversation.title = newTitle;
-                window.Storage.saveConversations(window.AppState.conversations);
+                Storage.getInstance.saveConversations(window.AppState.conversations);
                 ChatActions.getInstance.renderChatHistory();
             }
         }
@@ -110,7 +110,7 @@ Object.assign(window.UI.Core.Modal.Handlers, {
             tags: []
         };
         
-        window.Storage.saveSystemPromptTemplates(templates);
+        Storage.getInstance.saveSystemPromptTemplates(templates);
         
         // 入力をクリア
         window.UI.Cache.get('newSystemPromptName').value = '';
@@ -140,7 +140,7 @@ Object.assign(window.UI.Core.Modal.Handlers, {
     onTemplateDelete: function(promptName) {
         if (confirm(`システムプロンプト "${promptName}" を削除してもよろしいですか？`)) {
             delete window.AppState.systemPromptTemplates[promptName];
-            window.Storage.saveSystemPromptTemplates(window.AppState.systemPromptTemplates);
+            Storage.getInstance.saveSystemPromptTemplates(window.AppState.systemPromptTemplates);
             
             // システムプロンプト一覧を更新
             window.UI.Core.Modal.updateList(

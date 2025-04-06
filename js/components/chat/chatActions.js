@@ -79,7 +79,7 @@ class ChatActions {
             
             if (!result?.error) {
                 // 会話を保存
-                window.Storage.saveConversations(window.AppState.conversations);
+                Storage.getInstance.saveConversations(window.AppState.conversations);
                 
                 // 添付ファイルを保存（正常送信時のみ）
                 if (attachmentsToSend && attachmentsToSend.length > 0) {
@@ -264,10 +264,10 @@ class ChatActions {
         };
         
         window.AppState.conversations.unshift(newConversation);
-        window.Storage.saveConversations(window.AppState.conversations);
+        Storage.getInstance.saveConversations(window.AppState.conversations);
         
         window.AppState.currentConversationId = newConversation.id;
-        window.Storage.saveCurrentConversationId(window.AppState.currentConversationId);
+        Storage.getInstance.saveCurrentConversationId(window.AppState.currentConversationId);
         
         this.renderChatHistory();
         
@@ -301,7 +301,7 @@ class ChatActions {
         if (!conversationId) return;
         
         window.AppState.currentConversationId = conversationId;
-        window.Storage.saveCurrentConversationId(window.AppState.currentConversationId);
+        Storage.getInstance.saveCurrentConversationId(window.AppState.currentConversationId);
         
         // アクティブチャットを更新
         ChatHistory.getInstance.updateActiveChatInHistory(window.AppState.currentConversationId);
@@ -331,17 +331,17 @@ class ChatActions {
         
         // チャットを削除
         window.AppState.conversations = window.AppState.conversations.filter(conv => conv.id !== conversationId);
-        window.Storage.saveConversations(window.AppState.conversations);
+        Storage.getInstance.saveConversations(window.AppState.conversations);
         
         // 添付ファイルも削除
-        window.Storage.removeAttachments(conversationId);
+        Storage.getInstance.removeAttachments(conversationId);
         
         // 削除したチャットが現在表示中だった場合、別のチャットに切り替える
         if (isCurrentChat) {
             if (window.AppState.conversations.length > 0) {
                 // 最初のチャットに切り替え
                 window.AppState.currentConversationId = window.AppState.conversations[0].id;
-                window.Storage.saveCurrentConversationId(window.AppState.currentConversationId);
+                Storage.getInstance.saveCurrentConversationId(window.AppState.currentConversationId);
                 
                 if (window.Elements.chatMessages && window.Elements.modelSelect) {
                     // 会話を表示
@@ -370,12 +370,12 @@ class ChatActions {
             // すべての添付ファイルを削除
             window.AppState.conversations.forEach(conversation => {
                 if (conversation.id) {
-                    window.Storage.removeAttachments(conversation.id);
+                    Storage.getInstance.removeAttachments(conversation.id);
                 }
             });
             
             window.AppState.conversations = [];
-            window.Storage.saveConversations(window.AppState.conversations);
+            Storage.getInstance.saveConversations(window.AppState.conversations);
             this.createNewConversation();
         }
     }

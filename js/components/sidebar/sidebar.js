@@ -37,7 +37,7 @@ class Sidebar {
         });
         
         // 保存された状態を復元
-        const isCollapsed = window.Storage.loadSidebarState();
+        const isCollapsed = Storage.getInstance.loadSidebarState();
         if (isCollapsed) {
             sidebarEl.classList.add('collapsed');
         } else {
@@ -72,6 +72,6 @@ class Sidebar {
         const isNowCollapsed = sidebar.classList.contains('collapsed');
         sidebar.classList.toggle('collapsed');
         toggleButton.classList.toggle('sidebar-visible');
-        window.Storage.saveSidebarState(!isNowCollapsed);
+        Storage.getInstance.saveSidebarState(!isNowCollapsed);
     }
 }

@@ -211,7 +211,7 @@ class FileAttachment {
             });
             
             // 添付ファイルをローカルストレージに保存
-            window.Storage.saveAttachments(conversationId, {
+            Storage.getInstance.saveAttachments(conversationId, {
                 files: allAttachments
             });
             
@@ -235,7 +235,7 @@ class FileAttachment {
         
         try {
             // ローカルストレージから添付ファイルを読み込む
-            const attachmentData = window.Storage.loadAttachments(conversationId);
+            const attachmentData = Storage.getInstance.loadAttachments(conversationId);
             
             // 添付ファイルデータをチェック
             if (!attachmentData || !attachmentData.files || !Array.isArray(attachmentData.files)) {

@@ -144,7 +144,7 @@ class EventHandlers {
             if (!window.Elements.systemPromptInput) return;
             
             window.AppState.systemPrompt = window.Elements.systemPromptInput.value.trim();
-            window.Storage.saveSystemPrompt(window.AppState.systemPrompt);
+            Storage.getInstance.saveSystemPrompt(window.AppState.systemPrompt);
             window.UI.Core.Modal.hideSystemPromptModal();
         });
         
@@ -255,7 +255,7 @@ class EventHandlers {
                 const currentConversation = window.AppState.getConversationById(window.AppState.currentConversationId);
                 if (currentConversation) {
                     currentConversation.model = window.Elements.modelSelect.value;
-                    window.Storage.saveConversations(window.AppState.conversations);
+                    Storage.getInstance.saveConversations(window.AppState.conversations);
                 }
             });
         }
