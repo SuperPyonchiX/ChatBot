@@ -3,11 +3,35 @@
  * チャットUIの基本機能を提供します
  */
 class ChatUI {
+    // シングルトンインスタンス
+    static #instance = null;
+
     // プライベートフィールド
-    static #cache = {
+    #cache = {
         elements: new Map(),
         templates: new Map()
     };
+
+    /**
+     * プライベートコンストラクタ
+     * @private
+     */
+    constructor() {
+        if (ChatUI.#instance) {
+            throw new Error('ChatUIクラスは直接インスタンス化できません。ChatUI.instanceを使用してください。');
+        }
+    }
+
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {ChatUI} ChatUIのシングルトンインスタンス
+     */
+    static get instance() {
+        if (!ChatUI.#instance) {
+            ChatUI.#instance = new ChatUI();
+        }
+        return ChatUI.#instance;
+    }
 
     /**
      * DOM要素を作成します
@@ -20,7 +44,7 @@ class ChatUI {
      * @param {HTMLElement[]} [options.children] - 追加する子要素
      * @returns {HTMLElement} 作成されたDOM要素
      */
-    static createElement(tag, options = {}) {
+    createElement(tag, options = {}) {
         const element = document.createElement(tag);
         
         if (options.classList) {
@@ -64,7 +88,7 @@ class ChatUI {
      * @param {Function} creator - 要素を作成する関数
      * @returns {HTMLElement} キャッシュされた要素または新しく作成された要素
      */
-    static getCachedElement(key, creator) {
+    getCachedElement(key, creator) {
         if (!this.#cache.elements.has(key)) {
             this.#cache.elements.set(key, creator());
         }
@@ -77,7 +101,7 @@ class ChatUI {
      * @param {string} template - テンプレート文字列
      * @returns {string} キャッシュされたテンプレートまたは新しいテンプレート
      */
-    static getCachedTemplate(key, template) {
+    getCachedTemplate(key, template) {
         if (!this.#cache.templates.has(key)) {
             this.#cache.templates.set(key, template);
         }
@@ -87,7 +111,7 @@ class ChatUI {
     /**
      * キャッシュをクリアします
      */
-    static clearCache() {
+    clearCache() {
         this.#cache.elements.clear();
         this.#cache.templates.clear();
     }

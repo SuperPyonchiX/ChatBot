@@ -97,7 +97,7 @@ class ChatHistory {
         chatHistory.innerHTML = '';
         
         if (conversations.length === 0) {
-            const emptyState = ChatUI.createElement('div', {
+            const emptyState = ChatUI.instance.createElement('div', {
                 classList: 'empty-history',
                 innerHTML: `
                     <p>会話履歴がありません</p>
@@ -140,23 +140,23 @@ class ChatHistory {
             return document.createElement('div');
         }
         
-        const categorySection = ChatUI.createElement('div', {
+        const categorySection = ChatUI.instance.createElement('div', {
             classList: 'chat-category',
             attributes: {
                 'data-category': promptKey
             }
         });
         
-        const categoryHeader = ChatUI.createElement('div', { classList: 'category-header' });
-        const toggleIcon = ChatUI.createElement('i', {
+        const categoryHeader = ChatUI.instance.createElement('div', { classList: 'category-header' });
+        const toggleIcon = ChatUI.instance.createElement('i', {
             classList: ['fas', isExpanded ? 'fa-chevron-down' : 'fa-chevron-right']
         });
         
-        const categoryName = ChatUI.createElement('span', {
+        const categoryName = ChatUI.instance.createElement('span', {
             textContent: promptKey
         });
         
-        const countBadge = ChatUI.createElement('span', {
+        const countBadge = ChatUI.instance.createElement('span', {
             classList: 'category-count',
             textContent: groupConversations.length
         });
@@ -165,7 +165,7 @@ class ChatHistory {
         categoryHeader.appendChild(categoryName);
         categoryHeader.appendChild(countBadge);
         
-        const conversationList = ChatUI.createElement('div', { classList: 'category-conversations' });
+        const conversationList = ChatUI.instance.createElement('div', { classList: 'category-conversations' });
         if (!isExpanded) {
             conversationList.style.display = 'none';
         }
@@ -222,14 +222,14 @@ class ChatHistory {
             return document.createElement('div');
         }
         
-        const historyItem = ChatUI.createElement('div', {
+        const historyItem = ChatUI.instance.createElement('div', {
             classList: 'history-item',
             attributes: {
                 'data-id': conversation.id
             }
         });
         
-        const itemContent = ChatUI.createElement('div', {
+        const itemContent = ChatUI.instance.createElement('div', {
             classList: 'history-item-content',
             innerHTML: `
                 <i class="fas fa-comments"></i>
@@ -237,9 +237,9 @@ class ChatHistory {
             `
         });
         
-        const actionButtons = ChatUI.createElement('div', { classList: 'history-item-actions' });
+        const actionButtons = ChatUI.instance.createElement('div', { classList: 'history-item-actions' });
         
-        const editButton = ChatUI.createElement('button', {
+        const editButton = ChatUI.instance.createElement('button', {
             classList: ['history-action-button', 'edit-button'],
             innerHTML: '<i class="fas fa-edit"></i>',
             attributes: {
@@ -254,7 +254,7 @@ class ChatHistory {
             }
         });
         
-        const deleteButton = ChatUI.createElement('button', {
+        const deleteButton = ChatUI.instance.createElement('button', {
             classList: ['history-action-button', 'delete-button'],
             innerHTML: '<i class="fas fa-trash"></i>',
             attributes: {

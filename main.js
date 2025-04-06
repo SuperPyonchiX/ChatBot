@@ -71,12 +71,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
 
         if (window.AppState.conversations.length > 0) {
-            ChatActions.renderChatHistory();
+            ChatActions.instance.renderChatHistory();
         }
 
         // 新しい会話を作成または既存の会話を読み込む
         if (window.AppState.conversations.length === 0) {
-            ChatActions.createNewConversation();
+            ChatActions.instance.createNewConversation();
         } else {
             _loadCurrentConversation();
         }
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             !window.AppState.getConversationById(window.AppState.currentConversationId)) {
             window.AppState.currentConversationId = window.AppState.conversations[0]?.id;
             if (!window.AppState.currentConversationId) {
-                ChatActions.createNewConversation();
+                ChatActions.instance.createNewConversation();
                 return;
             }
         }

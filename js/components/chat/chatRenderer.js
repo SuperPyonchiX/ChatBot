@@ -13,7 +13,7 @@ class ChatRenderer {
         const msgTimestamp = timestamp || Date.now();
         const fragment = document.createDocumentFragment();
         
-        const messageDiv = ChatUI.createElement('div', {
+        const messageDiv = ChatUI.instance.createElement('div', {
             classList: ['message', 'user'],
             attributes: {
                 'data-timestamp': msgTimestamp.toString(),
@@ -22,12 +22,12 @@ class ChatRenderer {
             }
         });
         
-        const contentDiv = ChatUI.createElement('div', { classList: 'message-content' });
+        const contentDiv = ChatUI.instance.createElement('div', { classList: 'message-content' });
         const copyButton = this._createCopyButton(message || '');
         
         try {
             const renderedMarkdown = await window.Markdown.renderMarkdown(message || '');
-            const markdownContent = ChatUI.createElement('div', {
+            const markdownContent = ChatUI.instance.createElement('div', {
                 classList: 'markdown-content',
                 innerHTML: renderedMarkdown
             });
@@ -47,7 +47,7 @@ class ChatRenderer {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         } catch (e) {
             console.error('ユーザーメッセージのMarkdown解析エラー:', e);
-            const markdownContent = ChatUI.createElement('div', {
+            const markdownContent = ChatUI.instance.createElement('div', {
                 classList: 'markdown-content',
                 textContent: message || ''
             });
@@ -68,7 +68,7 @@ class ChatRenderer {
         if (!chatMessages) return;
         
         const msgTimestamp = timestamp || Date.now();
-        const messageDiv = ChatUI.createElement('div', {
+        const messageDiv = ChatUI.instance.createElement('div', {
             classList: ['message', 'bot'],
             attributes: {
                 'data-timestamp': msgTimestamp.toString(),
@@ -77,9 +77,9 @@ class ChatRenderer {
             }
         });
         
-        const contentDiv = ChatUI.createElement('div', { classList: 'message-content' });
+        const contentDiv = ChatUI.instance.createElement('div', { classList: 'message-content' });
         const copyButton = this._createCopyButton(message || '');
-        const messageContent = ChatUI.createElement('div', { classList: 'markdown-content' });
+        const messageContent = ChatUI.instance.createElement('div', { classList: 'markdown-content' });
         
         if (animate) {
             messageContent.innerHTML = '';
@@ -120,7 +120,7 @@ class ChatRenderer {
         if (!chatMessages) return null;
         
         const msgTimestamp = timestamp || Date.now();
-        const messageDiv = ChatUI.createElement('div', {
+        const messageDiv = ChatUI.instance.createElement('div', {
             classList: ['message', 'bot'],
             attributes: {
                 'data-timestamp': msgTimestamp.toString(),
@@ -129,8 +129,8 @@ class ChatRenderer {
             }
         });
         
-        const contentDiv = ChatUI.createElement('div', { classList: 'message-content' });
-        const messageContent = ChatUI.createElement('div', {
+        const contentDiv = ChatUI.instance.createElement('div', { classList: 'message-content' });
+        const messageContent = ChatUI.instance.createElement('div', {
             classList: 'markdown-content',
             innerHTML: '<p>Thinking<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>'
         });

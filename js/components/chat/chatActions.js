@@ -5,10 +5,34 @@ window.Chat.Actions = window.Chat.Actions || {};
  * チャット関連のアクション（メッセージ送信、会話管理など）を担当するモジュール
  */
 class ChatActions {
+    // シングルトンインスタンス
+    static #instance = null;
+
+    /**
+     * プライベートコンストラクタ
+     * @private
+     */
+    constructor() {
+        if (ChatActions.#instance) {
+            throw new Error('ChatActionsクラスは直接インスタンス化できません。ChatActions.instanceを使用してください。');
+        }
+    }
+
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {ChatActions} ChatActionsのシングルトンインスタンス
+     */
+    static get instance() {
+        if (!ChatActions.#instance) {
+            ChatActions.#instance = new ChatActions();
+        }
+        return ChatActions.#instance;
+    }
+
     /**
      * メッセージを送信します
      */
-    static async sendMessage() {
+    async sendMessage() {
         const currentConversation = window.AppState.getConversationById(window.AppState.currentConversationId);
         if (!currentConversation || !window.Elements.userInput || !window.Elements.chatMessages) return;
         
@@ -99,7 +123,7 @@ class ChatActions {
      * @param {Array} attachments - 添付ファイル配列
      * @returns {Promise<Object>} 送信結果
      */
-    static async processAndSendMessage(userInput, chatMessages, conversation, apiSettings, systemPrompt, attachments = []) {
+    async processAndSendMessage(userInput, chatMessages, conversation, apiSettings, systemPrompt, attachments = []) {
         if (!userInput || !chatMessages || !conversation) {
             return { error: 'Invalid parameters' };
         }
@@ -204,7 +228,7 @@ class ChatActions {
      * @param {Array} attachments - 添付ファイルの配列
      * @returns {Promise<string>} 処理された添付ファイルの内容
      */
-    static async _processAttachments(attachments) {
+    async _processAttachments(attachments) {
         if (!attachments || !Array.isArray(attachments)) {
             return '';
         }
@@ -226,7 +250,7 @@ class ChatActions {
     /**
      * 新しい会話を作成します
      */
-    static createNewConversation() {
+    createNewConversation() {
         const newConversation = {
             id: Date.now().toString(),
             title: '新しいチャット',
@@ -256,7 +280,7 @@ class ChatActions {
     /**
      * 会話履歴を表示します
      */
-    static renderChatHistory() {
+    renderChatHistory() {
         if (!window.Elements.chatHistory) return;
         
         // チャット履歴を更新
@@ -273,7 +297,7 @@ class ChatActions {
     /**
      * 会話を切り替えます
      */
-    static switchConversation(conversationId) {
+    switchConversation(conversationId) {
         if (!conversationId) return;
         
         window.AppState.currentConversationId = conversationId;
@@ -298,7 +322,7 @@ class ChatActions {
     /**
      * 会話を削除します
      */
-    static deleteConversation(conversationId) {
+    deleteConversation(conversationId) {
         // 確認ダイアログを表示
         if (!confirm('このチャットを削除してもよろしいですか？')) return;
             
@@ -341,7 +365,7 @@ class ChatActions {
     /**
      * すべての履歴をクリアします
      */
-    static clearAllHistory() {
+    clearAllHistory() {
         if (confirm('すべての会話履歴を削除してもよろしいですか？')) {
             // すべての添付ファイルを削除
             window.AppState.conversations.forEach(conversation => {
@@ -356,5 +380,3 @@ class ChatActions {
         }
     }
 }
-
-window.Chat.Actions = ChatActions;
