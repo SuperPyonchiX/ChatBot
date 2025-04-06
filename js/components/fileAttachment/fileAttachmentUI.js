@@ -85,7 +85,7 @@ class FileAttachmentUI {
         if (!previewArea || !files || !Array.isArray(files)) return;
         
         files.forEach((file, currentIndex) => {
-            const fileIndex = window.FileHandler.selectedFiles.indexOf(file);
+            const fileIndex = FileHandler.getInstance.selectedFiles.indexOf(file);
             if (fileIndex === -1) return;
             
             // すでにプレビュー表示されているかチェック
@@ -273,12 +273,12 @@ class FileAttachmentUI {
                 const indexToRemove = parseInt(e.currentTarget.dataset.index);
                 if (isNaN(indexToRemove)) return;
                 
-                window.FileHandler.selectedFiles = window.FileHandler.selectedFiles.filter((_, i) => i !== indexToRemove);
+                FileHandler.getInstance.selectedFiles = FileHandler.getInstance.selectedFiles.filter((_, i) => i !== indexToRemove);
                 
                 fileItem.remove();
                 this._updateFileIndices();
                 
-                if (window.FileHandler.selectedFiles.length === 0) {
+                if (FileHandler.getInstance.selectedFiles.length === 0) {
                     const previewArea = document.querySelector('.file-preview');
                     if (previewArea?.parentNode) {
                         previewArea.remove();
@@ -287,8 +287,8 @@ class FileAttachmentUI {
                     return;
                 }
                 
-                if (window.FileHandler.selectedFiles.length > 0) {
-                    window.FileHandler.notifyAttachmentComplete(window.FileHandler.selectedFiles);
+                if (FileHandler.getInstance.selectedFiles.length > 0) {
+                    FileHandler.getInstance.notifyAttachmentComplete(FileHandler.getInstance.selectedFiles);
                 }
             } catch (error) {
                 console.error('ファイル削除処理エラー:', error);

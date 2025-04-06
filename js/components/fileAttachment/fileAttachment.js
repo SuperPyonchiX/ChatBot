@@ -157,12 +157,12 @@ class FileAttachment {
      * @returns {Promise<Array>} API用に変換された添付ファイル配列
      */
     async getAttachmentsForAPI() {
-        if (!window.FileHandler.selectedFiles || window.FileHandler.selectedFiles.length === 0) {
+        if (!FileHandler.getInstance.selectedFiles || FileHandler.getInstance.selectedFiles.length === 0) {
             return [];
         }
         
         try {
-            const attachments = await FileConverter.getInstance.convertFilesToAttachments(window.FileHandler.selectedFiles);
+            const attachments = await FileConverter.getInstance.convertFilesToAttachments(FileHandler.getInstance.selectedFiles);
             // エラーがあった添付ファイルを除外
             return attachments.filter(attachment => attachment.type !== 'error');
         } catch (error) {
@@ -216,10 +216,10 @@ class FileAttachment {
             });
             
             // このインスタンスの savedAttachments を更新
-            window.FileHandler.savedAttachments = allAttachments;
+            FileHandler.getInstance.savedAttachments = allAttachments;
             
             // タイムスタンプをリセット
-            window.FileHandler.attachmentTimestamp = null;
+            FileHandler.getInstance.attachmentTimestamp = null;
         } catch (error) {
             console.error('[ERROR] 添付ファイルの保存中にエラーが発生しました:', error);
         }
@@ -243,7 +243,7 @@ class FileAttachment {
             }
 
             // このインスタンスの savedAttachments を更新
-            window.FileHandler.savedAttachments = attachmentData.files;
+            FileHandler.getInstance.savedAttachments = attachmentData.files;
             return attachmentData;
         } catch (error) {
             console.error('[ERROR] 添付ファイルの読み込み中にエラーが発生しました:', error);

@@ -110,12 +110,12 @@ class EventHandlers {
         if (!window.Elements.fileInput) return;
         
         // FileHandlerの初期化を行う
-        if (window.FileHandler && window.FileHandler.init) {
-            window.FileHandler.init();
+        if (FileHandler.getInstance && FileHandler.getInstance.init) {
+            FileHandler.getInstance.init();
         }
         
         // ファイル選択イベント
-        window.Elements.fileInput.addEventListener('change', window.FileHandler.handleFileSelect.bind(window.FileHandler));
+        window.Elements.fileInput.addEventListener('change', FileHandler.getInstance.handleFileSelect.bind(FileHandler.getInstance));
 
         // カスタムイベントリスナー
         document.addEventListener('file-attached', e => window.AppState.currentAttachments = e.detail.attachments);

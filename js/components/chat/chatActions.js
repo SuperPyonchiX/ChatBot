@@ -50,7 +50,7 @@ class ChatActions {
             
             // 送信前に添付ファイルをクリア
             window.AppState.currentAttachments = [];
-            window.FileHandler.clearSelectedFiles();
+            FileHandler.getInstance.clearSelectedFiles();
             
             // 添付ファイルのプレビュー表示をクリア
             const filePreviewArea = document.querySelector('.file-preview');
@@ -89,7 +89,7 @@ class ChatActions {
                         .pop();
                     
                     // FileHandlerのタイムスタンプを優先
-                    const timestamp = window.FileHandler.attachmentTimestamp || 
+                    const timestamp = FileHandler.getInstance.attachmentTimestamp || 
                                     (latestUserMessage ? latestUserMessage.timestamp : Date.now());
                     
                     FileAttachment.getInstance.saveAttachmentsForConversation(
