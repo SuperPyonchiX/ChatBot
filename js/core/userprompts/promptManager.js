@@ -5,10 +5,11 @@
  * - 条件付きプロンプト構築
  * - プロンプトライブラリ
  */
-
-window.PromptManager = (function() {
+class PromptManager {
+    static #instance = null;
+    
     // プロンプトカテゴリのデフォルト設定
-    const DEFAULT_CATEGORIES = {
+    static DEFAULT_CATEGORIES = {
         'all': {
             name: '全体',
             description: 'すべてのプロンプト',
@@ -36,108 +37,124 @@ window.PromptManager = (function() {
         }
     };
 
-    // プロンプト変数の記号
-    const VARIABLE_REGEX = /\{\{([^{}]+)\}\}/g;
-    
-    // 条件分岐の記号
-    const CONDITION_REGEX = /\{\%\s*if\s+([^{}%]+)\s*\%\}([\s\S]*?)(?:\{\%\s*else\s*\%\}([\s\S]*?))?\{\%\s*endif\s*\%\}/g;
+    constructor() {
+        if (PromptManager.#instance) {
+            return PromptManager.#instance;
+        }
+        
+        // プロンプト変数の記号
+        this.VARIABLE_REGEX = /\{\{([^{}]+)\}\}/g;
+        
+        // 条件分岐の記号
+        this.CONDITION_REGEX = /\{\%\s*if\s+([^{}%]+)\s*\%\}([\s\S]*?)(?:\{\%\s*else\s*\%\}([\s\S]*?))?\{\%\s*endif\s*\%\}/g;
+
+        // ストレージキー
+        this.STORAGE_KEYS = {
+            PROMPT_LIBRARY: 'promptLibrary',
+            PROMPT_CATEGORIES: 'promptCategories',
+            PROMPT_VARIABLES: 'promptVariables'
+        };
+
+        // デフォルトのプロンプトテンプレート
+        this.DEFAULT_PROMPTS = [
+            {
+                name: '詳細な説明要求',
+                content: 'この{{topic}}について、初心者にもわかりやすく詳細に説明してください。具体例を交えて説明し、重要なポイントを箇条書きでまとめてください。',
+                description: 'トピックについて詳細な説明を求めるプロンプト',
+                category: 'general',
+                tags: ['説明', '初心者向け']
+            },
+            {
+                name: '比較分析',
+                content: '{{option1}}と{{option2}}を以下の観点から比較してください：\n1. メリット\n2. デメリット\n3. 使用シーン\n4. コスト\n5. 将来性',
+                description: '2つの選択肢を複数の観点から比較するプロンプト',
+                category: 'general',
+                tags: ['比較', '分析']
+            },
+            {
+                name: 'コード生成',
+                content: '以下の要件を満たす{{language}}のコードを書いてください。\n\n【機能要件】\n{{requirements}}\n\n【追加条件】\n- コードは読みやすく、メンテナンスしやすいものにしてください\n- エラーハンドリングを適切に実装してください\n- コードの説明をコメントとして含めてください',
+                description: '指定された言語でコードを生成するプロンプト',
+                category: 'programming',
+                tags: ['コード生成', 'プログラミング']
+            },
+            {
+                name: 'バグ修正',
+                content: '以下の{{language}}コードにバグがあります。問題を特定して修正してください：\n\n```{{language}}\n{{code}}\n```\n\n【エラー内容】\n{{error_message}}\n\n修正したコードと、何が問題だったのかの説明を提供してください。',
+                description: 'コードのバグを修正するプロンプト',
+                category: 'programming',
+                tags: ['デバッグ', 'バグ修正']
+            },
+            {
+                name: 'リファクタリング提案',
+                content: '以下の{{language}}コードをリファクタリングしてください：\n\n```{{language}}\n{{code}}\n```\n\n以下の点を改善してください：\n- コードの読みやすさ\n- パフォーマンス\n- ベストプラクティスの適用\n- 重複コードの削除\n\n改善点と理由を説明してください。',
+                description: 'コードのリファクタリング提案をするプロンプト',
+                category: 'programming',
+                tags: ['リファクタリング', 'コード改善']
+            },
+            {
+                name: 'メール文章作成',
+                content: '{{recipient}}宛てのビジネスメールを作成してください。\n\n【目的】\n{{purpose}}\n\n【トーン】\n{% if formal %}フォーマル{% else %}カジュアル{% endif %}\n\n【追加情報】\n{{additional_info}}',
+                description: 'ビジネスメールを作成するプロンプト',
+                category: 'writing',
+                tags: ['メール', 'ビジネス文書']
+            },
+            {
+                name: 'ブログ記事作成',
+                content: '{{topic}}に関するブログ記事を作成してください。\n\n【対象読者】\n{{audience}}\n\n【記事の長さ】\n約{{length}}文字\n\n【キーポイント】\n{{key_points}}\n\n【記事のトーン】\n{{tone}}\n\nSEOに最適化し、読者の興味を引く見出しと導入部から始めてください。適切な小見出しを使い、読みやすく構成してください。',
+                description: 'ブログ記事を作成するプロンプト',
+                category: 'writing',
+                tags: ['ブログ', 'コンテンツ作成']
+            },
+            {
+                name: '要約',
+                content: '以下のテキストを要約してください。重要なポイントが含まれるように、約{{summary_length}}文字でまとめてください。\n\n{{text_to_summarize}}',
+                description: 'テキストを要約するプロンプト',
+                category: 'writing',
+                tags: ['要約', 'テキスト処理']
+            }
+        ];
+
+        PromptManager.#instance = this;
+        this.init();
+    }
 
     /**
-     * ストレージキー
-     * @private
+     * シングルトンインスタンスを取得
      */
-    const STORAGE_KEYS = {
-        PROMPT_LIBRARY: 'promptLibrary',
-        PROMPT_CATEGORIES: 'promptCategories',
-        PROMPT_VARIABLES: 'promptVariables'
-    };
-
-    // デフォルトのプロンプトテンプレート
-    const DEFAULT_PROMPTS = [
-        {
-            name: '詳細な説明要求',
-            content: 'この{{topic}}について、初心者にもわかりやすく詳細に説明してください。具体例を交えて説明し、重要なポイントを箇条書きでまとめてください。',
-            description: 'トピックについて詳細な説明を求めるプロンプト',
-            category: 'general',
-            tags: ['説明', '初心者向け']
-        },
-        {
-            name: '比較分析',
-            content: '{{option1}}と{{option2}}を以下の観点から比較してください：\n1. メリット\n2. デメリット\n3. 使用シーン\n4. コスト\n5. 将来性',
-            description: '2つの選択肢を複数の観点から比較するプロンプト',
-            category: 'general',
-            tags: ['比較', '分析']
-        },
-        {
-            name: 'コード生成',
-            content: '以下の要件を満たす{{language}}のコードを書いてください。\n\n【機能要件】\n{{requirements}}\n\n【追加条件】\n- コードは読みやすく、メンテナンスしやすいものにしてください\n- エラーハンドリングを適切に実装してください\n- コードの説明をコメントとして含めてください',
-            description: '指定された言語でコードを生成するプロンプト',
-            category: 'programming',
-            tags: ['コード生成', 'プログラミング']
-        },
-        {
-            name: 'バグ修正',
-            content: '以下の{{language}}コードにバグがあります。問題を特定して修正してください：\n\n```{{language}}\n{{code}}\n```\n\n【エラー内容】\n{{error_message}}\n\n修正したコードと、何が問題だったのかの説明を提供してください。',
-            description: 'コードのバグを修正するプロンプト',
-            category: 'programming',
-            tags: ['デバッグ', 'バグ修正']
-        },
-        {
-            name: 'リファクタリング提案',
-            content: '以下の{{language}}コードをリファクタリングしてください：\n\n```{{language}}\n{{code}}\n```\n\n以下の点を改善してください：\n- コードの読みやすさ\n- パフォーマンス\n- ベストプラクティスの適用\n- 重複コードの削除\n\n改善点と理由を説明してください。',
-            description: 'コードのリファクタリング提案をするプロンプト',
-            category: 'programming',
-            tags: ['リファクタリング', 'コード改善']
-        },
-        {
-            name: 'メール文章作成',
-            content: '{{recipient}}宛てのビジネスメールを作成してください。\n\n【目的】\n{{purpose}}\n\n【トーン】\n{% if formal %}フォーマル{% else %}カジュアル{% endif %}\n\n【追加情報】\n{{additional_info}}',
-            description: 'ビジネスメールを作成するプロンプト',
-            category: 'writing',
-            tags: ['メール', 'ビジネス文書']
-        },
-        {
-            name: 'ブログ記事作成',
-            content: '{{topic}}に関するブログ記事を作成してください。\n\n【対象読者】\n{{audience}}\n\n【記事の長さ】\n約{{length}}文字\n\n【キーポイント】\n{{key_points}}\n\n【記事のトーン】\n{{tone}}\n\nSEOに最適化し、読者の興味を引く見出しと導入部から始めてください。適切な小見出しを使い、読みやすく構成してください。',
-            description: 'ブログ記事を作成するプロンプト',
-            category: 'writing',
-            tags: ['ブログ', 'コンテンツ作成']
-        },
-        {
-            name: '要約',
-            content: '以下のテキストを要約してください。重要なポイントが含まれるように、約{{summary_length}}文字でまとめてください。\n\n{{text_to_summarize}}',
-            description: 'テキストを要約するプロンプト',
-            category: 'writing',
-            tags: ['要約', 'テキスト処理']
+    static get getInstance() {
+        if (!PromptManager.#instance) {
+            PromptManager.#instance = new PromptManager();
         }
-    ];
+        return PromptManager.#instance;
+    }
 
     /**
      * 初期化
      * @public
      */
-    function init() {
+    init() {
         // 初回実行時にデフォルトカテゴリを設定
-        const categories = loadCategories();
+        const categories = this.loadCategories();
         if (Object.keys(categories).length === 0) {
-            saveCategories(DEFAULT_CATEGORIES);
+            this.saveCategories(PromptManager.DEFAULT_CATEGORIES);
         }
         
         // 変数のデフォルト値を設定
-        const variables = loadVariables();
+        const variables = this.loadVariables();
         if (Object.keys(variables).length === 0) {
-            saveVariables({
+            this.saveVariables({
                 'current_date': new Date().toISOString().split('T')[0],
                 'user_name': 'ユーザー'
             });
         }
 
         // デフォルトプロンプトテンプレートを追加（既存のプロンプトが無い場合のみ）
-        const library = loadPromptLibrary();
+        const library = this.loadPromptLibrary();
         if (library.length === 0) {
             console.log('デフォルトプロンプトテンプレートを追加します');
-            DEFAULT_PROMPTS.forEach(prompt => {
-                addPrompt(prompt);
+            this.DEFAULT_PROMPTS.forEach(prompt => {
+                this.addPrompt(prompt);
             });
         }
     }
@@ -147,8 +164,8 @@ window.PromptManager = (function() {
      * @public
      * @returns {Array} プロンプトの配列
      */
-    function loadPromptLibrary() {
-        return window.Storage._getItem(STORAGE_KEYS.PROMPT_LIBRARY, [], true);
+    loadPromptLibrary() {
+        return window.Storage._getItem(this.STORAGE_KEYS.PROMPT_LIBRARY, [], true);
     }
 
     /**
@@ -156,9 +173,9 @@ window.PromptManager = (function() {
      * @public
      * @param {Array} promptLibrary - プロンプトの配列
      */
-    function savePromptLibrary(promptLibrary) {
+    savePromptLibrary(promptLibrary) {
         if (!Array.isArray(promptLibrary)) return;
-        window.Storage._setItem(STORAGE_KEYS.PROMPT_LIBRARY, promptLibrary);
+        window.Storage._setItem(this.STORAGE_KEYS.PROMPT_LIBRARY, promptLibrary);
     }
 
     /**
@@ -166,8 +183,8 @@ window.PromptManager = (function() {
      * @public
      * @returns {Object} カテゴリオブジェクト
      */
-    function loadCategories() {
-        return window.Storage._getItem(STORAGE_KEYS.PROMPT_CATEGORIES, {}, true);
+    loadCategories() {
+        return window.Storage._getItem(this.STORAGE_KEYS.PROMPT_CATEGORIES, {}, true);
     }
 
     /**
@@ -175,9 +192,9 @@ window.PromptManager = (function() {
      * @public
      * @param {Object} categories - カテゴリオブジェクト
      */
-    function saveCategories(categories) {
+    saveCategories(categories) {
         if (!categories || typeof categories !== 'object') return;
-        window.Storage._setItem(STORAGE_KEYS.PROMPT_CATEGORIES, categories);
+        window.Storage._setItem(this.STORAGE_KEYS.PROMPT_CATEGORIES, categories);
     }
 
     /**
@@ -185,8 +202,8 @@ window.PromptManager = (function() {
      * @public
      * @returns {Object} 変数オブジェクト
      */
-    function loadVariables() {
-        return window.Storage._getItem(STORAGE_KEYS.PROMPT_VARIABLES, {}, true);
+    loadVariables() {
+        return window.Storage._getItem(this.STORAGE_KEYS.PROMPT_VARIABLES, {}, true);
     }
 
     /**
@@ -194,9 +211,9 @@ window.PromptManager = (function() {
      * @public
      * @param {Object} variables - 変数オブジェクト
      */
-    function saveVariables(variables) {
+    saveVariables(variables) {
         if (!variables || typeof variables !== 'object') return;
-        window.Storage._setItem(STORAGE_KEYS.PROMPT_VARIABLES, variables);
+        window.Storage._setItem(this.STORAGE_KEYS.PROMPT_VARIABLES, variables);
     }
 
     /**
@@ -205,13 +222,13 @@ window.PromptManager = (function() {
      * @param {Object} prompt - プロンプトオブジェクト
      * @returns {string} 生成されたプロンプトID
      */
-    function addPrompt(prompt) {
+    addPrompt(prompt) {
         if (!prompt || !prompt.name || !prompt.content) {
             throw new Error('プロンプトには名前と内容が必要です');
         }
 
-        const library = loadPromptLibrary();
-        const promptId = generateUniqueId();
+        const library = this.loadPromptLibrary();
+        const promptId = this.#generateUniqueId();
         
         const newPrompt = {
             id: promptId,
@@ -220,13 +237,13 @@ window.PromptManager = (function() {
             description: prompt.description || '',
             category: prompt.category || 'general',
             tags: Array.isArray(prompt.tags) ? prompt.tags : [],
-            variables: extractVariables(prompt.content),
+            variables: this.#extractVariables(prompt.content),
             createdAt: Date.now(),
             updatedAt: Date.now()
         };
         
         library.push(newPrompt);
-        savePromptLibrary(library);
+        this.savePromptLibrary(library);
         
         return promptId;
     }
@@ -238,10 +255,10 @@ window.PromptManager = (function() {
      * @param {Object} updatedData - 更新データ
      * @returns {boolean} 更新成功時true
      */
-    function updatePrompt(promptId, updatedData) {
+    updatePrompt(promptId, updatedData) {
         if (!promptId || !updatedData) return false;
         
-        const library = loadPromptLibrary();
+        const library = this.loadPromptLibrary();
         const index = library.findIndex(p => p.id === promptId);
         
         if (index === -1) return false;
@@ -256,11 +273,11 @@ window.PromptManager = (function() {
         
         // 内容が更新された場合は変数も再抽出
         if (updatedData.content !== undefined) {
-            library[index].variables = extractVariables(updatedData.content);
+            library[index].variables = this.#extractVariables(updatedData.content);
         }
         
         library[index].updatedAt = Date.now();
-        savePromptLibrary(library);
+        this.savePromptLibrary(library);
         
         return true;
     }
@@ -271,17 +288,17 @@ window.PromptManager = (function() {
      * @param {string} promptId - 削除するプロンプトのID
      * @returns {boolean} 削除成功時true
      */
-    function deletePrompt(promptId) {
+    deletePrompt(promptId) {
         if (!promptId) return false;
         
-        const library = loadPromptLibrary();
+        const library = this.loadPromptLibrary();
         const filteredLibrary = library.filter(p => p.id !== promptId);
         
         if (filteredLibrary.length === library.length) {
             return false; // 削除対象が見つからなかった
         }
         
-        savePromptLibrary(filteredLibrary);
+        this.savePromptLibrary(filteredLibrary);
         return true;
     }
 
@@ -290,8 +307,8 @@ window.PromptManager = (function() {
      * @param {Object} filter - フィルタリング条件
      * @returns {Array} フィルタリングされたプロンプト配列
      */
-    function searchPrompts(filter = {}) {
-        const prompts = loadPromptLibrary();
+    searchPrompts(filter = {}) {
+        const prompts = this.loadPromptLibrary();
         console.log('検索フィルター:', filter, '全プロンプト数:', prompts.length);
         
         return prompts.filter(prompt => {
@@ -324,12 +341,12 @@ window.PromptManager = (function() {
      * @param {Object} categoryData - カテゴリデータ
      * @returns {boolean} 作成成功時true
      */
-    function createCategory(categoryKey, categoryData) {
+    createCategory(categoryKey, categoryData) {
         if (!categoryKey || !categoryData || !categoryData.name) {
             return false;
         }
         
-        const categories = loadCategories();
+        const categories = this.loadCategories();
         
         // 既に存在する場合は失敗
         if (categories[categoryKey]) {
@@ -342,19 +359,19 @@ window.PromptManager = (function() {
             order: categoryData.order !== undefined ? categoryData.order : Object.keys(categories).length
         };
         
-        saveCategories(categories);
+        this.saveCategories(categories);
         return true;
     }
 
     /**
      * カテゴリを更新する
-     * @private
+     * @public
      * @param {string} categoryKey - 更新するカテゴリのキー
      * @param {Object} updateData - 更新データ
      * @param {string} updateData.name - 新しいカテゴリ名
      * @returns {boolean} 更新の成否
      */
-    function updateCategory(categoryKey, updateData) {
+    updateCategory(categoryKey, updateData) {
         if (!categoryKey || !updateData || !updateData.name) {
             console.error('カテゴリ更新に必要なデータが不足しています');
             return false;
@@ -362,7 +379,7 @@ window.PromptManager = (function() {
 
         try {
             // カテゴリ一覧を取得
-            const categories = loadCategories();
+            const categories = this.loadCategories();
             
             // カテゴリの存在確認
             if (!categories[categoryKey]) {
@@ -380,7 +397,7 @@ window.PromptManager = (function() {
             categories[categoryKey].name = updateData.name.trim();
             
             // 保存
-            saveCategories(categories);
+            this.saveCategories(categories);
             
             return true;
         } catch (error) {
@@ -391,11 +408,11 @@ window.PromptManager = (function() {
 
     /**
      * カテゴリを削除する
-     * @private
+     * @public
      * @param {string} categoryKey - 削除するカテゴリのキー
      * @returns {boolean} 削除の成否
      */
-    function deleteCategory(categoryKey) {
+    deleteCategory(categoryKey) {
         if (!categoryKey) {
             console.error('カテゴリキーが指定されていません');
             return false;
@@ -403,7 +420,7 @@ window.PromptManager = (function() {
 
         try {
             // カテゴリ一覧を取得
-            const categories = loadCategories();
+            const categories = this.loadCategories();
             
             // カテゴリの存在確認
             if (!categories[categoryKey]) {
@@ -418,7 +435,7 @@ window.PromptManager = (function() {
             }
             
             // プロンプト一覧を取得
-            const prompts = loadPromptLibrary();
+            const prompts = this.loadPromptLibrary();
             
             // カテゴリ内のプロンプトを「一般」カテゴリに移動
             prompts.forEach(prompt => {
@@ -431,8 +448,8 @@ window.PromptManager = (function() {
             delete categories[categoryKey];
             
             // 変更を保存
-            saveCategories(categories);
-            savePromptLibrary(prompts);
+            this.saveCategories(categories);
+            this.savePromptLibrary(prompts);
             
             return true;
         } catch (error) {
@@ -447,12 +464,12 @@ window.PromptManager = (function() {
      * @param {string} name - 変数名
      * @param {string} value - 変数値
      */
-    function setVariable(name, value) {
+    setVariable(name, value) {
         if (!name) return;
         
-        const variables = loadVariables();
+        const variables = this.loadVariables();
         variables[name] = value;
-        saveVariables(variables);
+        this.saveVariables(variables);
     }
 
     /**
@@ -462,15 +479,15 @@ window.PromptManager = (function() {
      * @param {Object} customVariables - カスタム変数（オプション）
      * @returns {string} 構築されたプロンプト
      */
-    function buildPrompt(promptId, customVariables = {}) {
-        const library = loadPromptLibrary();
+    buildPrompt(promptId, customVariables = {}) {
+        const library = this.loadPromptLibrary();
         const prompt = library.find(p => p.id === promptId);
         
         if (!prompt) {
             throw new Error(`プロンプトID "${promptId}" が見つかりません`);
         }
         
-        return processPromptTemplate(prompt.content, customVariables);
+        return this.#processPromptTemplate(prompt.content, customVariables);
     }
 
     /**
@@ -481,16 +498,16 @@ window.PromptManager = (function() {
      * @param {string} separator - 区切り文字（デフォルトは改行2つ）
      * @returns {string} 結合されたプロンプト
      */
-    function combinePrompts(promptIds, customVariables = {}, separator = '\n\n') {
+    combinePrompts(promptIds, customVariables = {}, separator = '\n\n') {
         if (!Array.isArray(promptIds) || promptIds.length === 0) {
             return '';
         }
         
-        const library = loadPromptLibrary();
+        const library = this.loadPromptLibrary();
         const prompts = promptIds
             .map(id => library.find(p => p.id === id))
             .filter(Boolean)
-            .map(prompt => processPromptTemplate(prompt.content, customVariables));
+            .map(prompt => this.#processPromptTemplate(prompt.content, customVariables));
         
         return prompts.join(separator);
     }
@@ -502,7 +519,7 @@ window.PromptManager = (function() {
      * @param {Object} customVariables - カスタム変数
      * @returns {string} 処理されたプロンプト
      */
-    function processPromptTemplate(template, customVariables = {}) {
+    #processPromptTemplate(template, customVariables = {}) {
         if (!template) return '';
         
         // システム変数の設定
@@ -512,7 +529,7 @@ window.PromptManager = (function() {
         };
         
         // 保存済みの変数を読み込む
-        const savedVariables = loadVariables();
+        const savedVariables = this.loadVariables();
         
         // すべての変数をマージ（優先順位: カスタム > システム > 保存済み）
         const allVariables = {
@@ -522,10 +539,10 @@ window.PromptManager = (function() {
         };
         
         // まず条件分岐を処理
-        let processedTemplate = processConditions(template, allVariables);
+        let processedTemplate = this.#processConditions(template, allVariables);
         
         // 次に変数を置換
-        processedTemplate = processedTemplate.replace(VARIABLE_REGEX, (match, varName) => {
+        processedTemplate = processedTemplate.replace(this.VARIABLE_REGEX, (match, varName) => {
             const trimmedName = varName.trim();
             // 変数が存在すれば値を返し、なければプレースホルダーをそのまま残す
             return allVariables[trimmedName] !== undefined ? allVariables[trimmedName] : match;
@@ -541,11 +558,11 @@ window.PromptManager = (function() {
      * @param {Object} variables - 変数オブジェクト
      * @returns {string} 条件処理後のテンプレート
      */
-    function processConditions(template, variables) {
-        return template.replace(CONDITION_REGEX, (match, condition, ifBlock, elseBlock = '') => {
+    #processConditions(template, variables) {
+        return template.replace(this.CONDITION_REGEX, (match, condition, ifBlock, elseBlock = '') => {
             try {
                 // 条件式の評価
-                const conditionResult = evaluateCondition(condition, variables);
+                const conditionResult = this.#evaluateCondition(condition, variables);
                 return conditionResult ? ifBlock : elseBlock;
             } catch (e) {
                 console.error('条件評価エラー:', e);
@@ -561,7 +578,7 @@ window.PromptManager = (function() {
      * @param {Object} variables - 変数オブジェクト
      * @returns {boolean} 評価結果
      */
-    function evaluateCondition(condition, variables) {
+    #evaluateCondition(condition, variables) {
         // 基本的な比較演算子をサポート
         
         // 等しい
@@ -603,14 +620,14 @@ window.PromptManager = (function() {
      * @param {string} template - プロンプトテンプレート
      * @returns {Array} 変数名の配列
      */
-    function extractVariables(template) {
+    #extractVariables(template) {
         if (!template) return [];
         
         const variables = new Set();
         let match;
         
         // 変数の抽出
-        while ((match = VARIABLE_REGEX.exec(template)) !== null) {
+        while ((match = this.VARIABLE_REGEX.exec(template)) !== null) {
             variables.add(match[1].trim());
         }
         
@@ -622,7 +639,7 @@ window.PromptManager = (function() {
      * @private
      * @returns {string} 生成されたID
      */
-    function generateUniqueId() {
+    #generateUniqueId() {
         return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 9);
     }
 
@@ -632,7 +649,7 @@ window.PromptManager = (function() {
      * @param {string} categoryName - カテゴリ名
      * @returns {string} 一意のカテゴリキー
      */
-    function generateCategoryKey(categoryName) {
+    #generateCategoryKey(categoryName) {
         if (!categoryName) return '';
 
         // ハッシュ関数を使用して一意のキーを生成
@@ -649,21 +666,21 @@ window.PromptManager = (function() {
      * @param {string} categoryName - カテゴリ名
      * @returns {boolean} 作成成功時true
      */
-    function addCategory(categoryName) {
+    addCategory(categoryName) {
         if (!categoryName) {
             console.error('カテゴリ名が空です');
             return false;
         }
         
         // カテゴリキーを生成
-        const categoryKey = generateCategoryKey(categoryName);
+        const categoryKey = this.#generateCategoryKey(categoryName);
         
         if (!categoryKey) {
             console.error('カテゴリ名が不正です: ', categoryName);
             return false;
         }
         
-        const categories = loadCategories();
+        const categories = this.loadCategories();
         
         // 既に同じキーが存在する場合は失敗
         if (categories[categoryKey]) {
@@ -681,7 +698,7 @@ window.PromptManager = (function() {
         }
         
         // カテゴリを作成
-        const success = createCategory(categoryKey, {
+        const success = this.createCategory(categoryKey, {
             name: categoryName,
             description: '',
             order: Object.keys(categories).length
@@ -693,27 +710,4 @@ window.PromptManager = (function() {
         
         return success;
     }
-
-    // 公開API
-    return {
-        init,
-        loadPromptLibrary,
-        savePromptLibrary,
-        loadCategories,
-        saveCategories,
-        loadVariables,
-        saveVariables,
-        addPrompt,
-        updatePrompt,
-        deletePrompt,
-        searchPrompts,
-        createCategory,
-        updateCategory,
-        deleteCategory,
-        setVariable,
-        buildPrompt,
-        combinePrompts,
-        DEFAULT_CATEGORIES,
-        addCategory
-    };
-})();
+}

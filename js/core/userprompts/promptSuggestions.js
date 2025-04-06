@@ -379,7 +379,7 @@ window.PromptSuggestions = {
      */
     _searchPrompts(query) {
         // PromptManagerからプロンプトを検索
-        const prompts = window.PromptManager ? window.PromptManager.loadPromptLibrary() : [];
+        const prompts = PromptManager.getInstance ? PromptManager.getInstance.loadPromptLibrary() : [];
         
         // クエリがない場合は全てのプロンプトを表示
         if (!query) return prompts.slice(0, this.MAX_SUGGESTIONS);
@@ -408,7 +408,7 @@ window.PromptSuggestions = {
         if (!categoryId) return '';
         
         // カテゴリ情報を取得
-        const categories = window.PromptManager ? window.PromptManager.loadCategories() : {};
+        const categories = PromptManager.getInstance ? PromptManager.getInstance.loadCategories() : {};
         
         // カテゴリIDから名前を取得
         const category = categories[categoryId];

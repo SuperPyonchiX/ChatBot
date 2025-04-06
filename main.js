@@ -44,9 +44,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         
         // プロンプトマネージャーの初期化
-        if (window.PromptManager) {
-            window.PromptManager.init();
-        }
+        PromptManager.getInstance;
         
         // プロンプトマネージャーのUIイベント設定
         if (window.UI && window.UI.setupPromptManagerEvents) {

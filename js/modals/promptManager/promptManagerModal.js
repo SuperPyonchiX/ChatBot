@@ -57,7 +57,7 @@ Object.assign(window.UI.Core.Modal, {
         categoriesList.innerHTML = '';
         
         // カテゴリを読み込む
-        const categories = window.PromptManager.loadCategories();
+        const categories = PromptManager.getInstance.loadCategories();
         
         // カテゴリを並び替え
         const sortedCategories = Object.entries(categories)
@@ -145,7 +145,7 @@ Object.assign(window.UI.Core.Modal, {
         promptsList.innerHTML = '';
         
         // 検索条件でプロンプトを取得
-        const prompts = window.PromptManager.searchPrompts(filter);
+        const prompts = PromptManager.getInstance.searchPrompts(filter);
         
         if (prompts.length === 0) {
             promptsList.innerHTML = '<div class="no-prompts-message">プロンプトが見つかりません</div>';
@@ -220,7 +220,7 @@ Object.assign(window.UI.Core.Modal, {
      */
     _usePrompt: function(promptId) {
         try {
-            const promptText = window.PromptManager.buildPrompt(promptId);
+            const promptText = PromptManager.getInstance.buildPrompt(promptId);
             
             const userInput = window.UI.Cache.get('userInput');
             if (userInput) {
@@ -244,7 +244,7 @@ Object.assign(window.UI.Core.Modal, {
         const categories = document.querySelectorAll('.category-item');
         if (!categories.length) return;
         
-        const prompts = window.PromptManager.loadPromptLibrary();
+        const prompts = PromptManager.getInstance.loadPromptLibrary();
         
         // カテゴリごとのカウントを集計
         const counts = {
@@ -275,7 +275,7 @@ Object.assign(window.UI.Core.Modal, {
     _deletePrompt: function(promptId) {
         if (confirm('このプロンプトを削除してもよろしいですか？')) {
             try {
-                const result = window.PromptManager.deletePrompt(promptId);
+                const result = PromptManager.getInstance.deletePrompt(promptId);
                 if (result) {
                     window.UI.Core.Notification.show('プロンプトを削除しました', 'success');
                     
@@ -306,7 +306,7 @@ Object.assign(window.UI.Core.Modal, {
         
         if (newName && newName.trim() && newName !== currentName) {
             try {
-                const success = window.PromptManager.updateCategory(categoryKey, {
+                const success = PromptManager.getInstance.updateCategory(categoryKey, {
                     name: newName.trim()
                 });
                 
@@ -338,7 +338,7 @@ Object.assign(window.UI.Core.Modal, {
         ).then(confirmed => {
             if (confirmed) {
                 try {
-                    const success = window.PromptManager.deleteCategory(categoryKey);
+                    const success = PromptManager.getInstance.deleteCategory(categoryKey);
                     
                     if (success) {
                         window.UI.Core.Notification.show('カテゴリを削除しました', 'success');
@@ -447,7 +447,7 @@ Object.assign(window.UI.Core.Modal, {
         select.innerHTML = '';
 
         // カテゴリ一覧を取得
-        const categories = window.PromptManager.loadCategories();
+        const categories = PromptManager.getInstance.loadCategories();
         const sortedCategories = Object.entries(categories)
             .filter(([key]) => key !== 'all')
             .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
@@ -502,10 +502,10 @@ Object.assign(window.UI.Core.Modal, {
 
             if (promptId) {
                 // 既存プロンプトの更新
-                success = window.PromptManager.updatePrompt(promptId, promptData);
+                success = PromptManager.getInstance.updatePrompt(promptId, promptData);
             } else {
                 // 新規プロンプトの追加
-                success = window.PromptManager.addPrompt(promptData);
+                success = PromptManager.getInstance.addPrompt(promptData);
             }
 
             if (success) {
@@ -535,7 +535,7 @@ Object.assign(window.UI.Core.Modal, {
         if (!categoryName || !categoryName.trim()) return;
 
         try {
-            const success = window.PromptManager.addCategory(categoryName.trim());
+            const success = PromptManager.getInstance.addCategory(categoryName.trim());
             if (success) {
                 window.UI.Core.Notification.show('カテゴリを追加しました', 'success');
                 this.updatePromptCategories();
