@@ -580,7 +580,7 @@ class Storage {
         }
         
         if (sensitiveKeys.includes(key) && value) {
-            return window.CryptoHelper.encrypt(value);
+            return CryptoHelper.getInstance.encrypt(value);
         }
         
         return value;
@@ -603,8 +603,8 @@ class Storage {
             sensitiveKeys.push(key);
         }
         
-        if (sensitiveKeys.includes(key) && window.CryptoHelper.isEncrypted(value)) {
-            return window.CryptoHelper.decrypt(value);
+        if (sensitiveKeys.includes(key) && CryptoHelper.getInstance.isEncrypted(value)) {
+            return CryptoHelper.getInstance.decrypt(value);
         }
         
         return value;
