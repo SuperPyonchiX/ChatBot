@@ -1255,11 +1255,21 @@ classDiagram
     ChatActions --> FileAttachment: 添付ファイル処理
     ChatActions --> FileHandler: ファイル処理
     ChatActions --> UIUtils: テキストエリアリサイズ
+    ChatActions --> RenameChatModal: モーダル表示
+    
     ChatHistory --> UIUtils: スクロール制御
     ChatHistory --> ChatRenderer: メッセージ表示
+    ChatHistory --> ChatUI: 要素生成
+    ChatHistory --> FileAttachment: 添付ファイル表示
+    
     ChatRenderer --> Markdown: マークダウン処理
     ChatRenderer --> UIUtils: DOM要素生成
+    ChatRenderer --> ChatUI: 要素生成
+    ChatRenderer --> ChatAttachmentViewer: 添付ファイル表示
+    ChatRenderer --> CodeExecutor: コード実行
+    
     ChatAttachmentViewer --> Markdown: コード表示処理
+    ChatAttachmentViewer --> ChatUI: 要素生成
     
     %% コード実行関連
     CodeExecutor --> JavaScriptExecutor: 実行委譲
@@ -1267,9 +1277,13 @@ classDiagram
     CodeExecutor --> CPPExecutor: 実行委譲
     CodeExecutor --> HTMLExecutor: 実行委譲
     
+    %% サイドバー関連
+    Sidebar --> UICache: DOM要素取得
+    
     %% API関連
     AIAPI --> CryptoHelper: APIキー復号化
     AIAPI --> FileConverter: 添付ファイル処理
+    AIAPI --> Storage: API設定取得
 ```
 
 この図では、アプリケーションの主要なクラス間の実際の依存関係を表現しています。各クラスはシングルトンパターンを採用しており、`getInstance()`メソッドを通じて唯一のインスタンスにアクセスします。
@@ -1279,7 +1293,7 @@ classDiagram
 - 点線矢印(`..>`)は、弱い依存関係を示します
 - 三角矢印(`<|--`)は継承関係を示します
 
-依存関係の方向は、依存元から依存先へ向かう矢印で表現しています。例えば、`ChatActions --> AIAPI`は、ChatActionsクラスがAIAPIクラスに依存していることを示します。
+依存関係の方向は、依存元から依存先へ向かう矢印で表現しています。例えば、`ChatRenderer --> ChatUI`は、ChatRendererクラスがChatUIクラスに依存していることを示します。
 
 ## フローチャート
 
