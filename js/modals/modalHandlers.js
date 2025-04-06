@@ -91,7 +91,7 @@ class ModalHandlers {
         }
 
         // モーダルを閉じる
-        window.UI.Core.Modal.hideRenameChatModal();
+        RenameChatModal.getInstance.hideRenameChatModal();
     }
     
     /**

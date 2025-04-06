@@ -192,7 +192,7 @@ class EventHandlers {
         window.Elements.saveRenameChat.addEventListener('click', ModalHandlers.getInstance.saveRenamedChat);
         
         // キャンセルボタン
-        window.Elements.cancelRenameChat.addEventListener('click', window.UI.Core.Modal.hideRenameChatModal);
+        window.Elements.cancelRenameChat.addEventListener('click', RenameChatModal.getInstance.hideRenameChatModal);
     }
 
     /**
@@ -267,7 +267,7 @@ class EventHandlers {
                 const modals = [
                     { id: 'systemPromptModal', hide: SystemPromptModal.getInstance.hideSystemPromptModal },
                     { id: 'apiKeyModal', hide: ApiSettingsModal.getInstance.hideApiKeyModal },
-                    { id: 'renameChatModal', hide: window.UI.Core.Modal.hideRenameChatModal }
+                    { id: 'renameChatModal', hide: RenameChatModal.getInstance.hideRenameChatModal }
                 ];
                 
                 modals.forEach(modal => {

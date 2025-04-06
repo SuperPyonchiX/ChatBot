@@ -1,11 +1,30 @@
-window.UI = window.UI || {};
-window.UI.Core = window.UI.Core || {};
-window.UI.Core.Modal = window.UI.Core.Modal || {};
-
 /**
- * チャット名変更モーダル
+ * チャット名変更モーダルを管理するクラス
+ * @class RenameChatModal
  */
-Object.assign(window.UI.Core.Modal, {
+class RenameChatModal {
+    static #instance = null;
+
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {RenameChatModal} RenameChatModalのインスタンス
+     */
+    static get getInstance() {
+        if (!RenameChatModal.#instance) {
+            RenameChatModal.#instance = new RenameChatModal();
+        }
+        return RenameChatModal.#instance;
+    }
+
+    /**
+     * コンストラクタ - privateなので直接newはできません
+     */
+    constructor() {
+        if (RenameChatModal.#instance) {
+            throw new Error('RenameChatModalクラスは直接インスタンス化できません。getInstance()を使用してください。');
+        }
+    }
+
     /**
      * チャットの名前変更モーダルを表示します
      * 会話のタイトルを変更するためのモーダルを表示します
@@ -14,7 +33,7 @@ Object.assign(window.UI.Core.Modal, {
      * @param {string} conversation.id - 会話ID
      * @param {string} conversation.title - 会話タイトル
      */
-    showRenameChatModal: function(conversation) {
+    showRenameChatModal(conversation) {
         const modalEl = UICache.getInstance.get('renameChatModal');
         const titleInput = UICache.getInstance.get('chatTitleInput');
         
@@ -32,12 +51,12 @@ Object.assign(window.UI.Core.Modal, {
             titleInput.focus();
             titleInput.select();
         }, 10);
-    },
+    }
     
     /**
      * チャット名変更モーダルを非表示にします
      */
-    hideRenameChatModal: function() {
+    hideRenameChatModal() {
         UIUtils.getInstance.toggleModal('renameChatModal', false);
     }
-});
+}
