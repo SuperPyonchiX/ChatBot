@@ -162,7 +162,7 @@ class FileAttachment {
         }
         
         try {
-            const attachments = await window.FileConverter.convertFilesToAttachments(window.FileHandler.selectedFiles);
+            const attachments = await FileConverter.getInstance.convertFilesToAttachments(window.FileHandler.selectedFiles);
             // エラーがあった添付ファイルを除外
             return attachments.filter(attachment => attachment.type !== 'error');
         } catch (error) {

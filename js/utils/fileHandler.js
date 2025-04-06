@@ -82,7 +82,7 @@ window.FileHandler = {
         this.attachmentTimestamp = Date.now();
         
         // ファイル変換はFileConverterに委譲
-        window.FileConverter.convertFilesToAttachments(files)
+        FileConverter.getInstance.convertFilesToAttachments(files)
             .then(attachments => {
                 document.dispatchEvent(new CustomEvent('file-attached', {
                     detail: { attachments }

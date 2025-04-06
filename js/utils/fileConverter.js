@@ -1,18 +1,48 @@
 /**
  * fileConverter.js
  * ファイル変換機能を提供します
+ * @class FileConverter
  */
+class FileConverter {
+    static #instance = null;
 
-window.FileConverter = {
-    convertFilesToAttachments: function(files) {
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {FileConverter} FileConverterのインスタンス
+     */
+    static get getInstance() {
+        if (!FileConverter.#instance) {
+            FileConverter.#instance = new FileConverter();
+        }
+        return FileConverter.#instance;
+    }
+
+    /**
+     * コンストラクタ - privateなので直接newはできません
+     */
+    constructor() {
+        if (FileConverter.#instance) {
+            throw new Error('FileConverterクラスは直接インスタンス化できません。getInstance()を使用してください。');
+        }
+    }
+
+    /**
+     * ファイルを添付ファイル形式に変換します
+     * @param {File[]} files - 変換するファイルの配列
+     * @returns {Promise<Array>} 変換された添付ファイルの配列
+     */
+    convertFilesToAttachments(files) {
         if (!files || !Array.isArray(files)) {
             return Promise.resolve([]);
         }
         
         return Promise.all(files.map(file => this._convertFileToAttachment(file)));
-    },
+    }
 
-    _convertFileToAttachment: async function(file) {
+    /**
+     * プライベートメソッドはそのまま移行
+     */
+    async _convertFileToAttachment(file) {
         try {
             if (!file) {
                 throw new Error('有効なファイルが指定されていません');
@@ -81,14 +111,14 @@ window.FileConverter = {
                 error: error.message
             };
         }
-    },
+    }
 
-    _isOfficeFile: function(mimeType) {
+    _isOfficeFile(mimeType) {
         if (!mimeType) return false;
         return window.CONFIG.FILE.ALLOWED_FILE_TYPES.office?.includes(mimeType) ?? false;
-    },
+    }
 
-    _extractTextFromPDF: async function(file) {
+    async _extractTextFromPDF(file) {
         try {
             const arrayBuffer = await window.FileReaderUtil.readFileAsArrayBuffer(file);
             const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
@@ -109,9 +139,9 @@ window.FileConverter = {
             console.error('PDFテキスト抽出エラー:', error);
             return `PDFファイル「${file.name}」からテキストを抽出できませんでした。`;
         }
-    },
+    }
 
-    _extractTextFromOfficeFile: async function(file) {
+    async _extractTextFromOfficeFile(file) {
         try {
             if (file.type.includes('excel') || file.type.includes('sheet')) {
                 return await this._extractTextFromExcelFile(file);
@@ -126,9 +156,9 @@ window.FileConverter = {
             console.error('Officeファイルテキスト抽出エラー:', error);
             return `${this._getOfficeFileTypeName(file.type)}ファイル「${file.name}」からのテキスト抽出に失敗しました。`;
         }
-    },
+    }
 
-    _extractTextFromExcelFile: async function(file) {
+    async _extractTextFromExcelFile(file) {
         if (typeof XLSX === 'undefined') {
             return `Excelファイル「${file.name}」からのテキスト抽出に失敗しました。\nSheetJSライブラリが見つかりません。`;
         }
@@ -160,9 +190,9 @@ window.FileConverter = {
         });
         
         return extractedText;
-    },
+    }
 
-    _extractTextFromPowerPointFile: async function(file) {
+    async _extractTextFromPowerPointFile(file) {
         try {
             const arrayBuffer = await window.FileReaderUtil.readFileAsArrayBuffer(file);
             const zip = await JSZip.loadAsync(arrayBuffer);
@@ -200,9 +230,9 @@ window.FileConverter = {
         } catch (error) {
             throw new Error("PowerPointファイルの処理中にエラーが発生しました。");
         }
-    },
+    }
 
-    _extractTextFromXML: function(xmlContent) {
+    _extractTextFromXML(xmlContent) {
         try {
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
@@ -221,9 +251,9 @@ window.FileConverter = {
             console.error("XMLパース中のエラー:", error);
             return "";
         }
-    },
+    }
 
-    _extractTextFromWordFile: async function(file) {
+    async _extractTextFromWordFile(file) {
         if (typeof mammoth === 'undefined') {
             return `Wordファイル「${file.name}」からのテキスト抽出に失敗しました。\nmammoth.jsライブラリが見つかりません。`;
         }
@@ -237,18 +267,18 @@ window.FileConverter = {
             console.warn('Word文書からのテキスト抽出の警告:', result.messages.map(msg => msg.message).join('\n'));
             return `=== Wordファイル「${file.name}」の内容 ===\n\n（テキストを抽出できませんでした）`;
         }
-    },
+    }
 
-    _readFileAsText: function(file) {
+    _readFileAsText(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = e => resolve(e.target.result);
             reader.onerror = e => reject(new Error('ファイルの読み込みに失敗しました'));
             reader.readAsText(file);
         });
-    },
+    }
 
-    _getOfficeFileTypeName: function(mimeType) {
+    _getOfficeFileTypeName(mimeType) {
         if (!mimeType) return 'Office';
         
         if (mimeType.includes('word')) return 'Word';
@@ -257,4 +287,4 @@ window.FileConverter = {
         
         return 'Office';
     }
-};
+}
