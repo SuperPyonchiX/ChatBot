@@ -12,13 +12,14 @@
 4. [モジュール詳細](#モジュール詳細)
 5. [データモデル](#データモデル)
 6. [UI設計](#ui設計)
-7. [フローチャート](#フローチャート)
-8. [シーケンス図](#シーケンス図)
-9. [APIインターフェース](#apiインターフェース)
-10. [セキュリティ考慮事項](#セキュリティ考慮事項)
-11. [パフォーマンス最適化](#パフォーマンス最適化)
-12. [テスト計画](#テスト計画)
-13. [拡張計画](#拡張計画)
+7. [クラス図](#クラス図)
+8. [フローチャート](#フローチャート)
+9. [シーケンス図](#シーケンス図)
+10. [APIインターフェース](#apiインターフェース)
+11. [セキュリティ考慮事項](#セキュリティ考慮事項)
+12. [パフォーマンス最適化](#パフォーマンス最適化)
+13. [テスト計画](#テスト計画)
+14. [拡張計画](#拡張計画)
 
 ## 概要
 
@@ -70,24 +71,79 @@ ChatBot/
 ├── README.md                # プロジェクト概要説明
 │
 ├── css/                     # スタイルシート関連ファイル
-│   ├── base.css             # 基本スタイル
-│   ├── chat.css             # チャットUI用スタイル
-│   ├── components.css       # コンポーネント用スタイル
-│   ├── layout.css           # レイアウト用スタイル
-│   └── markdown.css         # マークダウン表示用スタイル
+│   ├── base/                # 基本スタイル
+│   │   ├── base.css         # 基本スタイル定義
+│   │   └── variables.css    # CSS変数定義
+│   ├── components/          # コンポーネント別スタイル
+│   │   ├── animations/      # アニメーション
+│   │   ├── buttons/         # ボタン
+│   │   ├── chat/            # チャットUI
+│   │   ├── code/            # コード実行
+│   │   ├── file-preview/    # ファイルプレビュー
+│   │   ├── forms/           # フォーム
+│   │   ├── modals/          # モーダル
+│   │   ├── prompt/          # プロンプト
+│   │   └── settings/        # 設定メニュー
+│   └── layouts/             # レイアウト
+│       └── layout.css       # ページレイアウト
 │
 ├── icon/                    # アプリケーションで使用するアイコン類
 │   └── ChatBot.png          # アプリケーションアイコン
 │
 └── js/                      # JavaScriptモジュール
-    ├── api.js               # API通信用モジュール
-    ├── chat.js              # チャット機能コア実装
-    ├── config.js            # 設定管理
-    ├── cryptoHelper.js      # 暗号化/復号化ユーティリティ
-    ├── fileHandler.js       # ファイル添付機能実装
-    ├── markdown.js          # マークダウン処理
-    ├── storage.js           # ローカルストレージ操作
-    └── ui.js                # UI操作関連
+    ├── components/          # UI・機能コンポーネント
+    │   ├── chat/            # チャット関連コンポーネント
+    │   │   ├── chatActions.js      # チャットアクション
+    │   │   ├── chatAttachmentViewer.js # 添付ファイル表示
+    │   │   ├── chatHistory.js      # チャット履歴管理
+    │   │   ├── chatRenderer.js     # チャット表示
+    │   │   └── chatUI.js           # チャットUI
+    │   ├── fileAttachment/  # ファイル添付関連
+    │   │   ├── fileAttachment.js   # ファイル添付機能
+    │   │   └── fileAttachmentUI.js # ファイル添付UI
+    │   └── sidebar/         # サイドバー関連
+    │       └── sidebar.js         # サイドバー管理
+    │
+    ├── core/                # コア機能モジュール
+    │   ├── api.js           # API通信
+    │   ├── appState.js      # アプリケーション状態管理
+    │   ├── config.js        # 設定管理
+    │   ├── domElements.js   # DOM要素参照
+    │   ├── eventHandlers.js # イベントハンドラー
+    │   ├── storage.js       # ストレージ操作
+    │   ├── ui.js            # UI操作共通
+    │   ├── uiCache.js       # UI要素キャッシュ
+    │   ├── uiUtils.js       # UI操作ユーティリティ
+    │   └── executors/       # コード実行機能
+    │       ├── codeExecutor.js     # コード実行管理
+    │       └── languages/          # 言語別実行モジュール
+    │           ├── CPPExecutor.js      # C++実行
+    │           ├── ExecutorBase.js     # 基底クラス
+    │           ├── HTMLExecutor.js     # HTML実行
+    │           ├── JavaScriptExecutor.js # JavaScript実行
+    │           └── PythonExecutor.js   # Python実行
+    │
+    ├── lib/                 # サードパーティライブラリ
+    │   └── JSCPP.es5.min.js # C++実行ライブラリ
+    │
+    ├── modals/              # モーダルダイアログ管理
+    │   ├── modalHandlers.js      # モーダル共通ハンドラー
+    │   ├── apiSettings/         # API設定モーダル
+    │   │   └── apiSettingsModal.js
+    │   ├── promptManager/       # プロンプト管理モーダル
+    │   │   └── promptManagerModal.js
+    │   ├── renameChat/          # チャット名変更モーダル
+    │   │   └── renameChatModal.js
+    │   └── systemPrompt/        # システムプロンプト設定モーダル
+    │       └── systemPromptModal.js
+    │
+    └── utils/               # ユーティリティモジュール
+        ├── cryptoHelper.js  # 暗号化/復号化
+        ├── fileConverter.js # ファイル変換
+        ├── fileHandler.js   # ファイル処理
+        ├── fileReader.js    # ファイル読込
+        ├── fileValidator.js # ファイル検証
+        └── markdown.js      # マークダウン処理
 ```
 
 ## モジュール詳細
@@ -101,10 +157,13 @@ ChatBot/
 **主な責任**:
 - アプリケーションの初期化処理
 - イベントリスナーのセットアップ
-- 会話管理（作成・切替・削除・名前変更）
-- 他のモジュールの連携・調整
+- 外部ライブラリの動的読み込み
+- 会話の初期ロード
+- Prism.jsコンポーネント管理
 
-### js/api.js
+### コアモジュール
+
+#### js/core/api.js (AIAPIクラス)
 
 APIとの通信を担当するモジュールです。
 
@@ -113,44 +172,51 @@ APIとの通信を担当するモジュールです。
 - Azure OpenAI APIとの通信
 - エラーハンドリング
 - リクエスト/レスポンスの整形
+- ストリーミングレスポンスの処理
+- 添付ファイルの処理
 
-### js/chat.js
+#### js/core/appState.js
 
-チャット機能のコア実装を担当します。
+アプリケーションの状態管理を担当します。
 
 **主な責任**:
-- メッセージの送受信制御
-- ユーザー/ボットメッセージの表示
-- チャット履歴の表示管理
-- チャットUI操作
+- 現在の会話状態管理
+- 会話履歴の管理
+- API設定の管理
+- システムプロンプトの管理
+- 添付ファイルの状態管理
 
-### js/config.js
+#### js/core/config.js
 
 アプリケーション設定の管理を担当します。
 
 **主な責任**:
 - デフォルト設定値の定義
 - 設定情報の構造定義
+- ファイル処理の設定
+- UIパラメータの定義
+- モデル設定の管理
 
-### js/fileHandler.js
+#### js/core/domElements.js
 
-ファイル添付機能の実装を担当します。
-
-**主な責任**:
-- ファイル選択UI操作
-- ファイル処理（読込・変換）
-- API送信用ファイルデータの生成
-
-### js/markdown.js
-
-マークダウンのレンダリングとコードハイライトを担当します。
+DOM要素への参照を一元管理します。
 
 **主な責任**:
-- マークダウンテキストのHTML変換
-- コードブロックの言語検出と適切なハイライト
-- Prism.jsのダイナミックロード制御
+- DOM要素IDの定義
+- DOM要素へのアクセス提供
 
-### js/storage.js
+#### js/core/eventHandlers.js (EventHandlersクラス)
+
+イベントハンドラーの設定を管理するモジュールです。
+
+**主な責任**:
+- チャット関連イベントの設定
+- 設定関連イベントの設定
+- ファイル関連イベントの設定
+- グローバルイベントの設定
+- モーダル関連イベントの設定
+
+#### js/core/storage.js (Storageクラス)
 
 ローカルストレージを使ったデータ永続化を担当します。
 
@@ -159,278 +225,1015 @@ APIとの通信を担当するモジュールです。
 - 会話履歴の保存/読込
 - システムプロンプトの保存/読込
 - プロンプトテンプレートの管理
+- カテゴリ状態の保存/読込
+- 添付ファイルの保存/読込
 
-### js/ui.js
+#### js/core/ui.js (UIクラス)
 
-UI操作およびモーダル管理を担当します。
-
-**主な責任**:
-- モーダルの表示/非表示制御
-- UI要素の動的生成
-- イベントハンドラ登録
-- アニメーション・視覚効果
-
-### js/cryptoHelper.js
-
-機密情報の暗号化と復号化を担当するユーティリティモジュールです。
+UI操作のコア機能を提供します。
 
 **主な責任**:
-- APIキーなどのセンシティブ情報の暗号化
-- 暗号化されたデータの復号化
-- 暗号化状態の検出と管理
+- テーマ設定（ダーク/ライト）
+- 通知表示
+- モーダルダイアログ表示
+- アクセシビリティ機能
+- タッチデバイス最適化
+- パフォーマンス最適化
+
+#### js/core/uiCache.js (UICacheクラス)
+
+DOM要素のキャッシュを管理します。
+
+**主な責任**:
+- DOM要素の効率的な取得と保存
+- 要素キャッシュの管理
+
+#### js/core/uiUtils.js (UIUtilsクラス)
+
+UI操作のユーティリティ機能を提供します。
+
+**主な責任**:
+- 要素の表示/非表示切替
+- モーダル表示/非表示切替
+- 要素の動的生成
+- テキストエリアの自動リサイズ
+
+### コンポーネントモジュール
+
+#### js/components/chat/chatActions.js (ChatActionsクラス)
+
+チャット関連のアクションを担当します。
+
+**主な責任**:
+- メッセージの送信
+- 会話の作成
+- 会話のクリア
+- 会話履歴の表示
+- 会話の切り替え・削除
+
+#### js/components/chat/chatAttachmentViewer.js (ChatAttachmentViewerクラス)
+
+添付ファイルの表示機能を提供します。
+
+**主な責任**:
+- 添付ファイルのプレビュー生成
+- 画像ファイルの表示
+- テキストファイルの表示・整形
+- コードのシンタックスハイライト
+
+#### js/components/chat/chatHistory.js (ChatHistoryクラス)
+
+チャット履歴管理を担当します。
+
+**主な責任**:
+- 会話履歴の表示
+- アクティブチャットの更新
+- 会話の表示
+- タイムスタンプの整形
+
+#### js/components/chat/chatRenderer.js (ChatRendererクラス)
+
+チャットメッセージのレンダリングを担当します。
+
+**主な責任**:
+- メッセージの表示
+- ストリーミングレスポンスの表示
+- マークダウンのレンダリング
+- コードのシンタックスハイライト
+
+#### js/components/chat/chatUI.js (ChatUIクラス)
+
+チャットUIの管理を担当します。
+
+**主な責任**:
+- チャットUIの初期化
+- スクロール管理
+- メッセージ入力管理
+- UI状態の更新
+
+#### js/components/fileAttachment/fileAttachment.js (FileAttachmentクラス)
+
+ファイル添付機能の管理を担当します。
+
+**主な責任**:
+- 添付ファイルのクリア
+- API用添付ファイル変換
+- 会話用添付ファイルの保存
+- 保存済み添付ファイルの表示
+
+#### js/components/fileAttachment/fileAttachmentUI.js (FileAttachmentUIクラス)
+
+ファイル添付のUI管理を担当します。
+
+**主な責任**:
+- 添付ファイルのプレビュー表示
+- プレビューのクリア
+- ファイル情報の表示
+- 削除ボタンの管理
+
+#### js/components/sidebar/sidebar.js (Sidebarクラス)
+
+サイドバーの管理を担当します。
+
+**主な責任**:
+- サイドバーの表示/非表示切替
+- サイドバートグルボタンの作成
+- レスポンシブデザイン対応
+
+### モーダルモジュール
+
+#### js/modals/apiSettings/apiSettingsModal.js (ApiSettingsModalクラス)
+
+API設定モーダルを管理します。
+
+**主な責任**:
+- API設定モーダルの表示/非表示
+- OpenAI/Azure設定フォームの切替
+- モデル別エンドポイント設定管理
+
+#### js/modals/promptManager/promptManagerModal.js (PromptManagerModalクラス)
+
+プロンプト管理モーダルを担当します。
+
+**主な責任**:
+- プロンプト一覧の表示
+- プロンプトの追加/編集/削除
+- カテゴリ管理
+- プロンプト検索
+
+#### js/modals/renameChat/renameChatModal.js (RenameChatModalクラス)
+
+チャット名変更モーダルを管理します。
+
+**主な責任**:
+- チャット名変更モーダルの表示/非表示
+- チャット情報の取得・表示
+
+#### js/modals/systemPrompt/systemPromptModal.js (SystemPromptModalクラス)
+
+システムプロンプト設定モーダルを管理します。
+
+**主な責任**:
+- システムプロンプトモーダルの表示/非表示
+- テンプレート一覧の表示
+- カテゴリ表示の管理
+
+#### js/modals/modalHandlers.js (ModalHandlersクラス)
+
+モーダルのイベントハンドラーを管理します。
+
+**主な責任**:
+- API設定の保存
+- チャット名変更の保存
+- システムプロンプトの保存
+- テンプレート選択・削除処理
+
+### コード実行モジュール
+
+#### js/core/executors/codeExecutor.js (CodeExecutorクラス)
+
+コード実行機能の管理を担当します。
+
+**主な責任**:
+- コード実行の初期化
+- 言語検出
+- 言語別エグゼキュータの選択
+
+#### js/core/executors/languages/ExecutorBase.js (ExecutorBaseクラス)
+
+言語実行クラスの基底クラスです。
+
+**主な責任**:
+- 実行環境の共通インターフェース定義
+- ランタイム読み込み
+- 実行結果の標準化
+
+#### js/core/executors/languages/JavaScriptExecutor.js (JavaScriptExecutorクラス)
+
+JavaScript実行を担当します。
+
+**主な責任**:
+- JavaScript実行環境のセットアップ
+- コードの実行
+- 結果の表示
+
+#### js/core/executors/languages/PythonExecutor.js (PythonExecutorクラス)
+
+Python実行を担当します。
+
+**主な責任**:
+- Pyodideランタイムの読み込み
+- Pythonコードの実行
+- 結果の表示
+
+#### js/core/executors/languages/CPPExecutor.js (CPPExecutorクラス)
+
+C++実行を担当します。
+
+**主な責任**:
+- JSCPPランタイムの読み込み
+- C++コードの実行
+- 結果の表示
+
+#### js/core/executors/languages/HTMLExecutor.js (HTMLExecutorクラス)
+
+HTML実行を担当します。
+
+**主な責任**:
+- iframeによる実行環境構築
+- HTML/CSS/JSの組み合わせ処理
+- 結果の表示
+
+### ユーティリティモジュール
+
+#### js/utils/cryptoHelper.js (CryptoHelperクラス)
+
+暗号化機能を提供します。
+
+**主な責任**:
+- APIキーの暗号化
+- 暗号化データの復号化
+- 暗号化キーの生成
+
+#### js/utils/fileConverter.js (FileConverterクラス)
+
+ファイル変換機能を提供します。
+
+**主な責任**:
+- ファイルのBase64変換
+- ファイルオブジェクトの整形
+- 添付ファイル形式への変換
+
+#### js/utils/fileHandler.js (FileHandlerクラス)
+
+ファイル操作の基本機能を提供します。
+
+**主な責任**:
+- ファイル選択処理
+- 添付ファイル通知
+- 許可ファイル拡張子管理
+- 選択ファイルのクリア
+
+#### js/utils/fileReader.js (FileReaderクラス)
+
+ファイル読み込み機能を提供します。
+
+**主な責任**:
+- ファイルの非同期読み込み
+- ファイルタイプ別読み込み処理
+- バイナリ/テキスト変換
+
+#### js/utils/fileValidator.js (FileValidatorクラス)
+
+ファイル検証機能を提供します。
+
+**主な責任**:
+- ファイルタイプ検証
+- ファイルサイズ検証
+- 拡張子検証
+
+#### js/utils/markdown.js (Markdownクラス)
+
+マークダウン処理機能を提供します。
+
+**主な責任**:
+- マークダウンテキストのレンダリング
+- コードブロックの抽出
+- シンタックスハイライト
+- マークダウンライブラリ管理
 
 ## データモデル
 
-アプリケーションで使用される主要なデータ構造を定義します。
+ChatBotアプリケーションで使用される主要なデータモデルは以下の通りです。これらのデータ構造はJavaScriptオブジェクトとして実装され、ローカルストレージに保存されます。
 
-### 会話（Conversation）オブジェクト
+### 会話データモデル
+
+会話データは以下の構造で保存されます：
 
 ```javascript
 {
-  id: "unique-id-string",               // 会話を一意に識別するID
-  title: "会話のタイトル",              // 会話のタイトル
-  systemPrompt: "AIへの指示プロンプト", // システムプロンプト
-  messages: [                          // メッセージ配列
-    {
-      role: "user" | "assistant" | "system", // メッセージの送信者
-      content: "メッセージ内容",            // テキスト内容
-      timestamp: 1616161616161,             // タイムスタンプ
-      attachments: [                        // 添付ファイル（ある場合）
+    // 会話の配列
+    conversations: [
         {
-          type: "image/png",                // MIMEタイプ
-          data: "base64エンコードデータ",   // ファイルデータ
-          name: "ファイル名.png"            // ファイル名
+            id: "1680123456789",                 // 会話ID（タイムスタンプベース）
+            title: "新しいチャット",             // 会話タイトル
+            model: "gpt-4o",                    // 使用モデル
+            timestamp: 1680123456789,           // 作成/更新日時
+            messages: [                          // メッセージ配列
+                {
+                    role: "system",              // システムメッセージ
+                    content: "あなたは優秀なAIアシスタントです。"
+                },
+                {
+                    role: "user",                // ユーザーメッセージ
+                    content: "こんにちは",
+                    timestamp: 1680123456790     // メッセージ送信時間
+                },
+                {
+                    role: "assistant",           // アシスタントメッセージ
+                    content: "こんにちは！何かお手伝いできることはありますか？",
+                    timestamp: 1680123456900
+                }
+            ]
         }
-      ]
+    ],
+    // 現在選択中の会話ID
+    currentConversationId: "1680123456789"
+}
+```
+
+### API設定データモデル
+
+API設定は以下の構造で保存されます：
+
+```javascript
+{
+    apiType: "openai",                       // "openai" または "azure"
+    openaiApiKey: "encrypted_key_data",      // 暗号化されたOpenAI APIキー
+    azureApiKey: "encrypted_key_data",       // 暗号化されたAzure APIキー
+    azureEndpoints: {                        // Azure用各モデルのエンドポイント
+        "gpt-4o-mini": "https://example-gpt4o-mini.openai.azure.com/...",
+        "gpt-4o": "https://example-gpt4o.openai.azure.com/...",
+        "o1-mini": "https://example-o1-mini.openai.azure.com/...",
+        "o1": "https://example-o1.openai.azure.com/..."
     }
-  ],
-  createdAt: 1616161616161,            // 会話作成タイムスタンプ
-  updatedAt: 1616161616161             // 最終更新タイムスタンプ
 }
 ```
 
-### API設定オブジェクト
+### システムプロンプトデータモデル
+
+システムプロンプトとテンプレートは以下の構造で保存されます：
 
 ```javascript
 {
-  type: "openai" | "azure",           // API種類
-  openaiApiKey: "sk-...",             // OpenAI APIキー
-  azureApiKey: "...",                 // Azure APIキー
-  azureEndpoints: {                   // Azureモデル別エンドポイント
-    "gpt-4o-mini": "エンドポイントURL",
-    "gpt-4o": "エンドポイントURL",
-    "o1-mini": "エンドポイントURL",
-    "o1": "エンドポイントURL"
-  }
+    // 現在のシステムプロンプト
+    systemPrompt: "あなたは優秀なAIアシスタントです。ユーザーの質問に丁寧に回答してください。",
+    
+    // システムプロンプトテンプレート集
+    systemPromptTemplates: {
+        "一般アシスタント": {
+            content: "あなたは優秀なAIアシスタントです。ユーザーの質問に丁寧に回答してください。",
+            category: "基本",
+            description: "標準的なアシスタント設定",
+            tags: ["一般", "標準"]
+        },
+        "コードレビュー": {
+            content: "あなたはプログラミングの専門家です。提供されたコードを分析し、問題点や改善点を指摘してください。",
+            category: "プログラミング",
+            description: "コードのレビューを行うプロンプト",
+            tags: ["コード", "レビュー", "プログラミング"]
+        }
+    }
 }
 ```
 
-### プロンプトテンプレートオブジェクト
+### 添付ファイルデータモデル
+
+添付ファイルは以下の構造で保存されます：
 
 ```javascript
 {
-  id: "unique-id-string",        // テンプレートID
-  name: "テンプレート名",        // 表示名
-  content: "プロンプト内容",     // プロンプト本文
-  createdAt: 1616161616161      // 作成タイムスタンプ
+    files: [
+        {
+            id: "file-1680123456789",            // ファイルID
+            name: "example.js",                  // ファイル名
+            type: "file",                        // "file" または "image"
+            size: 1024,                          // サイズ（バイト）
+            mimeType: "application/javascript",  // MIMEタイプ
+            content: "function hello() {...}",   // テキストコンテンツ（テキストファイルの場合）
+            data: "data:image/jpeg;base64,...",  // Base64エンコードされたデータ（画像の場合）
+            timestamp: 1680123456789             // 添付時間
+        }
+    ]
 }
+```
+
+### 設定データモデル
+
+アプリケーション設定は以下の構造で保存されます：
+
+```javascript
+{
+    theme: "dark",                            // "dark" または "light"
+    fontSize: "medium",                       // "small", "medium", "large"
+    codeAutoFormatting: true,                 // コード自動フォーマット
+    messageLayout: "bubbles",                 // "bubbles" または "flat"
+    categoryStates: {                         // カテゴリの展開/折りたたみ状態
+        "基本": false,                         // false = 展開, true = 折りたたみ
+        "プログラミング": true
+    }
+}
+```
+
+### データフロー
+
+これらのデータモデル間の関係と処理フローを以下に示します。
+
+```mermaid
+flowchart TD
+    A[会話データ] -- "保存/読込" --> B[ローカルストレージ]
+    C[添付ファイル] -- "保存/読込" --> B
+    D[API設定] -- "暗号化して保存" --> B
+    E[システムプロンプト] -- "保存/読込" --> B
+    
+    F[ユーザー入力] --> G[入力処理]
+    G --> H{添付ファイルあり?}
+    H -- "はい" --> I[ファイル処理]
+    I --> J[API呼び出し]
+    H -- "いいえ" --> J
+    
+    J -- "会話更新" --> A
+    J -- "添付ファイル更新" --> C
 ```
 
 ## UI設計
 
-ChatBotアプリケーションのUI構成をセクション別に解説します。
+ChatBotアプリケーションのUI設計は、直感的な操作性、レスポンシブ性、アクセシビリティを考慮して設計されています。
 
-### メインレイアウト
+### 画面レイアウト
+
+アプリケーションは以下の主要なUI領域で構成されています：
+
+1. **サイドバー** - 会話履歴と各種設定メニューへのアクセスを提供
+2. **メインチャットエリア** - メッセージの表示と入力を行う中心的なエリア
+3. **モーダルダイアログ** - 設定やプロンプト管理などのオーバーレイUI
 
 ```
-+---------------------+--------------------------------+
-|                     |                                |
-|    サイドバー        |       メインチャットエリア      |
-|  (チャット履歴)      |                                |
-|                     |                                |
-|                     |                                |
-|                     |                                |
-|                     |                                |
-|                     |                                |
-|                     |                                |
-|                     |                                |
-|                     |                                |
-|                     |                                |
-+---------------------+--------------------------------+
++-------------------------------------------+
+|  +--------+  +-------------------------+  |
+|  |        |  |                         |  |
+|  | サイド |  |  チャットメッセージ表示  |  |
+|  | バー   |  |                         |  |
+|  |        |  |                         |  |
+|  | 会話   |  |                         |  |
+|  | 履歴   |  |                         |  |
+|  |        |  |                         |  |
+|  | 新規   |  |                         |  |
+|  | チャット|  |                         |  |
+|  |        |  +-------------------------+  |
+|  | 設定   |  | ファイル添付 | モデル選択 |  |
+|  |        |  +-------------------------+  |
+|  +--------+  | メッセージ入力          |  |
+|              +-------------------------+  |
++-------------------------------------------+
 ```
 
-### UI構成要素
+### サイドバー
 
-1. **サイドバー**
-   - 新規チャットボタン
-   - チャット履歴リスト
-   - 設定ボタン
-   - 履歴クリアボタン
+```
++--------------------+
+| + 新しいチャット    |
++--------------------+
+| 会話履歴:          |
+|                    |
+| > 現在のチャット    |
+|   チャット1        |
+|   チャット2        |
+|   ...             |
++--------------------+
+| 設定:              |
+|   API設定          |
+|   システムプロンプト|
+|   プロンプト管理    |
+|   テーマ切替        |
++--------------------+
+| 履歴クリア         |
++--------------------+
+```
 
-2. **メインチャットエリア**
-   - ヘッダー（タイトルとモデル選択）
-   - メッセージ表示領域
-   - 入力フォーム（テキスト入力、ファイル添付、送信ボタン）
+**主な機能**:
+- 新規チャット作成ボタン
+- 会話履歴リスト（スクロール可能）
+- 各種設定へのアクセスメニュー
+- 履歴クリアボタン
+- モバイル表示時は収納可能（ハンバーガーメニュー）
 
-3. **モーダルダイアログ**
-   - API設定モーダル
-   - システムプロンプト設定モーダル
-   - チャット名変更モーダル
+### メインチャットエリア
+
+```
++------------------------------------------+
+|                                          |
+| システム: あなたは優秀なAIアシスタント...  |
+|                                          |
+| ユーザー: こんにちは                      |
+|                                          |
+| アシスタント: こんにちは！何かお手伝い...  |
+|                                          |
+|                                          |
++------------------------------------------+
+| [ファイル] [画像]  | モデル: [gpt-4o ▼]  |
++------------------------------------------+
+| メッセージを入力...                      |
+|                                [送信 ▶]  |
++------------------------------------------+
+```
+
+**主な機能**:
+- メッセージ表示エリア（システム/ユーザー/アシスタント）
+- マークダウン表示とコードハイライト
+- ファイル添付ボタン
+- モデル選択ドロップダウン
+- メッセージ入力エリア（自動リサイズ）
+- 送信ボタン
+
+### モーダルダイアログ（API設定）
+
+```
++------------------------------------------+
+| API設定                           [×]  |
++------------------------------------------+
+| APIタイプ:                              |
+| ○ OpenAI API   ● Azure OpenAI API      |
++------------------------------------------+
+| APIキー:                                |
+| [********************************]      |
++------------------------------------------+
+| Azure エンドポイント:                    |
+|                                          |
+| gpt-4o-mini:                            |
+| [https://example.openai.azure.com/...]  |
+|                                          |
+| gpt-4o:                                 |
+| [https://example.openai.azure.com/...]  |
+|                                          |
++------------------------------------------+
+| [キャンセル]                   [保存]    |
++------------------------------------------+
+```
+
+### モーダルダイアログ（システムプロンプト）
+
+```
++------------------------------------------+
+| システムプロンプト設定              [×]  |
++------------------------------------------+
+| [                                       |
+|  あなたは優秀なAIアシスタントです...     |
+|                                         |
+|                                       ] |
++------------------------------------------+
+| テンプレート:                           |
+|                                          |
+| 基本 ▼                                  |
+| ├── 一般アシスタント                     |
+| ├── 文章校正                            |
+| └── ブレインストーミング                 |
+|                                          |
+| プログラミング ▼                         |
+| ├── コードレビュー                       |
+| ├── バグ修正                            |
+| └── ...                                |
++------------------------------------------+
+| [新規テンプレート保存]  [プロンプト管理] |
++------------------------------------------+
+| [キャンセル]                   [保存]    |
++------------------------------------------+
+```
+
+### ファイル添付プレビュー
+
+```
++------------------------------------------+
+| 添付ファイル:                            |
+|                                          |
+| +---------------+  +---------------+     |
+| | [コード]      |  | [画像]        |     |
+| | example.js    |  | image.jpg     |     |
+| | 3.2KB        ×|  | 150KB        ×|     |
+| +---------------+  +---------------+     |
+|                                          |
++------------------------------------------+
+```
+
+### レスポンシブデザイン
+
+アプリケーションは以下のブレークポイントに対応したレスポンシブデザインを採用しています：
+
+- **モバイル**: <576px
+  - サイドバーは非表示（ハンバーガーメニューで表示）
+  - 単一カラムレイアウト
+  - コンパクトなコントロール
+
+- **タブレット**: 576px-992px
+  - サイドバーはコンパクト表示
+  - メインエリアの幅を確保
+
+- **デスクトップ**: >992px
+  - サイドバーとメインエリアの2カラムレイアウト
+  - 最適な閲覧/編集体験
+
+### テーマ
+
+アプリケーションはダークテーマとライトテーマの2つのカラーモードをサポートしています：
+
+**ダークテーマ**:
+- 背景: #1e1e2e
+- サイドバー背景: #181825
+- テキスト: #cdd6f4
+- アクセントカラー: #89b4fa
+- エラーカラー: #f38ba8
+
+**ライトテーマ**:
+- 背景: #ffffff
+- サイドバー背景: #f5f5f5
+- テキスト: #333333
+- アクセントカラー: #1e88e5
+- エラーカラー: #e53935
+
+### アクセシビリティ
+
+アプリケーションは以下のアクセシビリティ機能を実装しています：
+
+- 適切なコントラスト比（WCAG 2.1 AA準拠）
+- キーボードナビゲーション対応
+- スクリーンリーダー互換（ARIA属性）
+- フォーカス可視化
+- フォントサイズ調整機能
+- ショートカットキー
+  - Ctrl+Enter: メッセージ送信
+  - Ctrl+/: 新規チャット
+  - Esc: モーダルを閉じる
+
+## クラス図
+
+以下のクラス図はアプリケーションの主要クラスとその関連性を示しています。シングルトンパターンを採用している多くのクラスやコンポーネント間の依存関係を表現しています。
+
+```mermaid
+classDiagram
+    class UI {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +initialize()
+        +Core
+    }
+    
+    class Storage {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +saveConversations()
+        +loadConversations()
+        +saveSystemPrompt()
+        +loadSystemPrompt()
+        +saveApiSettings()
+        +loadApiSettings()
+        +saveAttachments()
+        +loadAttachments()
+        +saveCategoryState()
+        +loadCategoryState()
+    }
+    
+    class UIUtils {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +toggleVisibility()
+        +toggleModal()
+        +createElement()
+        +autoResizeTextarea()
+    }
+    
+    class UICache {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +get()
+        +set()
+        +clear()
+    }
+    
+    class EventHandlers {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +setupChatEvents()
+        +setupSettingsEvents()
+        +setupFileEvents()
+        +setupGlobalEvents()
+        +setupModalEvents()
+        -setupSystemPromptModal()
+        -setupApiKeyModal()
+        -setupRenameChatModal()
+        -setupPromptManagerModal()
+    }
+    
+    class AIAPI {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +sendMessage()
+        +sendMessageStream()
+        -processAttachments()
+        -performOpenAIRequest()
+        -performAzureRequest()
+    }
+    
+    class FileAttachment {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +clearAttachments()
+        +getAttachmentsForAPI()
+        +saveAttachmentsForConversation()
+        +displaySavedAttachments()
+        -loadAttachmentsForConversation()
+        -findClosestMessageIndex()
+    }
+    
+    class FileAttachmentUI {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +updatePreview()
+        +clearPreview()
+        -getOrCreatePreviewArea()
+        -createFilePreviewItems()
+        -createFilePreview()
+        -createImagePreview()
+        -createFileInfo()
+    }
+    
+    class FileHandler {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +selectedFiles
+        +savedAttachments
+        +attachmentTimestamp
+        +init()
+        +updateAcceptedFileTypes()
+        +handleFileSelect()
+        +notifyAttachmentComplete()
+        +clearSelectedFiles()
+        -getAllowedFileExtensions()
+    }
+    
+    class FileConverter {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +convertFilesToAttachments()
+        -convertFileToAttachment()
+        -convertImageToAttachment()
+        -convertTextToAttachment()
+    }
+    
+    class Markdown {
+        -static instance
+        +static getInstance()
+        -constructor()
+        -_libraryStatus
+        +initializeMarkdown()
+        +loadScript()
+        +renderMarkdown()
+        +escapeHtml()
+        +getCodeLanguage()
+    }
+    
+    class ChatActions {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +sendMessage()
+        +createNewConversation()
+        +clearAllHistory()
+        +renderChatHistory()
+        -switchConversation()
+        -deleteConversation()
+    }
+    
+    class ChatHistory {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +renderChatHistory()
+        +updateActiveChatInHistory()
+        +displayConversation()
+        -formatTimestamp()
+    }
+    
+    class ChatRenderer {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +renderUserMessage()
+        +renderBotMessage()
+        +clearStreamingMessage()
+        +updateStreamingMessage()
+        -highlightCode()
+    }
+    
+    class ChatAttachmentViewer {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +createAttachmentsElement()
+        +showFullSizeImage()
+        -createImageAttachment()
+        -createFileAttachment()
+        -formatTextContent()
+    }
+    
+    class ApiSettingsModal {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +showApiKeyModal()
+        +hideApiKeyModal()
+        +toggleAzureSettings()
+    }
+    
+    class SystemPromptModal {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +showSystemPromptModal()
+        +hideSystemPromptModal()
+        +updateList()
+        -createPromptItem()
+    }
+    
+    class PromptManagerModal {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +showPromptManagerModal()
+        +hidePromptManagerModal()
+        +showPromptEditModal()
+        +hidePromptEditModal()
+        +handleAddCategory()
+        -updatePromptCategories()
+    }
+    
+    class RenameChatModal {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +showRenameChatModal()
+        +hideRenameChatModal()
+    }
+    
+    class ModalHandlers {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +saveApiSettings()
+        +saveRenamedChat()
+        +saveNewSystemPrompt()
+        +onTemplateSelect()
+        +onTemplateDelete()
+    }
+    
+    class ExecutorBase {
+        +execute(code)* 
+        #_loadRuntime()*
+        #_executeCode(code)*
+        #_formatResult(result)*
+    }
+    
+    class JavaScriptExecutor {
+        +execute(code)
+        #_loadRuntime()
+        #_executeCode(code)
+        #_formatResult(result)
+    }
+    
+    class PythonExecutor {
+        +execute(code)
+        #_loadRuntime()
+        #_executeCode(code)
+        #_formatResult(result)
+    }
+    
+    class CPPExecutor {
+        +execute(code)
+        #_loadRuntime()
+        #_executeCode(code)
+        #_formatResult(result)
+    }
+    
+    class HTMLExecutor {
+        +execute(code)
+        #_loadRuntime()
+        #_executeCode(code)
+        #_formatResult(result)
+    }
+    
+    class CodeExecutor {
+        -static instance
+        +static getInstance()
+        -constructor()
+        +detectLanguage()
+        +execute()
+        -getExecutor()
+    }
+    
+    ExecutorBase <|-- JavaScriptExecutor
+    ExecutorBase <|-- PythonExecutor
+    ExecutorBase <|-- CPPExecutor
+    ExecutorBase <|-- HTMLExecutor
+    CodeExecutor --> ExecutorBase
+    
+    FileAttachment --> Storage
+    FileAttachment --> FileHandler
+    FileAttachment --> ChatAttachmentViewer
+    
+    FileAttachmentUI --> FileHandler
+    FileAttachmentUI --> ChatAttachmentViewer
+    
+    ChatActions --> AIAPI
+    ChatActions --> Storage
+    ChatActions --> FileAttachment
+    ChatActions --> FileHandler
+    ChatActions --> ChatHistory
+    
+    ChatRenderer --> Markdown
+    
+    ChatHistory --> ChatRenderer
+    
+    ModalHandlers --> ApiSettingsModal
+    ModalHandlers --> SystemPromptModal
+    ModalHandlers --> RenameChatModal
+    ModalHandlers --> PromptManagerModal
+    ModalHandlers --> Storage
+    ModalHandlers --> UI
+    
+    EventHandlers --> ModalHandlers
+    EventHandlers --> ChatActions
+    EventHandlers --> FileHandler
+    EventHandlers --> ApiSettingsModal
+    EventHandlers --> SystemPromptModal
+    EventHandlers --> RenameChatModal
+    EventHandlers --> PromptManagerModal
+    
+    UI --> UICache
+    UI --> UIUtils
+```
+
+この図は主要なクラス間の関係を示していますが、すべての関係性を表現するとクラス図が複雑になりすぎるため、最も重要な依存関係のみを示しています。ほとんどのクラスがシングルトンパターンを採用しており、`getInstance()`メソッドを通じて唯一のインスタンスにアクセスする設計となっています。
 
 ## フローチャート
+
+以下はChatBotアプリケーションの主要な処理フローチャートです。
 
 ### アプリケーション初期化フロー
 
 ```mermaid
 flowchart TD
-    A[DOMContentLoaded イベント発火] --> B[初期化関数 init 実行]
-    B --> C{API設定が存在するか?}
-    C -->|No| D[API設定モーダルを表示]
-    C -->|Yes| E[会話履歴を読み込む]
-    D --> E
-    E --> F{会話履歴が存在するか?}
-    F -->|Yes| G[会話履歴を表示]
-    F -->|No| H[新しい会話を作成]
-    G --> I[現在の会話をロード]
-    H --> J[イベントリスナーのセットアップ]
-    I --> J
-    J --> K[モデル選択リストの初期化]
-    K --> L[Markdownライブラリの初期化]
-    M[Prism.jsコンポーネントの動的読み込み] --> N[UI要素の初期化]
-    N --> O[アプリケーションの準備完了]
+    A[ページ読み込み] --> B[DOMContentLoaded]
+    B --> C[_init関数実行]
+    C --> D1[設定読み込み]
+    C --> D2[UIコンポーネント初期化]
+    C --> D3[イベントリスナー設定]
+    D1 --> E[会話履歴読み込み]
+    D2 --> F[テーマ設定適用]
+    D3 --> G[現在の会話表示]
+    F --> H[外部ライブラリ読み込み]
+    G --> I[アプリケーション準備完了]
+    H --> I
 ```
 
 ### メッセージ送信フロー
 
 ```mermaid
 flowchart TD
-    A[送信ボタンクリック/Enterキー] --> B[sendMessage関数呼び出し]
-    B --> C[選択モデルの取得]
-    C --> D[添付ファイルの取得]
-    D --> E[添付ファイルのクリア]
-    E --> F[Chat.sendMessage実行]
-    F --> G[ユーザーメッセージを表示]
-    G --> H[会話にユーザーメッセージを追加]
-    H --> I{初めてのメッセージか?}
-    I -->|Yes| J[チャットタイトルを更新]
-    I -->|No| K[Thinking... 表示]
-    J --> K
-    K --> L[API種類に応じたAPI呼び出し]
-    L --> M[Thinking... 表示を削除]
-    M --> N[ボットの応答を表示]
-    N --> O[応答をメッセージ履歴に追加]
-    O --> P[会話を保存]
+    A[送信ボタンクリック] --> B[ChatActions.sendMessage実行]
+    B --> C{入力メッセージ有効?}
+    C -->|はい| D[メッセージ送信準備]
+    C -->|いいえ| Z[処理終了]
+    D --> E[添付ファイル取得]
+    E --> F[ユーザーメッセージ表示]
+    F --> G[入力欄クリア]
+    G --> H[ストリーミングレスポンス開始]
+    H --> I[APIリクエスト送信]
+    I --> J{エラー発生?}
+    J -->|はい| K[エラーメッセージ表示]
+    J -->|いいえ| L[ストリーミングレスポンス表示]
+    L --> M[レスポンス完了]
+    M --> N[会話データ保存]
+    K --> N
+    N --> O[送信ボタン再有効化]
 ```
 
-### チャット履歴管理フロー
+### ファイル添付フロー
 
 ```mermaid
 flowchart TD
-    A[チャット履歴の表示] --> B[会話をシステムプロンプトでグループ化]
-    B --> C[各グループごとにカテゴリーセクションを作成]
-    C --> D[カテゴリーごとに会話リストを表示]
-    D --> E[各チャット項目にイベントリスナーを追加]
-    E --> F[アクティブなチャットをハイライト表示]
-    E --> G[各チャット項目に編集/削除ボタンを追加]
-    
-    H[新しいチャット作成] --> I[新しい会話オブジェクトを生成]
-    I --> J[会話リストの先頭に追加]
-    J --> K[会話を保存]
-    K --> L[現在の会話IDを更新]
-    L --> M[チャット履歴表示を更新]
-    
-    N[チャット削除] --> O{確認ダイアログ}
-    O -->|Yes| P[チャットを削除]
-    O -->|No| Q[キャンセル]
-    P --> R{現在表示中のチャットか?}
-    R -->|Yes| S{残りのチャットがあるか?}
-    S -->|Yes| T[最初のチャットに切り替え]
-    S -->|No| U[新しいチャットを作成]
-    R -->|No| V[チャット履歴表示を更新]
-    T --> V
-    
-    W[チャット名変更] --> X[チャット名変更モーダル表示]
-    X --> Y[新しいチャット名を入力]
-    Y --> Z[チャット名を更新]
-    Z --> AA[会話を保存]
-    AA --> AB[チャット履歴表示を更新]
-```
-
-### 設定管理フロー
-
-```mermaid
-flowchart TD
-    A[設定ボタンクリック] --> B[設定メニュー表示]
-    B --> C{選択されたメニュー}
-    C -->|システムプロンプト設定| D[システムプロンプトモーダル表示]
-    C -->|API設定| E[API設定モーダル表示]
-    
-    D --> F[プロンプトテンプレート一覧表示]
-    F --> G{アクション選択}
-    G -->|テンプレート選択| H[選択テンプレートを表示]
-    G -->|テンプレート削除| I[テンプレート削除]
-    G -->|保存| J[システムプロンプトを保存]
-    G -->|新規テンプレート保存| K[新しいテンプレートを保存]
-    G -->|キャンセル| L[モーダルを閉じる]
-    
-    E --> M{API種類選択}
-    M -->|OpenAI| N[OpenAI設定フォーム表示]
-    M -->|Azure| O[Azure設定フォーム表示]
-    N --> P{アクション選択}
-    O --> P
-    P -->|保存| Q[API設定を保存]
-    P -->|キャンセル| R[モーダルを閉じる]
-    
-    O --> S[モデルごとのエンドポイント設定]
-    S --> T[gpt-4o-miniエンドポイント]
-    S --> U[gpt-4oエンドポイント]
-    S --> V[o1-miniエンドポイント]
-    S --> W[o1エンドポイント]
+    A[ファイル選択] --> B[FileHandler.handleFileSelect実行]
+    B --> C[選択ファイル検証]
+    C --> D{ファイル有効?}
+    D -->|はい| E[選択ファイル配列に追加]
+    D -->|いいえ| F[エラー通知表示]
+    E --> G[ファイルプレビュー更新]
+    G --> H[ファイル添付イベント発行]
+    H --> I[AppState.currentAttachments更新]
+    F --> Z[処理終了]
 ```
 
 ## シーケンス図
 
-### アプリケーション初期化シーケンス
-
-```mermaid
-sequenceDiagram
-    participant Browser as ブラウザ
-    participant Main as main.js
-    participant Storage as storage.js
-    participant UI as ui.js
-    participant Chat as chat.js
-    participant Markdown as markdown.js
-    
-    Browser->>Main: DOMContentLoaded
-    activate Main
-    Main->>Storage: loadApiSettings()
-    Storage-->>Main: apiSettings
-    Main->>Storage: loadSystemPrompt()
-    Storage-->>Main: systemPrompt
-    Main->>Storage: loadSystemPromptTemplates()
-    Storage-->>Main: systemPromptTemplates
-    
-    Main->>UI: createSidebarToggle()
-    Main->>UI: initializeModelSelect()
-    
-    Main->>Storage: loadConversations()
-    Storage-->>Main: conversations
-    Main->>Storage: loadCurrentConversationId()
-    Storage-->>Main: currentConversationId
-    
-    alt 会話履歴が空の場合
-        Main->>Main: createNewConversation()
-    else 会話履歴がある場合
-        Main->>Chat: displayConversation()
-    end
-    
-    Main->>Markdown: loadPrismComponents()
-    Markdown-->>Main: Prism.js読み込み完了
-    Main->>Markdown: initializeMarkdown()
-    
-    Main->>Main: setupEventListeners()
-    deactivate Main
-```
+以下はChatBotアプリケーションの主要なシーケンス図です。
 
 ### メッセージ送信シーケンス
 
@@ -438,200 +1241,318 @@ sequenceDiagram
 sequenceDiagram
     participant User as ユーザー
     participant Main as main.js
-    participant FileHandler as fileHandler.js
-    participant Chat as chat.js
-    participant API as api.js
-    participant Storage as storage.js
+    participant ChatActions as ChatActions
+    participant FileAttachment as FileAttachment
+    participant AIAPI as AIAPI
+    participant Storage as Storage
     
     User->>Main: メッセージ送信ボタンクリック
     activate Main
-    Main->>Main: 選択中のモデルを取得
-    Main->>FileHandler: getAttachmentsForAPI()
-    FileHandler-->>Main: attachments
-    Main->>FileHandler: clearSelectedFiles()
+    Main->>ChatActions: sendMessage()
+    activate ChatActions
+    ChatActions->>FileAttachment: getAttachmentsForAPI()
+    FileAttachment-->>ChatActions: attachments
     
-    Main->>Chat: sendMessage(message, selectedModel, attachments)
-    activate Chat
-    Chat->>Chat: addUserMessage(message, attachments)
-    Chat->>Chat: 会話にメッセージを追加
+    ChatActions->>ChatActions: ユーザーメッセージ追加
+    ChatActions->>ChatActions: 入力欄クリア
+    ChatActions->>FileAttachment: clearAttachments()
     
-    alt OpenAI API使用時
-        Chat->>API: callOpenAIAPI(messages, selectedModel)
-    else Azure OpenAI API使用時
-        Chat->>API: callAzureOpenAIAPI(messages, selectedModel, endpoint)
+    ChatActions->>AIAPI: sendMessageStream()
+    activate AIAPI
+    AIAPI->>AIAPI: processAttachments()
+    
+    alt OpenAI API
+        AIAPI->>AIAPI: performOpenAIRequest()
+    else Azure API
+        AIAPI->>AIAPI: performAzureRequest()
     end
     
-    activate API
-    API-->>Chat: botResponse
-    deactivate API
+    loop ストリーミングレスポンス
+        AIAPI-->>ChatActions: パーシャルレスポンス
+        ChatActions->>ChatActions: updateStreamingMessage()
+    end
     
-    Chat->>Chat: addBotMessage()
-    Chat-->>Main: {titleUpdated, response}
-    deactivate Chat
+    AIAPI-->>ChatActions: 完了レスポンス
+    deactivate AIAPI
     
-    Main->>Storage: saveConversations()
+    ChatActions->>Storage: saveConversations()
+    ChatActions->>FileAttachment: saveAttachmentsForConversation()
+    deactivate ChatActions
     deactivate Main
 ```
 
-### チャット履歴管理シーケンス
+### 新規会話作成シーケンス
 
 ```mermaid
 sequenceDiagram
     participant User as ユーザー
     participant Main as main.js
-    participant Chat as chat.js
-    participant UI as ui.js
-    participant Storage as storage.js
+    participant ChatActions as ChatActions
+    participant ChatHistory as ChatHistory
+    participant Storage as Storage
     
-    User->>Main: 新しいチャットボタンクリック
-    activate Main
-    Main->>Main: createNewConversation()
-    Main->>Storage: saveConversations()
-    Main->>Storage: saveCurrentConversationId()
-    Main->>Chat: renderChatHistory()
-    Main->>Chat: displayConversation()
-    deactivate Main
+    User->>Main: 新規チャットボタンクリック
+    Main->>ChatActions: createNewConversation()
+    activate ChatActions
     
-    User->>Main: チャット履歴項目クリック
-    activate Main
-    Main->>Main: switchConversation()
-    Main->>Storage: saveCurrentConversationId()
-    Main->>Chat: updateActiveChatInHistory()
-    Main->>Chat: displayConversation()
-    deactivate Main
+    ChatActions->>ChatActions: 新規会話オブジェクト作成
+    ChatActions->>Storage: saveConversations()
+    Storage-->>ChatActions: 保存完了
     
-    User->>Main: チャット削除ボタンクリック
-    activate Main
-    Main->>Main: deleteConversation()
-    Main->>Storage: saveConversations()
-    alt 現在表示中のチャットを削除した場合
-        Main->>Storage: saveCurrentConversationId()
-        Main->>Chat: displayConversation()
-    end
-    Main->>Chat: renderChatHistory()
-    deactivate Main
+    ChatActions->>Storage: saveCurrentConversationId()
+    ChatActions->>ChatHistory: renderChatHistory()
+    activate ChatHistory
+    ChatHistory->>ChatHistory: 履歴リスト更新
+    deactivate ChatHistory
     
-    User->>Main: チャット名変更アイコンクリック
-    activate Main
-    Main->>UI: showRenameChatModal()
-    User->>Main: 新しいチャット名を入力して保存
-    Main->>Main: renameChat()
-    Main->>Storage: saveConversations()
-    Main->>Chat: renderChatHistory()
-    Main->>UI: hideRenameChatModal()
-    deactivate Main
+    ChatActions->>ChatHistory: displayConversation()
+    activate ChatHistory
+    ChatHistory->>ChatHistory: 会話表示
+    deactivate ChatHistory
+    
+    deactivate ChatActions
 ```
 
-### 設定管理シーケンス
+### システムプロンプト設定シーケンス
 
 ```mermaid
 sequenceDiagram
     participant User as ユーザー
-    participant Main as main.js
-    participant UI as ui.js
-    participant Storage as storage.js
+    participant EventHandlers as EventHandlers
+    participant SystemPromptModal as SystemPromptModal
+    participant ModalHandlers as ModalHandlers
+    participant Storage as Storage
+    participant UI as UI
     
-    User->>Main: 設定ボタンクリック
-    Main->>UI: 設定メニュー表示
+    User->>EventHandlers: システムプロンプト設定クリック
+    EventHandlers->>SystemPromptModal: showSystemPromptModal()
+    activate SystemPromptModal
     
-    alt システムプロンプト設定
-        User->>Main: システムプロンプト設定クリック
-        Main->>UI: showSystemPromptModal()
-        Main->>Main: loadSystemPromptTemplates()
-        User->>Main: プロンプト編集
-        User->>Main: 保存ボタンクリック
-        Main->>Storage: saveSystemPrompt()
-        Main->>UI: hideSystemPromptModal()
-    else API設定
-        User->>Main: API設定クリック
-        Main->>UI: showApiKeyModal()
-        
-        alt OpenAI選択時
-            User->>Main: OpenAIラジオボタン選択
-            Main->>UI: showOpenAiSettings()
-            Main->>UI: hideAzureSettings()
-            User->>Main: APIキー入力
-        else Azure選択時
-            User->>Main: Azureラジオボタン選択
-            Main->>UI: hideOpenAiSettings()
-            Main->>UI: showAzureSettings()
-            User->>Main: APIキーと各モデルのエンドポイント入力
-        end
-        
-        User->>Main: 保存ボタンクリック
-        Main->>Storage: saveApiSettings()
-        Main->>UI: hideApiKeyModal()
-    end
+    SystemPromptModal->>SystemPromptModal: モーダル表示
+    SystemPromptModal->>SystemPromptModal: updateList()
+    deactivate SystemPromptModal
+    
+    User->>SystemPromptModal: プロンプト編集
+    User->>SystemPromptModal: 保存ボタンクリック
+    SystemPromptModal->>ModalHandlers: saveSystemPrompt
+    activate ModalHandlers
+    
+    ModalHandlers->>Storage: saveSystemPrompt()
+    Storage-->>ModalHandlers: 保存完了
+    
+    ModalHandlers->>SystemPromptModal: hideSystemPromptModal()
+    ModalHandlers->>UI: Notification.show()
+    deactivate ModalHandlers
 ```
 
 ## APIインターフェース
+
+ChatBotは主に以下の2つのAPIインターフェースを使用します：
 
 ### OpenAI API
 
 **エンドポイント**: `https://api.openai.com/v1/chat/completions`
 
-**リクエスト形式**:
-```javascript
+**認証**: Bearer Token (APIキー)
+
+**リクエスト例**:
+```json
 {
-  model: "gpt-4o-mini" | "gpt-4o" | "o1-mini" | "o1",
-  messages: [
-    { role: "system", content: "..." },
-    { role: "user", content: "..." },
-    { role: "assistant", content: "..." },
-    ...
+  "model": "gpt-4o",
+  "messages": [
+    {"role": "system", "content": "あなたは優秀なAIアシスタントです。"},
+    {"role": "user", "content": "こんにちは、今日の天気を教えてください。"}
   ],
-  temperature: 0.7,
-  max_tokens: 1000
+  "stream": true,
+  "max_tokens": 2000,
+  "temperature": 0.7
+}
+```
+
+**レスポンス例** (ストリーミングなし):
+```json
+{
+  "id": "chatcmpl-123ABC...",
+  "object": "chat.completion",
+  "created": 1688662932,
+  "model": "gpt-4o",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "こんにちは！私はAIアシスタントなので、実際の天気を確認することはできません。お住まいの地域の天気を知るには、天気予報アプリや気象庁のウェブサイトをご確認いただくのが最適です。"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 48,
+    "completion_tokens": 102,
+    "total_tokens": 150
+  }
 }
 ```
 
 ### Azure OpenAI API
 
-**エンドポイント**: 各モデルごとに異なる設定が必要
+**エンドポイント**: `https://{リソース名}.openai.azure.com/openai/deployments/{デプロイメント名}/chat/completions?api-version=2023-12-01-preview`
 
-**リクエスト形式**:
-```javascript
+**認証**: APIキーをapi-keyヘッダーに設定
+
+**リクエスト例**:
+```json
 {
-  messages: [
-    { role: "system", content: "..." },
-    { role: "user", content: "..." },
-    { role: "assistant", content: "..." },
-    ...
+  "messages": [
+    {"role": "system", "content": "あなたは優秀なAIアシスタントです。"},
+    {"role": "user", "content": "こんにちは、今日の天気を教えてください。"}
   ],
-  temperature: 0.7,
-  max_tokens: 1000
+  "stream": true,
+  "max_tokens": 2000,
+  "temperature": 0.7
+}
+```
+
+**レスポンス形式**: OpenAI APIと同様
+
+### 添付ファイル付きメッセージのフォーマット
+
+画像添付の場合:
+```json
+{
+  "messages": [
+    {"role": "system", "content": "あなたは優秀なAIアシスタントです。"},
+    {
+      "role": "user", 
+      "content": [
+        {"type": "text", "text": "この画像について説明してください。"},
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...",
+            "detail": "high"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+ファイル添付の場合:
+```json
+{
+  "messages": [
+    {"role": "system", "content": "あなたは優秀なAIアシスタントです。"},
+    {
+      "role": "user", 
+      "content": [
+        {"type": "text", "text": "このコードを分析してください。"},
+        {
+          "type": "file",
+          "name": "example.js",
+          "content": "function hello() { console.log('Hello, world!'); }",
+          "mimeType": "application/javascript"
+        }
+      ]
+    }
+  ]
 }
 ```
 
 ## セキュリティ考慮事項
 
-1. **APIキーの保護**
-   - APIキーおよびAzureエンドポイントURLはローカルストレージに暗号化して保存されます
-   - 暗号化にはXORベースの暗号化とBase64エンコーディングを使用
-   - 暗号化データは「ENC:」プレフィックスで識別され、自動的に復号化されます
-   - 暗号化キーはデバイス固有情報とアプリケーション固有のソルトから生成
+ChatBotアプリケーションでは以下のセキュリティ対策を実装しています：
 
-2. **データプライバシー**
-   - すべての会話データはクライアント端末内のローカルストレージに保存
-   - サーバーサイドにデータが送信されることはありません（OpenAI/Azure API以外）
-   - 会話内容自体は暗号化されませんが、必要に応じて将来的に実装可能
+### APIキーの保護
 
-3. **入力検証**
-   - ユーザー入力は適切に検証・サニタイズする必要があります
-   - 悪意あるスクリプトの挿入を防止するメカニズムを実装
+- **クライアントサイド暗号化**: APIキーはブラウザのローカルストレージに保存する前に暗号化されます。
+- **暗号化キー生成**: 暗号化キーはユーザー固有の情報と組み合わせて生成されます。
+- **メモリ上の保護**: APIキーはJavaScriptのメモリ上に必要な間だけ保持されます。
+
+### 入力データ検証
+
+- **入力サニタイズ**: すべてのユーザー入力はHTMLエスケープ処理を施してからレンダリングします。
+- **コンテンツセキュリティポリシー**: インラインスクリプトの実行制限とリソース制限を実装。
+- **ファイル検証**: アップロードされるファイルは種類とサイズを検証します。
+
+### データ保護
+
+- **ローカルデータのみ**: すべてのチャットデータはブラウザのローカルストレージのみに保存され、サーバーには送信されません。
+- **転送時の暗号化**: OpenAI/Azure APIとの通信はHTTPS経由で行われます。
+
+### コード実行の隔離
+
+- **サンドボックス化**: コード実行は専用のiframeまたは制限された実行環境内で行われます。
+- **実行時間制限**: 無限ループを防ぐため、コード実行には時間制限があります。
 
 ## パフォーマンス最適化
 
-1. **マークダウンレンダリング**
-   - 長文レンダリング時のパフォーマンス対策
-   - コードハイライト言語のオンデマンドロード
+ChatBotアプリケーションでは以下のパフォーマンス最適化を実施しています：
 
-2. **会話履歴管理**
-   - 会話履歴が肥大化した場合のページングや仮想スクロール
+### DOM操作の最適化
 
-3. **ファイル添付**
-   - 画像サイズの適切な圧縮・リサイズ
-   - 大型ファイル処理時の非同期処理とプログレス表示
+- **DOMキャッシング**: `UICache`クラスを使用して頻繁にアクセスするDOM要素を効率的に管理します。
+- **バッチ処理**: 多数のDOM要素を追加する場合、DocumentFragmentを使用してバッチ処理します。
+- **仮想化リスト**: 大量のチャット履歴がある場合、表示範囲のみをレンダリングします。
+
+### リソース読み込みの最適化
+
+- **遅延読み込み**: Prism.js言語コンポーネントなど一部のリソースは必要に応じて動的に読み込みます。
+- **リソースプリフェッチ**: 必要なリソースを予め読み込んで表示を高速化します。
+- **キャッシュ制御**: 静的リソースのキャッシュヘッダーを最適化します。
+
+### レンダリングパフォーマンス
+
+- **スロットリング**: スクロールイベントや入力イベントのハンドラにはスロットリングを適用します。
+- **メモ化**: 頻繁に呼び出される処理結果をキャッシュします。
+- **CSS最適化**: レンダリングを阻害しないCSSの読み込み方法を採用します。
+
+### データ管理の最適化
+
+- **分割ストレージ**: 大きなデータは分割して保存し、必要に応じて読み込みます。
+- **索引付け**: 検索や参照が頻繁なデータは索引付けして高速にアクセスできるようにします。
+- **圧縮**: 添付ファイルなど大きなデータは適切に圧縮します。
+
+## テスト計画
+
+ChatBotアプリケーションの品質を確保するためのテスト計画は以下の通りです：
+
+### 単体テスト
+
+- **対象**: 各クラスの重要なメソッド、特にデータ変換、検証機能を中心に実施
+- **ツール**: Jest, Mocha+Chai
+- **実施頻度**: 重要な機能追加・変更時に実施
+
+### 統合テスト
+
+- **対象**: コンポーネント間のインタラクション、特にイベントハンドリング、API通信
+- **ツール**: Cypress
+- **実施頻度**: リリース前に必ず実施
+
+### E2Eテスト
+
+- **対象**: 実際のユーザーシナリオに基づいた一連の操作
+- **ツール**: Cypress, Playwright
+- **実施頻度**: メジャーリリース前に実施
+
+### パフォーマンステスト
+
+- **対象**: 大量メッセージ表示時のレンダリング速度、メモリ使用量
+- **ツール**: Chrome DevTools, Lighthouse
+- **実施頻度**: パフォーマンス改善時に実施
+
+### クロスブラウザテスト
+
+- **対象ブラウザ**: Chrome, Firefox, Safari, Edge
+- **テスト内容**: 基本機能が正常に動作することを確認
+- **実施頻度**: UIの大きな変更時に実施
+
+### セキュリティテスト
+
+- **対象**: 入力検証、APIキー保護、コンテンツセキュリティ
+- **ツール**: OWASP ZAP, Manual Testing
+- **実施頻度**: 四半期ごと
 
 ## 拡張計画
 
@@ -640,27 +1561,44 @@ sequenceDiagram
 1. **ローカルLLMサポート**
    - ローカルで実行可能なLLMモデルのサポート
    - オフライン動作モード
+   - WebGPU/WebAssemblyを活用した高速推論
 
 2. **プラグイン機能**
    - ウェブ検索、計算機能など拡張プラグインのサポート
    - カスタムプラグイン開発フレームワーク
+   - プラグイン管理インターフェース
 
 3. **音声入出力**
    - 音声入力による会話
    - テキスト読み上げ機能
-   
+   - 音声認識の精度向上のためのフィードバック機能
+
 4. **RAG（検索拡張生成）機能**
    - ユーザー独自のドキュメントからの情報取得
    - ベクトルデータベースとの連携
-   
+   - ドキュメントのインデックス作成と検索機能
+
 5. **マルチモーダル対応強化**
    - 画像認識・分析機能の拡張
    - 図表自動生成機能
+   - 画像編集・加工機能
 
 6. **チーム共有機能**
    - 会話履歴の共有・エクスポート
    - 複数ユーザーでの同時編集機能
+   - 権限管理と共同作業スペース
 
 7. **高度なプロンプト管理**
-   - プロンプトの階層管理
-   - 条件付きプロンプト構築ツール
+   - プロンプトの効果分析機能
+   - 会話コンテキスト管理の強化
+   - プロンプトテンプレートのインポート/エクスポート
+
+8. **プロジェクト管理機能**
+   - チャットを活用したタスク管理
+   - 議事録自動作成
+   - プロジェクトタイムライン表示
+
+9. **高度なカスタマイズ**
+   - UIテーマの完全カスタマイズ
+   - キーボードショートカットのカスタマイズ
+   - ワークフローの自動化
