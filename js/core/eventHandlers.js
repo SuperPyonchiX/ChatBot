@@ -2,8 +2,31 @@
  * eventHandlers.js
  * アプリケーション全体のイベントハンドラー設定を管理するモジュール
  */
+class EventHandlers {
+    // シングルトンインスタンス
+    static #instance = null;
 
-window.EventHandlers = {
+    /**
+     * プライベートコンストラクタ
+     * @private
+     */
+    constructor() {
+        if (EventHandlers.#instance) {
+            throw new Error('EventHandlersクラスは直接インスタンス化できません。EventHandlers.instanceを使用してください。');
+        }
+    }
+
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {EventHandlers} EventHandlersのシングルトンインスタンス
+     */
+    static get getInstance() {
+        if (!EventHandlers.#instance) {
+            EventHandlers.#instance = new EventHandlers();
+        }
+        return EventHandlers.#instance;
+    }
+
     /**
      * チャット関連のイベントをセットアップします
      */
@@ -12,13 +35,13 @@ window.EventHandlers = {
             !window.Elements.newChatButton || !window.Elements.clearHistoryButton) return;
         
         // 送信ボタンのクリックイベント
-        window.Elements.sendButton.addEventListener('click', ChatActions.instance.sendMessage.bind(ChatActions.instance));
+        window.Elements.sendButton.addEventListener('click', ChatActions.getInstance.sendMessage.bind(ChatActions.getInstance));
 
         // テキストエリアのEnterキーイベント（Shift+Enterで改行）
         window.Elements.userInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                ChatActions.instance.sendMessage();
+                ChatActions.getInstance.sendMessage();
             }
         });
         
@@ -26,11 +49,11 @@ window.EventHandlers = {
         window.Elements.userInput.addEventListener('input', () => window.UI.Utils.autoResizeTextarea(window.Elements.userInput));
 
         // 新しいチャットボタン
-        window.Elements.newChatButton.addEventListener('click', ChatActions.instance.createNewConversation.bind(ChatActions.instance));
+        window.Elements.newChatButton.addEventListener('click', ChatActions.getInstance.createNewConversation.bind(ChatActions.getInstance));
 
         // 履歴クリアボタン
-        window.Elements.clearHistoryButton.addEventListener('click', ChatActions.instance.clearAllHistory.bind(ChatActions.instance));
-    },
+        window.Elements.clearHistoryButton.addEventListener('click', ChatActions.getInstance.clearAllHistory.bind(ChatActions.getInstance));
+    }
 
     /**
      * 設定関連のイベントをセットアップします
@@ -78,7 +101,7 @@ window.EventHandlers = {
                 window.UI.Core.Modal.showPromptManagerModal();
             });
         }
-    },
+    }
 
     /**
      * ファイル関連のイベントをセットアップします
@@ -97,7 +120,7 @@ window.EventHandlers = {
         // カスタムイベントリスナー
         document.addEventListener('file-attached', e => window.AppState.currentAttachments = e.detail.attachments);
         document.addEventListener('attachment-removed', () => window.AppState.currentAttachments = []);
-    },
+    }
 
     /**
      * モーダル関連のイベントをセットアップします
@@ -107,7 +130,7 @@ window.EventHandlers = {
         this.setupApiKeyModal();
         this.setupRenameChatModal();
         this.setupPromptManagerModal();
-    },
+    }
 
     /**
      * システムプロンプトモーダルのイベントをセットアップします
@@ -132,14 +155,14 @@ window.EventHandlers = {
         window.Elements.saveNewSystemPrompt.addEventListener('click', window.UI.Core.Modal.Handlers.saveNewSystemPrompt.bind(window.UI.Core.Modal.Handlers));
 
         // 高度なプロンプト管理へ切り替え
-        const switchToPromptManagerBtn =window.UI.Cache.get('switchToPromptManager');
+        const switchToPromptManagerBtn = window.UI.Cache.get('switchToPromptManager');
         if (switchToPromptManagerBtn) {
             switchToPromptManagerBtn.addEventListener('click', () => {
                 window.UI.Core.Modal.hideSystemPromptModal();
                 window.UI.Core.Modal.showPromptManagerModal();
             });
         }
-    },
+    }
 
     /**
      * APIキーモーダルのイベントをセットアップします
@@ -157,7 +180,7 @@ window.EventHandlers = {
         // APIタイプ切り替え
         window.Elements.openaiRadio.addEventListener('change', window.UI.Core.Modal.toggleAzureSettings);
         window.Elements.azureRadio.addEventListener('change', window.UI.Core.Modal.toggleAzureSettings);
-    },
+    }
 
     /**
      * チャット名変更モーダルのイベントをセットアップします
@@ -170,7 +193,7 @@ window.EventHandlers = {
         
         // キャンセルボタン
         window.Elements.cancelRenameChat.addEventListener('click', window.UI.Core.Modal.hideRenameChatModal);
-    },
+    }
 
     /**
      * プロンプト管理モーダルのイベントをセットアップします
@@ -185,7 +208,7 @@ window.EventHandlers = {
         }
 
         // システムプロンプト設定への切り替えボタンのイベントハンドラー
-        const switchToSystemPromptBtn =window.UI.Cache.get('switchToSystemPrompt');
+        const switchToSystemPromptBtn = window.UI.Cache.get('switchToSystemPrompt');
         if (switchToSystemPromptBtn) {
             switchToSystemPromptBtn.addEventListener('click', () => {
                 window.UI.Core.Modal.hidePromptManagerModal();
@@ -197,7 +220,7 @@ window.EventHandlers = {
                 );
             });
         }
-        
+
         // カテゴリ追加ボタンのイベントハンドラー
         const addCategoryBtn = window.UI.Cache.get('addCategoryButton');
         if (addCategoryBtn) {
@@ -213,7 +236,7 @@ window.EventHandlers = {
                 window.UI.Core.Modal.showPromptEditModal(null);
             });
         }
-    },
+    }
 
     /**
      * グローバルなイベントをセットアップします
@@ -248,7 +271,7 @@ window.EventHandlers = {
                 ];
                 
                 modals.forEach(modal => {
-                    const element =window.UI.Cache.get(modal.id);
+                    const element = window.UI.Cache.get(modal.id);
                     if (element && element.style.display === 'block' && typeof modal.hide === 'function') {
                         modal.hide();
                     }
@@ -256,4 +279,4 @@ window.EventHandlers = {
             }
         });
     }
-};
+}

@@ -3,10 +3,34 @@
  * 会話履歴の管理機能を提供します
  */
 class ChatHistory {
+    // シングルトンインスタンス
+    static #instance = null;
+
+    /**
+     * プライベートコンストラクタ
+     * @private
+     */
+    constructor() {
+        if (ChatHistory.#instance) {
+            throw new Error('ChatHistoryクラスは直接インスタンス化できません。ChatHistory.instanceを使用してください。');
+        }
+    }
+
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {ChatHistory} ChatHistoryのシングルトンインスタンス
+     */
+    static get getInstance() {
+        if (!ChatHistory.#instance) {
+            ChatHistory.#instance = new ChatHistory();
+        }
+        return ChatHistory.#instance;
+    }
+
     /**
      * 会話を表示する
      */
-    static async displayConversation(conversation, chatMessages, modelSelect) {
+    async displayConversation(conversation, chatMessages, modelSelect) {
         if (!conversation || !chatMessages) return;
         
         chatMessages.innerHTML = '';
@@ -58,7 +82,7 @@ class ChatHistory {
      * ファイルの内容をクリーンアップする
      * @private
      */
-    static _cleanFileContent(content) {
+    _cleanFileContent(content) {
         if (!content) return '';
         
         // === ファイル名「...」の内容 === 以降のテキストをすべて削除
@@ -69,7 +93,7 @@ class ChatHistory {
      * 配列型のコンテンツを処理する
      * @private
      */
-    static _processContentArray(content) {
+    _processContentArray(content) {
         if (typeof content === 'string') return content;
         if (!Array.isArray(content)) return '';
         
@@ -91,13 +115,13 @@ class ChatHistory {
     /**
      * 会話履歴を表示する
      */
-    static renderChatHistory(conversations, currentConversationId, chatHistory, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
+    renderChatHistory(conversations, currentConversationId, chatHistory, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
         if (!chatHistory || !Array.isArray(conversations)) return;
         
         chatHistory.innerHTML = '';
         
         if (conversations.length === 0) {
-            const emptyState = ChatUI.instance.createElement('div', {
+            const emptyState = ChatUI.getInstance.createElement('div', {
                 classList: 'empty-history',
                 innerHTML: `
                     <p>会話履歴がありません</p>
@@ -135,28 +159,28 @@ class ChatHistory {
      * カテゴリーセクションを作成する
      * @private
      */
-    static _createCategorySection(promptKey, groupConversations, isExpanded, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
+    _createCategorySection(promptKey, groupConversations, isExpanded, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
         if (!promptKey || !Array.isArray(groupConversations)) {
             return document.createElement('div');
         }
         
-        const categorySection = ChatUI.instance.createElement('div', {
+        const categorySection = ChatUI.getInstance.createElement('div', {
             classList: 'chat-category',
             attributes: {
                 'data-category': promptKey
             }
         });
         
-        const categoryHeader = ChatUI.instance.createElement('div', { classList: 'category-header' });
-        const toggleIcon = ChatUI.instance.createElement('i', {
+        const categoryHeader = ChatUI.getInstance.createElement('div', { classList: 'category-header' });
+        const toggleIcon = ChatUI.getInstance.createElement('i', {
             classList: ['fas', isExpanded ? 'fa-chevron-down' : 'fa-chevron-right']
         });
         
-        const categoryName = ChatUI.instance.createElement('span', {
+        const categoryName = ChatUI.getInstance.createElement('span', {
             textContent: promptKey
         });
         
-        const countBadge = ChatUI.instance.createElement('span', {
+        const countBadge = ChatUI.getInstance.createElement('span', {
             classList: 'category-count',
             textContent: groupConversations.length
         });
@@ -165,7 +189,7 @@ class ChatHistory {
         categoryHeader.appendChild(categoryName);
         categoryHeader.appendChild(countBadge);
         
-        const conversationList = ChatUI.instance.createElement('div', { classList: 'category-conversations' });
+        const conversationList = ChatUI.getInstance.createElement('div', { classList: 'category-conversations' });
         if (!isExpanded) {
             conversationList.style.display = 'none';
         }
@@ -197,7 +221,7 @@ class ChatHistory {
      * カテゴリー展開/折りたたみを切り替え
      * @private
      */
-    static _toggleCategoryExpansion(toggleIcon, conversationList, promptKey) {
+    _toggleCategoryExpansion(toggleIcon, conversationList, promptKey) {
         if (!toggleIcon || !conversationList || !promptKey) return;
         
         const isNowExpanded = toggleIcon.classList.contains('fa-chevron-down');
@@ -217,19 +241,19 @@ class ChatHistory {
      * 履歴アイテムを作成する
      * @private
      */
-    static _createHistoryItem(conversation, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
+    _createHistoryItem(conversation, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
         if (!conversation || !conversation.id) {
             return document.createElement('div');
         }
         
-        const historyItem = ChatUI.instance.createElement('div', {
+        const historyItem = ChatUI.getInstance.createElement('div', {
             classList: 'history-item',
             attributes: {
                 'data-id': conversation.id
             }
         });
         
-        const itemContent = ChatUI.instance.createElement('div', {
+        const itemContent = ChatUI.getInstance.createElement('div', {
             classList: 'history-item-content',
             innerHTML: `
                 <i class="fas fa-comments"></i>
@@ -237,9 +261,9 @@ class ChatHistory {
             `
         });
         
-        const actionButtons = ChatUI.instance.createElement('div', { classList: 'history-item-actions' });
+        const actionButtons = ChatUI.getInstance.createElement('div', { classList: 'history-item-actions' });
         
-        const editButton = ChatUI.instance.createElement('button', {
+        const editButton = ChatUI.getInstance.createElement('button', {
             classList: ['history-action-button', 'edit-button'],
             innerHTML: '<i class="fas fa-edit"></i>',
             attributes: {
@@ -254,7 +278,7 @@ class ChatHistory {
             }
         });
         
-        const deleteButton = ChatUI.instance.createElement('button', {
+        const deleteButton = ChatUI.getInstance.createElement('button', {
             classList: ['history-action-button', 'delete-button'],
             innerHTML: '<i class="fas fa-trash"></i>',
             attributes: {
@@ -288,7 +312,7 @@ class ChatHistory {
      * 会話をシステムプロンプトでグループ化する
      * @private
      */
-    static _groupConversationsByPrompt(conversations) {
+    _groupConversationsByPrompt(conversations) {
         if (!Array.isArray(conversations)) {
             return { '未分類': [] };
         }
@@ -323,7 +347,7 @@ class ChatHistory {
      * システムプロンプトからカテゴリを判定する
      * @private
      */
-    static _getPromptCategory(promptText) {
+    _getPromptCategory(promptText) {
         if (!promptText) return '未分類';
         
         const templates = window.AppState.systemPromptTemplates;
@@ -340,7 +364,7 @@ class ChatHistory {
     /**
      * アクティブなチャットを更新する
      */
-    static updateActiveChatInHistory(currentConversationId) {
+    updateActiveChatInHistory(currentConversationId) {
         if (!currentConversationId) return;
         
         try {

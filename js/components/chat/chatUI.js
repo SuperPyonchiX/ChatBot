@@ -26,7 +26,7 @@ class ChatUI {
      * シングルトンインスタンスを取得します
      * @returns {ChatUI} ChatUIのシングルトンインスタンス
      */
-    static get instance() {
+    static get getInstance() {
         if (!ChatUI.#instance) {
             ChatUI.#instance = new ChatUI();
         }

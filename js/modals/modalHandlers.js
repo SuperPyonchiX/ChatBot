@@ -68,7 +68,7 @@ Object.assign(window.UI.Core.Modal.Handlers, {
             if (conversation) {
                 conversation.title = newTitle;
                 window.Storage.saveConversations(window.AppState.conversations);
-                ChatActions.instance.renderChatHistory();
+                ChatActions.getInstance.renderChatHistory();
             }
         }
 

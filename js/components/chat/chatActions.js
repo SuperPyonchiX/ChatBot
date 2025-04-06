@@ -22,7 +22,7 @@ class ChatActions {
      * シングルトンインスタンスを取得します
      * @returns {ChatActions} ChatActionsのシングルトンインスタンス
      */
-    static get instance() {
+    static get getInstance() {
         if (!ChatActions.#instance) {
             ChatActions.#instance = new ChatActions();
         }
@@ -273,7 +273,7 @@ class ChatActions {
         
         if (window.Elements.chatMessages && window.Elements.modelSelect) {
             // 会話を表示
-            ChatHistory.displayConversation(newConversation, window.Elements.chatMessages, window.Elements.modelSelect);
+            ChatHistory.getInstance.displayConversation(newConversation, window.Elements.chatMessages, window.Elements.modelSelect);
         }
     }
 
@@ -284,7 +284,7 @@ class ChatActions {
         if (!window.Elements.chatHistory) return;
         
         // チャット履歴を更新
-        ChatHistory.renderChatHistory(
+        ChatHistory.getInstance.renderChatHistory(
             window.AppState.conversations, 
             window.AppState.currentConversationId, 
             window.Elements.chatHistory, 
@@ -304,11 +304,11 @@ class ChatActions {
         window.Storage.saveCurrentConversationId(window.AppState.currentConversationId);
         
         // アクティブチャットを更新
-        ChatHistory.updateActiveChatInHistory(window.AppState.currentConversationId);
+        ChatHistory.getInstance.updateActiveChatInHistory(window.AppState.currentConversationId);
         
         if (window.Elements.chatMessages && window.Elements.modelSelect) {
             // 会話を表示
-            ChatHistory.displayConversation(
+            ChatHistory.getInstance.displayConversation(
                 window.AppState.getConversationById(window.AppState.currentConversationId),
                 window.Elements.chatMessages,
                 window.Elements.modelSelect
@@ -345,7 +345,7 @@ class ChatActions {
                 
                 if (window.Elements.chatMessages && window.Elements.modelSelect) {
                     // 会話を表示
-                    ChatHistory.displayConversation(
+                    ChatHistory.getInstance.displayConversation(
                         window.AppState.getConversationById(window.AppState.currentConversationId),
                         window.Elements.chatMessages,
                         window.Elements.modelSelect

@@ -296,7 +296,7 @@ Object.assign(window.UI.Components.FileAttachment, {
                     }
                     
                     // 新しい添付ファイル要素を作成して追加
-                    const attachmentsElement = ChatAttachmentViewer.createAttachmentsElement(files, parseInt(messageId));
+                    const attachmentsElement = ChatAttachmentViewer.getInstance.createAttachmentsElement(files, parseInt(messageId));
                     messageContent.appendChild(attachmentsElement);
                 }
             });

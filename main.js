@@ -71,12 +71,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
 
         if (window.AppState.conversations.length > 0) {
-            ChatActions.instance.renderChatHistory();
+            ChatActions.getInstance.renderChatHistory();
         }
 
         // 新しい会話を作成または既存の会話を読み込む
         if (window.AppState.conversations.length === 0) {
-            ChatActions.instance.createNewConversation();
+            ChatActions.getInstance.createNewConversation();
         } else {
             _loadCurrentConversation();
         }
@@ -90,16 +90,16 @@ document.addEventListener('DOMContentLoaded', async function() {
      * @private
      */
     function _setupEventListeners() {
-        if (!window.EventHandlers) {
+        if (!EventHandlers.getInstance) {
             console.error('EventHandlers module is not loaded');
             return;
         }
 
-        window.EventHandlers.setupChatEvents();
-        window.EventHandlers.setupSettingsEvents();
-        window.EventHandlers.setupFileEvents();
-        window.EventHandlers.setupModalEvents();
-        window.EventHandlers.setupGlobalEvents();
+        EventHandlers.getInstance.setupChatEvents();
+        EventHandlers.getInstance.setupSettingsEvents();
+        EventHandlers.getInstance.setupFileEvents();
+        EventHandlers.getInstance.setupModalEvents();
+        EventHandlers.getInstance.setupGlobalEvents();
         
         // プロンプト候補表示機能を初期化
         if (window.UI && window.UI.initPromptSuggestions) {
@@ -119,17 +119,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             !window.AppState.getConversationById(window.AppState.currentConversationId)) {
             window.AppState.currentConversationId = window.AppState.conversations[0]?.id;
             if (!window.AppState.currentConversationId) {
-                ChatActions.instance.createNewConversation();
+                ChatActions.getInstance.createNewConversation();
                 return;
             }
         }
 
         // 会話履歴から現在の会話を選択状態にする
-        ChatHistory.updateActiveChatInHistory(window.AppState.currentConversationId);
+        ChatHistory.getInstance.updateActiveChatInHistory(window.AppState.currentConversationId);
 
         // チャットメッセージを表示
         if (window.Elements.chatMessages && window.Elements.modelSelect) {
-            ChatHistory.displayConversation(
+            ChatHistory.getInstance.displayConversation(
                 window.AppState.getConversationById(window.AppState.currentConversationId),
                 window.Elements.chatMessages,
                 window.Elements.modelSelect

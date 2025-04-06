@@ -3,15 +3,39 @@
  * 添付ファイルの表示機能を提供します
  */
 class ChatAttachmentViewer {
+    // シングルトンインスタンス
+    static #instance = null;
+
+    /**
+     * プライベートコンストラクタ
+     * @private
+     */
+    constructor() {
+        if (ChatAttachmentViewer.#instance) {
+            throw new Error('ChatAttachmentViewerクラスは直接インスタンス化できません。ChatAttachmentViewer.instanceを使用してください。');
+        }
+    }
+
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {ChatAttachmentViewer} ChatAttachmentViewerのシングルトンインスタンス
+     */
+    static get getInstance() {
+        if (!ChatAttachmentViewer.#instance) {
+            ChatAttachmentViewer.#instance = new ChatAttachmentViewer();
+        }
+        return ChatAttachmentViewer.#instance;
+    }
+
     /**
      * 添付ファイル表示要素を作成
      */
-    static createAttachmentsElement(attachments, timestamp = null) {
+    createAttachmentsElement(attachments, timestamp = null) {
         if (!attachments || !Array.isArray(attachments)) {
             return document.createElement('div');
         }
         
-        const attachmentsDiv = ChatUI.instance.createElement('div', { 
+        const attachmentsDiv = ChatUI.getInstance.createElement('div', { 
             classList: 'message-attachments'
         });
         
@@ -49,12 +73,12 @@ class ChatAttachmentViewer {
      * 画像プレビューを作成
      * @private
      */
-    static _createImagePreview(attachment) {
-        const imgContainer = ChatUI.instance.createElement('div', {
+    _createImagePreview(attachment) {
+        const imgContainer = ChatUI.getInstance.createElement('div', {
             classList: 'attachment-image-container'
         });
         
-        const img = ChatUI.instance.createElement('img', {
+        const img = ChatUI.getInstance.createElement('img', {
             classList: 'attachment-image',
             attributes: {
                 src: attachment.data,
@@ -63,7 +87,7 @@ class ChatAttachmentViewer {
         });
         
         img.addEventListener('click', () => {
-            this._showFullSizeImage(attachment.data, attachment.name);
+            this.showFullSizeImage(attachment.data, attachment.name);
         });
         
         imgContainer.appendChild(img);
@@ -74,25 +98,25 @@ class ChatAttachmentViewer {
      * PDFプレビューを作成
      * @private
      */
-    static _createPdfPreview(attachment) {
-        const pdfContainer = ChatUI.instance.createElement('div', {
+    _createPdfPreview(attachment) {
+        const pdfContainer = ChatUI.getInstance.createElement('div', {
             classList: 'attachment-pdf-container'
         });
         
-        const pdfPreview = ChatUI.instance.createElement('div', {
+        const pdfPreview = ChatUI.getInstance.createElement('div', {
             classList: 'pdf-preview'
         });
         
-        const pdfIcon = ChatUI.instance.createElement('i', {
+        const pdfIcon = ChatUI.getInstance.createElement('i', {
             classList: ['fas', 'fa-file-pdf']
         });
         
-        const pdfName = ChatUI.instance.createElement('span', {
+        const pdfName = ChatUI.getInstance.createElement('span', {
             classList: 'attachment-file-name',
             textContent: attachment.name || 'PDF文書'
         });
         
-        const previewButton = ChatUI.instance.createElement('button', {
+        const previewButton = ChatUI.getInstance.createElement('button', {
             classList: 'pdf-preview-button',
             textContent: 'プレビュー'
         });
@@ -113,16 +137,16 @@ class ChatAttachmentViewer {
      * Officeファイルプレビューを作成
      * @private
      */
-    static _createOfficePreview(attachment) {
-        const officeContainer = ChatUI.instance.createElement('div', {
+    _createOfficePreview(attachment) {
+        const officeContainer = ChatUI.getInstance.createElement('div', {
             classList: 'attachment-office-container'
         });
         
-        const officePreview = ChatUI.instance.createElement('div', {
+        const officePreview = ChatUI.getInstance.createElement('div', {
             classList: 'office-preview'
         });
         
-        const officeIcon = ChatUI.instance.createElement('i');
+        const officeIcon = ChatUI.getInstance.createElement('i');
         if (attachment.mimeType) {
             if (attachment.mimeType.includes('word')) {
                 officeIcon.className = 'fas fa-file-word';
@@ -137,12 +161,12 @@ class ChatAttachmentViewer {
             officeIcon.className = 'fas fa-file';
         }
         
-        const officeName = ChatUI.instance.createElement('span', {
+        const officeName = ChatUI.getInstance.createElement('span', {
             classList: 'attachment-file-name',
             textContent: attachment.name || 'Officeファイル'
         });
         
-        const contentButton = ChatUI.instance.createElement('button', {
+        const contentButton = ChatUI.getInstance.createElement('button', {
             classList: 'office-content-button',
             textContent: 'プレビュー'
         });
@@ -163,21 +187,21 @@ class ChatAttachmentViewer {
      * ファイルプレビューを作成
      * @private
      */
-    static _createFilePreview(attachment) {
-        const fileContainer = ChatUI.instance.createElement('div', {
+    _createFilePreview(attachment) {
+        const fileContainer = ChatUI.getInstance.createElement('div', {
             classList: 'attachment-file-container'
         });
         
-        const fileIcon = ChatUI.instance.createElement('i', {
+        const fileIcon = ChatUI.getInstance.createElement('i', {
             classList: ['fas', 'fa-file']
         });
         
-        const fileName = ChatUI.instance.createElement('span', {
+        const fileName = ChatUI.getInstance.createElement('span', {
             classList: 'attachment-file-name',
             textContent: attachment.name || '添付ファイル'
         });
         
-        const previewButton = ChatUI.instance.createElement('button', {
+        const previewButton = ChatUI.getInstance.createElement('button', {
             classList: 'file-preview-button',
             textContent: 'プレビュー'
         });
@@ -197,7 +221,7 @@ class ChatAttachmentViewer {
      * テキストファイルの内容を表示
      * @private
      */
-    static _showTextFileContent(content, name) {
+    _showTextFileContent(content, name) {
         if (!content) {
             alert('ファイルの内容を表示できません。');
             return;
@@ -209,28 +233,28 @@ class ChatAttachmentViewer {
             return;
         }
         
-        const overlay = ChatUI.instance.createElement('div', {
+        const overlay = ChatUI.getInstance.createElement('div', {
             classList: 'text-file-overlay'
         });
         
-        const contentViewer = ChatUI.instance.createElement('div', {
+        const contentViewer = ChatUI.getInstance.createElement('div', {
             classList: 'text-file-viewer'
         });
         
-        const textContent = ChatUI.instance.createElement('pre', {
+        const textContent = ChatUI.getInstance.createElement('pre', {
             classList: 'text-file-content',
             innerHTML: this._formatTextContent(content, name)
         });
         
-        const titleBar = ChatUI.instance.createElement('div', {
+        const titleBar = ChatUI.getInstance.createElement('div', {
             classList: 'text-file-title-bar'
         });
         
-        const titleText = ChatUI.instance.createElement('span', {
+        const titleText = ChatUI.getInstance.createElement('span', {
             textContent: name || 'テキストファイル'
         });
         
-        const closeBtn = ChatUI.instance.createElement('button', {
+        const closeBtn = ChatUI.getInstance.createElement('button', {
             classList: 'overlay-close-btn',
             innerHTML: '<i class="fas fa-times"></i>'
         });
@@ -261,7 +285,7 @@ class ChatAttachmentViewer {
      * テキストファイルの内容をフォーマット
      * @private
      */
-    static _formatTextContent(content, fileName) {
+    _formatTextContent(content, fileName) {
         if (!content) return '';
         
         const ext = fileName ? fileName.split('.').pop().toLowerCase() : '';
@@ -286,7 +310,7 @@ class ChatAttachmentViewer {
      * HTMLの特殊文字をエスケープ
      * @private
      */
-    static _escapeHtml(text) {
+    _escapeHtml(text) {
         if (!text) return '';
         
         const escape = {
@@ -304,7 +328,7 @@ class ChatAttachmentViewer {
      * PDFプレビューを表示
      * @private
      */
-    static _showPDFPreview(src, name) {
+    _showPDFPreview(src, name) {
         if (!src) return;
         
         const existingOverlay = document.querySelector('.pdf-overlay');
@@ -313,15 +337,15 @@ class ChatAttachmentViewer {
             return;
         }
         
-        const overlay = ChatUI.instance.createElement('div', {
+        const overlay = ChatUI.getInstance.createElement('div', {
             classList: 'pdf-overlay'
         });
         
-        const pdfViewer = ChatUI.instance.createElement('div', {
+        const pdfViewer = ChatUI.getInstance.createElement('div', {
             classList: 'pdf-viewer'
         });
         
-        const pdfObject = ChatUI.instance.createElement('object', {
+        const pdfObject = ChatUI.getInstance.createElement('object', {
             attributes: {
                 type: 'application/pdf',
                 data: src,
@@ -330,19 +354,19 @@ class ChatAttachmentViewer {
             }
         });
         
-        const fallback = ChatUI.instance.createElement('p', {
+        const fallback = ChatUI.getInstance.createElement('p', {
             innerHTML: `<a href="${src}" target="_blank">PDFを表示できません。こちらをクリックして開いてください。</a>`
         });
         
-        const titleBar = ChatUI.instance.createElement('div', {
+        const titleBar = ChatUI.getInstance.createElement('div', {
             classList: 'pdf-title-bar'
         });
         
-        const titleText = ChatUI.instance.createElement('span', {
+        const titleText = ChatUI.getInstance.createElement('span', {
             textContent: name || 'PDF文書'
         });
         
-        const closeBtn = ChatUI.instance.createElement('button', {
+        const closeBtn = ChatUI.getInstance.createElement('button', {
             classList: 'overlay-close-btn',
             innerHTML: '<i class="fas fa-times"></i>'
         });
@@ -370,7 +394,7 @@ class ChatAttachmentViewer {
      * Officeファイルの内容を表示
      * @private
      */
-    static _showOfficeContent(content, name) {
+    _showOfficeContent(content, name) {
         if (!content) {
             alert('ファイルの内容を表示できません。');
             return;
@@ -382,28 +406,28 @@ class ChatAttachmentViewer {
             return;
         }
         
-        const overlay = ChatUI.instance.createElement('div', {
+        const overlay = ChatUI.getInstance.createElement('div', {
             classList: 'office-overlay'
         });
         
-        const contentViewer = ChatUI.instance.createElement('div', {
+        const contentViewer = ChatUI.getInstance.createElement('div', {
             classList: 'office-content-viewer'
         });
         
-        const textContent = ChatUI.instance.createElement('pre', {
+        const textContent = ChatUI.getInstance.createElement('pre', {
             classList: 'office-text-content',
             textContent: content
         });
         
-        const titleBar = ChatUI.instance.createElement('div', {
+        const titleBar = ChatUI.getInstance.createElement('div', {
             classList: 'office-title-bar'
         });
         
-        const titleText = ChatUI.instance.createElement('span', {
+        const titleText = ChatUI.getInstance.createElement('span', {
             textContent: name || 'ファイル内容'
         });
         
-        const closeBtn = ChatUI.instance.createElement('button', {
+        const closeBtn = ChatUI.getInstance.createElement('button', {
             classList: 'overlay-close-btn',
             innerHTML: '<i class="fas fa-times"></i>'
         });
@@ -430,7 +454,7 @@ class ChatAttachmentViewer {
      * 画像をフルサイズで表示
      * @private
      */
-    static _showFullSizeImage(src, name) {
+    showFullSizeImage(src, name) {
         if (!src) return;
         
         const existingOverlay = document.querySelector('.image-overlay');
@@ -439,30 +463,30 @@ class ChatAttachmentViewer {
             return;
         }
         
-        const overlay = ChatUI.instance.createElement('div', {
+        const overlay = ChatUI.getInstance.createElement('div', {
             classList: 'image-overlay'
         });
         
-        const imageViewer = ChatUI.instance.createElement('div', {
+        const imageViewer = ChatUI.getInstance.createElement('div', {
             classList: 'image-viewer'
         });
         
-        const image = ChatUI.instance.createElement('img', {
+        const image = ChatUI.getInstance.createElement('img', {
             attributes: {
                 src: src,
                 alt: name || '画像'
             }
         });
         
-        const titleBar = ChatUI.instance.createElement('div', {
+        const titleBar = ChatUI.getInstance.createElement('div', {
             classList: 'image-title-bar'
         });
         
-        const titleText = ChatUI.instance.createElement('span', {
+        const titleText = ChatUI.getInstance.createElement('span', {
             textContent: name || '画像'
         });
         
-        const closeBtn = ChatUI.instance.createElement('button', {
+        const closeBtn = ChatUI.getInstance.createElement('button', {
             classList: 'overlay-close-btn',
             innerHTML: '<i class="fas fa-times"></i>'
         });
@@ -485,3 +509,4 @@ class ChatAttachmentViewer {
         document.body.appendChild(overlay);
     }
 }
+
