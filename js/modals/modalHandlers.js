@@ -67,7 +67,7 @@ class ModalHandlers {
 
         // ローカルストレージに保存
         Storage.getInstance.saveApiSettings(window.AppState.apiSettings);
-        window.UI.Core.Notification.show('API設定を保存しました', 'success');
+        UI.getInstance.Core.Notification.show('API設定を保存しました', 'success');
         ApiSettingsModal.getInstance.hideApiKeyModal();
     }
     
@@ -103,12 +103,12 @@ class ModalHandlers {
         const systemPrompt = UICache.getInstance.get('systemPromptInput').value.trim();
         
         if (!systemPromptName || !systemPrompt) {
-            window.UI.Core.Notification.show('システムプロンプト名と内容を入力してください', 'error');
+            UI.getInstance.Core.Notification.show('システムプロンプト名と内容を入力してください', 'error');
             return;
         }
 
         if (!templateCategory) {
-            window.UI.Core.Notification.show('カテゴリを入力してください', 'error');
+            UI.getInstance.Core.Notification.show('カテゴリを入力してください', 'error');
             return;
         }
 
@@ -116,7 +116,7 @@ class ModalHandlers {
         
         // 重複チェック
         if (templates[systemPromptName]) {
-            window.UI.Core.Notification.show('同じ名前のシステムプロンプトが既に存在します', 'error');
+            UI.getInstance.Core.Notification.show('同じ名前のシステムプロンプトが既に存在します', 'error');
             return;
         }
         
@@ -136,7 +136,7 @@ class ModalHandlers {
         
         // システムプロンプト一覧を更新
         SystemPromptModal.getInstance.updateList(templates);
-        window.UI.Core.Notification.show('システムプロンプトを保存しました', 'success');
+        UI.getInstance.Core.Notification.show('システムプロンプトを保存しました', 'success');
     }
     
     /**
@@ -168,7 +168,7 @@ class ModalHandlers {
                 this.onTemplateSelect.bind(this), 
                 this.onTemplateDelete.bind(this)
             );
-            window.UI.Core.Notification.show('システムプロンプトを削除しました', 'success');
+            UI.getInstance.Core.Notification.show('システムプロンプトを削除しました', 'success');
         }
     }
 }

@@ -398,6 +398,3 @@ class UI {
         this.Core.Performance.optimize();
     }
 }
-
-// グローバルアクセスのために window.UI を設定
-window.UI = UI.getInstance;

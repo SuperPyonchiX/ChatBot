@@ -248,10 +248,10 @@ class PromptManagerModal {
             }
             
             this.hidePromptManagerModal();
-            window.UI.Core.Notification.show('プロンプトをセットしました', 'success');
+            UI.getInstance.Core.Notification.show('プロンプトをセットしました', 'success');
         } catch (error) {
             console.error('プロンプト使用中にエラーが発生しました:', error);
-            window.UI.Core.Notification.show('プロンプトの使用に失敗しました', 'error');
+            UI.getInstance.Core.Notification.show('プロンプトの使用に失敗しました', 'error');
         }
     }
     
@@ -296,7 +296,7 @@ class PromptManagerModal {
             try {
                 const result = PromptManager.getInstance.deletePrompt(promptId);
                 if (result) {
-                    window.UI.Core.Notification.show('プロンプトを削除しました', 'success');
+                    UI.getInstance.Core.Notification.show('プロンプトを削除しました', 'success');
                     
                     const activeCategory = document.querySelector('.category-item.active');
                     const filter = {};
@@ -307,11 +307,11 @@ class PromptManagerModal {
                     this.updatePromptsList(filter);
                     this._updateCategoryCounts();
                 } else {
-                    window.UI.Core.Notification.show('プロンプトの削除に失敗しました', 'error');
+                    UI.getInstance.Core.Notification.show('プロンプトの削除に失敗しました', 'error');
                 }
             } catch (error) {
                 console.error('プロンプト削除中にエラーが発生しました:', error);
-                window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
+                UI.getInstance.Core.Notification.show('エラー: ' + error.message, 'error');
             }
         }
     }
@@ -330,14 +330,14 @@ class PromptManagerModal {
                 });
                 
                 if (success) {
-                    window.UI.Core.Notification.show('カテゴリ名を更新しました', 'success');
+                    UI.getInstance.Core.Notification.show('カテゴリ名を更新しました', 'success');
                     this.updatePromptCategories();
                 } else {
-                    window.UI.Core.Notification.show('カテゴリの更新に失敗しました', 'error');
+                    UI.getInstance.Core.Notification.show('カテゴリの更新に失敗しました', 'error');
                 }
             } catch (error) {
                 console.error('カテゴリ更新中にエラーが発生しました:', error);
-                window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
+                UI.getInstance.Core.Notification.show('エラー: ' + error.message, 'error');
             }
         }
     }
@@ -360,14 +360,14 @@ class PromptManagerModal {
                     const success = PromptManager.getInstance.deleteCategory(categoryKey);
                     
                     if (success) {
-                        window.UI.Core.Notification.show('カテゴリを削除しました', 'success');
+                        UI.getInstance.Core.Notification.show('カテゴリを削除しました', 'success');
                         this.updatePromptCategories();
                     } else {
-                        window.UI.Core.Notification.show('カテゴリの削除に失敗しました', 'error');
+                        UI.getInstance.Core.Notification.show('カテゴリの削除に失敗しました', 'error');
                     }
                 } catch (error) {
                     console.error('カテゴリ削除中にエラーが発生しました:', error);
-                    window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
+                    UI.getInstance.Core.Notification.show('エラー: ' + error.message, 'error');
                 }
             }
         });
@@ -503,7 +503,7 @@ class PromptManagerModal {
 
         // バリデーション
         if (!name || !content) {
-                window.UI.Core.Notification.show('名前とプロンプト内容は必須です', 'error');
+                UI.getInstance.Core.Notification.show('名前とプロンプト内容は必須です', 'error');
             return;
         }
 
@@ -528,7 +528,7 @@ class PromptManagerModal {
             }
 
             if (success) {
-                window.UI.Core.Notification.show(promptId ? 'プロンプトを更新しました' : 'プロンプトを作成しました', 'success');
+                UI.getInstance.Core.Notification.show(promptId ? 'プロンプトを更新しました' : 'プロンプトを作成しました', 'success');
                 this.hidePromptEditModal();
                 
                 // プロンプトリストを更新
@@ -537,11 +537,11 @@ class PromptManagerModal {
                 this.updatePromptsList(filter);
                 this._updateCategoryCounts();
             } else {
-                window.UI.Core.Notification.show('プロンプトの保存に失敗しました', 'error');
+                UI.getInstance.Core.Notification.show('プロンプトの保存に失敗しました', 'error');
             }
         } catch (error) {
             console.error('プロンプト保存中にエラーが発生しました:', error);
-            window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
+            UI.getInstance.Core.Notification.show('エラー: ' + error.message, 'error');
         }
     }
 
@@ -556,14 +556,14 @@ class PromptManagerModal {
         try {
             const success = PromptManager.getInstance.addCategory(categoryName.trim());
             if (success) {
-                window.UI.Core.Notification.show('カテゴリを追加しました', 'success');
+                UI.getInstance.Core.Notification.show('カテゴリを追加しました', 'success');
                 this.updatePromptCategories();
             } else {
-                window.UI.Core.Notification.show('カテゴリの追加に失敗しました', 'error');
+                UI.getInstance.Core.Notification.show('カテゴリの追加に失敗しました', 'error');
             }
         } catch (error) {
             console.error('カテゴリ追加中にエラーが発生しました:', error);
-            window.UI.Core.Notification.show('エラー: ' + error.message, 'error');
+            UI.getInstance.Core.Notification.show('エラー: ' + error.message, 'error');
         }
     }
 }
