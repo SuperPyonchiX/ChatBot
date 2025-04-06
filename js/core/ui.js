@@ -383,7 +383,7 @@ window.UI = {
         this.Core.Theme.apply();
         this.Core.Accessibility.setup();
         this.Core.TouchOptimization.setup();
-        this.Components.Sidebar?.createSidebarToggle();
+        Sidebar.getInstance?.createSidebarToggle();
         this.Core.Performance.optimize();
     }
 };

@@ -38,8 +38,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         } else {
             console.warn('UI.initializeが見つかりません');
             // フォールバック: サイドバートグルボタンを個別に作成
-            if (window.UI && window.UI.Components.Sidebar.createSidebarToggle) {
-                window.UI.Components.Sidebar.createSidebarToggle();
+            if (window.UI && Sidebar.getInstance.createSidebarToggle) {
+                Sidebar.getInstance.createSidebarToggle();
             }
         }
         

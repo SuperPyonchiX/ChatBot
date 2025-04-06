@@ -1,16 +1,31 @@
-window.UI = window.UI || {};
-window.UI.Components = window.UI.Components || {};
-window.UI.Components.Sidebar = window.UI.Components.Sidebar || {};
 /**
- * サイドバー関連の機能
- * @namespace UI.Components.Sidebar
+ * サイドバーの機能を管理するクラス
  */
-Object.assign(window.UI.Components.Sidebar, {
+class Sidebar {
+    static #instance = null;
+    
+    constructor() {
+        if (Sidebar.#instance) {
+            return Sidebar.#instance;
+        }
+        Sidebar.#instance = this;
+    }
+
+    /**
+     * シングルトンインスタンスを取得
+     */
+    static get getInstance() {
+        if (!Sidebar.#instance) {
+            Sidebar.#instance = new Sidebar();
+        }
+        return Sidebar.#instance;
+    }
+
     /**
      * モバイル用のサイドバートグルボタンを作成します
      * 画面サイズに応じてサイドバーの表示/非表示を切り替えるボタンを配置します
      */
-    createSidebarToggle: function() {
+    createSidebarToggle() {
         const sidebarEl = window.UI.Cache.get('.sidebar', true);
         const appContainer = window.UI.Cache.get('.app-container', true);
         
@@ -47,16 +62,16 @@ Object.assign(window.UI.Components.Sidebar, {
         // 要素を追加
         toggleArea.appendChild(toggleButton);
         appContainer.appendChild(toggleArea);
-    },
+    }
 
     /**
      * サイドバーの状態をトグルします
      * @private
      */
-    _toggleSidebarState: function(sidebar, toggleButton) {
+    _toggleSidebarState(sidebar, toggleButton) {
         const isNowCollapsed = sidebar.classList.contains('collapsed');
         sidebar.classList.toggle('collapsed');
         toggleButton.classList.toggle('sidebar-visible');
         window.Storage.saveSidebarState(!isNowCollapsed);
     }
-});
+}
