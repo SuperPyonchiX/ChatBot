@@ -135,7 +135,7 @@ class ModalHandlers {
         UICache.getInstance.get('newTemplateCategory').value = '';
         
         // システムプロンプト一覧を更新
-        SystemPromptModal.getInstance.updateList(templates, this.onTemplateSelect.bind(this), this.onTemplateDelete.bind(this));
+        SystemPromptModal.getInstance.updateList(templates);
         window.UI.Core.Notification.show('システムプロンプトを保存しました', 'success');
     }
     

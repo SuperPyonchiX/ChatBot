@@ -206,8 +206,3 @@ class SystemPromptModal {
         return promptItem;
     }
 }
-
-// グローバルアクセスのために window.UI.Core.Modal に設定
-window.UI = window.UI || {};
-window.UI.Core = window.UI.Core || {};
-window.UI.Core.Modal = SystemPromptModal.getInstance;

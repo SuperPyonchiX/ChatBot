@@ -80,7 +80,7 @@ class EventHandlers {
         // システムプロンプト設定
         window.Elements.openSystemPromptSettings.addEventListener('click', () => {
             window.Elements.settingsMenu.style.display = 'none';
-            window.UI.Core.Modal.showSystemPromptModal(
+            SystemPromptModal.getInstance.showSystemPromptModal(
                 window.AppState.systemPrompt, 
                 window.AppState.systemPromptTemplates, 
                 ModalHandlers.getInstance.onTemplateSelect, 
@@ -212,7 +212,7 @@ class EventHandlers {
         if (switchToSystemPromptBtn) {
             switchToSystemPromptBtn.addEventListener('click', () => {
                 window.UI.Core.Modal.hidePromptManagerModal();
-                window.UI.Core.Modal.showSystemPromptModal(
+                SystemPromptModal.getInstance.showSystemPromptModal(
                     window.AppState.systemPrompt,
                     window.AppState.systemPromptTemplates,
                     ModalHandlers.getInstance.onTemplateSelect,
@@ -265,7 +265,7 @@ class EventHandlers {
             if (e.key === 'Escape') {
                 // 開いているモーダルを閉じる
                 const modals = [
-                    { id: 'systemPromptModal', hide: window.UI.Core.Modal.hideSystemPromptModal },
+                    { id: 'systemPromptModal', hide: SystemPromptModal.getInstance.hideSystemPromptModal },
                     { id: 'apiKeyModal', hide: ApiSettingsModal.getInstance.hideApiKeyModal },
                     { id: 'renameChatModal', hide: window.UI.Core.Modal.hideRenameChatModal }
                 ];

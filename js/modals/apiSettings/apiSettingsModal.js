@@ -85,8 +85,3 @@ class ApiSettingsModal {
         UIUtils.getInstance.toggleVisibility(azureSettings, azureRadio.checked);
     }
 }
-
-// グローバルアクセスのために window.UI.Core.Modal に設定
-window.UI = window.UI || {};
-window.UI.Core = window.UI.Core || {};
-window.UI.Core.Modal = ApiSettingsModal.getInstance;
