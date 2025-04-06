@@ -24,6 +24,34 @@ class HTMLExecutor extends ExecutorBase {
     }
 
     /**
+     * HTMLをサニタイズする
+     * @private
+     * @param {string} html - サニタイズするHTML
+     * @returns {string} サニタイズされたHTML
+     */
+    static #sanitizeHtml(html) {
+        try {
+            const sanitized = html
+                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, (match) => {
+                    if (match.match(/src\s*=\s*["']https?:\/\//i)) {
+                        return '<!-- 外部スクリプトは安全のため削除されました -->';
+                    }
+                    return match;
+                });
+            
+            const hasBaseTag = /<base\b/i.test(sanitized);
+            if (!hasBaseTag) {
+                return sanitized.replace(/<head\b[^>]*>/i, '$&<base target="_blank">');
+            }
+            
+            return sanitized;
+        } catch (error) {
+            console.error('HTMLサニタイズ中にエラーが発生しました:', error);
+            return '<p>HTMLのサニタイズに失敗しました</p>';
+        }
+    }
+
+    /**
      * HTMLコードを実行（プレビュー表示）する
      * @param {string} code - 実行するHTMLコード
      * @param {Function} [outputCallback] - リアルタイム出力用コールバック関数
@@ -78,7 +106,7 @@ class HTMLExecutor extends ExecutorBase {
                 sanitizedHtml = resultHtml;
             }
             
-            sanitizedHtml = ExecutorUtils.sanitizeHtml(sanitizedHtml);
+            sanitizedHtml = HTMLExecutor.#sanitizeHtml(sanitizedHtml);
             
             const result = {
                 html: sanitizedHtml,
