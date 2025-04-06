@@ -14,7 +14,7 @@ window.FileHandler = {
     
     updateAcceptedFileTypes: function() {
         try {
-            const fileInput = window.UI.Cache.get('fileInput');
+            const fileInput = UICache.getInstance.get('fileInput');
             if (!fileInput) return;
             
             const acceptedExtensions = this.getAllowedFileExtensions();

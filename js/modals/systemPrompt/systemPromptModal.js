@@ -15,7 +15,7 @@ Object.assign(window.UI.Core.Modal, {
      */
     showSystemPromptModal: function(systemPrompt, systemPromptTemplates, onSelect, onDelete) {
         window.UI.Utils.toggleModal('systemPromptModal', true);
-        window.UI.Cache.get('systemPromptInput').value = systemPrompt;
+        UICache.getInstance.get('systemPromptInput').value = systemPrompt;
         
         // バインドされたコールバック関数を保存
         this._boundOnSelect = onSelect.bind(window.UI.Core.Modal.Handlers);
@@ -36,7 +36,7 @@ Object.assign(window.UI.Core.Modal, {
      * @param {Object} systemPromptTemplates - システムプロンプト集
      */
     updateList: function(systemPromptTemplates) {
-        const listArea = window.UI.Cache.get('systemPromptListArea');
+        const listArea = UICache.getInstance.get('systemPromptListArea');
         if (!listArea) return;
         
         // 一覧をクリア

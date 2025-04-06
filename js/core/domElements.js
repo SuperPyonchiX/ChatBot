@@ -14,8 +14,8 @@ window.Elements = (function() {
         const elements = {};
         
         selectors.forEach(id => {
-            // window.UI.Cacheを使用して要素を取得
-            const element = window.UI.Cache.get(id);
+            // UICache.getInstanceを使用して要素を取得
+            const element = UICache.getInstance.get(id);
             
             if (element) {
                 elements[id] = element;

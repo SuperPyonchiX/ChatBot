@@ -80,9 +80,9 @@ Object.assign(window.UI.Core.Modal.Handlers, {
      * 新しいシステムプロンプトを保存します
      */
     saveNewSystemPrompt: function() {
-        const systemPromptName = window.UI.Cache.get('newSystemPromptName').value.trim();
-        const templateCategory = window.UI.Cache.get('newTemplateCategory').value.trim();
-        const systemPrompt = window.UI.Cache.get('systemPromptInput').value.trim();
+        const systemPromptName = UICache.getInstance.get('newSystemPromptName').value.trim();
+        const templateCategory = UICache.getInstance.get('newTemplateCategory').value.trim();
+        const systemPrompt = UICache.getInstance.get('systemPromptInput').value.trim();
         
         if (!systemPromptName || !systemPrompt) {
             window.UI.Core.Notification.show('システムプロンプト名と内容を入力してください', 'error');
@@ -113,8 +113,8 @@ Object.assign(window.UI.Core.Modal.Handlers, {
         Storage.getInstance.saveSystemPromptTemplates(templates);
         
         // 入力をクリア
-        window.UI.Cache.get('newSystemPromptName').value = '';
-        window.UI.Cache.get('newTemplateCategory').value = '';
+        UICache.getInstance.get('newSystemPromptName').value = '';
+        UICache.getInstance.get('newTemplateCategory').value = '';
         
         // システムプロンプト一覧を更新
         window.UI.Core.Modal.updateList(templates, this.onTemplateSelect, this.onTemplateDelete);

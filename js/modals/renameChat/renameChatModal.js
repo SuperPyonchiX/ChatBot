@@ -15,8 +15,8 @@ Object.assign(window.UI.Core.Modal, {
      * @param {string} conversation.title - 会話タイトル
      */
     showRenameChatModal: function(conversation) {
-        const modalEl = window.UI.Cache.get('renameChatModal');
-        const titleInput = window.UI.Cache.get('chatTitleInput');
+        const modalEl = UICache.getInstance.get('renameChatModal');
+        const titleInput = UICache.getInstance.get('chatTitleInput');
         
         // 現在のタイトルをセット
         titleInput.value = conversation.title || '新しいチャット';

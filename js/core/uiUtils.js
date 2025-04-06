@@ -27,7 +27,7 @@ Object.assign(window.UI.Utils, {
      * @param {boolean} show - 表示するかどうか
      */
     toggleModal: function(modalId, show) {
-        const modal = window.UI.Cache.get(modalId);
+        const modal = UICache.getInstance.get(modalId);
         if (!modal) return;
         
         if (show) {

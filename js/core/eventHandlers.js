@@ -155,7 +155,7 @@ class EventHandlers {
         window.Elements.saveNewSystemPrompt.addEventListener('click', window.UI.Core.Modal.Handlers.saveNewSystemPrompt.bind(window.UI.Core.Modal.Handlers));
 
         // 高度なプロンプト管理へ切り替え
-        const switchToPromptManagerBtn = window.UI.Cache.get('switchToPromptManager');
+        const switchToPromptManagerBtn = UICache.getInstance.get('switchToPromptManager');
         if (switchToPromptManagerBtn) {
             switchToPromptManagerBtn.addEventListener('click', () => {
                 window.UI.Core.Modal.hideSystemPromptModal();
@@ -200,7 +200,7 @@ class EventHandlers {
      */
     setupPromptManagerModal() {
         // 閉じるボタンのイベントハンドラー
-        const closePromptManagerBtn = window.UI.Cache.get('closePromptManager');
+        const closePromptManagerBtn = UICache.getInstance.get('closePromptManager');
         if (closePromptManagerBtn) {
             closePromptManagerBtn.addEventListener('click', () => {
                 window.UI.Core.Modal.hidePromptManagerModal();
@@ -208,7 +208,7 @@ class EventHandlers {
         }
 
         // システムプロンプト設定への切り替えボタンのイベントハンドラー
-        const switchToSystemPromptBtn = window.UI.Cache.get('switchToSystemPrompt');
+        const switchToSystemPromptBtn = UICache.getInstance.get('switchToSystemPrompt');
         if (switchToSystemPromptBtn) {
             switchToSystemPromptBtn.addEventListener('click', () => {
                 window.UI.Core.Modal.hidePromptManagerModal();
@@ -222,7 +222,7 @@ class EventHandlers {
         }
 
         // カテゴリ追加ボタンのイベントハンドラー
-        const addCategoryBtn = window.UI.Cache.get('addCategoryButton');
+        const addCategoryBtn = UICache.getInstance.get('addCategoryButton');
         if (addCategoryBtn) {
             addCategoryBtn.addEventListener('click', () => {
                 window.UI.Core.Modal._handleAddCategory();
@@ -230,7 +230,7 @@ class EventHandlers {
         }
 
         // 新規プロンプト追加ボタンのイベントハンドラー
-        const addPromptButton = window.UI.Cache.get('addPromptButton');
+        const addPromptButton = UICache.getInstance.get('addPromptButton');
         if (addPromptButton) {
             addPromptButton.addEventListener('click', () => {
                 window.UI.Core.Modal.showPromptEditModal(null);
@@ -271,7 +271,7 @@ class EventHandlers {
                 ];
                 
                 modals.forEach(modal => {
-                    const element = window.UI.Cache.get(modal.id);
+                    const element = UICache.getInstance.get(modal.id);
                     if (element && element.style.display === 'block' && typeof modal.hide === 'function') {
                         modal.hide();
                     }

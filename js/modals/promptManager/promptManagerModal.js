@@ -17,7 +17,7 @@ Object.assign(window.UI.Core.Modal, {
      */
     showPromptManagerModal: function() {
         console.log('プロンプトマネージャーモーダルを表示します');
-        const modal = window.UI.Cache.get('promptManagerModal');
+        const modal = UICache.getInstance.get('promptManagerModal');
         if (!modal) {
             console.error('モーダル要素が見つかりません: promptManagerModal');
             return;
@@ -36,7 +36,7 @@ Object.assign(window.UI.Core.Modal, {
      */
     hidePromptManagerModal: function() {
         console.log('プロンプトマネージャーモーダルを閉じます');
-        const modal = window.UI.Cache.get('promptManagerModal');
+        const modal = UICache.getInstance.get('promptManagerModal');
         if (modal) {
             modal.style.display = 'none';
         }
@@ -47,7 +47,7 @@ Object.assign(window.UI.Core.Modal, {
      */
     updatePromptCategories: function() {
         console.log('カテゴリ一覧を更新します');
-        const categoriesList = window.UI.Cache.get('promptCategoriesList');
+        const categoriesList = UICache.getInstance.get('promptCategoriesList');
         if (!categoriesList) {
             console.error('カテゴリリスト要素が見つかりません: promptCategoriesList');
             return;
@@ -135,7 +135,7 @@ Object.assign(window.UI.Core.Modal, {
      * @param {Object} filter - フィルタリング条件
      */
     updatePromptsList: function(filter = {}) {
-        const promptsList = window.UI.Cache.get('promptsList');
+        const promptsList = UICache.getInstance.get('promptsList');
         if (!promptsList) {
             console.error('プロンプトリスト要素が見つかりません: promptsList');
             return;
@@ -222,7 +222,7 @@ Object.assign(window.UI.Core.Modal, {
         try {
             const promptText = PromptManager.getInstance.buildPrompt(promptId);
             
-            const userInput = window.UI.Cache.get('userInput');
+            const userInput = UICache.getInstance.get('userInput');
             if (userInput) {
                 userInput.value = promptText;
                 window.UI.Utils.autoResizeTextarea(userInput);
@@ -359,24 +359,24 @@ Object.assign(window.UI.Core.Modal, {
      * @param {Object} prompt - 編集するプロンプトデータ
      */
     showPromptEditModal: function(prompt) {
-        const modal = window.UI.Cache.get('promptEditModal');
+        const modal = UICache.getInstance.get('promptEditModal');
         if (!modal) {
             console.error('モーダル要素が見つかりません: promptEditModal');
             return;
         }
 
         // モーダルタイトルを設定
-        const title = window.UI.Cache.get('promptEditTitle');
+        const title = UICache.getInstance.get('promptEditTitle');
         if (title) {
             title.textContent = prompt ? 'プロンプト編集' : '新規プロンプト';
         }
 
         // フォームに値を設定
-        const nameInput = window.UI.Cache.get('promptNameInput');
-        const categorySelect = window.UI.Cache.get('promptCategorySelect');
-        const tagsInput = window.UI.Cache.get('promptTagsInput');
-        const descriptionInput = window.UI.Cache.get('promptDescriptionInput');
-        const contentInput = window.UI.Cache.get('promptContentInput');
+        const nameInput = UICache.getInstance.get('promptNameInput');
+        const categorySelect = UICache.getInstance.get('promptCategorySelect');
+        const tagsInput = UICache.getInstance.get('promptTagsInput');
+        const descriptionInput = UICache.getInstance.get('promptDescriptionInput');
+        const contentInput = UICache.getInstance.get('promptContentInput');
 
         if (prompt) {
             // 既存のプロンプトを編集する場合
@@ -401,8 +401,8 @@ Object.assign(window.UI.Core.Modal, {
         modal.style.display = 'block';
 
         // イベントリスナーを設定
-        const saveButton = window.UI.Cache.get('savePromptEdit');
-        const cancelButton = window.UI.Cache.get('cancelPromptEdit');
+        const saveButton = UICache.getInstance.get('savePromptEdit');
+        const cancelButton = UICache.getInstance.get('cancelPromptEdit');
 
         if (saveButton && cancelButton) {
             // 既存のイベントリスナーを削除
@@ -430,7 +430,7 @@ Object.assign(window.UI.Core.Modal, {
      * プロンプト編集モーダルを非表示にする
      */
     hidePromptEditModal: function() {
-        const modal = window.UI.Cache.get('promptEditModal');
+        const modal = UICache.getInstance.get('promptEditModal');
         if (modal) {
             modal.style.display = 'none';
         }
@@ -469,11 +469,11 @@ Object.assign(window.UI.Core.Modal, {
      * @private
      */
     _savePromptEdit: function(modal) {
-        const nameInput = window.UI.Cache.get('promptNameInput');
-        const categorySelect = window.UI.Cache.get('promptCategorySelect');
-        const tagsInput = window.UI.Cache.get('promptTagsInput');
-        const descriptionInput = window.UI.Cache.get('promptDescriptionInput');
-        const contentInput = window.UI.Cache.get('promptContentInput');
+        const nameInput = UICache.getInstance.get('promptNameInput');
+        const categorySelect = UICache.getInstance.get('promptCategorySelect');
+        const tagsInput = UICache.getInstance.get('promptTagsInput');
+        const descriptionInput = UICache.getInstance.get('promptDescriptionInput');
+        const contentInput = UICache.getInstance.get('promptContentInput');
 
         // 入力値を取得
         const name = nameInput.value.trim();

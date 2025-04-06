@@ -16,16 +16,16 @@ Object.assign(window.UI.Core.Modal, {
         
         // 必要な要素を一度に取得
         const elements = {
-            azureApiKeyInput: window.UI.Cache.get('azureApiKeyInput'),
-            openaiRadio: window.UI.Cache.get('openaiRadio'),
-            azureRadio: window.UI.Cache.get('azureRadio'),
-            apiKeyInput: window.UI.Cache.get('apiKeyInput'),
-            openaiSettings: window.UI.Cache.get('openaiSettings'),
-            azureSettings: window.UI.Cache.get('azureSettings'),
-            azureEndpointGpt4oMini: window.UI.Cache.get('azureEndpointGpt4oMini'),
-            azureEndpointGpt4o: window.UI.Cache.get('azureEndpointGpt4o'),
-            azureEndpointO1Mini: window.UI.Cache.get('azureEndpointO1Mini'),
-            azureEndpointO1: window.UI.Cache.get('azureEndpointO1')
+            azureApiKeyInput: UICache.getInstance.get('azureApiKeyInput'),
+            openaiRadio: UICache.getInstance.get('openaiRadio'),
+            azureRadio: UICache.getInstance.get('azureRadio'),
+            apiKeyInput: UICache.getInstance.get('apiKeyInput'),
+            openaiSettings: UICache.getInstance.get('openaiSettings'),
+            azureSettings: UICache.getInstance.get('azureSettings'),
+            azureEndpointGpt4oMini: UICache.getInstance.get('azureEndpointGpt4oMini'),
+            azureEndpointGpt4o: UICache.getInstance.get('azureEndpointGpt4o'),
+            azureEndpointO1Mini: UICache.getInstance.get('azureEndpointO1Mini'),
+            azureEndpointO1: UICache.getInstance.get('azureEndpointO1')
         };
         
         // APIタイプに応じて設定を表示
@@ -59,9 +59,9 @@ Object.assign(window.UI.Core.Modal, {
      * Azure設定の表示/非表示を切り替えます
      */
     toggleAzureSettings: function() {
-        const openaiSettings = window.UI.Cache.get('openaiSettings');
-        const azureSettings = window.UI.Cache.get('azureSettings');
-        const azureRadio = window.UI.Cache.get('azureRadio');
+        const openaiSettings = UICache.getInstance.get('openaiSettings');
+        const azureSettings = UICache.getInstance.get('azureSettings');
+        const azureRadio = UICache.getInstance.get('azureRadio');
         
         window.UI.Utils.toggleVisibility(openaiSettings, !azureRadio.checked);
         window.UI.Utils.toggleVisibility(azureSettings, azureRadio.checked);
