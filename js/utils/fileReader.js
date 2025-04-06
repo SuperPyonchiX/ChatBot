@@ -1,10 +1,37 @@
 /**
  * fileReader.js
  * ファイル読み込み機能を提供します
+ * @class FileReaderUtil
  */
+class FileReaderUtil {
+    static #instance = null;
 
-window.FileReaderUtil = {
-    readFileAsDataURL: function(file) {
+    /**
+     * シングルトンインスタンスを取得します
+     * @returns {FileReaderUtil} FileReaderUtilのインスタンス
+     */
+    static get getInstance() {
+        if (!FileReaderUtil.#instance) {
+            FileReaderUtil.#instance = new FileReaderUtil();
+        }
+        return FileReaderUtil.#instance;
+    }
+
+    /**
+     * コンストラクタ - privateなので直接newはできません
+     */
+    constructor() {
+        if (FileReaderUtil.#instance) {
+            throw new Error('FileReaderUtilクラスは直接インスタンス化できません。getInstance()を使用してください。');
+        }
+    }
+
+    /**
+     * ファイルをDataURL形式で読み込みます
+     * @param {File} file - 読み込むファイル
+     * @returns {Promise<string>} DataURL形式の文字列
+     */
+    readFileAsDataURL(file) {
         return new Promise((resolve, reject) => {
             if (!file) {
                 reject(new Error('有効なファイルが指定されていません'));
@@ -32,9 +59,14 @@ window.FileReaderUtil = {
             
             reader.readAsDataURL(file);
         });
-    },
+    }
 
-    readFileAsBase64: function(file) {
+    /**
+     * ファイルをBase64形式で読み込みます
+     * @param {File} file - 読み込むファイル
+     * @returns {Promise<string>} Base64エンコードされた文字列
+     */
+    readFileAsBase64(file) {
         return new Promise((resolve, reject) => {
             if (!file) {
                 reject(new Error('有効なファイルが指定されていません'));
@@ -68,9 +100,14 @@ window.FileReaderUtil = {
             
             reader.readAsDataURL(file);
         });
-    },
+    }
 
-    readFileAsArrayBuffer: function(file) {
+    /**
+     * ファイルをArrayBuffer形式で読み込みます
+     * @param {File} file - 読み込むファイル
+     * @returns {Promise<ArrayBuffer>} ArrayBuffer形式のデータ
+     */
+    readFileAsArrayBuffer(file) {
         return new Promise((resolve, reject) => {
             if (!file) {
                 reject(new Error('有効なファイルが指定されていません'));
@@ -99,4 +136,4 @@ window.FileReaderUtil = {
             reader.readAsArrayBuffer(file);
         });
     }
-};
+}

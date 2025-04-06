@@ -50,7 +50,7 @@ class FileConverter {
             
             // 画像ファイルの場合
             if (file.type.startsWith('image/')) {
-                const dataUrl = await window.FileReaderUtil.readFileAsDataURL(file);
+                const dataUrl = await FileReaderUtil.getInstance.readFileAsDataURL(file);
                 return {
                     type: 'image',
                     name: file.name,
@@ -61,7 +61,7 @@ class FileConverter {
             } 
             // PDFファイルの場合
             else if (file.type === 'application/pdf') {
-                const dataUrl = await window.FileReaderUtil.readFileAsDataURL(file);
+                const dataUrl = await FileReaderUtil.getInstance.readFileAsDataURL(file);
                 const extractedText = await this._extractTextFromPDF(file);
                 
                 return {
@@ -75,7 +75,7 @@ class FileConverter {
             }
             // Office関連ファイルの場合
             else if (this._isOfficeFile(file.type)) {
-                const dataUrl = await window.FileReaderUtil.readFileAsDataURL(file);
+                const dataUrl = await FileReaderUtil.getInstance.readFileAsDataURL(file);
                 const extractedText = await this._extractTextFromOfficeFile(file);
                 
                 return {
@@ -89,7 +89,7 @@ class FileConverter {
             }
             // その他のファイルの場合
             else {
-                const dataUrl = await window.FileReaderUtil.readFileAsDataURL(file);
+                const dataUrl = await FileReaderUtil.getInstance.readFileAsDataURL(file);
                 const textContent = await this._readFileAsText(file);
                 let extractedText = `=== ${file.type}ファイル「${file.name}」の内容 ===\n\n`;
                 extractedText += textContent;
@@ -120,7 +120,7 @@ class FileConverter {
 
     async _extractTextFromPDF(file) {
         try {
-            const arrayBuffer = await window.FileReaderUtil.readFileAsArrayBuffer(file);
+            const arrayBuffer = await FileReaderUtil.getInstance.readFileAsArrayBuffer(file);
             const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
             
             let extractedText = `=== PDFファイル「${file.name}」の内容 ===\n\n`;
@@ -163,7 +163,7 @@ class FileConverter {
             return `Excelファイル「${file.name}」からのテキスト抽出に失敗しました。\nSheetJSライブラリが見つかりません。`;
         }
         
-        const arrayBuffer = await window.FileReaderUtil.readFileAsArrayBuffer(file);
+        const arrayBuffer = await FileReaderUtil.getInstance.readFileAsArrayBuffer(file);
         const workbook = XLSX.read(arrayBuffer, { type: 'array' });
         
         let extractedText = `=== Excelファイル「${file.name}」の内容 ===\n\n`;
@@ -194,7 +194,7 @@ class FileConverter {
 
     async _extractTextFromPowerPointFile(file) {
         try {
-            const arrayBuffer = await window.FileReaderUtil.readFileAsArrayBuffer(file);
+            const arrayBuffer = await FileReaderUtil.getInstance.readFileAsArrayBuffer(file);
             const zip = await JSZip.loadAsync(arrayBuffer);
             
             const slideEntries = [];
@@ -258,7 +258,7 @@ class FileConverter {
             return `Wordファイル「${file.name}」からのテキスト抽出に失敗しました。\nmammoth.jsライブラリが見つかりません。`;
         }
         
-        const arrayBuffer = await window.FileReaderUtil.readFileAsArrayBuffer(file);
+        const arrayBuffer = await FileReaderUtil.getInstance.readFileAsArrayBuffer(file);
         const result = await mammoth.extractRawText({ arrayBuffer });
         
         if (result.value) {
