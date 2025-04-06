@@ -138,7 +138,7 @@ class ChatActions {
             };
 
             // ユーザーメッセージを表示
-            await window.Chat.Renderer.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
+            await ChatRenderer.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
             conversation.messages.push(userMessage);
 
             // チャットタイトルの更新
@@ -157,7 +157,7 @@ class ChatActions {
 
             const botTimestamp = Date.now();
             // ストリーミング用のボットメッセージを表示
-            const { messageDiv, contentContainer } = window.Chat.Renderer.addStreamingBotMessage(chatMessages, botTimestamp);
+            const { messageDiv, contentContainer } = ChatRenderer.addStreamingBotMessage(chatMessages, botTimestamp);
 
             let fullResponseText = '';
             let isFirstChunk = true;
@@ -172,12 +172,12 @@ class ChatActions {
                     onChunk: (chunk) => {
                         fullResponseText += chunk;
                         // ストリーミング中のメッセージ更新
-                        window.Chat.Renderer.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
+                        ChatRenderer.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
                         isFirstChunk = false;
                     },
                     onComplete: (fullText) => {
                         // ストリーミング完了時の処理
-                        window.Chat.Renderer.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
+                        ChatRenderer.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
                         fullResponseText = fullText;
                     }
                 }

@@ -23,12 +23,12 @@ class ChatHistory {
                 
                 // ファイル内容を除去
                 const displayContent = this._cleanFileContent(content);
-                await window.Chat.Renderer.addUserMessage(displayContent, chatMessages, [], message.timestamp);
+                await ChatRenderer.addUserMessage(displayContent, chatMessages, [], message.timestamp);
             } else if (message.role === 'assistant') {
                 const content = typeof message.content === 'string' 
                     ? message.content 
                     : this._processContentArray(message.content);
-                await window.Chat.Renderer.addBotMessage(content, chatMessages, message.timestamp, false);
+                await ChatRenderer.addBotMessage(content, chatMessages, message.timestamp, false);
             }
         }
         
