@@ -178,13 +178,7 @@ class ChatActions {
 
     /**
      * メッセージを処理して送信する
-     * @param {Object} userInput - ユーザー入力要素
-     * @param {HTMLElement} chatMessages - チャットメッセージ要素
-     * @param {Object} conversation - 現在の会話オブジェクト
-     * @param {Object} apiSettings - API設定
-     * @param {string} systemPrompt - システムプロンプト
-     * @param {Array} attachments - 添付ファイル配列
-     * @returns {Promise<Object>} 送信結果
+     * @private
      */
     async #processAndSendMessage(userInput, chatMessages, conversation, apiSettings, systemPrompt, attachments = []) {
         if (!userInput || !chatMessages || !conversation) {
@@ -217,15 +211,21 @@ class ChatActions {
                 attachmentContent = await this.#processAttachments(attachments);
             }
 
-            // ユーザーメッセージを作成と表示
+            // ユーザーメッセージを作成と表示（Web情報の取得を含む）
+            const { processedMessage, hasWebContent } = await ChatRenderer.getInstance.addUserMessage(
+                userText,
+                chatMessages,
+                displayAttachments,
+                timestamp
+            );
+
             const userMessage = {
                 role: 'user',
-                content: attachmentContent ? `${userText}\n\n${attachmentContent}` : userText,
+                content: hasWebContent ? processedMessage : (attachmentContent ? `${userText}\n\n${attachmentContent}` : userText),
                 timestamp: timestamp
             };
 
-            // ユーザーメッセージを表示
-            await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
+            // ユーザーメッセージを履歴に追加
             conversation.messages.push(userMessage);
 
             // チャットタイトルの更新
@@ -258,12 +258,10 @@ class ChatActions {
                     stream: true,
                     onChunk: (chunk) => {
                         fullResponseText += chunk;
-                        // ストリーミング中のメッセージ更新
                         ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
                         isFirstChunk = false;
                     },
                     onComplete: (fullText) => {
-                        // ストリーミング完了時の処理
                         ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
                         fullResponseText = fullText;
                     }

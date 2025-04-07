@@ -47,7 +47,7 @@ class ChatHistory {
                 
                 // ファイル内容を除去
                 const displayContent = this.#cleanFileContent(content);
-                await ChatRenderer.getInstance.addUserMessage(displayContent, chatMessages, [], message.timestamp);
+                await ChatRenderer.getInstance.addUserMessage(displayContent, chatMessages, [], message.timestamp, true);
             } else if (message.role === 'assistant') {
                 const content = typeof message.content === 'string' 
                     ? message.content 
@@ -66,9 +66,7 @@ class ChatHistory {
             }
         }
         
-        // 添付ファイルの表示
-        FileAttachment.getInstance.displaySavedAttachments(conversation.id, chatMessages);
-        
+        // コードハイライトを適用
         if (typeof Prism !== 'undefined') {
             try {
                 Prism.highlightAll();

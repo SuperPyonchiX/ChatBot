@@ -28,10 +28,76 @@ class ChatRenderer {
     }
 
     /**
-     * ユーザーメッセージを追加する
+     * メッセージ内のURLを抽出する
+     * @private
+     * @param {string} message - 検査するメッセージ
+     * @returns {string[]} 検出されたURLの配列
      */
-    async addUserMessage(message, chatMessages, attachments = [], timestamp = null) {
-        if (!chatMessages) return;
+    #extractUrls(message) {
+        const urlRegex = /(https?:\/\/[^\s<>"]+)/g;
+        return message.match(urlRegex) || [];
+    }
+
+    /**
+     * URLの内容を取得する
+     * @private
+     * @param {string} url - スクレイピングするURL
+     * @param {HTMLElement} markdownContent - マークダウンコンテンツ要素
+     * @returns {Promise<{content: string, isError: boolean}>} ページの内容とエラー状態
+     */
+    async #fetchUrlContent(url, markdownContent) {
+        // すでにマークダウンコンテンツが表示されている場合は、その後にローディング表示を追加
+        const loadingDiv = document.createElement('div');
+        loadingDiv.classList.add('web-fetch-loading');
+        loadingDiv.innerHTML = '<p>Web情報取得中<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>';
+        markdownContent.insertAdjacentElement('afterend', loadingDiv);
+
+        try {
+            const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+            const data = await response.json();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(data.contents, 'text/html');
+
+            // メタデータを抽出
+            const title = doc.querySelector('title')?.textContent || '';
+            const description = doc.querySelector('meta[name="description"]')?.content || '';
+            const h1 = doc.querySelector('h1')?.textContent || '';
+
+            // 本文のテキストを抽出（スクリプトとスタイルを除外）
+            const bodyText = doc.body.textContent
+                .replace(/\s+/g, ' ')
+                .trim()
+                .substring(0, 1000); // 最初の1000文字に制限
+
+            // ローディング表示を削除
+            loadingDiv.remove();
+
+            const content = `
+### ${title || 'ウェブページの内容'}
+${description ? `\n${description}\n` : ''}
+${h1 ? `\n${h1}\n` : ''}
+\n${bodyText}...\n
+[元のページを表示](${url})
+`;
+
+            return { content, isError: false };
+        } catch (error) {
+            console.error('URLの内容取得に失敗しました:', error);
+            // ローディング表示を削除
+            loadingDiv.remove();
+            return { 
+                content: `\n> URLの内容を取得できませんでした: ${url}\n`,
+                isError: true 
+            };
+        }
+    }
+
+    /**
+     * ユーザーメッセージを追加する
+     * @returns {Promise<{processedMessage: string, hasWebContent: boolean}>} 処理されたメッセージと Web コンテンツの有無
+     */
+    async addUserMessage(message, chatMessages, attachments = [], timestamp = null, isHistory = false) {
+        if (!chatMessages) return { processedMessage: message, hasWebContent: false };
         
         const msgTimestamp = timestamp || Date.now();
         const fragment = document.createDocumentFragment();
@@ -47,40 +113,47 @@ class ChatRenderer {
         
         const contentDiv = ChatUI.getInstance.createElement('div', { classList: 'message-content' });
         const copyButton = this.#createCopyButton(message || '');
+        const markdownContent = ChatUI.getInstance.createElement('div', { classList: 'markdown-content' });
+        
+        contentDiv.appendChild(copyButton);
+        contentDiv.appendChild(markdownContent);
+        messageDiv.appendChild(contentDiv);
+        
+        if (attachments && attachments.length > 0) {
+            contentDiv.appendChild(ChatAttachmentViewer.getInstance.createAttachmentsElement(attachments));
+        }
+        
+        fragment.appendChild(messageDiv);
+        chatMessages.appendChild(fragment);
         
         try {
-            const renderedMarkdown = await Markdown.getInstance.renderMarkdown(message || '');
-            const markdownContent = ChatUI.getInstance.createElement('div', {
-                classList: 'markdown-content',
-                innerHTML: renderedMarkdown
-            });
-            
-            contentDiv.appendChild(copyButton);
-            contentDiv.appendChild(markdownContent);
-            
-            if (attachments && attachments.length > 0) {
-                contentDiv.appendChild(ChatAttachmentViewer.getInstance.createAttachmentsElement(attachments));
+            let processedMessage = message;
+            let hasWebContent = false;
+
+            // 履歴表示時はWeb情報の取得をスキップ
+            if (!isHistory) {
+                // URLを検出
+                const urls = this.#extractUrls(message);
+                if (urls.length > 0) {
+                    const urlResults = await Promise.all(urls.map(url => this.#fetchUrlContent(url, markdownContent)));
+                    const urlContents = urlResults.map(result => result.content);
+                    processedMessage += '\n\n' + urlContents.join('\n\n');
+                    hasWebContent = urlResults.some(result => !result.isError);
+                }
             }
-            
-            messageDiv.appendChild(contentDiv);
-            fragment.appendChild(messageDiv);
-            chatMessages.appendChild(fragment);
+
+            const renderedMarkdown = await Markdown.getInstance.renderMarkdown(processedMessage || '');
+            markdownContent.innerHTML = renderedMarkdown;
             
             this.#applyCodeFormatting(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            return { processedMessage, hasWebContent };
         } catch (e) {
             console.error('ユーザーメッセージのMarkdown解析エラー:', e);
-            const markdownContent = ChatUI.getInstance.createElement('div', {
-                classList: 'markdown-content',
-                textContent: message || ''
-            });
-            
-            contentDiv.appendChild(copyButton);
-            contentDiv.appendChild(markdownContent);
-            messageDiv.appendChild(contentDiv);
-            fragment.appendChild(messageDiv);
-            chatMessages.appendChild(fragment);
+            markdownContent.textContent = message || '';
             chatMessages.scrollTop = chatMessages.scrollHeight;
+            return { processedMessage: message, hasWebContent: false };
         }
     }
 
