@@ -280,9 +280,33 @@ class ChatActions {
             return { titleUpdated, response: fullResponseText };
 
         } catch (error) {
-            console.error('メッセージ送信処理中にエラーが発生しました:', error);
+            // エラーメッセージを表示
+            const errorMessage = error.message || 'APIリクエスト中にエラーが発生しました';
+            this.#showErrorMessage(errorMessage, chatMessages);
+
             return { titleUpdated: false, error: error.message || '内部エラーが発生しました' };
         }
+    }
+
+    /**
+     * エラーメッセージを表示
+     * @private
+     * @param {string} errorMessage - エラーメッセージ
+     * @param {HTMLElement} chatMessages - メッセージ表示要素
+     */
+    #showErrorMessage(errorMessage, chatMessages) {
+        if (!chatMessages) return;
+        
+        const errorMessageDiv = document.createElement('div');
+        errorMessageDiv.classList.add('message', 'bot', 'error');
+        errorMessageDiv.innerHTML = `
+            <div class="message-content">
+                <p>エラーが発生しました: ${errorMessage || '不明なエラー'}</p>
+                <button id="showApiSettings" class="error-action">API設定を確認する</button>
+            </div>
+        `;
+        chatMessages.appendChild(errorMessageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     /**
