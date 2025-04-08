@@ -178,7 +178,13 @@ class ChatActions {
 
     /**
      * メッセージを処理して送信する
-     * @private
+     * @param {Object} userInput - ユーザー入力要素
+     * @param {HTMLElement} chatMessages - チャットメッセージ要素
+     * @param {Object} conversation - 現在の会話オブジェクト
+     * @param {Object} apiSettings - API設定
+     * @param {string} systemPrompt - システムプロンプト
+     * @param {Array} attachments - 添付ファイル配列
+     * @returns {Promise<Object>} 送信結果
      */
     async #processAndSendMessage(userInput, chatMessages, conversation, apiSettings, systemPrompt, attachments = []) {
         if (!userInput || !chatMessages || !conversation) {
@@ -202,6 +208,9 @@ class ChatActions {
             let attachmentContent = '';
             let displayAttachments = [];
 
+            // メッセージの前処理（URL情報の取得など）を実行
+            const { messageWithWebContents, hasWebContent } = await this.getWebContents(userText);
+
             if (attachments && attachments.length > 0) {
                 displayAttachments = attachments.map(att => ({
                     ...att,
@@ -211,21 +220,17 @@ class ChatActions {
                 attachmentContent = await this.#processAttachments(attachments);
             }
 
-            // ユーザーメッセージを作成と表示（Web情報の取得を含む）
-            const { processedMessage, hasWebContent } = await ChatRenderer.getInstance.addUserMessage(
-                userText,
-                chatMessages,
-                displayAttachments,
-                timestamp
-            );
+            // 添付ファイルの内容を含めた最終的なメッセージを作成
+            const finalMessage = (attachmentContent ? `${messageWithWebContents}\n\n${attachmentContent}` : messageWithWebContents);
 
             const userMessage = {
                 role: 'user',
-                content: hasWebContent ? processedMessage : (attachmentContent ? `${userText}\n\n${attachmentContent}` : userText),
+                content: finalMessage,
                 timestamp: timestamp
             };
 
-            // ユーザーメッセージを履歴に追加
+            // ユーザーメッセージを表示
+            await ChatRenderer.getInstance.addUserMessage(finalMessage, chatMessages, displayAttachments, timestamp);
             conversation.messages.push(userMessage);
 
             // チャットタイトルの更新
@@ -330,6 +335,93 @@ class ChatActions {
             }
         }
         return content;
+    }
+
+    /**
+     * メッセージ内のURLから情報を取得する
+     * @param {string} message - URLを検索するメッセージ
+     * @returns {Promise<{messageWithWebContents: string, hasWebContent: boolean}>} 処理されたメッセージとWeb情報の有無
+     */
+    async getWebContents(message) {
+        if (!message) return { messageWithWebContents: message, hasWebContent: false };
+
+        try {
+            const urlRegex = /(https?:\/\/[^\s<>"]+)/g;
+            const urls = message.match(urlRegex) || [];
+
+            if (urls.length === 0) {
+                return { messageWithWebContents: message, hasWebContent: false };
+            }
+
+            // 進捗状況表示用の要素を作成
+            const messageDiv = ChatUI.getInstance.createElement('div', {
+                classList: ['message', 'user'],
+            });
+            const contentDiv = ChatUI.getInstance.createElement('div');
+            contentDiv.innerHTML = `
+                <div class="message-content">
+                    <p>WEB情報取得中<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>
+                </div>
+            `;
+            messageDiv.appendChild(contentDiv);
+            window.Elements.chatMessages.appendChild(messageDiv);
+
+            const urlResults = await Promise.all(urls.map(url => this.#fetchUrlContent(url)));
+            
+            // 進捗状況表示を削除
+            messageDiv.remove();
+
+            const urlContents = urlResults.map(result => result.content);
+            const messageWithWebContents = message + '\n\n' + urlContents.join('\n\n');
+            const hasWebContent = urlResults.some(result => !result.isError);
+
+            return { messageWithWebContents, hasWebContent };
+        } catch (error) {
+            console.error('URL情報取得エラー:', error);
+            return { messageWithWebContents: message, hasWebContent: false };
+        }
+    }
+
+    /**
+     * URLの内容を取得する
+     * @private
+     * @param {string} url - スクレイピングするURL
+     * @returns {Promise<{content: string, isError: boolean}>} ページの内容とエラー状態
+     */
+    async #fetchUrlContent(url) {
+        try {
+            const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+            const data = await response.json();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(data.contents, 'text/html');
+
+            // メタデータを抽出
+            const title = doc.querySelector('title')?.textContent || '';
+            const description = doc.querySelector('meta[name="description"]')?.content || '';
+            const h1 = doc.querySelector('h1')?.textContent || '';
+
+            // 本文のテキストを抽出（スクリプトとスタイルを除外）
+            const bodyText = doc.body.textContent
+                .replace(/\s+/g, ' ')
+                .trim()
+                .substring(0, 1000); // 最初の1000文字に制限
+
+            const content = `
+### ${title || 'ウェブページの内容'}
+${description ? `\n${description}\n` : ''}
+${h1 ? `\n${h1}\n` : ''}
+\n${bodyText}...\n
+[元のページを表示](${url})
+`;
+
+            return { content, isError: false };
+        } catch (error) {
+            console.error('URLの内容取得に失敗しました:', error);
+            return { 
+                content: `\n> URLの内容を取得できませんでした: ${url}\n`,
+                isError: true 
+            };
+        }
     }
 
     /**
