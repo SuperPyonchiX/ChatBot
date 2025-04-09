@@ -122,16 +122,11 @@ class FileHandler {
     #getAllowedFileExtensions() {
         try {
             const extensions = [];
-            const allowedTypes = window.CONFIG.FILE.ALLOWED_FILE_TYPES;
-            const mimeToExtMap = window.CONFIG.FILE.MIME_TO_EXTENSION_MAP;
+            const fileTypeMap = window.CONFIG.FILE.FILE_TYPE_MAP;
             
-            for (const category in allowedTypes) {
-                if (!Object.prototype.hasOwnProperty.call(allowedTypes, category)) continue;
-                
-                for (const mimeType of allowedTypes[category]) {
-                    if (mimeToExtMap[mimeType]) {
-                        extensions.push(...mimeToExtMap[mimeType]);
-                    }
+            for (const [, fileType] of Object.entries(fileTypeMap)) {
+                if (fileType.extensions && Array.isArray(fileType.extensions)) {
+                    extensions.push(...fileType.extensions);
                 }
             }
             

@@ -53,64 +53,46 @@ window.CONFIG = {
         // ファイル読み込みタイムアウト（ミリ秒）
         FILE_READ_TIMEOUT: 30000,
         
-        // 許可されるファイルタイプ
-        ALLOWED_FILE_TYPES: {
+        // ファイルタイプの定義（MIMEタイプと対応する拡張子のマッピング）
+        // categoryはファイルタイプのカテゴリ分類（画像、テキストなど）
+        FILE_TYPE_MAP: {
             // 画像ファイル
-            image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
+            'image/jpeg': { extensions: ['.jpg', '.jpeg'], category: 'image' },
+            'image/png': { extensions: ['.png'], category: 'image' },
+            'image/gif': { extensions: ['.gif'], category: 'image' },
+            'image/webp': { extensions: ['.webp'], category: 'image' },
+            'image/svg+xml': { extensions: ['.svg'], category: 'image' },
+            
             // テキストファイル
-            text: ['text/plain', 'text/markdown', 'text/csv'],
+            'text/plain': { extensions: ['.txt'], category: 'text' },
+            'text/markdown': { extensions: ['.md'], category: 'text' },
+            'text/csv': { extensions: ['.csv'], category: 'text' },
+            
             // PDFファイル
-            pdf: ['application/pdf'],
+            'application/pdf': { extensions: ['.pdf'], category: 'pdf' },
+            
             // コード関連
-            code: [
-                'text/javascript', 'text/html', 'text/css', 'application/json',
-                'text/x-python', 'text/x-c', 'text/x-cpp',
-                'text/x-java', 'text/x-csharp', 'text/x-ruby',
-                'text/x-php', 'text/x-typescript'
-            ],
+            'text/javascript': { extensions: ['.js'], category: 'code' },
+            'text/html': { extensions: ['.html', '.htm'], category: 'code' },
+            'text/css': { extensions: ['.css'], category: 'code' },
+            'application/json': { extensions: ['.json'], category: 'code' },
+            'text/x-python': { extensions: ['.py', '.pyw'], category: 'code' },
+            'text/x-c': { extensions: ['.c', '.h'], category: 'code' },
+            'text/x-cpp': { extensions: ['.cpp', '.hpp', '.cc', '.hh'], category: 'code' },
+            'text/x-java': { extensions: ['.java'], category: 'code' },
+            'text/x-csharp': { extensions: ['.cs'], category: 'code' },
+            'text/x-ruby': { extensions: ['.rb'], category: 'code' },
+            'text/x-php': { extensions: ['.php'], category: 'code' },
+            'text/x-typescript': { extensions: ['.ts', '.tsx'], category: 'code' },
+            
             // Office関連
-            office: [
-                'application/vnd.ms-excel',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'application/vnd.ms-excel.sheet.macroEnabled.12',
-                'application/msword',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'application/vnd.ms-powerpoint',
-                'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-            ]
-        },
-
-        // MIMEタイプから拡張子へのマッピング
-        MIME_TO_EXTENSION_MAP: {
-            'image/jpeg': ['.jpg', '.jpeg'],
-            'image/png': ['.png'],
-            'image/gif': ['.gif'],
-            'image/webp': ['.webp'],
-            'image/svg+xml': ['.svg'],
-            'text/plain': ['.txt'],
-            'text/markdown': ['.md'],
-            'text/csv': ['.csv'],
-            'application/pdf': ['.pdf'],
-            'text/javascript': ['.js'],
-            'text/html': ['.html', '.htm'],
-            'text/css': ['.css'],
-            'application/json': ['.json'],
-            'application/vnd.ms-excel': ['.xls'],
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-            'application/vnd.ms-excel.sheet.macroEnabled.12': ['.xlsm'],
-            'application/msword': ['.doc'],
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-            'application/vnd.ms-powerpoint': ['.ppt'],
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
-            // プログラミング言語ファイル
-            'text/x-python': ['.py', '.pyw'],
-            'text/x-c': ['.c', '.h'],
-            'text/x-cpp': ['.cpp', '.hpp', '.cc', '.hh'],
-            'text/x-java': ['.java'],
-            'text/x-csharp': ['.cs'],
-            'text/x-ruby': ['.rb'],
-            'text/x-php': ['.php'],
-            'text/x-typescript': ['.ts', '.tsx']
+            'application/vnd.ms-excel': { extensions: ['.xls'], category: 'office' },
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': { extensions: ['.xlsx'], category: 'office' },
+            'application/vnd.ms-excel.sheet.macroEnabled.12': { extensions: ['.xlsm'], category: 'office' },
+            'application/msword': { extensions: ['.doc'], category: 'office' },
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': { extensions: ['.docx'], category: 'office' },
+            'application/vnd.ms-powerpoint': { extensions: ['.ppt'], category: 'office' },
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation': { extensions: ['.pptx'], category: 'office' }
         }
     },
     

@@ -75,23 +75,23 @@ class FileValidator {
         const mimeType = file.type;
         
         // すべての許可されたMIMEタイプのリスト
-        const allowedMimeTypes = Object.values(window.CONFIG.FILE.ALLOWED_FILE_TYPES).flat();
+        const fileTypeMap = window.CONFIG.FILE.FILE_TYPE_MAP;
         
         // MIMEタイプの完全一致を確認
-        if (allowedMimeTypes.includes(mimeType)) {
+        if (Object.keys(fileTypeMap).includes(mimeType)) {
             return true;
         }
 
         // 拡張子でチェック
         const extension = '.' + fileName.split('.').pop().toLowerCase();
-        for (const mimeExtensions of Object.values(window.CONFIG.FILE.MIME_TO_EXTENSION_MAP)) {
-            if (mimeExtensions.includes(extension)) {
+        for (const [, fileType] of Object.entries(fileTypeMap)) {
+            if (fileType.extensions.includes(extension)) {
                 return true;
             }
         }
         
         // 一般的なタイプに対して前方一致を確認
-        for (const allowed of allowedMimeTypes) {
+        for (const allowed of Object.keys(fileTypeMap)) {
             const genericType = allowed.split('/')[0];
             if (mimeType.startsWith(`${genericType}/`)) {
                 return true;

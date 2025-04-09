@@ -115,7 +115,9 @@ class FileConverter {
 
     #isOfficeFile(mimeType) {
         if (!mimeType) return false;
-        return window.CONFIG.FILE.ALLOWED_FILE_TYPES.office?.includes(mimeType) ?? false;
+        const fileTypeMap = window.CONFIG.FILE.FILE_TYPE_MAP;
+        return Object.keys(fileTypeMap)
+            .some(key => fileTypeMap[key].category === 'office' && key === mimeType);
     }
 
     async #extractTextFromPDF(file) {
