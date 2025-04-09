@@ -203,13 +203,5 @@ window.CONFIG = {
     /**
      * 実行可能な言語リスト
      */
-    EXECUTABLE_LANGUAGES: ['javascript', 'js', 'python', 'py', 'html', 'cpp', 'c++'],
-
-    /**
-     * Confluence設定
-     */
-    confluence: {
-        username: '', // ここにConfluenceのユーザー名を設定
-        password: ''  // ここにConfluenceのパスワードを設定
-    }
+    EXECUTABLE_LANGUAGES: ['javascript', 'js', 'python', 'py', 'html', 'cpp', 'c++']
 };
