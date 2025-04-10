@@ -114,11 +114,11 @@ class ModalHandlers {
 
         const templates = window.AppState.systemPromptTemplates;
         
-        // 重複チェック
-        if (templates[systemPromptName]) {
-            UI.getInstance.Core.Notification.show('同じ名前のシステムプロンプトが既に存在します', 'error');
-            return;
-        }
+        // // 重複チェック
+        // if (templates[systemPromptName]) {
+        //     UI.getInstance.Core.Notification.show('同じ名前のシステムプロンプトが既に存在します', 'error');
+        //     return;
+        // }
         
         // システムプロンプトを保存
         templates[systemPromptName] = {
