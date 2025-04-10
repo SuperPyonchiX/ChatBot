@@ -230,7 +230,7 @@ class ChatActions {
             };
 
             // ユーザーメッセージを表示
-            await ChatRenderer.getInstance.addUserMessage(finalMessage, chatMessages, displayAttachments, timestamp);
+            await ChatRenderer.getInstance.addUserMessage(messageWithWebContents, chatMessages, displayAttachments, timestamp);
             conversation.messages.push(userMessage);
 
             // チャットタイトルの更新
@@ -263,10 +263,12 @@ class ChatActions {
                     stream: true,
                     onChunk: (chunk) => {
                         fullResponseText += chunk;
+                        // ストリーミング中のメッセージ更新
                         ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
                         isFirstChunk = false;
                     },
                     onComplete: (fullText) => {
+                        // ストリーミング完了時の処理
                         ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
                         fullResponseText = fullText;
                     }
