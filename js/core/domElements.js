@@ -48,6 +48,7 @@ window.Elements = (function() {
         'apiKeyModal', 'saveApiKey', 'cancelApiKey', 'openaiRadio', 'azureRadio',
         'apiKeyInput', 'azureApiKeyInput', 'azureEndpointGpt4oMini', 
         'azureEndpointGpt4o', 'azureEndpointO1Mini', 'azureEndpointO1',
+        'tavilyApiKeyInput', 'autoSearchEnabled',
         
         // チャット名前変更関連
         'saveRenameChat', 'cancelRenameChat', 'renameChatModal', 'chatTitleInput',

@@ -208,20 +208,34 @@ class ChatActions {
             let attachmentContent = '';
             let displayAttachments = [];
 
-            // メッセージの前処理（URL情報の取得など）を実行
-            const { messageWithWebContents, hasWebContent } = await this.getWebContents(userText);
-
-            if (attachments && attachments.length > 0) {
-                displayAttachments = attachments.map(att => ({
-                    ...att,
-                    timestamp: timestamp
-                }));
-
-                attachmentContent = await this.#processAttachments(attachments);
+            // 自動Web検索が有効な場合、GPTに検索が必要か問い合わせる
+            let messageWithSearchResults = userText;
+            let searchPerformed = false;
+            
+            if (window.CONFIG.WEB_SEARCH.AUTO_SEARCH_ENABLED) {
+                const webExtractor = WebContentExtractor.getInstance;
+                if (webExtractor && webExtractor.hasTavilyApiKey()) {
+                    try {
+                        const model = window.AppState.getCurrentModel() || window.CONFIG.WEB_SEARCH.AUTO_SEARCH_MODEL;
+                        const searchResult = await webExtractor.autoSearchWeb(userText, model, chatMessages);
+                        
+                        if (searchResult.searchPerformed && searchResult.hasResults) {
+                            messageWithSearchResults = searchResult.messageWithSearchResults;
+                            searchPerformed = true;
+                            console.log('自動検索実行: ', searchResult.reason);
+                        } else if (searchResult.searchPerformed) {
+                            console.log('検索を試みましたが、結果が得られませんでした: ', searchResult.reason);
+                        } else {
+                            console.log('検索は必要ないと判断されました: ', searchResult.reason);
+                        }
+                    } catch (searchError) {
+                        console.error('自動検索中にエラーが発生しました:', searchError);
+                    }
+                }
             }
 
             // 添付ファイルの内容を含めた最終的なメッセージを作成
-            const finalMessage = (attachmentContent ? `${messageWithWebContents}\n\n${attachmentContent}` : messageWithWebContents);
+            const finalMessage = (attachmentContent ? `${messageWithSearchResults}\n\n${attachmentContent}` : messageWithSearchResults);
 
             const userMessage = {
                 role: 'user',
@@ -230,7 +244,7 @@ class ChatActions {
             };
 
             // ユーザーメッセージを表示
-            await ChatRenderer.getInstance.addUserMessage(messageWithWebContents, chatMessages, displayAttachments, timestamp);
+            await ChatRenderer.getInstance.addUserMessage(messageWithSearchResults, chatMessages, displayAttachments, timestamp);
             conversation.messages.push(userMessage);
 
             // チャットタイトルの更新
@@ -337,15 +351,6 @@ class ChatActions {
             }
         }
         return content;
-    }
-
-    /**
-     * メッセージ内のURLから情報を取得する
-     * @param {string} message - URLを検索するメッセージ
-     * @returns {Promise<{messageWithWebContents: string, hasWebContent: boolean}>} 処理されたメッセージとWeb情報の有無
-     */
-    async getWebContents(message) {
-        return await WebContentExtractor.getInstance.extractWebContents(message, window.Elements.chatMessages);
     }
 
     /**

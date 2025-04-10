@@ -43,8 +43,14 @@ class ApiSettingsModal {
             azureEndpointGpt4oMini: UICache.getInstance.get('azureEndpointGpt4oMini'),
             azureEndpointGpt4o: UICache.getInstance.get('azureEndpointGpt4o'),
             azureEndpointO1Mini: UICache.getInstance.get('azureEndpointO1Mini'),
-            azureEndpointO1: UICache.getInstance.get('azureEndpointO1')
+            azureEndpointO1: UICache.getInstance.get('azureEndpointO1'),
+            tavilyApiKeyInput: UICache.getInstance.get('tavilyApiKeyInput')
         };
+        
+        // Tavily APIキーの設定
+        if (apiSettings.tavilyApiKey) {
+            elements.tavilyApiKeyInput.value = apiSettings.tavilyApiKey;
+        }
         
         // APIタイプに応じて設定を表示
         if (apiSettings.apiType === 'azure') {

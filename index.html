@@ -135,6 +135,20 @@
                 <label for="apiKeyInput">OpenAI APIキー:</label>
                 <input type="password" id="apiKeyInput" placeholder="sk-...">
             </div>
+            <!-- Tavily API設定 -->
+            <div class="form-group">
+                <label for="tavilyApiKeyInput">Tavily APIキー (Web検索用):</label>
+                <input type="password" id="tavilyApiKeyInput" placeholder="tvly-...">
+                <small>Tavily APIを使用してWeb検索機能を強化します。<a href="https://tavily.com/" target="_blank">登録はこちら</a></small>
+            </div>
+            <div class="form-group">
+                <label>Web検索設定:</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="autoSearchEnabled" checked>
+                    <label for="autoSearchEnabled">GPTに判断させて自動検索する</label>
+                    <span class="help-text">質問内容に応じて、GPTが必要と判断した場合に自動的にWeb検索を実行します</span>
+                </div>
+            </div>
             <div id="azureSettings" class="hidden">
                 <div class="form-group">
                     <label for="azureApiKeyInput">Azure APIキー:</label>

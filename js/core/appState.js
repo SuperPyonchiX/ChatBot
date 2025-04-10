@@ -30,6 +30,7 @@ window.AppState = (function() {
 
             // グローバル設定を更新
             this.updateGlobalSettings();
+                        
             return this;
         },
 
