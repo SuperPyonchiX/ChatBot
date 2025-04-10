@@ -118,7 +118,7 @@
     --modal-width: 90%;
     --modal-max-width-default: 1000px;
     --modal-max-width-small: 400px;
-    --modal-max-height-system-prompt: 400px;
+    --modal-max-height-system-prompt: 450px;
     --modal-template-sidebar-width: 300px;
     
     /* システムプロンプト設定 */
