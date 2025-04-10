@@ -200,6 +200,19 @@ class SystemPromptModal {
         promptItem.addEventListener('click', () => {
             if (this._boundOnSelect) {
                 this._boundOnSelect(prompt.name);
+                
+                // 選択されたプロンプトの情報を入力フィールドに設定
+                const categoryInput = UICache.getInstance.get('newTemplateCategory');
+                const nameInput = UICache.getInstance.get('newSystemPromptName');
+                
+                if (categoryInput && nameInput) {
+                    // 親要素のカテゴリを取得
+                    const category = promptItem.closest('.system-prompt-category')
+                        ?.querySelector('.category-title')?.textContent || '';
+                    
+                    categoryInput.value = category;
+                    nameInput.value = prompt.name;
+                }
             }
         });
         
