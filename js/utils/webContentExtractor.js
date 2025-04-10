@@ -292,31 +292,18 @@ class WebContentExtractor {
   "reasoning": "判断理由の簡潔な説明"
 }`;
 
-            // APIリクエストの準備
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('openaiApiKey') || ''}`
-                },
-                body: JSON.stringify({
-                    model: model || 'gpt-4o-mini',
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: query }
-                    ],
-                    temperature: 0.3, // より決定論的な応答を得るために低い温度を設定
-                    max_tokens: 500
-                })
-            });
-
-            if (!response.ok) {
-                console.error('検索判断APIエラー:', response.status);
-                return { needsSearch: false, searchQuery: '' };
-            }
-
-            const result = await response.json();
-            const content = result?.choices?.[0]?.message?.content;
+            // AIAPIクラスを使用してOpenAI APIを呼び出す
+            const messages = [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: query }
+            ];
+            
+            // ストリーミングなしでAPIを呼び出す
+            const content = await AIAPI.getInstance.callOpenAIAPI(
+                messages, 
+                model || 'gpt-4o-mini'
+            );
+            
             console.log('検索判断結果:', content);
 
             if (!content) {
@@ -399,7 +386,7 @@ class WebContentExtractor {
             }
             
             // 検索結果をマークダウン形式で整形
-            let formattedResults = `\n\n### 関連情報（自動検索）\n\n検索クエリ: "${searchQuery}"\n\n`;
+            let formattedResults = `\n\n### 以下のWEB検索結果を参考に回答してください。引用元のリンクも回答に含めてください。\n\n検索クエリ: "${searchQuery}"\n\n`;
             
             searchResults.results.forEach((result, index) => {
                 formattedResults += `#### ${index + 1}. [${result.title}](${result.url})\n`;
