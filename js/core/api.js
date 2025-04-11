@@ -586,42 +586,67 @@ class AIAPI {
                     throw new Error('ストリーミングのタイムアウト: チャンク間の時間が長すぎます');
                 }
                 
-                const { done, value } = await reader.read();
-                if (done) break;
-                
                 // バイナリデータを文字列に変換し、バッファに追加
-                buffer += decoder.decode(value, { stream: true });
+                const { done, value } = await reader.read();
                 
-                // バッファを行に分割して処理
-                const lines = buffer.split('\n');
-                buffer = lines.pop() || ''; // 最後の不完全な行をバッファに戻す
-                
-                for (const line of lines) {
-                    // 空行または'data: [DONE]'は無視
-                    if (!line || line === 'data: [DONE]') continue;
+                // データがある場合は処理
+                if (value) {
+                    buffer += decoder.decode(value, { stream: true });
                     
-                    if (line.startsWith('data: ')) {
-                        try {
-                            // 'data: ' 接頭辞を削除してJSONをパース
-                            const jsonData = JSON.parse(line.substring(6));
-                            
-                            // チャンクからデルタコンテンツを抽出
-                            if (jsonData.choices && jsonData.choices.length > 0) {
-                                const delta = jsonData.choices[0].delta;
+                    // バッファを行に分割して処理
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || ''; // 最後の不完全な行をバッファに戻す
+                    
+                    for (const line of lines) {
+                        // 空行または'data: [DONE]'は無視
+                        if (!line || line === 'data: [DONE]') continue;
+                        
+                        if (line.startsWith('data: ')) {
+                            try {
+                                // 'data: ' 接頭辞を削除してJSONをパース
+                                const jsonData = JSON.parse(line.substring(6));
                                 
-                                // content属性がある場合のみ処理
-                                if (delta && delta.content) {
-                                    onChunk(delta.content);
-                                    fullText += delta.content;
-                                    chunkCount++;
-                                    lastChunkTime = Date.now();
+                                // チャンクからデルタコンテンツを抽出
+                                if (jsonData.choices && jsonData.choices.length > 0) {
+                                    const delta = jsonData.choices[0].delta;
+                                    
+                                    // content属性がある場合のみ処理
+                                    if (delta && delta.content) {
+                                        onChunk(delta.content);
+                                        fullText += delta.content;
+                                        chunkCount++;
+                                        lastChunkTime = Date.now();
+                                    }
                                 }
+                            } catch (parseError) {
+                                console.warn('JSONパースエラー:', parseError, line);
+                                // パースエラーは無視して続行
                             }
-                        } catch (parseError) {
-                            console.warn('JSONパースエラー:', parseError, line);
-                            // パースエラーは無視して続行
                         }
                     }
+                }
+                
+                // 最後の残りのバッファを処理
+                if (done) {
+                    if (buffer) {
+                        const line = buffer.trim();
+                        if (line && !line.includes('[DONE]') && line.startsWith('data: ')) {
+                            try {
+                                const jsonData = JSON.parse(line.substring(6));
+                                if (jsonData.choices && jsonData.choices.length > 0) {
+                                    const delta = jsonData.choices[0].delta;
+                                    if (delta && delta.content) {
+                                        onChunk(delta.content);
+                                        fullText += delta.content;
+                                        chunkCount++;
+                                    }
+                                }
+                            } catch (parseError) {
+                                console.warn('最後のバッファのJSONパースエラー:', parseError, line);
+                            }
+                        }
+                    }
+                    break;
                 }
             }
             
