@@ -729,4 +729,62 @@ class ChatRenderer {
             }
         }, 1500);
     }
+
+    /**
+     * システムメッセージを表示する
+     * @param {HTMLElement} chatMessages - チャットメッセージコンテナ
+     * @param {string} message - 表示するメッセージ
+     * @returns {Object} メッセージ要素の参照
+     */
+    addSystemMessage(chatMessages, message) {
+        if (!chatMessages) return null;
+        
+        const messageDiv = ChatUI.getInstance.createElement('div', {
+            classList: ['message', 'bot', 'system-message'],
+            attributes: {
+                'role': 'status',
+                'aria-live': 'polite'
+            }
+        });
+        
+        const contentDiv = ChatUI.getInstance.createElement('div', { classList: 'message-content' });
+        const messageContent = ChatUI.getInstance.createElement('div', {
+            classList: 'markdown-content',
+            innerHTML: `<p>${message}<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>`
+        });
+        
+        contentDiv.appendChild(messageContent);
+        messageDiv.appendChild(contentDiv);
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        return {
+            messageDiv: messageDiv,
+            contentContainer: messageContent
+        };
+    }
+
+    /**
+     * システムメッセージを更新する
+     * @param {HTMLElement} messageDiv - メッセージ要素
+     * @param {string} message - 新しいメッセージ
+     */
+    updateSystemMessage(messageDiv, message) {
+        if (!messageDiv) return;
+        
+        const messageContent = messageDiv.querySelector('.markdown-content');
+        if (messageContent) {
+            messageContent.innerHTML = `<p>${message}<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>`;
+        }
+    }
+
+    /**
+     * システムメッセージを削除する
+     * @param {HTMLElement} messageDiv - 削除するメッセージ要素
+     */
+    removeSystemMessage(messageDiv) {
+        if (messageDiv && messageDiv.parentNode) {
+            messageDiv.parentNode.removeChild(messageDiv);
+        }
+    }
 }

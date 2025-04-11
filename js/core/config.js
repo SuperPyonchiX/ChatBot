@@ -105,6 +105,7 @@ window.CONFIG = {
             SIDEBAR: 'sidebarCollapsed',
             OPENAI_API_KEY: 'openaiApiKey',
             AZURE_API_KEY: 'azureApiKey',
+            TAVILY_API_KEY: 'tavilyApiKey',
             API_TYPE: 'apiType',
             AZURE_ENDPOINT_PREFIX: 'azureEndpoint_',
             SYSTEM_PROMPT: 'systemPrompt',
@@ -147,7 +148,7 @@ window.CONFIG = {
             CATEGORY_ORDER: ['基本', '図表作成']
         }
     },
-    
+
     /**
      * モデル関連の設定
      */
@@ -183,7 +184,16 @@ window.CONFIG = {
     },
 
     /**
-     * 実行可能な言語リスト
+     * Web検索関連の設定
      */
-    EXECUTABLE_LANGUAGES: ['javascript', 'js', 'python', 'py', 'html', 'cpp', 'c++']
+    WEB_SEARCH: {
+        // 自動検索が有効かどうか
+        AUTO_SEARCH_ENABLED: true,
+        
+        // 自動検索で使用する判断モデル
+        AUTO_SEARCH_MODEL: 'gpt-4o-mini',
+        
+        // 特殊コマンドのプレフィックス
+        COMMAND_PREFIX: '!'
+    }
 };

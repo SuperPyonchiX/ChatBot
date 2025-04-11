@@ -39,6 +39,23 @@ class ModalHandlers {
             window.AppState.apiSettings.openaiApiKey = window.Elements.apiKeyInput.value.trim();
         }
         
+        // Tavily APIキーを設定
+        if (window.Elements.tavilyApiKeyInput) {
+            window.AppState.apiSettings.tavilyApiKey = window.Elements.tavilyApiKeyInput.value.trim();
+            // WebContentExtractorにもAPIキーを設定
+            const webExtractor = WebContentExtractor.getInstance;
+            if (webExtractor) {
+                webExtractor.setTavilyApiKey(window.AppState.apiSettings.tavilyApiKey);
+            }
+        }
+        
+        // 自動検索設定を保存
+        if (window.Elements.autoSearchEnabled) {
+            window.AppState.apiSettings.autoSearchEnabled = window.Elements.autoSearchEnabled.checked;
+            // グローバル設定を更新
+            window.CONFIG.WEB_SEARCH.AUTO_SEARCH_ENABLED = window.Elements.autoSearchEnabled.checked;
+        }
+        
         // Azure OpenAI APIキーとエンドポイントを設定
         if (window.AppState.apiSettings.apiType === 'azure') {
             if (window.Elements.azureApiKeyInput) {
