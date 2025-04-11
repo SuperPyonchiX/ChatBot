@@ -206,7 +206,10 @@ class ChatActions {
 
             // 添付ファイルの処理
             let attachmentContent = '';
-            let displayAttachments = [];
+            const displayAttachments = attachments || [];
+
+            // ユーザーメッセージを表示
+            await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
 
             // 自動Web検索が有効な場合、GPTに検索が必要か問い合わせる
             let messageWithSearchResults = userText;
@@ -219,12 +222,14 @@ class ChatActions {
                         const model = window.AppState.getCurrentModel() || window.CONFIG.WEB_SEARCH.AUTO_SEARCH_MODEL;
                         const searchResult = await webExtractor.autoSearchWeb(userText, model, chatMessages);
                         
-                        if (searchResult.searchPerformed && searchResult.hasResults) {
-                            messageWithSearchResults = searchResult.messageWithSearchResults;
-                            searchPerformed = true;
-                            console.log('自動検索実行: ', searchResult.reason);
-                        } else if (searchResult.searchPerformed) {
-                            console.log('検索を試みましたが、結果が得られませんでした: ', searchResult.reason);
+                        if (searchResult.searchPerformed) {
+                            if (searchResult.hasResults) {
+                                messageWithSearchResults = searchResult.messageWithSearchResults;
+                                searchPerformed = true;
+                                console.log('自動検索実行: ', searchResult.reason);
+                            } else {
+                                console.log('検索を試みましたが、結果が得られませんでした: ', searchResult.reason);
+                            }
                         } else {
                             console.log('検索は必要ないと判断されました: ', searchResult.reason);
                         }
@@ -243,8 +248,6 @@ class ChatActions {
                 timestamp: timestamp
             };
 
-            // ユーザーメッセージを表示
-            await ChatRenderer.getInstance.addUserMessage(messageWithSearchResults, chatMessages, displayAttachments, timestamp);
             conversation.messages.push(userMessage);
 
             // チャットタイトルの更新

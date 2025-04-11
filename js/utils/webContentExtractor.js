@@ -133,133 +133,109 @@ class WebContentExtractor {
         }
     }
 
-    /**
-     * Tavilyを使用してWeb検索を実行する
-     * @param {string} query - 検索クエリ
-     * @param {HTMLElement} chatMessages - チャットメッセージ表示要素
-     * @returns {Promise<{messageWithSearchResults: string, hasResults: boolean}>} 検索結果を含むメッセージと結果の有無
-     */
-    async searchWeb(query, chatMessages) {
-        if (!query) return { messageWithSearchResults: query, hasResults: false };
-        if (!this.#tavilyApiKey) return { 
-            messageWithSearchResults: query + '\n\n> Tavily APIキーが設定されていないため、WEB検索できません。システム設定から設定してください。', 
-            hasResults: false 
-        };
+    // /**
+    //  * Tavilyを使用してWeb検索を実行する
+    //  * @param {string} query - 検索クエリ
+    //  * @param {HTMLElement} chatMessages - チャットメッセージ表示要素
+    //  * @returns {Promise<{messageWithSearchResults: string, hasResults: boolean}>} 検索結果を含むメッセージと結果の有無
+    //  */
+    // async searchWeb(query, chatMessages) {
+    //     if (!query) return { messageWithSearchResults: query, hasResults: false };
+    //     if (!this.#tavilyApiKey) return { 
+    //         messageWithSearchResults: query + '\n\n> Tavily APIキーが設定されていないため、WEB検索できません。システム設定から設定してください。', 
+    //         hasResults: false 
+    //     };
 
-        try {
-            // 進捗状況を表示
-            const progressElement = this.#showProgressIndicator(chatMessages, 'WEB検索中');
+    //     try {
+    //         // 進捗状況を表示（ChatRendererを使用）
+    //         const statusMessage = ChatRenderer.getInstance.addSystemMessage(chatMessages, 'Web検索中');
 
-            const searchResults = await this.#performTavilySearch(query);
+    //         const searchResults = await this.#performTavilySearch(query);
             
-            // 進捗状況表示を削除
-            progressElement?.remove();
+    //         // 進捗状況表示を削除
+    //         ChatRenderer.getInstance.removeSystemMessage(statusMessage.messageDiv);
 
-            if (searchResults.error) {
-                return { 
-                    messageWithSearchResults: query + `\n\n> WEB検索に失敗しました: ${searchResults.error}`, 
-                    hasResults: false 
-                };
-            }
+    //         if (searchResults.error) {
+    //             return { 
+    //                 messageWithSearchResults: query + `\n\n> WEB検索に失敗しました: ${searchResults.error}`, 
+    //                 hasResults: false 
+    //             };
+    //         }
 
-            // 検索結果をマークダウン形式で整形
-            let formattedResults = '\n\n### 検索結果\n\n';
+    //         // 検索結果をマークダウン形式で整形
+    //         let formattedResults = '\n\n### 検索結果\n\n';
             
-            searchResults.results.forEach((result, index) => {
-                formattedResults += `#### ${index + 1}. [${result.title}](${result.url})\n`;
-                formattedResults += `${result.content}\n\n`;
-            });
+    //         searchResults.results.forEach((result, index) => {
+    //             formattedResults += `#### ${index + 1}. [${result.title}](${result.url})\n`;
+    //             formattedResults += `${result.content}\n\n`;
+    //         });
             
-            formattedResults += `\n*検索時刻: ${new Date().toLocaleString()}*\n`;
+    //         formattedResults += `\n*検索時刻: ${new Date().toLocaleString()}*\n`;
             
-            return {
-                messageWithSearchResults: query + formattedResults,
-                hasResults: searchResults.results.length > 0
-            };
-        } catch (error) {
-            console.error('WEB検索エラー:', error);
-            return { 
-                messageWithSearchResults: query + '\n\n> WEB検索中にエラーが発生しました。', 
-                hasResults: false 
-            };
-        }
-    }
+    //         return {
+    //             messageWithSearchResults: query + formattedResults,
+    //             hasResults: searchResults.results.length > 0
+    //         };
+    //     } catch (error) {
+    //         console.error('WEB検索エラー:', error);
+    //         return { 
+    //             messageWithSearchResults: query + '\n\n> WEB検索中にエラーが発生しました。', 
+    //             hasResults: false 
+    //         };
+    //     }
+    // }
     
-    /**
-     * Tavilyを使用して特定のURLの内容を詳細に抽出する
-     * @param {string} url - 抽出対象のURL
-     * @param {HTMLElement} chatMessages - チャットメッセージ表示要素
-     * @returns {Promise<{extractedContent: string, success: boolean}>} 抽出された内容と成功状態
-     */
-    async extractDetailedContent(url, chatMessages) {
-        if (!url) return { extractedContent: '', success: false };
-        if (!this.#tavilyApiKey) return { 
-            extractedContent: '> Tavily APIキーが設定されていないため、コンテンツを抽出できません。システム設定から設定してください。', 
-            success: false 
-        };
+    // /**
+    //  * Tavilyを使用して特定のURLの内容を詳細に抽出する
+    //  * @param {string} url - 抽出対象のURL
+    //  * @param {HTMLElement} chatMessages - チャットメッセージ表示要素
+    //  * @returns {Promise<{extractedContent: string, success: boolean}>} 抽出された内容と成功状態
+    //  */
+    // async extractDetailedContent(url, chatMessages) {
+    //     if (!url) return { extractedContent: '', success: false };
+    //     if (!this.#tavilyApiKey) return { 
+    //         extractedContent: '> Tavily APIキーが設定されていないため、コンテンツを抽出できません。システム設定から設定してください。', 
+    //         success: false 
+    //     };
 
-        try {
-            // 進捗状況を表示
-            const progressElement = this.#showProgressIndicator(chatMessages, 'コンテンツ抽出中');
+    //     try {
+    //         // 進捗状況を表示（ChatRendererを使用）
+    //         const statusMessage = ChatRenderer.getInstance.addSystemMessage(chatMessages, 'コンテンツ抽出中');
 
-            const extractResult = await this.#performTavilyExtract(url);
+    //         const extractResult = await this.#performTavilyExtract(url);
             
-            // 進捗状況表示を削除
-            progressElement?.remove();
+    //         // 進捗状況表示を削除
+    //         ChatRenderer.getInstance.removeSystemMessage(statusMessage.messageDiv);
 
-            if (extractResult.error) {
-                return { 
-                    extractedContent: `> コンテンツ抽出に失敗しました: ${extractResult.error}`, 
-                    success: false 
-                };
-            }
+    //         if (extractResult.error) {
+    //             return { 
+    //                 extractedContent: `> コンテンツ抽出に失敗しました: ${extractResult.error}`, 
+    //                 success: false 
+    //             };
+    //         }
 
-            // 抽出結果をマークダウン形式で整形
-            let formattedContent = `### ${extractResult.title || 'ウェブページの内容'}\n\n`;
+    //         // 抽出結果をマークダウン形式で整形
+    //         let formattedContent = `### ${extractResult.title || 'ウェブページの内容'}\n\n`;
             
-            if (extractResult.description) {
-                formattedContent += `> ${extractResult.description}\n\n`;
-            }
+    //         if (extractResult.description) {
+    //             formattedContent += `> ${extractResult.description}\n\n`;
+    //         }
             
-            formattedContent += extractResult.content;
-            formattedContent += `\n\n[元のページを表示](${url})\n`;
+    //         formattedContent += extractResult.content;
+    //         formattedContent += `\n\n[元のページを表示](${url})\n`;
             
-            return {
-                extractedContent: formattedContent,
-                success: true
-            };
-        } catch (error) {
-            console.error('コンテンツ抽出エラー:', error);
-            return { 
-                extractedContent: '> コンテンツ抽出中にエラーが発生しました。', 
-                success: false 
-            };
-        }
-    }
-
-    /**
-     * 進捗状況インジケータを表示
-     * @private
-     * @param {HTMLElement} chatMessages - チャットメッセージ表示要素
-     * @param {string} message - 表示するメッセージ
-     * @returns {HTMLElement} 作成された進捗表示要素
-     */
-    #showProgressIndicator(chatMessages, message = 'WEB情報取得中') {
-        if (!chatMessages) return null;
-
-        const messageDiv = ChatUI.getInstance.createElement('div', {
-            classList: ['message', 'user'],
-        });
-        const contentDiv = ChatUI.getInstance.createElement('div');
-        contentDiv.innerHTML = `
-            <div class="message-content">
-                <p>${message}<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>
-            </div>
-        `;
-        messageDiv.appendChild(contentDiv);
-        chatMessages.appendChild(messageDiv);
-        return messageDiv;
-    }
+    //         return {
+    //             extractedContent: formattedContent,
+    //             success: true
+    //         };
+    //     } catch (error) {
+    //         console.error('コンテンツ抽出エラー:', error);
+    //         return { 
+    //             extractedContent: '> コンテンツ抽出中にエラーが発生しました。', 
+    //             success: false 
+    //         };
+    //     }
+    // }
 
     // #fetchUrlContent メソッドは削除されました
 
@@ -355,10 +331,15 @@ class WebContentExtractor {
         };
 
         try {
+            // Thinkingメッセージを表示
+            const statusMessage = ChatRenderer.getInstance.addSystemMessage(chatMessages, 'Thinking');
+
             // 検索の必要性を判断
             const { needsSearch, searchQuery, reasoning } = await this.checkIfSearchNeeded(query, model);
             
             if (!needsSearch) {
+                // システムメッセージを削除
+                ChatRenderer.getInstance.removeSystemMessage(statusMessage.messageDiv);
                 return { 
                     messageWithSearchResults: query, 
                     hasResults: false, 
@@ -367,14 +348,14 @@ class WebContentExtractor {
                 };
             }
             
-            // 進捗状況を表示
-            const progressElement = this.#showProgressIndicator(chatMessages, '関連情報を検索中');
+            // Web検索中メッセージに更新
+            ChatRenderer.getInstance.updateSystemMessage(statusMessage.messageDiv, 'Web検索中');
             
             // 実際の検索を実行
             const searchResults = await this.#performTavilySearch(searchQuery);
             
-            // 進捗状況表示を削除
-            progressElement?.remove();
+            // システムメッセージを削除
+            ChatRenderer.getInstance.removeSystemMessage(statusMessage.messageDiv);
             
             if (searchResults.error) {
                 return { 
@@ -403,6 +384,11 @@ class WebContentExtractor {
             };
             
         } catch (error) {
+            // エラー時もシステムメッセージを削除
+            if (statusMessage?.messageDiv) {
+                ChatRenderer.getInstance.removeSystemMessage(statusMessage.messageDiv);
+            }
+            
             console.error('自動Web検索エラー:', error);
             return { 
                 messageWithSearchResults: query, 
