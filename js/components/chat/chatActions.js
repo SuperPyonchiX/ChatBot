@@ -278,6 +278,15 @@ class ChatActions {
                 }
             }
 
+            if (attachments && attachments.length > 0) {
+                displayAttachments = attachments.map(att => ({
+                    ...att,
+                    timestamp: timestamp
+                }));
+
+                attachmentContent = await this.#processAttachments(attachments);
+            }
+
             // 添付ファイルの内容を含めた最終的なメッセージを作成
             const finalMessage = (attachmentContent ? `${messageWithSearchResults}\n\n${attachmentContent}` : messageWithSearchResults);
 
