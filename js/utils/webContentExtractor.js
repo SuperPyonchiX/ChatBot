@@ -161,34 +161,53 @@ class WebContentExtractor {
      * GPTにWeb検索が必要かどうか判断してもらう
      * @param {string} query - ユーザーの質問内容
      * @param {string} model - 使用するモデル名
+     * @param {string} systemPrompt - 現在のシステムプロンプト（オプション）
      * @returns {Promise<{needsSearch: boolean, searchQuery: string}>} 検索が必要かどうかの判断と検索クエリ
      */
-    async checkIfSearchNeeded(query, model) {
+    async checkIfSearchNeeded(query, model, systemPrompt = '') {
         if (!query) return { needsSearch: false, searchQuery: '' };
         if (!this.#tavilyApiKey) return { needsSearch: false, searchQuery: '' };
 
         try {
-            // GPTに検索が必要かどうか判断してもらうシステムプロンプト
-            const systemPrompt = `あなたはユーザーの質問に回答するAIアシスタントです。
+            // 検索要否判断用のシステムプロンプト
+            const searchJudgmentPrompt = `あなたはユーザーの質問に回答するAIアシスタントです。
 現在の日付: ${new Date().toLocaleDateString('ja-JP')}
 あなたの役割は、ユーザーの質問に対して検索が必要かどうかを判断することです。
-検索が必要な場合は、最適な検索クエリも提案してください。
+
+以下の2つの要素を考慮して判断してください：
+
+1. システムプロンプトの性質
+- タスク特化型のシステムプロンプトかどうかを判断してください
+- タスク特化型とは、特定の作業や処理に特化した明確な指示が含まれているプロンプトです
+- 例：コード解析、図の作成、UML作成、コードレビュー、リファクタリングなど
+
+2. ユーザーの質問内容
 以下のような場合は検索が必要です：
-1. 最新の情報やニュースについての質問（例：「今日の天気」「最新のAI技術」など）
-2. 事実確認が必要な具体的な情報（例：「東京タワーの高さ」「Python 3.11の新機能」など）
-3. あなたの知識が及ばない可能性がある専門的な質問
-4. あなたのトレーニングデータ以降の出来事に関する質問（2023年以降の事象）
+- 最新の情報やニュースについての質問
+- 事実確認が必要な具体的な情報
+- AIの知識が及ばない可能性がある専門的な質問
+- トレーニングデータ以降の出来事に関する質問
+
+以下のような場合は検索不要です：
+- システムプロンプトがタスク特化型で、ユーザーの質問がそのタスクに関連している
+- 提供されたコンテンツのみで完結するタスク
+- 一般的なプログラミングの概念やパターンについての質問
+- 特定のコードやシステムについての説明や改善提案
 
 回答は必ず以下のJSON形式で出力してください：
 {
   "needsSearch": true または false,
   "searchQuery": "検索が必要な場合の最適な検索クエリ（日本語で）",
   "reasoning": "判断理由の簡潔な説明"
-}`;
+}
+
+現在のシステムの状況：
+${systemPrompt ? `システムプロンプト: ${systemPrompt}\n` : '一般的な質問応答モード\n'}
+ユーザーの質問: ${query}`;
 
             // AIAPIクラスを使用してOpenAI APIを呼び出す
             const messages = [
-                { role: 'system', content: systemPrompt },
+                { role: 'system', content: searchJudgmentPrompt },
                 { role: 'user', content: query }
             ];
             
@@ -252,8 +271,12 @@ class WebContentExtractor {
             // Thinkingメッセージを表示
             const statusMessage = ChatRenderer.getInstance.addSystemMessage(chatMessages, 'Thinking');
 
-            // 検索の必要性を判断
-            const { needsSearch, searchQuery, reasoning } = await this.checkIfSearchNeeded(query, model);
+            // 検索の必要性を判断（現在のシステムプロンプトを渡す）
+            const { needsSearch, searchQuery, reasoning } = await this.checkIfSearchNeeded(
+                query, 
+                model,
+                window.AppState.systemPrompt
+            );
             
             if (!needsSearch) {
                 // システムメッセージを削除
