@@ -113,7 +113,8 @@ window.CONFIG = {
             CATEGORY_STATES: 'categoryStates',
             CONVERSATIONS: 'conversations',
             CURRENT_CONVERSATION_ID: 'currentConversationId',
-            ATTACHMENTS_PREFIX: 'attachments_'
+            ATTACHMENTS_PREFIX: 'attachments_',
+            WEB_SEARCH_ENABLED: 'webSearchEnabled'
         },
         
         // デフォルト値
@@ -187,9 +188,6 @@ window.CONFIG = {
      * Web検索関連の設定
      */
     WEB_SEARCH: {
-        // 自動検索が有効かどうか
-        AUTO_SEARCH_ENABLED: true,
-        
         // 自動検索で使用する判断モデル
         AUTO_SEARCH_MODEL: 'gpt-4o-mini',
         

@@ -6,6 +6,10 @@ class ChatActions {
     // シングルトンインスタンス
     static #instance = null;
 
+    // DOM要素
+    #webSearchToggle;
+    #toggleStatus;
+
     /**
      * シングルトンインスタンスを取得します
      * @returns {ChatActions} ChatActionsのシングルトンインスタンス
@@ -25,6 +29,41 @@ class ChatActions {
         if (ChatActions.#instance) {
             throw new Error('ChatActionsクラスは直接インスタンス化できません。ChatActions.instanceを使用してください。');
         }
+        this.#initializeElements();
+        this.#setupEventListeners();
+        this.#updateToggleButtonState();
+    }
+
+    /**
+     * DOM要素を初期化します
+     * @private
+     */
+    #initializeElements() {
+        this.#webSearchToggle = document.getElementById('webSearchToggle');
+        this.#toggleStatus = this.#webSearchToggle.querySelector('.toggle-status');
+    }
+
+    /**
+     * イベントリスナーを設定します
+     * @private
+     */
+    #setupEventListeners() {
+        this.#webSearchToggle.addEventListener('click', () => {
+            const webContentExtractor = WebContentExtractor.getInstance;
+            const currentState = webContentExtractor.isWebSearchEnabled();
+            webContentExtractor.toggleWebSearch(!currentState);
+            this.#updateToggleButtonState();
+        });
+    }
+
+    /**
+     * トグルボタンの状態を更新します
+     * @private
+     */
+    #updateToggleButtonState() {
+        const isEnabled = WebContentExtractor.getInstance.isWebSearchEnabled();
+        this.#webSearchToggle.classList.toggle('active', isEnabled);
+        this.#toggleStatus.textContent = `WEB検索: ${isEnabled ? 'ON' : 'OFF'}`;
     }
 
     /**
@@ -211,25 +250,23 @@ class ChatActions {
             // ユーザーメッセージを表示
             await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
 
-            // 自動Web検索が有効な場合、GPTに検索が必要か問い合わせる
+            // WEB検索が有効で、GPTが必要と判断した場合に検索を実行
             let messageWithSearchResults = userText;
             let searchPerformed = false;
             
-            if (window.CONFIG.WEB_SEARCH.AUTO_SEARCH_ENABLED) {
-                const webExtractor = WebContentExtractor.getInstance;
-                if (webExtractor && webExtractor.hasTavilyApiKey()) {
-                    try {
-                        const model = window.AppState.getCurrentModel() || window.CONFIG.WEB_SEARCH.AUTO_SEARCH_MODEL;
-                        const searchResult = await webExtractor.autoSearchWeb(userText, model, chatMessages);
-                        
-                        if (searchResult.searchPerformed && searchResult.hasResults) {
-                            // 検索結果がある場合、メッセージを更新
-                            messageWithSearchResults = searchResult.messageWithSearchResults;
-                            searchPerformed = true;
-                        }
-                    } catch (searchError) {
-                        console.error('自動検索中にエラーが発生しました:', searchError);
+            const webExtractor = WebContentExtractor.getInstance;
+            if (webExtractor && webExtractor.hasTavilyApiKey() && webExtractor.isWebSearchEnabled()) {
+                try {
+                    const model = window.AppState.getCurrentModel() || window.CONFIG.WEB_SEARCH.AUTO_SEARCH_MODEL;
+                    const searchResult = await webExtractor.autoSearchWeb(userText, model, chatMessages);
+                    
+                    if (searchResult.searchPerformed && searchResult.hasResults) {
+                        // 検索結果がある場合、メッセージを更新
+                        messageWithSearchResults = searchResult.messageWithSearchResults;
+                        searchPerformed = true;
                     }
+                } catch (searchError) {
+                    console.error('自動検索中にエラーが発生しました:', searchError);
                 }
             }
 
@@ -418,3 +455,8 @@ class ChatActions {
         this.renderChatHistory();
     }
 }
+
+// チャットアクションの初期化
+document.addEventListener('DOMContentLoaded', () => {
+    ChatActions.getInstance;
+});

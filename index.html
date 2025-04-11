@@ -114,6 +114,12 @@
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
+            <div class="chat-actions">
+                <button id="webSearchToggle" class="toggle-button" title="WEB検索の有効/無効を切り替え">
+                    <i class="fas fa-globe"></i>
+                    <span class="toggle-status">WEB検索: ON</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -157,14 +163,6 @@
                         <label for="azureEndpointO1">o1 エンドポイントURL:</label>
                         <input type="text" id="azureEndpointO1" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
                     </div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Web検索設定:</label>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="autoSearchEnabled" checked>
-                    <label for="autoSearchEnabled">GPTに判断させて自動検索する</label>
-                    <span class="help-text">質問内容に応じて、GPTが必要と判断した場合に自動的にWeb検索を実行します</span>
                 </div>
             </div>
             <div class="form-group">

@@ -537,3 +537,42 @@
     0%, 100% { opacity: 0.3; }
     50% { opacity: 1; }
 }
+
+/* チャットアクションのスタイル */
+.chat-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--background-color);
+}
+
+.toggle-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--button-background);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.toggle-button:hover {
+    background-color: var(--button-hover-background);
+}
+
+.toggle-button.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.toggle-button i {
+    font-size: 14px;
+}
+
+.toggle-status {
+    font-size: 12px;
+}

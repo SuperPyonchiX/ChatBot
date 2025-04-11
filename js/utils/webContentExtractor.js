@@ -10,6 +10,9 @@ class WebContentExtractor {
     // TavilyのAPIキー
     #tavilyApiKey = null;
     
+    // WEB検索の有効/無効状態
+    #isWebSearchEnabled = true;
+    
     // TavilyのAPIエンドポイント
     #tavilySearchEndpoint = 'https://api.tavily.com/search';
     #tavilyExtractEndpoint = 'https://api.tavily.com/extract';
@@ -36,6 +39,10 @@ class WebContentExtractor {
         
         // ローカルストレージからAPIキーを取得
         this.#tavilyApiKey = AppState.apiSettings.tavilyApiKey || null;
+        
+        // ローカルストレージからWEB検索の有効/無効状態を取得
+        this.#isWebSearchEnabled = Storage.getInstance.loadWebSearchEnabled();
+        
         if (this.#tavilyApiKey) {
             console.log('Tavily APIキー取得:', this.#tavilyApiKey);
         } else {
@@ -60,7 +67,24 @@ class WebContentExtractor {
         return !!this.#tavilyApiKey;
     }
 
-    // extractWebContents メソッドは削除されました
+    /**
+     * WEB検索が有効かどうかを取得します
+     * @returns {boolean} WEB検索が有効かどうか
+     */
+    isWebSearchEnabled() {
+        return this.#isWebSearchEnabled;
+    }
+
+    /**
+     * WEB検索の有効/無効を切り替えます
+     * @param {boolean} enabled WEB検索を有効にするかどうか
+     * @returns {boolean} 設定後のWEB検索の状態
+     */
+    toggleWebSearch(enabled) {
+        this.#isWebSearchEnabled = enabled;
+        Storage.getInstance.saveWebSearchEnabled(enabled);
+        return this.#isWebSearchEnabled;
+    }
 
     /**
      * Tavily検索APIを使用して検索を実行する
@@ -132,112 +156,6 @@ class WebContentExtractor {
             return { error: error.message || 'コンテンツ抽出中にエラーが発生しました' };
         }
     }
-
-    // /**
-    //  * Tavilyを使用してWeb検索を実行する
-    //  * @param {string} query - 検索クエリ
-    //  * @param {HTMLElement} chatMessages - チャットメッセージ表示要素
-    //  * @returns {Promise<{messageWithSearchResults: string, hasResults: boolean}>} 検索結果を含むメッセージと結果の有無
-    //  */
-    // async searchWeb(query, chatMessages) {
-    //     if (!query) return { messageWithSearchResults: query, hasResults: false };
-    //     if (!this.#tavilyApiKey) return { 
-    //         messageWithSearchResults: query + '\n\n> Tavily APIキーが設定されていないため、WEB検索できません。システム設定から設定してください。', 
-    //         hasResults: false 
-    //     };
-
-    //     try {
-    //         // 進捗状況を表示（ChatRendererを使用）
-    //         const statusMessage = ChatRenderer.getInstance.addSystemMessage(chatMessages, 'Web検索中');
-
-    //         const searchResults = await this.#performTavilySearch(query);
-            
-    //         // 進捗状況表示を削除
-    //         ChatRenderer.getInstance.removeSystemMessage(statusMessage.messageDiv);
-
-    //         if (searchResults.error) {
-    //             return { 
-    //                 messageWithSearchResults: query + `\n\n> WEB検索に失敗しました: ${searchResults.error}`, 
-    //                 hasResults: false 
-    //             };
-    //         }
-
-    //         // 検索結果をマークダウン形式で整形
-    //         let formattedResults = '\n\n### 検索結果\n\n';
-            
-    //         searchResults.results.forEach((result, index) => {
-    //             formattedResults += `#### ${index + 1}. [${result.title}](${result.url})\n`;
-    //             formattedResults += `${result.content}\n\n`;
-    //         });
-            
-    //         formattedResults += `\n*検索時刻: ${new Date().toLocaleString()}*\n`;
-            
-    //         return {
-    //             messageWithSearchResults: query + formattedResults,
-    //             hasResults: searchResults.results.length > 0
-    //         };
-    //     } catch (error) {
-    //         console.error('WEB検索エラー:', error);
-    //         return { 
-    //             messageWithSearchResults: query + '\n\n> WEB検索中にエラーが発生しました。', 
-    //             hasResults: false 
-    //         };
-    //     }
-    // }
-    
-    // /**
-    //  * Tavilyを使用して特定のURLの内容を詳細に抽出する
-    //  * @param {string} url - 抽出対象のURL
-    //  * @param {HTMLElement} chatMessages - チャットメッセージ表示要素
-    //  * @returns {Promise<{extractedContent: string, success: boolean}>} 抽出された内容と成功状態
-    //  */
-    // async extractDetailedContent(url, chatMessages) {
-    //     if (!url) return { extractedContent: '', success: false };
-    //     if (!this.#tavilyApiKey) return { 
-    //         extractedContent: '> Tavily APIキーが設定されていないため、コンテンツを抽出できません。システム設定から設定してください。', 
-    //         success: false 
-    //     };
-
-    //     try {
-    //         // 進捗状況を表示（ChatRendererを使用）
-    //         const statusMessage = ChatRenderer.getInstance.addSystemMessage(chatMessages, 'コンテンツ抽出中');
-
-    //         const extractResult = await this.#performTavilyExtract(url);
-            
-    //         // 進捗状況表示を削除
-    //         ChatRenderer.getInstance.removeSystemMessage(statusMessage.messageDiv);
-
-    //         if (extractResult.error) {
-    //             return { 
-    //                 extractedContent: `> コンテンツ抽出に失敗しました: ${extractResult.error}`, 
-    //                 success: false 
-    //             };
-    //         }
-
-    //         // 抽出結果をマークダウン形式で整形
-    //         let formattedContent = `### ${extractResult.title || 'ウェブページの内容'}\n\n`;
-            
-    //         if (extractResult.description) {
-    //             formattedContent += `> ${extractResult.description}\n\n`;
-    //         }
-            
-    //         formattedContent += extractResult.content;
-    //         formattedContent += `\n\n[元のページを表示](${url})\n`;
-            
-    //         return {
-    //             extractedContent: formattedContent,
-    //             success: true
-    //         };
-    //     } catch (error) {
-    //         console.error('コンテンツ抽出エラー:', error);
-    //         return { 
-    //             extractedContent: '> コンテンツ抽出中にエラーが発生しました。', 
-    //             success: false 
-    //         };
-    //     }
-    // }
-
-    // #fetchUrlContent メソッドは削除されました
 
     /**
      * GPTにWeb検索が必要かどうか判断してもらう

@@ -547,6 +547,22 @@ class Storage {
         }
     }
 
+    /**
+     * WEB検索の有効/無効状態を保存
+     * @param {boolean} enabled - 有効にするかどうか
+     */
+    saveWebSearchEnabled(enabled) {
+        this.setItem(window.CONFIG.STORAGE.KEYS.WEB_SEARCH_ENABLED, enabled);
+    }
+
+    /**
+     * WEB検索の有効/無効状態を読み込む
+     * @returns {boolean} WEB検索が有効かどうか
+     */
+    loadWebSearchEnabled() {
+        return this.getItem(window.CONFIG.STORAGE.KEYS.WEB_SEARCH_ENABLED) !== 'false';
+    }
+
     // Private Methods ///////////////////////////////////////////////////////
     /**
      * LocalStorageが利用可能かどうかを確認
