@@ -308,6 +308,12 @@ class AIAPI {
         // o1/o1-miniモデルかどうかをチェック
         const isO1Model = model.startsWith('o1');
 
+        // o1モデルでストリーミングが要求された場合は無効化
+        if (isO1Model && useStream) {
+            console.warn('o1モデルはストリーミングに対応していません。通常のリクエストにフォールバックします。');
+            useStream = false;
+        }
+
         // 共通のボディパラメータを設定
         body = {
             messages: messages
@@ -520,6 +526,9 @@ class AIAPI {
             throw new Error('ストリーミングモードでは onComplete コールバック関数が必要です');
         }
         
+        let chunkCount = 0;
+        let lastChunkTime = Date.now();
+        
         try {
             // ストリーミングフラグをリクエストに追加
             const body = JSON.parse(bodyStr);
@@ -530,7 +539,6 @@ class AIAPI {
             const timeoutId = setTimeout(() => controller.abort(), window.CONFIG.AIAPI.TIMEOUT_MS);
             
             const startTime = Date.now();
-            
             console.log(`ストリーミングAPIリクエスト送信: ${endpoint}`);
             
             const response = await fetch(endpoint, {
@@ -545,17 +553,15 @@ class AIAPI {
             
             if (!response.ok) {
                 let errorMessage = `API Error: ${response.status} ${response.statusText}`;
-                
-                // レスポンスのJSONを取得して詳細なエラーメッセージを取得
                 try {
                     const errorData = await response.json();
                     if (errorData.error) {
                         errorMessage = errorData.error.message || errorMessage;
                     }
+                    console.error('ストリーミングAPIエラーの詳細:', errorData);
                 } catch (jsonError) {
-                    // JSONパースに失敗した場合は元のエラーメッセージを使用
+                    console.error('ストリーミングAPIエラーの詳細を取得できませんでした:', jsonError);
                 }
-                
                 throw new Error(errorMessage);
             }
             
@@ -567,18 +573,28 @@ class AIAPI {
             const reader = response.body.getReader();
             const decoder = new TextDecoder('utf-8');
             let fullText = '';
+            let buffer = '';  // 不完全なJSONを処理するためのバッファ
+            
+            // チャンク処理のタイムアウトを設定
+            const chunkTimeoutMs = 10000; // 10秒
             
             // 受信したデータを順次処理
             while (true) {
+                // チャンク間のタイムアウトをチェック
+                const currentTime = Date.now();
+                if (chunkCount > 0 && (currentTime - lastChunkTime) > chunkTimeoutMs) {
+                    throw new Error('ストリーミングのタイムアウト: チャンク間の時間が長すぎます');
+                }
+                
                 const { done, value } = await reader.read();
                 if (done) break;
                 
-                // バイナリデータを文字列に変換
-                const chunk = decoder.decode(value, { stream: true });
+                // バイナリデータを文字列に変換し、バッファに追加
+                buffer += decoder.decode(value, { stream: true });
                 
-                // Server-Sent Eventsの形式でデータを処理
-                // 'data: '行を処理
-                const lines = chunk.split('\n');
+                // バッファを行に分割して処理
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || ''; // 最後の不完全な行をバッファに戻す
                 
                 for (const line of lines) {
                     // 空行または'data: [DONE]'は無視
@@ -595,32 +611,34 @@ class AIAPI {
                                 
                                 // content属性がある場合のみ処理
                                 if (delta && delta.content) {
-                                    // コールバックでデルタコンテンツを処理
                                     onChunk(delta.content);
                                     fullText += delta.content;
+                                    chunkCount++;
+                                    lastChunkTime = Date.now();
                                 }
                             }
                         } catch (parseError) {
-                            console.warn('JSON解析エラー:', parseError, line);
+                            console.warn('JSONパースエラー:', parseError, line);
+                            // パースエラーは無視して続行
                         }
                     }
                 }
             }
             
             const responseTime = Date.now() - startTime;
-            console.log(`ストリーミングAPIレスポンス完了 (${responseTime}ms)`);
+            console.log(`ストリーミングAPIレスポンス完了 (${responseTime}ms, ${chunkCount}チャンク)`);
             
             // すべてのデータを受信した後、完了コールバックを呼び出す
             onComplete(fullText);
-            
-            // ストリーミングではPromiseの戻り値は使用されないが、
-            // 一貫性のために空文字列を返す
             return '';
+            
         } catch (error) {
             if (error.name === 'AbortError') {
-                throw new Error('APIリクエストがタイムアウトしました');
+                throw new Error('ストリーミングAPIリクエストがタイムアウトしました');
             }
             
+            // エラー情報にチャンク数を追加
+            error.message = `${error.message} (処理済みチャンク数: ${chunkCount})`;
             throw error;
         }
     }
