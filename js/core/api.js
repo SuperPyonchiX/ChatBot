@@ -308,11 +308,11 @@ class AIAPI {
         // o1/o1-miniモデルかどうかをチェック
         const isO1Model = model.startsWith('o1');
 
-        // o1モデルでストリーミングが要求された場合は無効化
-        if (isO1Model && useStream) {
-            console.warn('o1モデルはストリーミングに対応していません。通常のリクエストにフォールバックします。');
-            useStream = false;
-        }
+        // // o1モデルでストリーミングが要求された場合は無効化
+        // if (isO1Model && useStream) {
+        //     console.warn('o1モデルはストリーミングに対応していません。通常のリクエストにフォールバックします。');
+        //     useStream = false;
+        // }
 
         // 共通のボディパラメータを設定
         body = {
