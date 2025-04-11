@@ -6,6 +6,16 @@
 // グローバルスコープに設定オブジェクトを公開
 window.CONFIG = {
     /**
+     * コード実行関連の設定
+     */
+    EXECUTABLE_LANGUAGES: [
+        'javascript', 'js',
+        'html',
+        'python', 'py',
+        'cpp', 'c++'
+    ],
+
+    /**
      * APIリクエストの設定
      */
     AIAPI: {
