@@ -306,30 +306,30 @@ class AIAPI {
     #prepareAPIRequest(messages, model, useStream) {
         let endpoint, headers = {}, body = {};
         
+        // o1/o1-miniモデルかどうかをチェック
+        const isO1Model = model.startsWith('o1');
+
+        // 共通のボディパラメータを設定
+        body = {
+            messages: messages
+        };
+
+        // モデルに応じて適切なパラメータを設定
+        if (isO1Model) {
+            body.max_completion_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
+        } else {
+            body.temperature = window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature;
+            body.max_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
+        }
+        
         if (window.apiSettings.apiType === 'openai') {
             // OpenAI API
             endpoint = window.CONFIG.AIAPI.ENDPOINTS.OPENAI;
-            
             headers = {
                 'Authorization': `Bearer ${window.apiSettings.openaiApiKey}`,
                 'Content-Type': 'application/json'
             };
-            
-            // o1/o1-miniモデルでは temperature と max_tokens を max_completion_tokens に変更
-            const isO1Model = model.startsWith('o1');
-            
-            body = {
-                model: model,
-                messages: messages
-            };
-
-            // モデルに応じて適切なパラメータを設定
-            if (isO1Model) {
-                body.max_completion_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
-            } else {
-                body.temperature = window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature;
-                body.max_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
-            }
+            body.model = model;
         } else {
             // Azure OpenAI API
             endpoint = window.apiSettings.azureEndpoints[model];
@@ -342,12 +342,6 @@ class AIAPI {
             headers = {
                 'api-key': window.apiSettings.azureApiKey,
                 'Content-Type': 'application/json'
-            };
-            
-            body = {
-                messages: messages,
-                temperature: window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature,
-                max_tokens: window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens
             };
         }
         
