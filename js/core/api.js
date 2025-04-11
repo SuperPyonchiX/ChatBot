@@ -206,7 +206,7 @@ class AIAPI {
         
         const validFileAttachments = attachments.filter(
             att => att && att.type === 'file' && att.name && att.data && att.mimeType &&
-            (!att.size || att.size <= window.CONFIG.FILE.MAX_FILE_SIZE || 10 * 1024 * 1024)
+            (!att.size || att.size <= window.CONFIG.FILE.MAX_FILE_SIZE || 10 * 1024 *1024)
         );
         
         // 画像添付ファイルをcontent_urlタイプとして追加
@@ -307,12 +307,6 @@ class AIAPI {
         
         // o1/o1-miniモデルかどうかをチェック
         const isO1Model = model.startsWith('o1');
-
-        // // o1モデルでストリーミングが要求された場合は無効化
-        // if (isO1Model && useStream) {
-        //     console.warn('o1モデルはストリーミングに対応していません。通常のリクエストにフォールバックします。');
-        //     useStream = false;
-        // }
 
         // 共通のボディパラメータを設定
         body = {
@@ -626,28 +620,7 @@ class AIAPI {
                     }
                 }
                 
-                // 最後の残りのバッファを処理
-                if (done) {
-                    if (buffer) {
-                        const line = buffer.trim();
-                        if (line && !line.includes('[DONE]') && line.startsWith('data: ')) {
-                            try {
-                                const jsonData = JSON.parse(line.substring(6));
-                                if (jsonData.choices && jsonData.choices.length > 0) {
-                                    const delta = jsonData.choices[0].delta;
-                                    if (delta && delta.content) {
-                                        onChunk(delta.content);
-                                        fullText += delta.content;
-                                        chunkCount++;
-                                    }
-                                }
-                            } catch (parseError) {
-                                console.warn('最後のバッファのJSONパースエラー:', parseError, line);
-                            }
-                        }
-                    }
-                    break;
-                }
+                if (done) break;
             }
             
             const responseTime = Date.now() - startTime;
