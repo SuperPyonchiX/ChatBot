@@ -253,7 +253,7 @@ class ChatActions {
 
             // 添付ファイルの処理
             let attachmentContent = '';
-            const displayAttachments = attachments || [];
+            let displayAttachments = attachments || [];
 
             // ユーザーメッセージを表示
             await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
