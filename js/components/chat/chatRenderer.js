@@ -141,31 +141,20 @@ class ChatRenderer {
      */
     addStreamingBotMessage(chatMessages, timestamp = null) {
         if (!chatMessages) return null;
+
+        const { messageDiv, contentContainer } = this.addSystemMessage(chatMessages, 'Thinking');
         
-        const msgTimestamp = timestamp || Date.now();
-        const messageDiv = ChatUI.getInstance.createElement('div', {
-            classList: ['message', 'bot'],
-            attributes: {
-                'data-timestamp': msgTimestamp.toString(),
-                'role': 'region',
-                'aria-label': 'AIからの返答'
+        // システムメッセージのクラスを変更してボットメッセージに
+        if (messageDiv) {
+            messageDiv.classList.remove('system-message');
+            if (timestamp) {
+                messageDiv.setAttribute('data-timestamp', timestamp.toString());
             }
-        });
-        
-        const contentDiv = ChatUI.getInstance.createElement('div', { classList: 'message-content' });
-        const messageContent = ChatUI.getInstance.createElement('div', {
-            classList: 'markdown-content',
-            innerHTML: '<p>Thinking<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>'
-        });
-        
-        contentDiv.appendChild(messageContent);
-        messageDiv.appendChild(contentDiv);
-        chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
+        }
+
         return {
             messageDiv: messageDiv,
-            contentContainer: messageContent
+            contentContainer: contentContainer
         };
     }
 
