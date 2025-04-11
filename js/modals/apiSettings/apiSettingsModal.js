@@ -47,11 +47,6 @@ class ApiSettingsModal {
             tavilyApiKeyInput: UICache.getInstance.get('tavilyApiKeyInput')
         };
         
-        // Tavily APIキーの設定
-        if (apiSettings.tavilyApiKey) {
-            elements.tavilyApiKeyInput.value = apiSettings.tavilyApiKey;
-        }
-        
         // APIタイプに応じて設定を表示
         if (apiSettings.apiType === 'azure') {
             elements.azureRadio.checked = true;
@@ -69,6 +64,11 @@ class ApiSettingsModal {
             elements.apiKeyInput.value = apiSettings.openaiApiKey;
             UIUtils.getInstance.toggleVisibility(elements.openaiSettings, true);
             UIUtils.getInstance.toggleVisibility(elements.azureSettings, false);
+        }
+
+        // Tavily APIキーの設定（Web検索用）
+        if (apiSettings.tavilyApiKey) {
+            elements.tavilyApiKeyInput.value = apiSettings.tavilyApiKey;
         }
     }
     
