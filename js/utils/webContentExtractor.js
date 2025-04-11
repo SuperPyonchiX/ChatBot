@@ -367,7 +367,7 @@ class WebContentExtractor {
             }
             
             // 検索結果をマークダウン形式で整形
-            let formattedResults = `\n\n### 以下のWEB検索結果を参考に回答してください。引用元のリンクも回答に含めてください。\n\n検索クエリ: "${searchQuery}"\n\n`;
+            let formattedResults = `\n\n=== 以下のWEB検索結果を参考に回答してください ===\n引用元のリンクも回答に含めてください。\n\n検索クエリ: "${searchQuery}"\n\n`;
             
             searchResults.results.forEach((result, index) => {
                 formattedResults += `#### ${index + 1}. [${result.title}](${result.url})\n`;

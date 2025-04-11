@@ -45,8 +45,8 @@ class ChatHistory {
                     ? message.content 
                     : this.#processContentArray(message.content);
                 
-                // ファイル内容を除去
-                const displayContent = this.#cleanFileContent(content);
+                // ファイル内容とWEB検索結果の表示を除去
+                const displayContent = this.#cleanDisplayContent(content);
                 await ChatRenderer.getInstance.addUserMessage(displayContent, chatMessages, [], message.timestamp);
             } else if (message.role === 'assistant') {
                 const content = typeof message.content === 'string' 
@@ -153,14 +153,16 @@ class ChatHistory {
     }
 
     /**
-     * ファイルの内容をクリーンアップする
+     * メッセージ表示の内容をクリーンアップする
      * @private
      */
-    #cleanFileContent(content) {
+    #cleanDisplayContent(content) {
         if (!content) return '';
-        
         // === ファイル名「...」の内容 === 以降のテキストをすべて削除
-        return content.replace(/===\s+.*?ファイル「.*?」の内容\s+===[\s\S]*$/g, '').trim();
+        let cleanContent = content.replace(/===\s+.*?ファイル「.*?」の内容\s+===[\s\S]*$/g, '').trim();
+        // === 以下のWEB検索結果を参考に回答してください === 以降のテキストをすべて削除
+        cleanContent = cleanContent.replace(/===\s+以下のWEB検索結果を参考に回答してください\s+===[\s\S]*$/g, '').trim();
+        return cleanContent;
     }
 
     /**
