@@ -290,7 +290,7 @@ ${systemPrompt ? `システムプロンプト: ${systemPrompt}\n` : '一般的�
             }
             
             // Web検索中メッセージに更新
-            ChatRenderer.getInstance.updateSystemMessage(statusMessage.messageDiv, 'Web検索中');
+            ChatRenderer.getInstance.updateSystemMessage(statusMessage.messageDiv, 'Searching the web');
             
             // 実際の検索を実行
             const searchResults = await this.#performTavilySearch(searchQuery);
