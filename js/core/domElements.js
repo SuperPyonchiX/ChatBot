@@ -32,6 +32,7 @@ window.Elements = (function() {
     const ids = [
         // チャット関連
         'chatMessages', 'userInput', 'sendButton', 'modelSelect', 'chatHistory', 'chatInputContainer',
+        'webSearchToggle',
         
         // ボタン関連
         'newChatButton', 'clearHistoryButton', 'settingsButton', 'settingsMenu',
@@ -48,7 +49,7 @@ window.Elements = (function() {
         'apiKeyModal', 'saveApiKey', 'cancelApiKey', 'openaiRadio', 'azureRadio',
         'apiKeyInput', 'azureApiKeyInput', 'azureEndpointGpt4oMini', 
         'azureEndpointGpt4o', 'azureEndpointO1Mini', 'azureEndpointO1',
-        'tavilyApiKeyInput', 'autoSearchEnabled',
+        'tavilyApiKeyInput',
         
         // チャット名前変更関連
         'saveRenameChat', 'cancelRenameChat', 'renameChatModal', 'chatTitleInput',

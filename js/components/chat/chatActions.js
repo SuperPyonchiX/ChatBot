@@ -40,7 +40,13 @@ class ChatActions {
      */
     #initializeElements() {
         this.#webSearchToggle = document.getElementById('webSearchToggle');
-        this.#toggleStatus = this.#webSearchToggle.querySelector('.toggle-status');
+        // アクティブ状態を設定
+        if (this.#webSearchToggle) {
+            const isEnabled = WebContentExtractor.getInstance.isWebSearchEnabled();
+            if (isEnabled) {
+                this.#webSearchToggle.classList.add('active');
+            }
+        }
     }
 
     /**
@@ -48,12 +54,14 @@ class ChatActions {
      * @private
      */
     #setupEventListeners() {
-        this.#webSearchToggle.addEventListener('click', () => {
-            const webContentExtractor = WebContentExtractor.getInstance;
-            const currentState = webContentExtractor.isWebSearchEnabled();
-            webContentExtractor.toggleWebSearch(!currentState);
-            this.#updateToggleButtonState();
-        });
+        if (this.#webSearchToggle) {
+            this.#webSearchToggle.addEventListener('click', () => {
+                const webContentExtractor = WebContentExtractor.getInstance;
+                const currentState = webContentExtractor.isWebSearchEnabled();
+                webContentExtractor.toggleWebSearch(!currentState);
+                this.#updateToggleButtonState();
+            });
+        }
     }
 
     /**
@@ -61,9 +69,9 @@ class ChatActions {
      * @private
      */
     #updateToggleButtonState() {
+        if (!this.#webSearchToggle) return;
         const isEnabled = WebContentExtractor.getInstance.isWebSearchEnabled();
         this.#webSearchToggle.classList.toggle('active', isEnabled);
-        this.#toggleStatus.textContent = `WEB検索: ${isEnabled ? 'ON' : 'OFF'}`;
     }
 
     /**

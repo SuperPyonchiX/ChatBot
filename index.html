@@ -105,19 +105,18 @@
                         <!-- プロンプト候補はJSで動的に追加 -->
                     </div>
                     <textarea id="userInput" placeholder="メッセージを入力..." rows="1"></textarea>
-                    <label class="file-upload-label" title="ファイルを添付する">
-                        <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.txt,.md,.csv,.pdf,.js,.html,.css,.json">
-                        <i class="fas fa-paperclip"></i>
-                    </label>
+                    <div class="input-actions">
+                        <button id="webSearchToggle" class="toggle-button" title="WEB検索の有効/無効を切り替え">
+                            <i class="fas fa-globe"></i>
+                        </button>
+                        <label class="file-upload-label" title="ファイルを添付する">
+                            <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.txt,.md,.csv,.pdf,.js,.html,.css,.json">
+                            <i class="fas fa-paperclip"></i>
+                        </label>
+                    </div>
                 </div>
                 <button id="sendButton">
                     <i class="fas fa-paper-plane"></i>
-                </button>
-            </div>
-            <div class="chat-actions">
-                <button id="webSearchToggle" class="toggle-button" title="WEB検索の有効/無効を切り替え">
-                    <i class="fas fa-globe"></i>
-                    <span class="toggle-status">WEB検索: ON</span>
                 </button>
             </div>
         </div>
