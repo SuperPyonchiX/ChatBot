@@ -65,9 +65,9 @@
     border: none;
     padding: 8px;
     cursor: pointer;
-    color: var(--text-color);
+    color: var(--text-tertiary);
     opacity: 0.6;
-    transition: opacity 0.2s;
+    transition: all var(--transition-fast);
     display: flex;
     align-items: center;
     justify-content: center;
