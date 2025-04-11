@@ -164,6 +164,12 @@ class AIAPI {
             throw new Error('有効なメッセージが指定されていません');
         }
         
+        // o1/o1-miniモデルの場合はシステムメッセージをユーザーメッセージに変換
+        const model = window.AppState.getCurrentModel();
+        if (model && (model === 'o1' || model === 'o1-mini')) {
+            messages = this.#convertSystemToUserMessage(messages);
+        }
+        
         if (!attachments || !Array.isArray(attachments) || attachments.length === 0) {
             return messages;
         }
@@ -233,6 +239,43 @@ class AIAPI {
 
         return processedMessages;
     }
+
+    /**
+     * システムメッセージをユーザーメッセージに変換する
+     * @private
+     * @param {Array} messages - 元のメッセージ配列
+     * @returns {Array} 変換後のメッセージ配列
+     */
+    #convertSystemToUserMessage(messages) {
+        const convertedMessages = [];
+        let systemContent = '';
+        
+        for (const message of messages) {
+            if (message.role === 'system') {
+                // システムメッセージの内容を蓄積
+                systemContent = (systemContent ? systemContent + '\n\n' : '') + message.content;
+            } else if (message.role === 'user' && systemContent) {
+                // ユーザーメッセージの前にシステムメッセージを追加
+                convertedMessages.push({
+                    role: 'user',
+                    content: systemContent + '\n\n' + message.content
+                });
+                systemContent = ''; // システムメッセージをクリア
+            } else {
+                convertedMessages.push(message);
+            }
+        }
+        
+        // 最後に残っているシステムメッセージがあれば、ユーザーメッセージとして追加
+        if (systemContent) {
+            convertedMessages.push({
+                role: 'user',
+                content: systemContent
+            });
+        }
+        console.log('システムメッセージをユーザーメッセージに変換:', convertedMessages);
+        return convertedMessages;
+    }
     
     /**
      * ファイルサイズを読みやすい形式に変換
@@ -272,12 +315,21 @@ class AIAPI {
                 'Content-Type': 'application/json'
             };
             
+            // o1/o1-miniモデルでは temperature と max_tokens を max_completion_tokens に変更
+            const isO1Model = model.startsWith('o1');
+            
             body = {
                 model: model,
-                messages: messages,
-                temperature: window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature,
-                max_tokens: window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens
+                messages: messages
             };
+
+            // モデルに応じて適切なパラメータを設定
+            if (isO1Model) {
+                body.max_completion_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
+            } else {
+                body.temperature = window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature;
+                body.max_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
+            }
         } else {
             // Azure OpenAI API
             endpoint = window.apiSettings.azureEndpoints[model];
