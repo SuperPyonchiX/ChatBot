@@ -71,6 +71,50 @@
     word-break: break-all;
 }
 
+/* ファイルプレビュー */
+.file-preview {
+    display: none;
+    position: absolute;
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+}
+
+.file-preview:not(:empty) {
+    position: static;
+    visibility: visible;
+    height: auto;
+    opacity: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) 0;
+    border-top: 1px solid var(--border-color);
+    margin-top: var(--spacing-xs);
+    padding-top: var(--spacing-sm);
+}
+
+.file-preview-item {
+    display: flex;
+    align-items: center;
+    background-color: var(--background-tertiary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+}
+
+.file-preview-item .remove-file {
+    margin-left: var(--spacing-xs);
+    cursor: pointer;
+    color: var(--text-tertiary);
+}
+
+.file-preview-item .remove-file:hover {
+    color: var(--error-color);
+}
+
 /* Bot応答のコードブロックスタイル */
 .message.bot .markdown-content pre {
     background-color: #282c34;
@@ -231,34 +275,6 @@
 
 .file-upload-label input[type="file"] {
     display: none;
-}
-
-/* ファイルプレビュー */
-.file-preview {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-xs) 0;
-}
-
-.file-preview-item {
-    display: flex;
-    align-items: center;
-    background-color: var(--background-tertiary);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--border-radius-sm);
-    font-size: var(--font-size-sm);
-    color: var(--text-primary);
-}
-
-.file-preview-item .remove-file {
-    margin-left: var(--spacing-xs);
-    cursor: pointer;
-    color: var(--text-tertiary);
-}
-
-.file-preview-item .remove-file:hover {
-    color: var(--error-color);
 }
 
 /* エラーメッセージ */

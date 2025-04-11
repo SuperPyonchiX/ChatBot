@@ -31,12 +31,25 @@
 .input-wrapper {
     flex: 1;
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
     position: relative;
     background-color: var(--background-primary);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
     padding: var(--spacing-sm);
+    min-height: fit-content;
+}
+
+/* プロンプト候補表示エリアはinput-wrapper内で絶対配置 */
+#promptSuggestions {
+    margin-bottom: var(--spacing-sm);
+}
+
+.main-input-area {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    min-height: fit-content;
 }
 
 #userInput {
@@ -48,9 +61,11 @@
     outline: none;
     overflow-y: auto;
     max-height: 150px;
+    min-height: 24px;
     line-height: 1.4;
     background-color: transparent;
     color: var(--text-primary);
+    margin: 0;
 }
 
 .input-actions {

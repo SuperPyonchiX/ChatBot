@@ -4,18 +4,23 @@
     bottom: 100%;
     left: 0;
     width: 100%;
-    max-height: var(--suggestions-max-height);
-    overflow-y: auto;
+    max-height: 0;
+    overflow: hidden;
     background-color: var(--background-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--suggestion-shadow);
     z-index: 100;
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: max-height 0.2s ease, opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .prompt-suggestions.show {
-    display: block;
+    max-height: var(--suggestions-max-height);
+    opacity: 1;
+    visibility: visible;
+    overflow-y: auto;
 }
 
 .prompt-suggestion-item {

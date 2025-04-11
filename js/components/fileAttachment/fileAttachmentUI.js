@@ -31,23 +31,14 @@ class FileAttachmentUI {
         }
         
         this.#createFilePreviewItems(files, previewArea);
+        previewArea.style.display = 'flex'; // プレビューエリアを表示
     }
 
     clearPreview() {
-        // FileHandler側のプレビュー
-        const inputWrapper = document.querySelector('.input-wrapper');
-        if (inputWrapper) {
-            const filePreview = inputWrapper.querySelector('.file-preview');
-            if (filePreview) {
-                filePreview.remove();
-            }
-        }
-        
-        // UI側のプレビュー
-        const attachmentPreviewArea = document.querySelector('.attachment-preview-area');
-        if (attachmentPreviewArea) {
-            attachmentPreviewArea.innerHTML = '';
-            attachmentPreviewArea.style.display = 'none';
+        const previewArea = this.#getOrCreatePreviewArea();
+        if (previewArea) {
+            previewArea.innerHTML = '';
+            previewArea.style.display = 'none'; // プレビューエリアを非表示
         }
     }
 
@@ -66,12 +57,8 @@ class FileAttachmentUI {
             if (!previewArea) {
                 previewArea = document.createElement('div');
                 previewArea.classList.add('file-preview');
-                const userInput = UICache.getInstance.get('userInput');
-                if (userInput) {
-                    inputWrapper.insertBefore(previewArea, userInput);
-                } else {
-                    inputWrapper.appendChild(previewArea);
-                }
+                previewArea.style.display = 'none'; // 初期状態は非表示
+                inputWrapper.appendChild(previewArea);
             }
             
             return previewArea;
@@ -280,8 +267,8 @@ class FileAttachmentUI {
                 
                 if (FileHandler.getInstance.selectedFiles.length === 0) {
                     const previewArea = document.querySelector('.file-preview');
-                    if (previewArea?.parentNode) {
-                        previewArea.remove();
+                    if (previewArea) {
+                        previewArea.style.display = 'none'; // 要素は削除せずに非表示にする
                     }
                     document.dispatchEvent(new CustomEvent('attachment-removed'));
                     return;
