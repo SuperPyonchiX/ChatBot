@@ -273,7 +273,6 @@ class AIAPI {
                 content: systemContent
             });
         }
-        console.log('システムメッセージをユーザーメッセージに変換:', convertedMessages);
         return convertedMessages;
     }
     
