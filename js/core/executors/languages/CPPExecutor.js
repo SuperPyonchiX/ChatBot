@@ -1,20 +1,9 @@
 /**
  * CPPExecutor.js
  * C++コードの実行を担当するクラス
- * GodboltコンパイラエクスプローラーのAPIを使用してC++コードをコンパイル・実行
  */
 class CPPExecutor extends ExecutorBase {
     static #instance = null;
-    #compilerOptions = {
-        compiler: 'g122', // GCC 12.2をデフォルトで使用
-        options: {
-            compilerOptions: {
-                executorRequest: true,
-                skipAsm: true
-            }
-        },
-        allowStoreCodeDebug: true
-    };
 
     constructor() {
         super();
@@ -42,75 +31,83 @@ class CPPExecutor extends ExecutorBase {
      */
     async execute(code, outputCallback) {
         try {
-            if (typeof outputCallback === 'function') {
-                outputCallback({
-                    type: 'status',
-                    content: 'Godbolt APIでC++コードを送信しています...'
-                });
-            }
-            
-            const startTime = performance.now();
-            const processedCode = this._preprocessCPPCode(code);
-            
-            try {
-                const result = await this._executeViaGodbolt(processedCode);
-                const endTime = performance.now();
-                const executionTime = (endTime - startTime).toFixed(2);
+            if (typeof JSCPP === 'undefined') {
+                if (typeof outputCallback === 'function') {
+                    outputCallback({
+                        type: 'status',
+                        content: 'C++ランタイム(JSCPP)を読み込んでいます...'
+                    });
+                }
                 
-                // 実行結果の処理
-                if (result.code === 0) {
-                    // 正常終了
-                    // stdoutの各要素からtextプロパティを抽出して結合
-                    const outputText = result.stdout.map(item => typeof item === 'object' && item.text ? item.text : String(item)).join('\n') || '(出力なし)';
-                    const finalResult = {
-                        result: outputText,
-                        exitCode: result.code,
-                        executionTime: `${executionTime}ms`,
-                        compilerOutput: result.buildResult ? result.buildResult.stderr.join('\n') : ''
-                    };
-                    
-                    // UI更新用のコールバックを実行
-                    if (typeof outputCallback === 'function') {
-                        // 一度ステータス更新
-                        outputCallback({
-                            type: 'output',
-                            content: outputText
-                        });
-                        
-                        // 最終結果を送信
-                        outputCallback({
-                            type: 'result',
-                            content: finalResult
-                        });
-                    }
-                    
-                    return finalResult;
-                } else {
-                    // エラー発生
-                    const errorOutput = result.stderr.join('\n') || result.buildResult?.stderr.join('\n') || '不明なエラー';
-                    
-                    const errorResult = {
-                        error: `C++の実行エラー: 終了コード ${result.code}`,
-                        errorDetail: errorOutput,
-                        executionTime: `${executionTime}ms`,
-                        compilerOutput: result.buildResult ? result.buildResult.stderr.join('\n') : ''
-                    };
+                try {
+                    await this._loadRuntime();
+                } catch (loadError) {
+                    const errorMsg = `C++ランタイムの読み込みに失敗しました: ${loadError.message}`;
+                    console.error(errorMsg);
                     
                     if (typeof outputCallback === 'function') {
                         outputCallback({
                             type: 'error',
-                            content: errorResult
+                            content: errorMsg
                         });
                     }
                     
-                    return errorResult;
+                    return { error: errorMsg };
                 }
-            } catch (execError) {
-                console.error('Godbolt APIでのC++実行中にエラーが発生しました:', execError);
+            }
+            
+            let outputText = '';
+            const startTime = performance.now();
+            let preprocessedCode = this._preprocessCPPCode(code);
+            
+            if (typeof outputCallback === 'function') {
+                outputCallback({
+                    type: 'status',
+                    content: 'C++コードを実行しています...'
+                });
+            }
+            
+            const config = {
+                stdio: {
+                    write: function(s) {
+                        outputText += s;
+                        
+                        if (typeof outputCallback === 'function') {
+                            outputCallback({
+                                type: 'output',
+                                content: s
+                            });
+                        }
+                    }
+                },
+                unsigned_overflow: "warn"
+            };
+            
+            try {
+                const exitCode = JSCPP.run(preprocessedCode, "", config);
+                const endTime = performance.now();
+                const executionTime = (endTime - startTime).toFixed(2);
+                
+                const finalResult = {
+                    result: outputText || '(出力なし)',
+                    exitCode: exitCode,
+                    executionTime: `${executionTime}ms`
+                };
+                
+                if (typeof outputCallback === 'function') {
+                    outputCallback({
+                        type: 'result',
+                        content: finalResult
+                    });
+                }
+                
+                return finalResult;
+            } catch (runtimeError) {
+                console.error('C++実行中にエラーが発生しました:', runtimeError);
                 
                 const errorResult = {
-                    error: `C++の実行エラー: ${execError.message || '不明なエラー'}`,
-                    errorDetail: execError.stack,
+                    error: `C++の実行エラー: ${runtimeError.message || '不明なエラー'}`,
+                    errorDetail: runtimeError.stack,
                     executionTime: `${(performance.now() - startTime).toFixed(2)}ms`
                 };
                 
@@ -123,6 +120,7 @@ class CPPExecutor extends ExecutorBase {
                 
                 return errorResult;
             }
+            
         } catch (error) {
             console.error('C++実行中にエラーが発生しました:', error);
             const errorResult = { 
@@ -142,65 +140,58 @@ class CPPExecutor extends ExecutorBase {
     }
 
     /**
-     * Godbolt APIを使用してC++コードを実行する
-     * @private
-     * @param {string} code - 実行するC++コード
-     * @returns {Promise<Object>} APIレスポンス
+     * JSCPPランタイムを読み込む
+     * @protected
+     * @returns {Promise<void>}
      */
-    async _executeViaGodbolt(code) {
-        const url = 'https://godbolt.org/api/compiler/' + this.#compilerOptions.compiler + '/compile';
-        
-        const requestBody = {
-            source: code,
-            options: this.#compilerOptions.options,
-            allowStoreCodeDebug: this.#compilerOptions.allowStoreCodeDebug
-        };
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
+    _loadRuntime() {
+        return new Promise((resolve, reject) => {
+            if (typeof JSCPP !== 'undefined') {
+                console.log('JSCPPはすでに読み込まれています');
+                resolve();
+                return;
+            }
+
+            try {
+                const script = document.createElement('script');
+                script.src = 'js/lib/JSCPP.es5.min.js';
+                script.onload = () => {
+                    console.log('JSCPPの読み込みが完了しました');
+                    resolve();
+                };
+                script.onerror = (e) => {
+                    console.error('JSCPPの読み込みに失敗しました:', e);
+                    reject(new Error('C++ランタイム(JSCPP)の読み込みに失敗しました'));
+                };
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('JSCPPローディングエラー:', error);
+                reject(error);
+            }
         });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
     }
 
     /**
-     * C++コードを前処理する
+     * C++コードをJSCPPで実行できるように前処理する
      * @private
      * @param {string} code - 元のC++コード
      * @returns {string} 前処理後のコード
      */
     _preprocessCPPCode(code) {
-        // 不可視文字の除去と改行の統一
         let processedCode = code
-            .replace(/[\u200B-\u200D\uFEFF]/g, '') // ゼロ幅文字の除去
-            .replace(/\r\n/g, '\n')                // 改行コードの統一
+            .replace(/[\u200B-\u200D\uFEFF]/g, '')
+            .replace(/\r\n/g, '\n')
+            .replace(/[^\x00-\x7F]/g, '')
             .trim();
         
-        // コードにmain関数がない場合はmain関数を追加
-        if (!processedCode.includes('int main(') && !processedCode.includes('int main (')) {
-            // #includeがあれば、その後にmain関数を追加
-            if (processedCode.includes('#include')) {
-                const includeEndIndex = processedCode.lastIndexOf('#include');
-                const lineEndIndex = processedCode.indexOf('\n', includeEndIndex);
-                const insertIndex = lineEndIndex > 0 ? lineEndIndex + 1 : processedCode.length;
-                
-                const beforeMain = processedCode.substring(0, insertIndex);
-                const afterMain = processedCode.substring(insertIndex);
-                
-                processedCode = beforeMain + '\n\nint main() {\n' + afterMain + '\n  return 0;\n}\n';
-            } else {
-                // #includeがなければ、標準ライブラリを追加してからmain関数を追加
-                processedCode = '#include <iostream>\n\nint main() {\n' + processedCode + '\n  return 0;\n}\n';
-            }
+        if (!processedCode.includes('using namespace std;')) {
+            processedCode = processedCode.replace(
+                /(#include\s*<[^>]+>)/,
+                '$1\nusing namespace std;'
+            );
         }
+        
+        processedCode = processedCode.replace(/std::/g, '');
         
         return processedCode;
     }

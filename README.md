@@ -31,11 +31,7 @@ git clone https://github.com/yourusername/ChatBot.git
 3. 希望するAIモデルを選択します。
 4. メッセージを入力して送信すると、AIからの応答が表示されます。
 5. 必要に応じてファイルを添付することもできます。
-6. AIが返信したコードブロックには「実行」ボタンがあり、サポートされている言語のコードをブラウザ上で直接実行できます：
-   - JavaScript: ブラウザ内で直接実行
-   - Python: Pyodideを使用してブラウザ内で実行
-   - C++: Compiler Explorer (Godbolt) APIを使用してクラウド上で実行
-   - HTML: iframeで分離された環境で実行
+6. AIが返信したコードブロックには「実行」ボタンがあり、サポートされている言語（JavaScript、Python、C++、HTML）のコードをブラウザ上で直接実行できます。
 7. 「新しいチャット」ボタンで新しい会話を開始できます。
 
 ## API設定
@@ -58,7 +54,7 @@ git clone https://github.com/yourusername/ChatBot.git
 - [Marked.js](https://marked.js.org/) - マークダウンパーサー
 - [Prism.js](https://prismjs.com/) - コードハイライト
 - [Font Awesome](https://fontawesome.com/) - アイコン
-- [Compiler Explorer API](https://godbolt.org/api) - C++コード実行
+- [JSCPP](https://github.com/felixhao28/JSCPP) - C++コード実行
 - [Pyodide](https://pyodide.org/) - Pythonコード実行
 - OpenAI API / Azure OpenAI API
 
