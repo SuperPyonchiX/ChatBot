@@ -35,6 +35,12 @@ try { ^
                     '.svg' { $contentType = 'image/svg+xml' } ^
                     '.json' { $contentType = 'application/json; charset=utf-8' } ^
                     '.ico' { $contentType = 'image/x-icon' } ^
+                    '.pdf' { $contentType = 'application/pdf' } ^
+                    '.woff' { $contentType = 'font/woff' } ^
+                    '.woff2' { $contentType = 'font/woff2' } ^
+                    '.mp4' { $contentType = 'video/mp4' } ^
+                    '.mp3' { $contentType = 'audio/mpeg' } ^
+                    '.webm' { $contentType = 'video/webm' } ^
                 } ^
                 $bytes = [System.IO.File]::ReadAllBytes($file); ^
                 $context.Response.StatusCode = 200; ^
