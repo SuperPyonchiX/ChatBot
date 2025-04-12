@@ -49,13 +49,16 @@ graph TD
     LocalStorage[ローカルストレージ]
     OpenAI[OpenAI API]
     Azure[Azure OpenAI API]
+    Godbolt[Compiler Explorer API]
     
     Client -- 設定/チャット履歴保存 --> LocalStorage
     Client -- 設定/チャット履歴読込 --> LocalStorage
-    Client -- API呼び出し --> OpenAI
-    Client -- API呼び出し --> Azure
+    Client -- AI API呼び出し --> OpenAI
+    Client -- AI API呼び出し --> Azure
+    Client -- C++コード実行 --> Godbolt
     OpenAI -- レスポンス --> Client
     Azure -- レスポンス --> Client
+    Godbolt -- コンパイル/実行結果 --> Client
 ```
 
 ## ファイル構造
@@ -122,9 +125,6 @@ ChatBot/
     │           ├── HTMLExecutor.js     # HTML実行
     │           ├── JavaScriptExecutor.js # JavaScript実行
     │           └── PythonExecutor.js   # Python実行
-    │
-    ├── lib/                 # サードパーティライブラリ
-    │   └── JSCPP.es5.min.js # C++実行ライブラリ
     │
     ├── modals/              # モーダルダイアログ管理
     │   ├── modalHandlers.js      # モーダル共通ハンドラー
@@ -428,12 +428,13 @@ Python実行を担当します。
 
 #### js/core/executors/languages/CPPExecutor.js (CPPExecutorクラス)
 
-C++実行を担当します。
+C++実行を担当します。Compiler Explorer (Godbolt) APIを使用してC++コードのコンパイルと実行を行います。
 
 **主な責任**:
-- JSCPPランタイムの読み込み
-- C++コードの実行
-- 結果の表示
+- Godbolt APIを使用したC++コードの実行
+- コンパイラオプションの管理
+- 実行結果とコンパイラ出力の処理
+- エラーハンドリング
 
 #### js/core/executors/languages/HTMLExecutor.js (HTMLExecutorクラス)
 
@@ -1760,7 +1761,7 @@ sequenceDiagram
 
 ## APIインターフェース
 
-ChatBotは主に以下の2つのAPIインターフェースを使用します：
+ChatBotは主に以下の3つのAPIインターフェースを使用します：
 
 ### OpenAI API
 
@@ -1872,6 +1873,52 @@ ChatBotは主に以下の2つのAPIインターフェースを使用します：
   ]
 }
 ```
+
+### Compiler Explorer (Godbolt) API
+
+**エンドポイント**: `https://godbolt.org/api/compiler/{compiler-id}/compile`
+
+**リクエスト例**:
+```json
+{
+  "source": "#include <iostream>\nint main() { std::cout << \"Hello World!\"; return 0; }",
+  "options": {
+    "compilerOptions": {
+      "executorRequest": true,
+      "skipAsm": true
+    }
+  },
+  "allowStoreCodeDebug": true
+}
+```
+
+**レスポンス例**:
+```json
+{
+  "code": 0,
+  "stdout": [
+    {
+      "text": "Hello World!"
+    }
+  ],
+  "stderr": [],
+  "execTime": "46",
+  "processExecutionResultTime": 0.034,
+  "buildResult": {
+    "code": 0,
+    "stdout": [],
+    "stderr": [],
+    "execTime": "123",
+    "okToCache": true
+  }
+}
+```
+
+**主な機能**:
+- GCC 12.2などの実際のC++コンパイラによるコンパイルと実行
+- コンパイラオプションのカスタマイズ
+- コンパイル結果とランタイム出力の分離
+- エラー情報の詳細な取得
 
 ## セキュリティ考慮事項
 
