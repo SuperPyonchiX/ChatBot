@@ -1,9 +1,10 @@
 @echo off
-@REM chcp 65001 > nul
 cd /d "%~dp0"
 echo ローカルサーバーを起動中...
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-"$port = 8000; $url = 'http://localhost:' + $port + '/'; ^
+"^
+$port = 8000; ^
+$url = 'http://localhost:' + $port + '/'; ^
 try { ^
     $listener = New-Object System.Net.HttpListener; ^
     $listener.Prefixes.Add($url); ^
@@ -11,6 +12,8 @@ try { ^
     Write-Host 'サーバーを開始しました: ' -NoNewline; ^
     Write-Host $url -ForegroundColor Green; ^
     Write-Host 'Ctrl + C で終了' -ForegroundColor Yellow; ^
+    Start-Process $url; ^
+    Write-Host 'ブラウザでindex.htmlを開きました' -ForegroundColor Cyan; ^
     while ($listener.IsListening) { ^
         try { ^
             $context = $listener.GetContext(); ^
