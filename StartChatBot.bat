@@ -1,9 +1,14 @@
 @echo off
 cd /d "%~dp0"
-echo ローカルサーバーを起動中...
+
+REM ポート番号の設定（デフォルト：8000）
+set PORT=8000
+if not "%1"=="" set PORT=%1
+
+echo ローカルサーバーを起動中...（ポート: %PORT%）
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 "^
-$port = 8000; ^
+$port = $env:PORT; ^
 $url = 'http://localhost:' + $port + '/'; ^
 try { ^
     $listener = New-Object System.Net.HttpListener; ^
@@ -20,8 +25,11 @@ try { ^
             $path = $context.Request.Url.LocalPath.TrimStart('/'); ^
             if ([string]::IsNullOrWhiteSpace($path)) { $path = 'index.html' } ^
             $file = Join-Path (Get-Location) $path; ^
-            Write-Host (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') -NoNewline; ^
+            $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'; ^
+            $logMessage = """$timestamp $($context.Request.HttpMethod) $path - """; ^
+            Write-Host $timestamp -NoNewline; ^
             Write-Host (' ' + $context.Request.HttpMethod + ' ' + $path + ' - ') -NoNewline; ^
+            Add-Content -Path """server.log""" -Value """$logMessage""" -Encoding UTF8; ^
             if (Test-Path $file) { ^
                 $contentType = 'text/plain; charset=utf-8'; ^
                 switch ([System.IO.Path]::GetExtension($file).ToLower()) { ^
