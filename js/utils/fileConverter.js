@@ -77,6 +77,7 @@ class FileConverter {
             else if (this.#isOfficeFile(file.type)) {
                 const dataUrl = await FileReaderUtil.getInstance.readFileAsDataURL(file);
                 const extractedText = await this.#extractTextFromOfficeFile(file);
+                const extractedImages = await this.#extractImagesFromOfficeFile(file);
                 
                 return {
                     type: 'office',
@@ -84,7 +85,8 @@ class FileConverter {
                     mimeType: file.type,
                     size: file.size,
                     data: dataUrl,
-                    content: extractedText
+                    content: extractedText,
+                    images: extractedImages
                 };
             }
             // その他のファイルの場合
@@ -288,5 +290,176 @@ class FileConverter {
         if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'PowerPoint';
         
         return 'Office';
+    }
+
+    /**
+     * Officeファイルから画像を抽出します
+     * @param {File} file - 対象ファイル
+     * @returns {Promise<Array>} 抽出された画像の配列
+     */
+    async #extractImagesFromOfficeFile(file) {
+        try {
+            if (file.type.includes('word') || file.type.includes('document')) {
+                return await this.#extractImagesFromWordFile(file);
+            } else if (file.type.includes('powerpoint') || file.type.includes('presentation')) {
+                return await this.#extractImagesFromPowerPointFile(file);
+            } else if (file.type.includes('excel') || file.type.includes('sheet')) {
+                return await this.#extractImagesFromExcelFile(file);
+            }
+            return [];
+        } catch (error) {
+            console.error('Officeファイル画像抽出エラー:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Wordファイルから画像を抽出します
+     * @param {File} file - 対象ファイル
+     * @returns {Promise<Array>} 抽出された画像の配列
+     */
+    async #extractImagesFromWordFile(file) {
+        try {
+            const arrayBuffer = await FileReaderUtil.getInstance.readFileAsArrayBuffer(file);
+            const zip = await JSZip.loadAsync(arrayBuffer);
+            
+            // 画像ファイルを格納する配列
+            const extractedImages = [];
+            
+            // Word文書内の画像を探索
+            const imageRegex = /word\/media\/.*?\.(png|jpg|jpeg|gif|svg|bmp)/i;
+            const promises = [];
+            
+            zip.forEach((relativePath, zipEntry) => {
+                if (imageRegex.test(relativePath)) {
+                    const promise = (async () => {
+                        const imageData = await zipEntry.async('base64');
+                        const extension = relativePath.split('.').pop().toLowerCase();
+                        const mimeType = this.#getMimeTypeFromExtension(extension);
+                        
+                        if (mimeType) {
+                            extractedImages.push({
+                                name: relativePath.split('/').pop(),
+                                data: `data:${mimeType};base64,${imageData}`,
+                                mimeType: mimeType
+                            });
+                        }
+                    })();
+                    promises.push(promise);
+                }
+            });
+            
+            await Promise.all(promises);
+            return extractedImages;
+        } catch (error) {
+            console.error('Word画像抽出エラー:', error);
+            return [];
+        }
+    }
+
+    /**
+     * PowerPointファイルから画像を抽出します
+     * @param {File} file - 対象ファイル
+     * @returns {Promise<Array>} 抽出された画像の配列
+     */
+    async #extractImagesFromPowerPointFile(file) {
+        try {
+            const arrayBuffer = await FileReaderUtil.getInstance.readFileAsArrayBuffer(file);
+            const zip = await JSZip.loadAsync(arrayBuffer);
+            
+            // 画像ファイルを格納する配列
+            const extractedImages = [];
+            
+            // PowerPoint文書内の画像を探索
+            const imageRegex = /ppt\/media\/.*?\.(png|jpg|jpeg|gif|svg|bmp)/i;
+            const promises = [];
+            
+            zip.forEach((relativePath, zipEntry) => {
+                if (imageRegex.test(relativePath)) {
+                    const promise = (async () => {
+                        const imageData = await zipEntry.async('base64');
+                        const extension = relativePath.split('.').pop().toLowerCase();
+                        const mimeType = this.#getMimeTypeFromExtension(extension);
+                        
+                        if (mimeType) {
+                            extractedImages.push({
+                                name: relativePath.split('/').pop(),
+                                data: `data:${mimeType};base64,${imageData}`,
+                                mimeType: mimeType
+                            });
+                        }
+                    })();
+                    promises.push(promise);
+                }
+            });
+            
+            await Promise.all(promises);
+            return extractedImages;
+        } catch (error) {
+            console.error('PowerPoint画像抽出エラー:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Excelファイルから画像を抽出します
+     * @param {File} file - 対象ファイル
+     * @returns {Promise<Array>} 抽出された画像の配列
+     */
+    async #extractImagesFromExcelFile(file) {
+        try {
+            const arrayBuffer = await FileReaderUtil.getInstance.readFileAsArrayBuffer(file);
+            const zip = await JSZip.loadAsync(arrayBuffer);
+            
+            // 画像ファイルを格納する配列
+            const extractedImages = [];
+            
+            // Excel文書内の画像を探索
+            const imageRegex = /xl\/media\/.*?\.(png|jpg|jpeg|gif|svg|bmp)/i;
+            const promises = [];
+            
+            zip.forEach((relativePath, zipEntry) => {
+                if (imageRegex.test(relativePath)) {
+                    const promise = (async () => {
+                        const imageData = await zipEntry.async('base64');
+                        const extension = relativePath.split('.').pop().toLowerCase();
+                        const mimeType = this.#getMimeTypeFromExtension(extension);
+                        
+                        if (mimeType) {
+                            extractedImages.push({
+                                name: relativePath.split('/').pop(),
+                                data: `data:${mimeType};base64,${imageData}`,
+                                mimeType: mimeType
+                            });
+                        }
+                    })();
+                    promises.push(promise);
+                }
+            });
+            
+            await Promise.all(promises);
+            return extractedImages;
+        } catch (error) {
+            console.error('Excel画像抽出エラー:', error);
+            return [];
+        }
+    }
+
+    /**
+     * ファイル拡張子からMIMEタイプを取得します
+     * @param {string} extension - ファイル拡張子
+     * @returns {string} MIMEタイプ
+     */
+    #getMimeTypeFromExtension(extension) {
+        const mimeTypeMap = {
+            'png': 'image/png',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'gif': 'image/gif',
+            'svg': 'image/svg+xml',
+            'bmp': 'image/bmp'
+        };
+        
+        return mimeTypeMap[extension.toLowerCase()] || null;
     }
 }
