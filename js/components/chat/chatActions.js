@@ -261,12 +261,17 @@ class ChatActions {
             // WEB検索が有効で、GPTが必要と判断した場合に検索を実行
             let messageWithSearchResults = userText;
             let searchPerformed = false;
-            
+
             const webExtractor = WebContentExtractor.getInstance;
             if (webExtractor && webExtractor.hasTavilyApiKey() && webExtractor.isWebSearchEnabled()) {
                 try {
                     const model = window.AppState.getCurrentModel() || window.CONFIG.WEB_SEARCH.AUTO_SEARCH_MODEL;
-                    const searchResult = await webExtractor.autoSearchWeb(userText, model, chatMessages);
+                    
+                    // 現在の会話からチャット履歴を取得
+                    const chatHistory = conversation.messages || [];
+                    
+                    // チャット履歴を含めて検索判断を行う
+                    const searchResult = await webExtractor.autoSearchWeb(userText, model, chatMessages, chatHistory);
                     
                     if (searchResult.searchPerformed && searchResult.hasResults) {
                         // 検索結果がある場合、メッセージを更新
