@@ -51,6 +51,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             UI.getInstance.setupPromptManagerEvents();
         }
         
+        // Confluence連携機能の初期化
+        if (ConfluenceChatActions) {
+            const confluenceChatActions = ConfluenceChatActions.getInstance;
+            const chatInputContainer = document.querySelector('.chat-input-container');
+            if (chatInputContainer) {
+                confluenceChatActions.addConfluenceSearchButton(chatInputContainer);
+            }
+        }
+        
         _loadConversations();
         _setupEventListeners();
     }
