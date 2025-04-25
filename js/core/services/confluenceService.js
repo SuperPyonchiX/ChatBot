@@ -8,7 +8,7 @@ class ConfluenceService {
     #pythonExecutor;
     #baseUrl;
     #username;
-    #apiToken;
+    #password;
     #space;
     
     constructor() {
@@ -19,7 +19,7 @@ class ConfluenceService {
         this.#pythonExecutor = PythonExecutor.getInstance;
         this.#baseUrl = '';
         this.#username = '';
-        this.#apiToken = '';
+        this.#password = '';
         this.#space = '';
         
         ConfluenceService.#instance = this;
@@ -41,19 +41,19 @@ class ConfluenceService {
      * @param {Object} config - 設定オブジェクト
      * @param {string} config.baseUrl - ConfluenceのベースURL (例: https://yourcompany.atlassian.net/wiki)
      * @param {string} config.username - ユーザー名/メールアドレス
-     * @param {string} config.apiToken - APIトークン
-     * @param {string} config.space - スペースキー
+     * @param {string} config.password - パスワード
+     * @param {string} config.space - スペース識別子
      * @returns {boolean} - 設定が成功したかどうか
      */
-    configure({ baseUrl, username, apiToken, space }) {
-        if (!baseUrl || !username || !apiToken || !space) {
+    configure({ baseUrl, username, password, space }) {
+        if (!baseUrl || !username || !password || !space) {
             console.error('Confluenceの設定に必要なパラメータが不足しています');
             return false;
         }
         
         this.#baseUrl = baseUrl;
         this.#username = username;
-        this.#apiToken = apiToken;
+        this.#password = password;
         this.#space = space;
         
         return true;
@@ -64,7 +64,7 @@ class ConfluenceService {
      * @returns {boolean} - 設定が完了しているかどうか
      */
     isConfigured() {
-        return Boolean(this.#baseUrl && this.#username && this.#apiToken && this.#space);
+        return Boolean(this.#baseUrl && this.#username && this.#password && this.#space);
     }
     
     /**
@@ -139,11 +139,11 @@ from bs4 import BeautifulSoup
 # Confluence API設定
 base_url = "${this.#baseUrl}"
 username = "${this.#username}"
-api_token = "${this.#apiToken}"
+password = "${this.#password}"
 space_key = "${this.#space}"
 
 # Basic認証ヘッダーの作成
-auth_str = f"{username}:{api_token}"
+auth_str = f"{username}:{password}"
 auth_bytes = auth_str.encode('ascii')
 auth_b64 = base64.b64encode(auth_bytes).decode('ascii')
 
@@ -239,10 +239,10 @@ from bs4 import BeautifulSoup
 # Confluence API設定
 base_url = "${this.#baseUrl}"
 username = "${this.#username}"
-api_token = "${this.#apiToken}"
+password = "${this.#password}"
 
 # Basic認証ヘッダーの作成
-auth_str = f"{username}:{api_token}"
+auth_str = f"{username}:{password}"
 auth_bytes = auth_str.encode('ascii')
 auth_b64 = base64.b64encode(auth_bytes).decode('ascii')
 

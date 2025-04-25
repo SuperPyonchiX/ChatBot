@@ -6,13 +6,11 @@
 class ConfluenceChatActions {
     static #instance = null;
     #confluenceService;
-    #settingsModal;
       constructor() {
         if (ConfluenceChatActions.#instance) {
             return ConfluenceChatActions.#instance;
         }
           this.#confluenceService = ConfluenceService.getInstance;
-        this.#settingsModal = ConfluenceSettingsModal.getInstance;
         
         ConfluenceChatActions.#instance = this;
     }
@@ -60,7 +58,7 @@ class ConfluenceChatActions {
     #handleConfluenceSearchClick() {
         if (!this.#confluenceService.isConfigured()) {
             UI.getInstance.Core.Notification.show('Confluenceの設定が必要です', 'warning');
-            this.#settingsModal.show();
+            ConfluenceSettingsModal.getInstance.show();
             return;
         }
         
