@@ -12,6 +12,8 @@
 
 .form-group input[type="text"],
 .form-group input[type="password"],
+.form-group input[type="url"],
+.form-group input[type="email"],
 .form-group textarea {
     width: 100%;
     padding: var(--form-input-padding);

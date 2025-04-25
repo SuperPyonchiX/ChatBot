@@ -311,6 +311,39 @@
         </div>
     </div>
 
+    <!-- Confluence設定モーダル -->
+    <div id="confluenceSettingsModal" class="modal">
+        <div class="modal-content">
+            <h2>Confluence連携設定</h2>
+            <p class="modal-description">Confluenceの情報を検索するための設定を入力してください。通常のユーザー名とパスワードでログインできます。</p>
+            
+            <div class="form-group">
+                <label for="confluence-baseurl">ベースURL</label>
+                <input type="url" id="confluence-baseurl" placeholder="https://yourcompany.atlassian.net/wiki" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confluence-username">メールアドレス</label>
+                <input type="email" id="confluence-username" placeholder="example@yourcompany.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confluence-password">パスワード</label>
+                <input type="password" id="confluence-password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confluence-space">Confluenceスペース識別子 (オプション)</label>
+                <input type="text" id="confluence-space" placeholder="TEAMSPACE">
+            </div>
+            
+            <div class="modal-buttons">
+                <button id="saveConfluenceSettings" class="primary-button">保存</button>
+                <button id="cancelConfluenceSettings" class="secondary-button">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
     <!-- JSファイルを読み込む -->
     <!-- 実行環境関連のファイル -->
     <script src="js/lib/JSCPP.es5.min.js"></script>
