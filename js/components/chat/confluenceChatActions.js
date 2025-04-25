@@ -11,9 +11,8 @@ class ConfluenceChatActions {
         if (ConfluenceChatActions.#instance) {
             return ConfluenceChatActions.#instance;
         }
-        
-        this.#confluenceService = ConfluenceService.getInstance;
-        this.#settingsModal = new ConfluenceSettingsModal();
+          this.#confluenceService = ConfluenceService.getInstance;
+        this.#settingsModal = ConfluenceSettingsModal.getInstance;
         
         ConfluenceChatActions.#instance = this;
     }
@@ -42,8 +41,7 @@ class ConfluenceChatActions {
             actionsContainer = document.createElement('div');
             actionsContainer.className = 'chat-input-actions';
             chatInputContainer.appendChild(actionsContainer);
-        }
-          // Confluence検索ボタン作成
+        }          // Confluence検索ボタン作成
         const searchButton = document.createElement('button');
         searchButton.className = 'primary-button action-button confluence-search-btn';
         searchButton.title = 'Confluenceで検索';
@@ -53,17 +51,6 @@ class ConfluenceChatActions {
         searchButton.addEventListener('click', () => this.#handleConfluenceSearchClick());
         
         actionsContainer.appendChild(searchButton);
-        
-        // 設定ボタン作成
-        const settingsButton = document.createElement('button');
-        settingsButton.className = 'primary-button action-button confluence-settings-btn';
-        settingsButton.title = 'Confluence設定';
-        settingsButton.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>';
-        
-        // クリックイベント設定
-        settingsButton.addEventListener('click', () => this.#handleConfluenceSettingsClick());
-        
-        actionsContainer.appendChild(settingsButton);
     }
     
     /**
@@ -79,14 +66,6 @@ class ConfluenceChatActions {
         
         // 検索クエリ入力用のモーダル表示
         this.#showSearchQueryInput();
-    }
-    
-    /**
-     * Confluence設定ボタン押下時の処理
-     * @private
-     */
-    #handleConfluenceSettingsClick() {
-        this.#settingsModal.show();
     }
     
     /**

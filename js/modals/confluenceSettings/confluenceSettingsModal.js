@@ -4,14 +4,41 @@
  */
 
 class ConfluenceSettingsModal {
+    // シングルトンインスタンス
+    static #instance = null;
+    
+    // プライベートフィールド
     #modal;
     #form;
     #overlay;
     #confluenceService;
     
+    /**
+     * コンストラクタ
+     * @private
+     */
     constructor() {
+        // すでにインスタンスが存在する場合は既存のインスタンスを返す
+        if (ConfluenceSettingsModal.#instance) {
+            return ConfluenceSettingsModal.#instance;
+        }
+        
         this.#confluenceService = ConfluenceService.getInstance;
         this.#createModal();
+        
+        // シングルトンインスタンスとして保存
+        ConfluenceSettingsModal.#instance = this;
+    }
+    
+    /**
+     * シングルトンインスタンスを取得
+     * @returns {ConfluenceSettingsModal} ConfluenceSettingsModalのインスタンス
+     */
+    static get getInstance() {
+        if (!ConfluenceSettingsModal.#instance) {
+            ConfluenceSettingsModal.#instance = new ConfluenceSettingsModal();
+        }
+        return ConfluenceSettingsModal.#instance;
     }
       /**
      * モーダルを表示する

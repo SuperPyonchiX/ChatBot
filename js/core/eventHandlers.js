@@ -101,6 +101,15 @@ class EventHandlers {
                 PromptManagerModal.getInstance.showPromptManagerModal();
             });
         }
+        
+        // Confluence設定
+        if (window.Elements.openConfluenceSettings) {
+            window.Elements.openConfluenceSettings.addEventListener('click', () => {
+                window.Elements.settingsMenu.style.display = 'none';
+                // シングルトンパターンを使用して直接モーダルを表示
+                ConfluenceSettingsModal.getInstance.show();
+            });
+        }
     }
 
     /**

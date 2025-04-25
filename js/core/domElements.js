@@ -36,7 +36,7 @@ window.Elements = (function() {
         
         // ボタン関連
         'newChatButton', 'clearHistoryButton', 'settingsButton', 'settingsMenu',
-        'openSystemPromptSettings', 'openApiSettings', 'openPromptManager',
+        'openSystemPromptSettings', 'openApiSettings', 'openPromptManager', 'openConfluenceSettings',
         
         // ファイル関連
         'fileInput',
