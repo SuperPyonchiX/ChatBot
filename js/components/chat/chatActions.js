@@ -255,7 +255,52 @@ class ChatActions {
             let attachmentContent = '';
             let displayAttachments = attachments || [];
 
-            // ユーザーメッセージを表示
+            // Confluenceコマンドの処理
+            const confluencePrefix = '/confluence';
+            let messageWithConfluenceResults = userText;
+            
+            if (userText.startsWith(confluencePrefix)) {
+                try {
+                    const confluenceChatActions = ConfluenceChatActions.getInstance;
+                    if (confluenceChatActions) {
+                        // Confluenceサービスが設定済みか確認
+                        const confluenceService = ConfluenceService.getInstance;
+                        if (confluenceService && confluenceService.isConfigured()) {
+                            // コマンドを解析 (/confluence 検索ワード)
+                            const searchQuery = userText.substring(confluencePrefix.length).trim();
+                            if (searchQuery) {
+                                // ユーザーメッセージを表示
+                                await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
+                                
+                                // Confluence検索実行
+                                const searchingMessage = ChatRenderer.getInstance.addSystemMessage(
+                                    `Confluenceで「${searchQuery}」を検索中...`,
+                                    chatMessages
+                                );
+                                
+                                // 検索実行
+                                await confluenceChatActions.searchAndAnswerWithGPT(searchQuery, searchingMessage);
+                                
+                                // この特別なコマンドは通常のGPT処理をスキップ
+                                return { processed: true, titleUpdated };
+                            }
+                        } else {
+                            // Confluenceが未設定の場合
+                            await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
+                            ChatRenderer.getInstance.addSystemMessage(
+                                'Confluenceの設定が必要です。設定ボタンからConfluence設定を行ってください。',
+                                chatMessages,
+                                'warning'
+                            );
+                            return { processed: true };
+                        }
+                    }
+                } catch (confluenceError) {
+                    console.error('Confluence検索処理中にエラーが発生しました:', confluenceError);
+                }
+            }
+            
+            // 通常のユーザーメッセージを表示（Confluenceコマンドでなかった場合）
             await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
 
             // WEB検索が有効で、GPTが必要と判断した場合に検索を実行

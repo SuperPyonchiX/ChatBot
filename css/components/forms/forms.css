@@ -10,6 +10,29 @@
     color: var(--text-primary);
 }
 
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-top: var(--spacing-xs);
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: var(--spacing-sm);
+}
+
+.checkbox-group label {
+    display: inline;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.help-text {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    margin-top: calc(var(--spacing-xs) * -1);
+    margin-bottom: var(--spacing-sm);
+}
+
 .form-group input[type="text"],
 .form-group input[type="password"],
 .form-group input[type="url"],

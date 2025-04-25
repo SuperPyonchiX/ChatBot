@@ -17,7 +17,13 @@
     --accent-color: #10a37f;
     --accent-hover-color: #0d8c6d;
     --error-color: #e25555;
+    --warning-color: #f0ad4e;
     --success-color: #28a745;
+    
+    /* 背景色バリエーション */
+    --error-bg: rgba(226, 85, 85, 0.1);
+    --warning-bg: rgba(240, 173, 78, 0.1);
+    --success-bg: rgba(40, 167, 69, 0.1);
     
     /* レイアウト */
     --spacing-xs: 4px;

@@ -65,8 +65,7 @@ class ConfluenceChatActions {
         // 検索クエリ入力用のモーダル表示
         this.#showSearchQueryInput();
     }
-    
-    /**
+      /**
      * 検索クエリ入力用のミニモーダルを表示
      * @private 
      */
@@ -98,10 +97,12 @@ class ConfluenceChatActions {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const query = searchInput.value.trim();
+            const askGpt = askGptCheckbox.checked;
+            
             if (query) {
                 document.body.removeChild(overlay);
                 document.body.removeChild(miniModal);
-                this.#performConfluenceSearch(query);
+                this.#performConfluenceSearch(query, askGpt);
             }
         });
         
@@ -118,6 +119,28 @@ class ConfluenceChatActions {
         formGroup.appendChild(searchInput);
         form.appendChild(formGroup);
         
+        // GPTオプション
+        const optionGroup = document.createElement('div');
+        optionGroup.className = 'form-group checkbox-group';
+        
+        const askGptCheckbox = document.createElement('input');
+        askGptCheckbox.type = 'checkbox';
+        askGptCheckbox.id = 'ask-gpt-checkbox';
+        
+        const askGptLabel = document.createElement('label');
+        askGptLabel.setAttribute('for', 'ask-gpt-checkbox');
+        askGptLabel.textContent = '検索結果をもとにGPTに回答を生成させる';
+        
+        optionGroup.appendChild(askGptCheckbox);
+        optionGroup.appendChild(askGptLabel);
+        form.appendChild(optionGroup);
+        
+        // 説明テキスト
+        const helpText = document.createElement('p');
+        helpText.className = 'help-text';
+        helpText.textContent = 'オンにすると、Confluenceの検索結果をGPTに送り、その情報を元に回答を生成します。';
+        form.appendChild(helpText);
+        
         // ボタンコンテナ
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'modal-button-container';
@@ -129,6 +152,17 @@ class ConfluenceChatActions {
         searchButton.className = 'button primary';
         buttonContainer.appendChild(searchButton);
         
+        // キャンセルボタン
+        const cancelButton = document.createElement('button');
+        cancelButton.textContent = 'キャンセル';
+        cancelButton.type = 'button';
+        cancelButton.className = 'button secondary';
+        cancelButton.addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            document.body.removeChild(miniModal);
+        });
+        buttonContainer.appendChild(cancelButton);
+        
         form.appendChild(buttonContainer);
         miniModal.appendChild(form);
         
@@ -138,17 +172,18 @@ class ConfluenceChatActions {
         
         // 入力欄にフォーカス
         searchInput.focus();
-    }
-    
-    /**
+    }    /**
      * Confluence検索を実行し、結果をチャットに表示
      * 
      * @param {string} query - 検索クエリ
+     * @param {boolean} [askGpt=false] - 検索結果をGPTに質問するかどうか
+     * @param {HTMLElement} [existingMessage=null] - 既存の検索メッセージ要素（メインチャットからの呼び出し時に使用）
+     * @returns {Promise<Object>} - 検索結果
      * @private
      */
-    async #performConfluenceSearch(query) {
-        // 検索中メッセージをチャットに表示
-        const searchingMessage = this.#addSystemMessageToChat(`Confluenceで「${query}」を検索中...`);
+    async #performConfluenceSearch(query, askGpt = false, existingMessage = null) {
+        // 検索中メッセージをチャットに表示（既存のメッセージがあれば使用）
+        const searchingMessage = existingMessage || this.#addSystemMessageToChat(`Confluenceで「${query}」を検索中...`);
         
         try {
             // 検索実行
@@ -164,7 +199,7 @@ class ConfluenceChatActions {
             if (result.error) {
                 searchingMessage.textContent = `検索エラー: ${result.error}`;
                 searchingMessage.classList.add('error-message');
-                return;
+                return null;
             }
             
             // 検索結果をパース（文字列の場合）
@@ -185,6 +220,9 @@ class ConfluenceChatActions {
             // 結果表示のHTMLを生成
             let resultsHTML;
             if (parsedResults && parsedResults.results && parsedResults.results.length > 0) {
+                // GPTに質問する場合は追加ボタンを表示
+                const askGptButton = askGpt ? '' : `<button class="button primary-button ask-gpt-btn">この検索結果についてGPTに質問</button>`;
+                
                 resultsHTML = `<div class="confluence-search-results">
                     <h4>Confluence検索結果: ${parsedResults.results.length}件</h4>
                     <ul class="result-list">
@@ -202,12 +240,13 @@ class ConfluenceChatActions {
                             </li>
                         `).join('')}
                     </ul>
+                    ${askGptButton}
                 </div>`;
                 
                 // 検索結果をチャットに表示
                 searchingMessage.innerHTML = resultsHTML;
                 
-                // 「内容を表示」ボタンにイベントを設定
+                // 「内容を表示」ボタンと「GPTに質問」ボタンにイベントを設定
                 setTimeout(() => {
                     const viewButtons = searchingMessage.querySelectorAll('.view-content-btn');
                     viewButtons.forEach(button => {
@@ -216,15 +255,32 @@ class ConfluenceChatActions {
                             this.#showConfluencePageContent(pageId);
                         });
                     });
+                    
+                    // GPTに質問ボタンのイベント設定
+                    const askGptBtn = searchingMessage.querySelector('.ask-gpt-btn');
+                    if (askGptBtn) {
+                        askGptBtn.addEventListener('click', () => {
+                            this.#askGptWithConfluenceResults(query, parsedResults);
+                        });
+                    }
                 }, 100);
+                
+                // GPTに質問する場合はここで実行
+                if (askGpt && parsedResults) {
+                    return this.#askGptWithConfluenceResults(query, parsedResults, searchingMessage);
+                }
+                
+                return parsedResults;
             } else {
                 // 検索結果がない場合
                 searchingMessage.textContent = `「${query}」に関する情報はConfluenceで見つかりませんでした。`;
+                return null;
             }
         } catch (error) {
             console.error('Confluence検索エラー:', error);
             searchingMessage.textContent = `検索エラー: ${error.message || '不明なエラーが発生しました'}`;
             searchingMessage.classList.add('error-message');
+            return null;
         }
     }
     
@@ -277,6 +333,148 @@ class ConfluenceChatActions {
             console.error('ページ内容取得エラー:', error);
             loadingMessage.textContent = `エラー: ${error.message || '不明なエラーが発生しました'}`;
             loadingMessage.classList.add('error-message');
+        }
+    }    /**
+     * Confluenceで検索してGPTに回答させる（パブリックメソッド - メインチャットからも使用可能）
+     * 
+     * @param {string} query - 検索クエリ
+     * @param {HTMLElement} [searchingMessage] - すでに表示されている検索中メッセージ要素
+     * @returns {Promise<Object>} - 検索と回答の結果
+     * @public
+     */
+    async searchAndAnswerWithGPT(query, searchingMessage = null) {
+        try {
+            // 検索中メッセージをまだ表示していない場合は表示
+            const searchMessage = searchingMessage || this.#addSystemMessageToChat(`Confluenceで「${query}」を検索中...`);
+            
+            // Confluence検索を実行
+            const results = await this.#performConfluenceSearch(query, true, searchMessage);
+            return results;
+        } catch (error) {
+            console.error('Confluence検索と回答生成エラー:', error);
+            return { error: error.message || '検索処理中にエラーが発生しました' };
+        }
+    }
+
+    /**
+     * Confluenceの検索結果をもとにGPTに質問する
+     * 
+     * @param {string} query - ユーザーの質問
+     * @param {Object} confluenceResults - Confluenceの検索結果
+     * @param {HTMLElement} [searchingMessage] - 既存の検索結果メッセージ要素
+     * @returns {Promise<Object>} - GPTの応答結果
+     * @private
+     */
+    async #askGptWithConfluenceResults(query, confluenceResults, searchingMessage = null) {
+        const results = confluenceResults.results || [];
+        if (results.length === 0) {
+            return null;
+        }
+        
+        // GPTに送信するプロンプトを作成
+        let contextText = '以下のConfluence検索結果を参考にして質問に回答してください。\n\n';
+        
+        // 検索結果の内容を追加
+        results.forEach((item, index) => {
+            contextText += `----文書${index + 1}----\n`;
+            contextText += `タイトル: ${item.title}\n`;
+            contextText += `要約: ${item.summary}\n\n`;
+        });
+        
+        // ユーザー質問を追加
+        contextText += `----質問----\n${query}\n\n`;
+        
+        try {
+            // 処理中メッセージを表示
+            const processingMessage = searchingMessage || this.#addSystemMessageToChat(`Confluenceの情報をもとにGPTが回答を作成中...`);
+            if (!searchingMessage) {
+                processingMessage.classList.add('gpt-processing');
+            }
+            
+            // 現在のチャット会話を取得
+            const currentConversation = window.AppState.getConversationById(window.AppState.currentConversationId);
+            if (!currentConversation) {
+                throw new Error('現在の会話が見つかりません');
+            }
+            
+            // システムプロンプトを取得
+            const systemPrompt = window.AppState.systemPrompt || window.CONFIG.SYSTEM_PROMPTS.DEFAULT_SYSTEM_PROMPT;
+            
+            // GPTにコンテキストと質問を送信するためのメッセージ配列
+            const messagesWithSystem = [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: contextText }
+            ];
+            
+            // チャット履歴を作成
+            if (!currentConversation.messages) {
+                currentConversation.messages = [];
+            }
+            
+            // ユーザーのメッセージとして会話履歴に追加
+            currentConversation.messages.push({
+                role: 'user',
+                content: `Confluence検索「${query}」結果に基づく質問`,
+                timestamp: Date.now()
+            });
+            
+            let fullResponseText = '';
+            let isFirstChunk = true;
+            
+            // メッセージのHTML要素を作成
+            const chatMessages = document.getElementById('chatMessages');
+            if (!chatMessages) {
+                throw new Error('チャットメッセージ要素が見つかりません');
+            }
+            
+            // 応答表示用のメッセージ要素
+            const { messageDiv, contentContainer } = ChatRenderer.getInstance.addStreamingBotMessage(chatMessages, Date.now());
+            
+            // GPTにAPI呼び出し
+            await AIAPI.getInstance.callOpenAIAPI(
+                messagesWithSystem,
+                currentConversation.model,
+                [],  // 添付ファイルなし
+                {
+                    stream: true,
+                    onChunk: (chunk) => {
+                        fullResponseText += chunk;
+                        // ストリーミング中のメッセージ更新
+                        ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
+                        isFirstChunk = false;
+                    },
+                    onComplete: (fullText) => {
+                        // ストリーミング完了時の処理
+                        ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
+                        fullResponseText = fullText;
+                        
+                        // 元々の検索結果メッセージを更新（渡された場合のみ）
+                        if (searchingMessage) {
+                            searchingMessage.innerHTML = `<div class="confluence-search-results">
+                                <h4>Confluence検索結果がGPTに送信されました</h4>
+                                <p>「${query}」に関する情報をGPTに提供しました。</p>
+                            </div>`;
+                        }
+                    }
+                }
+            );
+            
+            // 応答をメッセージ履歴に追加
+            currentConversation.messages.push({
+                role: 'assistant',
+                content: fullResponseText,
+                timestamp: Date.now()
+            });
+            
+            // 会話更新を保存
+            ChatHistory.getInstance.saveConversation(currentConversation);
+            
+            return { success: true, response: fullResponseText };
+        } catch (error) {
+            console.error('GPT応答生成エラー:', error);
+            const errorMessage = this.#addSystemMessageToChat(`エラー: Confluenceの情報をもとにした回答の生成に失敗しました - ${error.message}`);
+            errorMessage.classList.add('error-message');
+            return { error: error.message };
         }
     }
     

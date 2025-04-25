@@ -45,6 +45,21 @@
     padding: var(--spacing-sm);
 }
 
+/* システムメッセージのタイプ別スタイル */
+.message.bot.system-info .message-content {
+    background-color: var(--background-secondary);
+}
+
+.message.bot.system-warning .message-content {
+    background-color: var(--warning-bg);
+    border-left: 3px solid var(--warning-color);
+}
+
+.message.bot.system-error .message-content {
+    background-color: var(--error-bg);
+    border-left: 3px solid var(--error-color);
+}
+
 /* メッセージの添付ファイル表示 */
 .message-attachments {
     margin-top: var(--spacing-sm);

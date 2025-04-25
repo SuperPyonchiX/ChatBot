@@ -720,16 +720,17 @@ class ChatRenderer {
     }
 
     /**
-     * システムメッセージを表示する
-     * @param {HTMLElement} chatMessages - チャットメッセージコンテナ
+     * システムメッセージを追加する
+     * @param {HTMLElement} chatMessages - メッセージ表示領域
      * @param {string} message - 表示するメッセージ
+     * @param {string} [type='info'] - メッセージのタイプ ('info', 'warning', 'error')
      * @returns {Object} メッセージ要素の参照
      */
-    addSystemMessage(chatMessages, message) {
+    addSystemMessage(chatMessages, message, type = 'info') {
         if (!chatMessages) return null;
         
         const messageDiv = ChatUI.getInstance.createElement('div', {
-            classList: ['message', 'bot', 'system-message'],
+            classList: ['message', 'bot', 'system-message', `system-${type}`],
             attributes: {
                 'role': 'status',
                 'aria-live': 'polite'
@@ -737,9 +738,16 @@ class ChatRenderer {
         });
         
         const contentDiv = ChatUI.getInstance.createElement('div', { classList: 'message-content' });
+        let innerContent = message;
+        
+        // info タイプの場合は読み込み中のインジケータを表示
+        if (type === 'info') {
+            innerContent = `${message}<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>`;
+        }
+        
         const messageContent = ChatUI.getInstance.createElement('div', {
             classList: 'markdown-content',
-            innerHTML: `<p>${message}<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>`
+            innerHTML: `<p>${innerContent}</p>`
         });
         
         contentDiv.appendChild(messageContent);
