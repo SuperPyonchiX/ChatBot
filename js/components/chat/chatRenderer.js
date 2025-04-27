@@ -55,16 +55,16 @@ class ChatRenderer {
                 innerHTML: renderedMarkdown
             });
         
-        contentDiv.appendChild(copyButton);
-        contentDiv.appendChild(markdownContent);
-        
-        if (attachments && attachments.length > 0) {
-            contentDiv.appendChild(ChatAttachmentViewer.getInstance.createAttachmentsElement(attachments));
-        }
-        
-        messageDiv.appendChild(contentDiv);
-        fragment.appendChild(messageDiv);
-        chatMessages.appendChild(fragment);
+            contentDiv.appendChild(copyButton);
+            contentDiv.appendChild(markdownContent);
+            
+            if (attachments && attachments.length > 0) {
+                contentDiv.appendChild(ChatAttachmentViewer.getInstance.createAttachmentsElement(attachments));
+            }
+            
+            messageDiv.appendChild(contentDiv);
+            fragment.appendChild(messageDiv);
+            chatMessages.appendChild(fragment);
         
             this.#applyCodeFormatting(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
