@@ -76,6 +76,8 @@ class ChatActions {
 
     /**
      * メッセージを送信します
+     * ユーザー入力、添付ファイルを取得し、AIへの送信処理を行います
+     * @returns {Promise<void>} 送信処理の完了を示すPromise
      */
     async sendMessage() {
         const currentConversation = window.AppState.getConversationById(window.AppState.currentConversationId);
@@ -160,6 +162,9 @@ class ChatActions {
 
     /**
      * 新しい会話を作成します
+     * タイムスタンプをIDとして使用し、デフォルトのシステムプロンプトを含む新しい会話を生成します
+     * 作成後は会話履歴を更新し、新しい会話を表示します
+     * @returns {void}
      */
     createNewConversation() {
         const newConversation = {
@@ -190,6 +195,9 @@ class ChatActions {
 
     /**
      * 会話履歴を表示します
+     * ChatHistoryクラスを使用して、サイドバーに会話履歴のリストをレンダリングします
+     * 会話の切り替え、名前変更、削除のコールバック関数も設定します
+     * @returns {void}
      */
     renderChatHistory() {
         if (!window.Elements.chatHistory) return;
@@ -207,6 +215,9 @@ class ChatActions {
 
     /**
      * すべての履歴をクリアします
+     * ユーザーの確認後、すべての会話と関連する添付ファイルをストレージから削除し、
+     * 新しい空の会話を作成します
+     * @returns {void}
      */
     clearAllHistory() {
         if (confirm('すべての会話履歴を削除してもよろしいですか？')) {
@@ -411,6 +422,10 @@ class ChatActions {
 
     /**
      * 会話を切り替えます
+     * 指定されたIDの会話に切り替え、UIを更新し、関連する添付ファイルを表示します
+     * @private
+     * @param {string} conversationId - 切り替え先の会話ID
+     * @returns {void}
      */
     #switchConversation(conversationId) {
         if (!conversationId) return;
@@ -436,6 +451,11 @@ class ChatActions {
 
     /**
      * 会話を削除します
+     * 指定された会話IDの会話を削除し、関連する添付ファイルも削除します
+     * 削除した会話が現在表示中だった場合、別のチャットに切り替えるか新しいチャットを作成します
+     * @private
+     * @param {string} conversationId - 削除する会話ID
+     * @returns {void}
      */
     #deleteConversation(conversationId) {
         // 確認ダイアログを表示
