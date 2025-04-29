@@ -146,6 +146,9 @@ class ChatUI {
                 if (e.propertyName === 'opacity' && this.#codeEditorModal.classList.contains('active')) {
                     // モーダルが完全に表示された後にエディタの再描画を試みる
                     try {
+                        // DOM要素の順序を再確認（エディタが先、実行結果が後）
+                        this.#fixEditorContainerOrder();
+                        
                         if (this.#editorInstance && typeof this.#editorInstance.resizeEditor === 'function') {
                             console.log('[ChatUI] モーダル表示後にエディタをリサイズします');
                             this.#editorInstance.resizeEditor();
@@ -197,6 +200,9 @@ class ChatUI {
         
         // 少し遅延してからモーダルを表示（CSSアニメーションが確実に動作するように）
         setTimeout(() => {
+            // モーダル表示前にDOM要素の順序を強制的に修正
+            this.#fixEditorContainerOrder();
+            
             // モーダルを表示
             this.#codeEditorModal.classList.add('active');
             
@@ -283,6 +289,9 @@ class ChatUI {
                 if (this.#editorInstance) {
                     console.log('既存のエディタインスタンスを使用します');
                     try {
+                        // エディタとコード実行結果の順序を正しく設定
+                        this.#fixEditorContainerOrder();
+                        
                         // エディタのDOMを確実に表示
                         // まずエディタのコンテナを取得して表示状態に
                         if (editorContainer) {
@@ -297,10 +306,6 @@ class ChatUI {
                             const containerParent = editorContainer.parentNode;
                             if (containerParent) {
                                 containerParent.style.display = 'block';
-                                // 一度DOMから削除して再追加すると表示が更新される
-                                const temp = editorContainer;
-                                containerParent.removeChild(editorContainer);
-                                containerParent.appendChild(temp);
                             }
                         }
                         
@@ -553,6 +558,53 @@ class ChatUI {
             this.#codeEditorModal.classList.remove('active');
         }
         this.#activeCodeBlock = null;
+    }
+
+    /**
+     * モーダル内のエディタと実行結果の表示順序を修正する
+     * @private
+     */
+    #fixEditorContainerOrder() {
+        try {
+            const codeEditorContainer = document.querySelector('.code-editor-container');
+            if (!codeEditorContainer) return;
+            
+            // エディタと実行結果のDOMエレメントを取得
+            const editorContainer = document.getElementById('monacoEditorContainer');
+            const executionPreview = document.getElementById('codeExecutionPreview');
+            if (!editorContainer || !executionPreview) return;
+
+            console.log('[ChatUI] エディタと実行結果の順序を修正します');
+            
+            // 現在の親要素
+            const parent = editorContainer.parentElement;
+            if (!parent) return;
+            
+            // 一旦両方の要素を削除
+            parent.removeChild(editorContainer);
+            parent.removeChild(executionPreview);
+            
+            // 正しい順序で再追加（エディタが先、実行結果が後）
+            parent.appendChild(editorContainer);
+            parent.appendChild(executionPreview);
+            
+            // スタイルを明示的に設定
+            editorContainer.style.order = '1';
+            executionPreview.style.order = '2';
+            
+            // 各要素のスタイルを確保
+            editorContainer.style.display = 'block';
+            editorContainer.style.height = 'calc(50% - 10px)';
+            editorContainer.style.minHeight = '300px';
+            
+            executionPreview.style.display = 'block';
+            executionPreview.style.height = 'calc(50% - 20px)';
+            executionPreview.style.marginTop = 'var(--spacing-md)';
+            
+            console.log('[ChatUI] エディタと実行結果の順序の修正が完了しました');
+        } catch (err) {
+            console.error('[ChatUI] エディタと実行結果の順序修正中にエラーが発生しました:', err);
+        }
     }
 
     /**
