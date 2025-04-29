@@ -123,15 +123,7 @@ class ChatUI {
             });
         }
 
-        // 適用ボタン
-        const applyButton = document.getElementById('applyCodeChanges');
-        if (applyButton) {
-            applyButton.addEventListener('click', () => {
-                this.#applyCodeChanges();
-            });
-        }
-
-        // キャンセルボタン
+        // キャンセル（閉じる）ボタン - 閉じる前に変更を適用
         const cancelButton = document.getElementById('cancelCodeChanges');
         if (cancelButton) {
             cancelButton.addEventListener('click', () => {
@@ -166,6 +158,14 @@ class ChatUI {
                     } catch (err) {
                         console.warn('[ChatUI] モーダル表示後の処理でエラー:', err);
                     }
+                }
+            });
+            
+            // モーダルが非表示になるときの処理（ESCキーなどでも適用される）
+            this.#codeEditorModal.addEventListener('transitionend', (e) => {
+                if (e.propertyName === 'opacity' && !this.#codeEditorModal.classList.contains('active') && this.#activeCodeBlock) {
+                    // 処理完了後にクリーンアップ
+                    this.#activeCodeBlock = null;
                 }
             });
         }
@@ -506,60 +506,6 @@ class ChatUI {
     }
 
     /**
-     * コードの変更を適用します
-     * @private
-     */
-    #applyCodeChanges() {
-        if (!this.#activeCodeBlock) {
-            this.#hideCodeEditorModal();
-            return;
-        }
-        
-        let newCode = '';
-        let language = this.#currentLanguage;
-        
-        // モナコエディタからコードを取得するか、シンプルエディタからコードを取得する
-        if (this.#editorInstance) {
-            newCode = this.#editorInstance.getCode();
-            language = this.#editorInstance.getLanguage();
-        } else {
-            // フォールバック: シンプルなテキストエリアからコードを取得
-            const simpleEditor = document.getElementById('simpleCodeEditor');
-            if (simpleEditor) {
-                newCode = simpleEditor.value || '';
-                console.log('シンプルエディタからコードを取得:', newCode);
-            }
-        }
-        
-        // コードブロックのコードを更新
-        const codeElement = this.#activeCodeBlock.querySelector('code');
-        if (codeElement) {
-            // コードブロックのクラスを更新
-            const languageClass = `language-${language}`;
-            codeElement.className = languageClass;
-            
-            // コードを設定
-            codeElement.textContent = newCode;
-            
-            // Prism.jsでシンタックスハイライトを適用
-            if (typeof Prism !== 'undefined') {
-                Prism.highlightElement(codeElement);
-            }
-        }
-        
-        // 実行ボタンのdata属性を更新
-        const codeBlock = this.#activeCodeBlock.closest('.code-block');
-        if (codeBlock) {
-            const runButton = codeBlock.querySelector('.code-execute-button');
-            if (runButton) {
-                runButton.setAttribute('data-language', language);
-            }
-        }
-        
-        this.#hideCodeEditorModal();
-    }
-
-    /**
      * コードエディターモーダルを閉じます
      * @private
      */
@@ -567,7 +513,8 @@ class ChatUI {
         if (this.#codeEditorModal) {
             this.#codeEditorModal.classList.remove('active');
         }
-        this.#activeCodeBlock = null;
+        // 閉じる前に変更内容を消去しないように、activeCodeBlockはここでは消去しない
+        // 変更内容の適用は別途呼び出し元で行われるようにする
     }
 
     /**
