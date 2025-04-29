@@ -112,6 +112,9 @@ class ChatUI {
                     const code = this.#editorInstance.getCode();
                     this.#editorInstance.updateModel(code, language);
                 }
+                
+                // 言語変更時に実行可能かどうかを確認して表示/非表示を切り替え
+                this.#toggleExecutionFeaturesBasedOnLanguage(language);
             });
         }
 
@@ -194,6 +197,9 @@ class ChatUI {
         if (languageSelect) {
             languageSelect.value = this.#currentLanguage;
         }
+        
+        // 言語に基づいて実行ボタンと実行結果の表示を切り替え
+        this.#toggleExecutionFeaturesBasedOnLanguage(this.#currentLanguage);
 
         // モーダルを表示する前に、一度アクティブクラスを削除してリセット
         this.#codeEditorModal.classList.remove('active');
@@ -449,6 +455,12 @@ class ChatUI {
         let code = '';
         let language = this.#currentLanguage || 'javascript';
         
+        // 実行可能な言語かどうかをチェック
+        if (!window.CONFIG.EXECUTABLE_LANGUAGES.includes(language.toLowerCase())) {
+            console.warn(`[ChatUI] ${language}は実行できない言語です。`);
+            return; // 実行可能でない言語の場合は処理を中止
+        }
+        
         if (this.#editorInstance) {
             // Monaco Editorからコードを取得
             code = this.#editorInstance.getCode();
@@ -617,6 +629,9 @@ class ChatUI {
         simpleEditor.appendChild(languageLabel);
         container.appendChild(simpleEditor);
         
+        // 実行可能な言語かどうかをチェックして表示/非表示を切り替え
+        this.#toggleExecutionFeaturesBasedOnLanguage(language);
+        
         // フォーカスをテキストエリアに設定 (少し遅延を長めに)
         setTimeout(() => {
             try {
@@ -648,5 +663,45 @@ class ChatUI {
         
         // シンプルエディタが使用されていることを記録
         this.#simpleEditorFallbackUsed = true;
+    }
+
+    /**
+     * 言語に基づいて実行ボタンと実行結果の表示を切り替えます
+     * @param {string} language - 現在の言語
+     * @private
+     */
+    #toggleExecutionFeaturesBasedOnLanguage(language) {
+        // 実行可能な言語かどうかをチェック
+        const isExecutable = window.CONFIG.EXECUTABLE_LANGUAGES.includes(language.toLowerCase());
+        
+        // 実行ボタンの表示切り替え
+        const runButton = document.getElementById('runCodeButton');
+        if (runButton) {
+            if (isExecutable) {
+                runButton.style.display = 'block';
+                runButton.disabled = false;
+            } else {
+                runButton.style.display = 'none';
+                runButton.disabled = true;
+            }
+        }
+        
+        // 実行結果エリアの表示切り替え
+        const executionPreview = document.getElementById('codeExecutionPreview');
+        if (executionPreview) {
+            executionPreview.style.display = isExecutable ? 'block' : 'none';
+            
+            // 実行不可の場合はエディタエリアを大きくする
+            const editorContainer = document.getElementById('monacoEditorContainer');
+            if (editorContainer) {
+                if (isExecutable) {
+                    editorContainer.style.height = 'calc(50% - 10px)';
+                } else {
+                    editorContainer.style.height = 'calc(100% - 20px)';
+                }
+            }
+        }
+        
+        console.log(`[ChatUI] 言語: ${language} は実行${isExecutable ? '可能' : '不可能'}です。実行機能を${isExecutable ? '表示' : '非表示'}にしました。`);
     }
 }

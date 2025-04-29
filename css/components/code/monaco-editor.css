@@ -48,9 +48,16 @@
 .editor-language-select select {
     padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: var(--border-radius-sm);
-    background-color: var(--background-input);
+    background-color: var(--background-secondary);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 24px;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='%23b0b0b0' height='24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 4px center;
 }
 
 .editor-actions {
