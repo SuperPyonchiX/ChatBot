@@ -224,6 +224,13 @@ class ChatUI {
                 statusElement.textContent = '準備完了';
                 statusElement.classList.remove('execution-error', 'execution-complete');
             }
+            
+            // 実行時間表示も初期化
+            const timeElement = resultElement.querySelector('#executionTimeDisplay');
+            if (timeElement) {
+                timeElement.innerHTML = '';
+                timeElement.style.display = 'none'; // 初期状態は非表示
+            }
 
             const outputElement = resultElement.querySelector('.realtime-output');
             if (outputElement) {
@@ -471,6 +478,13 @@ class ChatUI {
         if (statusElement) {
             statusElement.textContent = '実行中...';
             statusElement.classList.remove('execution-error', 'execution-complete');
+        }
+        
+        // 実行時間表示をクリア
+        const timeElement = resultElement.querySelector('#executionTimeDisplay');
+        if (timeElement) {
+            timeElement.innerHTML = '';
+            timeElement.style.display = 'none'; // 実行前は非表示
         }
         
         // 出力をクリア
