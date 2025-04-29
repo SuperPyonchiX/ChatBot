@@ -175,7 +175,7 @@
     opacity: 1;
 }
 
-.code-copy-button {
+.code-copy-button, .code-edit-button {
     width: 28px;
     height: 28px;
     padding: 4px;
@@ -191,13 +191,17 @@
     margin-right: 4px;
 }
 
-.code-copy-button:hover {
+.code-copy-button:hover, .code-edit-button:hover {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
 .code-copy-button.copied {
     background-color: #10a37f;
     color: white;
+}
+
+.code-edit-button {
+    color: #79c0ff;
 }
 
 /* Mermaid図のスタイル */
