@@ -246,10 +246,6 @@ class ChatUI {
         // Monaco Editorを初期化または更新
         const editorContainer = document.getElementById('monacoEditorContainer');
         if (editorContainer) {
-            // エディター表示前にデバッグ情報を出力
-            console.log('編集するコード(showCodeEditor):', code);
-            console.log('コード長さ:', code ? code.length : 0);
-            console.log('編集する言語(showCodeEditor):', this.#currentLanguage);
             
             // タイムアウト処理用の変数
             let editorInitTimeout;                // エディタコンテナのスタイルを明示的に設定

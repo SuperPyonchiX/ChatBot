@@ -720,10 +720,7 @@ class ChatRenderer {
             // コードを取得して前後の空白を整理
             const rawCode = codeBlock.textContent || '';
             const code = rawCode.trim();
-            
-            console.log('編集するコード (長さ: ' + code.length + '):', code.substring(0, 50) + (code.length > 50 ? '...' : ''));
-            console.log('編集する言語:', language);
-            
+                        
             // 実際にコードがあるか確認
             if (!code) {
                 console.warn('編集するコードが空です');
