@@ -125,8 +125,8 @@
                     <div class="main-input-area">
                         <textarea id="userInput" placeholder="メッセージを入力..." rows="1"></textarea>
                         <div class="input-actions">
-                            <button id="webSearchToggle" class="toggle-button" title="WEB検索の有効/無効を切り替え">
-                                <i class="fas fa-globe"></i>
+                                                        <button id="webSearchToggle" class="toggle-button" title="Web検索機能の有効/無効を切り替え (GPT-5: Responses API内蔵検索 / その他: Tavily検索)">
+                                <span>🌐</span>
                             </button>
                             <label class="file-upload-label" title="ファイルを添付する">
                                 <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.txt,.md,.csv,.pdf,.js,.html,.css,.json">
@@ -193,9 +193,18 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="tavilyApiKeyInput">Tavily APIキー (Web検索用):</label>
+                <label for="tavilyApiKeyInput">Tavily APIキー:</label>
                 <input type="password" id="tavilyApiKeyInput" placeholder="tvly-...">
-                <small>Tavily APIを使用してWeb検索機能を強化します。<a href="https://tavily.com/" target="_blank">登録はこちら</a></small>
+                <small>非GPT-5モデル用のWeb検索機能です。<a href="https://tavily.com/" target="_blank">登録はこちら</a></small>
+            </div>
+            <div class="form-group">
+                <div style="padding: 12px; background: #e8f4fd; border-left: 4px solid #2196f3; border-radius: 4px; margin-bottom: 15px;">
+                    <strong>🌐 Web検索機能について</strong><br>
+                    <small>
+                        • <strong>GPT-5/GPT-5-mini</strong>: Responses API内蔵Web検索機能を使用<br>
+                        • <strong>その他のモデル</strong>: Tavily API検索（設定必要）
+                    </small>
+                </div>
             </div>
             <div class="modal-buttons">
                 <button id="saveApiKey" class="primary-button">保存</button>
@@ -415,6 +424,7 @@
     <!-- <script src="js/components/fileAttachment/attachmentViewer.js"></script> -->
 
     <script src="js/core/api.js"></script>
+    <script src="js/core/responsesApi.js"></script>
     <script src="js/utils/markdown.js"></script>
     <script src="js/core/userprompts/promptManager.js"></script>
     <script src="js/core/userprompts/promptSuggestions.js"></script>

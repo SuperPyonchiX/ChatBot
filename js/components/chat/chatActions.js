@@ -269,14 +269,22 @@ class ChatActions {
             // ユーザーメッセージを表示
             await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
 
-            // WEB検索が有効で、GPTが必要と判断した場合に検索を実行
-            let messageWithSearchResults = userText;
+            // WEB検索の実行判断
             let searchPerformed = false;
-
+            let messageWithSearchResults = userText;
+            const currentModel = window.AppState.getCurrentModel();
             const webExtractor = WebContentExtractor.getInstance;
-            if (webExtractor && webExtractor.hasTavilyApiKey() && webExtractor.isWebSearchEnabled()) {
+            const isWebSearchEnabled = webExtractor && webExtractor.isWebSearchEnabled();
+
+            // GPT-5シリーズはResponses API内蔵Web検索、その他はTavily検索
+            if (isWebSearchEnabled && currentModel.startsWith('gpt-5')) {
+                // GPT-5 Responses APIの内蔵Web検索を使用（APIレベルで自動処理）
+                console.log(`GPT-5 Responses API Web検索機能を有効にします: ${currentModel}`);
+            } else if (isWebSearchEnabled && webExtractor.hasTavilyApiKey()) {
+                // 従来のTavily検索を使用
+                console.log(`Web検索機能を有効にします (Tavily API): ${currentModel}`);
                 try {
-                    const model = window.AppState.getCurrentModel() || window.CONFIG.WEB_SEARCH.AUTO_SEARCH_MODEL;
+                    const model = currentModel || window.CONFIG.WEB_SEARCH.AUTO_SEARCH_MODEL;
                     
                     // 現在の会話からチャット履歴を取得
                     const chatHistory = conversation.messages || [];
@@ -290,7 +298,7 @@ class ChatActions {
                         searchPerformed = true;
                     }
                 } catch (searchError) {
-                    console.error('自動検索中にエラーが発生しました:', searchError);
+                    console.error('Tavily自動検索中にエラーが発生しました:', searchError);
                 }
             }
 
@@ -342,6 +350,7 @@ class ChatActions {
                 displayAttachments,
                 {
                     stream: true,
+                    enableWebSearch: isWebSearchEnabled && currentModel.startsWith('gpt-5'),
                     onChunk: (chunk) => {
                         fullResponseText += chunk;
                         // ストリーミング中のメッセージ更新

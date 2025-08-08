@@ -29,6 +29,7 @@ class AIAPI {
      * @param {Array} attachments - 添付ファイルの配列（任意）
      * @param {Object} options - 追加オプション
      * @param {boolean} options.stream - ストリーミングを使用するかどうか
+     * @param {boolean} options.enableWebSearch - GPT-5内蔵Web検索を有効にするかどうか
      * @param {Function} options.onChunk - ストリーミング時のチャンク受信コールバック関数
      * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
      * @returns {Promise<string>} APIからの応答テキスト（ストリーミングの場合は空文字列）
@@ -36,6 +37,14 @@ class AIAPI {
      */
     async callOpenAIAPI(messages, model, attachments = [], options = {}) {
         try {
+            // OpenAI GPT-4o/GPT-5シリーズの場合のみResponses APIを使用
+            // Azure OpenAIは従来のChat Completions APIを継続使用
+            if ((model.startsWith('gpt-4o') || model.startsWith('gpt-5')) && 
+                window.apiSettings.apiType === 'openai') {
+                const responsesApi = ResponsesAPI.getInstance;
+                return await responsesApi.callResponsesAPI(messages, model, attachments, options);
+            }
+            
             // API設定を確認
             this.#validateAPISettings();
             this.#validateModelSettings(model);
@@ -44,7 +53,12 @@ class AIAPI {
             const processedMessages = this.#processAttachments(messages, attachments);
             
             // APIリクエストの準備
-            const { endpoint, headers, body, useStream } = this.#prepareAPIRequest(processedMessages, model, options.stream);
+            const { endpoint, headers, body, useStream } = this.#prepareAPIRequest(
+                processedMessages, 
+                model, 
+                options.stream, 
+                options.enableWebSearch
+            );
             
             // ストリーミングモードの場合
             if (useStream) {
@@ -205,6 +219,7 @@ class AIAPI {
         }
         
         // o1/o1-mini/gpt-5/gpt-5-miniモデルの場合はシステムメッセージをユーザーメッセージに変換
+        // 注: GPT-4oシリーズはシステムメッセージをサポートするため変換不要
         const model = window.AppState.getCurrentModel();
         if (model && (model === 'o1' || model === 'o1-mini' || model === 'gpt-5' || model === 'gpt-5-mini')) {
             messages = this.#convertSystemToUserMessage(messages);
@@ -340,9 +355,10 @@ class AIAPI {
      * @param {Array} messages - 処理済みメッセージ配列
      * @param {string} model - 使用するモデル名
      * @param {boolean} useStream - ストリーミングを使用するかどうか
+     * @param {boolean} enableWebSearch - Web検索機能を有効にするかどうか
      * @returns {Object} エンドポイント、ヘッダー、ボディを含むオブジェクト
      */
-    #prepareAPIRequest(messages, model, useStream) {
+    #prepareAPIRequest(messages, model, useStream, enableWebSearch = false) {
         let endpoint, headers = {}, body = {};
         
         // o1/o1-mini/gpt-5/gpt-5-miniモデルかどうかをチェック
@@ -352,6 +368,12 @@ class AIAPI {
         body = {
             messages: messages
         };
+
+        // Web検索機能設定はResponses APIに移行（OpenAI GPT-4o/GPT-5のみResponses APIで処理）
+        if (enableWebSearch && 
+            !((model.startsWith('gpt-4o') || model.startsWith('gpt-5')) && window.apiSettings.apiType === 'openai')) {
+            console.log(`Chat Completions APIではWeb検索を無効化: ${model} (Tavily検索にフォールバック)`);
+        }
 
         // モデルに応じて適切なパラメータを設定
         if (isSpecialModel) {
@@ -648,6 +670,40 @@ class AIAPI {
                                         chunkCount++;
                                         lastChunkTime = Date.now();
                                     }
+                                    
+                                    // tool_callsがある場合も処理（GPT-5のWeb検索結果用）
+                                    if (delta && delta.tool_calls) {
+                                        console.log('Tool calls受信:', delta.tool_calls);
+                                        // Web検索結果をテキストに含める
+                                        for (const toolCall of delta.tool_calls) {
+                                            if (toolCall.function) {
+                                                if (toolCall.function.name === 'web_search') {
+                                                    console.log('Web検索実行中...');
+                                                    // Web検索実行中のメッセージを表示
+                                                    onChunk('\n🌐 Web検索を実行中...\n');
+                                                    chunkCount++;
+                                                } else if (toolCall.function.arguments) {
+                                                    // ツール呼び出しの結果をコンテンツに追加
+                                                    const toolContent = toolCall.function.arguments;
+                                                    if (toolContent) {
+                                                        onChunk(toolContent);
+                                                        fullText += toolContent;
+                                                        chunkCount++;
+                                                        lastChunkTime = Date.now();
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Web検索結果が直接含まれる場合も処理
+                                if (jsonData.web_search_results) {
+                                    console.log('Web検索結果を受信:', jsonData.web_search_results);
+                                    const searchResults = `\n🌐 Web検索結果:\n${JSON.stringify(jsonData.web_search_results, null, 2)}\n`;
+                                    onChunk(searchResults);
+                                    fullText += searchResults;
+                                    chunkCount++;
                                 }
                             } catch (parseError) {
                                 console.warn('JSONパースエラー:', parseError, line);

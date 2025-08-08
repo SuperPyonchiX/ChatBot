@@ -46,7 +46,7 @@ class WebContentExtractor {
         if (this.#tavilyApiKey) {
             console.log('Tavily APIキー取得:', this.#tavilyApiKey);
         } else {
-            console.warn('Tavily APIキーが設定されていません。');
+            console.info('Tavily APIキーが未設定です。GPT-5モデルでは内蔵Web検索機能を使用します。');
         }
     }
     

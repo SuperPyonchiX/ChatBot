@@ -25,6 +25,12 @@ window.CONFIG = {
         // タイムアウト時間（ミリ秒）
         TIMEOUT_MS: 60000,
         
+        // リクエストタイムアウト（ミリ秒）
+        REQUEST_TIMEOUT: 60000,
+        
+        // ストリーミングタイムアウト（ミリ秒）
+        STREAM_TIMEOUT: 120000,
+        
         // Azure OpenAI API バージョン
         AZURE_API_VERSION: '2023-05-15',
         
@@ -48,7 +54,8 @@ window.CONFIG = {
         
         // APIエンドポイントURL
         ENDPOINTS: {
-            OPENAI: 'https://api.openai.com/v1/chat/completions'
+            OPENAI: 'https://api.openai.com/v1/chat/completions',
+            RESPONSES: 'https://api.openai.com/v1/responses'
             // Azure用エンドポイントはユーザー設定から生成
         }
     },
