@@ -5,12 +5,12 @@
 
 window.AppState = (function() {
     // プライベート変数
-    let _apiSettings = null;
-    let _systemPrompt = '';
-    let _systemPromptTemplates = {};
-    let _conversations = [];
-    let _currentConversationId = null;
-    let _currentAttachments = [];
+    let _apiSettings = null;       // APIの設定情報を保持する変数
+    let _systemPrompt = '';        // 現在のシステムプロンプトを保持する変数
+    let _systemPromptTemplates = {};  // システムプロンプトのテンプレート一覧を保持する変数
+    let _conversations = [];       // すべての会話データを保持する配列（他から参照されても実体は同じ）
+    let _currentConversationId = null; // 現在選択中の会話IDを保持する変数
+    let _currentAttachments = [];   // 現在の添付ファイル情報を保持する配列
 
     return {
         /**

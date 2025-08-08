@@ -133,11 +133,7 @@ class PromptSuggestions {
                 break;
                 
             case 'Enter':
-                // Enterキー: 選択中の候補を適用
-                if (this.#selectedIndex >= 0) {
-                    e.preventDefault();
-                    this.#applySuggestion(this.#suggestions[this.#selectedIndex]);
-                }
+                // Enterキーでは候補を適用しない（通常の改行動作を維持）
                 break;
                 
             case 'Escape':

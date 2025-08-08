@@ -1,0 +1,210 @@
+/* コードエディターモーダル */
+.code-editor-modal .modal-content {
+    width: 90%;
+    max-width: 1200px;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.code-editor-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: var(--spacing-md);
+}
+
+.code-editor-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    height: calc(100% - 120px);
+    min-height: 400px; /* 最小の高さを確保 */
+    overflow: hidden;
+    /* order を適用するための設定 */
+    display: flex;
+    flex-flow: column;
+}
+
+.editor-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-xs) 0;
+    margin-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.editor-language-select {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.editor-language-select label {
+    margin-bottom: 0;
+}
+
+.editor-language-select select {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 24px;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='%23b0b0b0' height='24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 4px center;
+}
+
+.editor-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.editor-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    background-color: var(--background-button);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background-color var(--transition-fast) ease;
+}
+
+.editor-button:hover {
+    background-color: var(--background-button-hover);
+}
+
+.editor-button i {
+    margin-right: var(--spacing-xs);
+}
+
+.run-button {
+    background-color: var(--color-success);
+    color: white;
+}
+
+.run-button:hover {
+    background-color: var(--color-success-hover);
+}
+
+.monaco-editor-container {
+    flex-grow: 1;
+    height: calc(50% - 10px);
+    min-height: 300px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+    position: relative; /* 相対位置設定 */
+    display: flex; /* フレックスコンテナとして設定 */
+    order: 1; /* 表示順序を1に設定（上部に表示） */
+}
+
+/* Monaco Editorが正しく表示されるための追加スタイル */
+.monaco-editor-container .monaco-editor {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* ローディング表示用スタイル */
+.monaco-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    font-size: 14px;
+}
+
+/* シンプルエディタのフォールバックスタイル */
+.simple-editor-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.simple-editor-fallback textarea {
+    flex-grow: 1;
+    resize: none;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    tab-size: 4;
+    background-color: #1e1e1e;
+    color: #ddd;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 10px;
+    outline: none;
+}
+
+.simple-editor-fallback textarea:focus {
+    border-color: #007acc;
+}
+
+.code-execution-preview {
+    margin-top: var(--spacing-md);
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 30%;
+    min-height: 150px;
+    max-height: 300px;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+}
+
+.code-execution-preview h3 {
+    margin: 0;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--background-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.code-editor-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    background-color: var(--modal-overlay-bg);
+}
+
+.code-editor-modal.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .code-editor-modal .modal-content {
+        width: 95%;
+        height: 90vh;
+    }
+    
+    .editor-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+    }
+    
+    .monaco-editor-container {
+        height: 40%;
+    }
+}

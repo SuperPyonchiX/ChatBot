@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="css/components/prompt/prompt-manager.css">
     <link rel="stylesheet" href="css/components/prompt/prompt-suggestions.css">
     <link rel="stylesheet" href="css/components/code/code-execution.css">
+    <link rel="stylesheet" href="css/components/code/monaco-editor.css">
     <link rel="stylesheet" href="css/components/animations/typing.css">
     <link rel="stylesheet" href="css/components/file-preview/pdf-preview.css">
     <link rel="stylesheet" href="css/components/file-preview/office-preview.css">
@@ -47,6 +48,21 @@
     
     <!-- JSZip ライブラリ (PPTX, DOCX解析用) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <!-- シンプルコードエディタスタイル -->
+    <style>
+        .simple-editor-fallback textarea {
+            width: 100%;
+            height: 300px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            padding: 10px;
+            border: 1px solid #444;
+            resize: none;
+        }
+    </style>
     
     <!-- Prism.js ランタイム読み込み用スクリプト -->
     <script>
@@ -319,6 +335,51 @@
             </div>
         </div>
     </div>
+    
+    <!-- コードエディターモーダル -->
+    <div id="codeEditorModal" class="modal code-editor-modal">
+        <div class="modal-content code-editor-content">
+            <h2>コードエディター</h2>
+            <div class="code-editor-container">
+                <div class="editor-toolbar">
+                    <div class="editor-language-select">
+                        <label for="editorLanguageSelect">言語:</label>
+                        <select id="editorLanguageSelect">
+                            <option value="javascript">JavaScript</option>
+                            <option value="html">HTML</option>
+                            <option value="css">CSS</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                        </select>
+                    </div>
+                    <div class="editor-actions">
+                        <button id="runCodeButton" class="editor-button run-button">
+                            <i class="fas fa-play"></i> 実行
+                        </button>
+                    </div>
+                </div>
+                <!-- エディタを明示的に上に配置 -->
+                <div id="monacoEditorContainer" class="monaco-editor-container"></div>
+                
+                <!-- 実行結果エリアを下に配置 -->
+                <div id="codeExecutionPreview" class="code-execution-preview">
+                    <h3>実行結果</h3>
+                    <div class="code-execution-result">
+                        <div class="execution-info-bar">
+                            <div class="execution-status">準備完了</div>
+                            <div class="execution-time" id="executionTimeDisplay"><!-- ここに実行時間が表示されます --></div>
+                        </div>
+                        <pre class="realtime-output"></pre>
+                        <div class="html-result-container"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="cancelCodeChanges" class="secondary-button">閉じる</button>
+            </div>
+        </div>
+    </div>
 
     <!-- JSファイルを読み込む -->
     <!-- 実行環境関連のファイル -->
@@ -373,6 +434,9 @@
     <script src="js/modals/renameChat/renameChatModal.js"></script>
     <script src="js/modals/systemPrompt/systemPromptModal.js"></script>
     <script src="js/modals/promptManager/promptManagerModal.js"></script>
+    
+    <!-- Monaco Editor コントローラー -->
+    <script src="js/core/monaco/MonacoEditorController.js"></script>
     
     <!-- ユーティリティ関連のファイル -->
     <script src="js/utils/webContentExtractor.js"></script>

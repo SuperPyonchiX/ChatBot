@@ -47,12 +47,36 @@ class ChatHistory {
                 
                 // ファイル内容とWEB検索結果の表示を除去
                 const displayContent = this.#cleanDisplayContent(content);
-                await ChatRenderer.getInstance.addUserMessage(displayContent, chatMessages, [], message.timestamp);
+                
+                // ChatRenderer のインスタンスが存在するか確認してから使用
+                try {
+                    if (typeof ChatRenderer !== 'undefined' && ChatRenderer.getInstance) {
+                        await ChatRenderer.getInstance.addUserMessage(displayContent, chatMessages, [], message.timestamp);
+                    } else {
+                        console.warn('ChatRenderer が見つからないため、シンプルなレンダリングを使用します');
+                        this.#renderSimpleUserMessage(displayContent, chatMessages, message.timestamp);
+                    }
+                } catch (error) {
+                    console.error('メッセージ表示中にエラーが発生:', error);
+                    this.#renderSimpleUserMessage(displayContent, chatMessages, message.timestamp);
+                }
             } else if (message.role === 'assistant') {
                 const content = typeof message.content === 'string' 
                     ? message.content 
                     : this.#processContentArray(message.content);
-                await ChatRenderer.getInstance.addBotMessage(content, chatMessages, message.timestamp, false);
+                
+                // ChatRenderer のインスタンスが存在するか確認してから使用
+                try {
+                    if (typeof ChatRenderer !== 'undefined' && ChatRenderer.getInstance) {
+                        await ChatRenderer.getInstance.addBotMessage(content, chatMessages, message.timestamp, false);
+                    } else {
+                        console.warn('ChatRenderer が見つからないため、シンプルなレンダリングを使用します');
+                        this.#renderSimpleAssistantMessage(content, chatMessages, message.timestamp);
+                    }
+                } catch (error) {
+                    console.error('メッセージ表示中にエラーが発生:', error);
+                    this.#renderSimpleAssistantMessage(content, chatMessages, message.timestamp);
+                }
             }
         }
         
@@ -197,32 +221,30 @@ class ChatHistory {
             return document.createElement('div');
         }
         
-        const categorySection = ChatUI.getInstance.createElement('div', {
-            classList: 'chat-category',
-            attributes: {
-                'data-category': promptKey
-            }
-        });
+        // DOMElementsクラスを使用して要素を作成
+        const categorySection = document.createElement('div');
+        categorySection.className = 'chat-category';
+        categorySection.dataset.category = promptKey;
         
-        const categoryHeader = ChatUI.getInstance.createElement('div', { classList: 'category-header' });
-        const toggleIcon = ChatUI.getInstance.createElement('i', {
-            classList: ['fas', isExpanded ? 'fa-chevron-down' : 'fa-chevron-right']
-        });
+        const categoryHeader = document.createElement('div');
+        categoryHeader.className = 'category-header';
         
-        const categoryName = ChatUI.getInstance.createElement('span', {
-            textContent: promptKey
-        });
+        const toggleIcon = document.createElement('i');
+        toggleIcon.className = `fas ${isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'}`;
         
-        const countBadge = ChatUI.getInstance.createElement('span', {
-            classList: 'category-count',
-            textContent: groupConversations.length
-        });
+        const categoryName = document.createElement('span');
+        categoryName.textContent = promptKey;
+        
+        const countBadge = document.createElement('span');
+        countBadge.className = 'category-count';
+        countBadge.textContent = groupConversations.length;
         
         categoryHeader.appendChild(toggleIcon);
         categoryHeader.appendChild(categoryName);
         categoryHeader.appendChild(countBadge);
         
-        const conversationList = ChatUI.getInstance.createElement('div', { classList: 'category-conversations' });
+        const conversationList = document.createElement('div');
+        conversationList.className = 'category-conversations';
         if (!isExpanded) {
             conversationList.style.display = 'none';
         }
@@ -279,30 +301,24 @@ class ChatHistory {
             return document.createElement('div');
         }
         
-        const historyItem = ChatUI.getInstance.createElement('div', {
-            classList: 'history-item',
-            attributes: {
-                'data-id': conversation.id
-            }
-        });
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        historyItem.dataset.id = conversation.id;
         
-        const itemContent = ChatUI.getInstance.createElement('div', {
-            classList: 'history-item-content',
-            innerHTML: `
-                <i class="fas fa-comments"></i>
-                <span class="history-item-title">${conversation.title || '新しいチャット'}</span>
-            `
-        });
+        const itemContent = document.createElement('div');
+        itemContent.className = 'history-item-content';
+        itemContent.innerHTML = `
+            <i class="fas fa-comments"></i>
+            <span class="history-item-title">${conversation.title || '新しいチャット'}</span>
+        `;
         
-        const actionButtons = ChatUI.getInstance.createElement('div', { classList: 'history-item-actions' });
+        const actionButtons = document.createElement('div');
+        actionButtons.className = 'history-item-actions';
         
-        const editButton = ChatUI.getInstance.createElement('button', {
-            classList: ['history-action-button', 'edit-button'],
-            innerHTML: '<i class="fas fa-edit"></i>',
-            attributes: {
-                title: 'チャットの名前を変更'
-            }
-        });
+        const editButton = document.createElement('button');
+        editButton.className = 'history-action-button edit-button';
+        editButton.innerHTML = '<i class="fas fa-edit"></i>';
+        editButton.title = 'チャットの名前を変更';
         
         editButton.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -311,13 +327,10 @@ class ChatHistory {
             }
         });
         
-        const deleteButton = ChatUI.getInstance.createElement('button', {
-            classList: ['history-action-button', 'delete-button'],
-            innerHTML: '<i class="fas fa-trash"></i>',
-            attributes: {
-                title: 'チャットを削除'
-            }
-        });
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'history-action-button delete-button';
+        deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+        deleteButton.title = 'チャットを削除';
         
         deleteButton.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -392,5 +405,71 @@ class ChatHistory {
         }
         
         return '未分類';
+    }
+    
+    /**
+     * シンプルなユーザーメッセージを表示する（ChatRendererフォールバック）
+     * @private
+     */
+    #renderSimpleUserMessage(content, container, timestamp) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', 'user');
+        if (timestamp) messageDiv.dataset.timestamp = timestamp.toString();
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        
+        const messageContent = document.createElement('div');
+        messageContent.className = 'markdown-content';
+        
+        // シンプルなテキスト表示
+        if (typeof Markdown !== 'undefined' && Markdown.getInstance) {
+            Markdown.getInstance.renderMarkdown(content)
+                .then(html => {
+                    messageContent.innerHTML = html;
+                })
+                .catch(() => {
+                    messageContent.textContent = content;
+                });
+        } else {
+            messageContent.textContent = content;
+        }
+        
+        contentDiv.appendChild(messageContent);
+        messageDiv.appendChild(contentDiv);
+        container.appendChild(messageDiv);
+    }
+    
+    /**
+     * シンプルなアシスタントメッセージを表示する（ChatRendererフォールバック）
+     * @private
+     */
+    #renderSimpleAssistantMessage(content, container, timestamp) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', 'assistant');
+        if (timestamp) messageDiv.dataset.timestamp = timestamp.toString();
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        
+        const messageContent = document.createElement('div');
+        messageContent.className = 'markdown-content';
+        
+        // シンプルなテキスト表示
+        if (typeof Markdown !== 'undefined' && Markdown.getInstance) {
+            Markdown.getInstance.renderMarkdown(content)
+                .then(html => {
+                    messageContent.innerHTML = html;
+                })
+                .catch(() => {
+                    messageContent.textContent = content;
+                });
+        } else {
+            messageContent.textContent = content;
+        }
+        
+        contentDiv.appendChild(messageContent);
+        messageDiv.appendChild(contentDiv);
+        container.appendChild(messageDiv);
     }
 }

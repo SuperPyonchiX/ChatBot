@@ -29,6 +29,12 @@ class ChatRenderer {
 
     /**
      * ユーザーメッセージを追加する
+     * ユーザーのメッセージとその添付ファイルをチャット画面に表示します
+     * @param {string} message - ユーザーが入力したテキストメッセージ
+     * @param {HTMLElement} chatMessages - メッセージを表示する親要素
+     * @param {Array} attachments - 添付ファイルの配列
+     * @param {number|null} timestamp - メッセージのタイムスタンプ、nullの場合は現在時刻を使用
+     * @returns {Promise<void>}
      */
     async addUserMessage(message, chatMessages, attachments = [], timestamp = null) {
         if (!chatMessages) return;
@@ -36,44 +42,41 @@ class ChatRenderer {
         const msgTimestamp = timestamp || Date.now();
         const fragment = document.createDocumentFragment();
         
-        const messageDiv = ChatUI.getInstance.createElement('div', {
-            classList: ['message', 'user'],
-            attributes: {
-                'data-timestamp': msgTimestamp.toString(),
-                'role': 'region',
-                'aria-label': 'あなたのメッセージ'
-            }
-        });
+        // 直接DOMを操作して要素を作成
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', 'user');
+        messageDiv.dataset.timestamp = msgTimestamp.toString();
+        messageDiv.setAttribute('role', 'region');
+        messageDiv.setAttribute('aria-label', 'あなたのメッセージ');
         
-        const contentDiv = ChatUI.getInstance.createElement('div', { classList: 'message-content' });
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
         const copyButton = this.#createCopyButton(message || '');
         
         try {
             const renderedMarkdown = await Markdown.getInstance.renderMarkdown(message || '');
-            const markdownContent = ChatUI.getInstance.createElement('div', {
-                classList: 'markdown-content',
-                innerHTML: renderedMarkdown
-            });
+            const markdownContent = document.createElement('div');
+            markdownContent.className = 'markdown-content';
+            markdownContent.innerHTML = renderedMarkdown;
         
-        contentDiv.appendChild(copyButton);
-        contentDiv.appendChild(markdownContent);
-        
-        if (attachments && attachments.length > 0) {
-            contentDiv.appendChild(ChatAttachmentViewer.getInstance.createAttachmentsElement(attachments));
-        }
-        
-        messageDiv.appendChild(contentDiv);
-        fragment.appendChild(messageDiv);
-        chatMessages.appendChild(fragment);
+            contentDiv.appendChild(copyButton);
+            contentDiv.appendChild(markdownContent);
+            
+            if (attachments && attachments.length > 0) {
+                contentDiv.appendChild(ChatAttachmentViewer.getInstance.createAttachmentsElement(attachments));
+            }
+            
+            messageDiv.appendChild(contentDiv);
+            fragment.appendChild(messageDiv);
+            chatMessages.appendChild(fragment);
         
             this.#applyCodeFormatting(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         } catch (e) {
             console.error('ユーザーメッセージのMarkdown解析エラー:', e);
-            const markdownContent = ChatUI.getInstance.createElement('div', {
-                classList: 'markdown-content',
-                textContent: message || ''
-            });
+            const markdownContent = document.createElement('div');
+            markdownContent.className = 'markdown-content';
+            markdownContent.textContent = message || '';
             
             contentDiv.appendChild(copyButton);
             contentDiv.appendChild(markdownContent);
@@ -86,23 +89,28 @@ class ChatRenderer {
 
     /**
      * ボットメッセージを追加する
+     * AIからの応答メッセージをチャット画面に表示します
+     * @param {string} message - 表示するボットのメッセージ内容
+     * @param {HTMLElement} chatMessages - メッセージを表示する親要素
+     * @param {number|null} timestamp - メッセージのタイムスタンプ、nullの場合は現在時刻を使用
+     * @param {boolean} animate - タイピングアニメーションを適用するかのフラグ
+     * @returns {Promise<void>}
      */
     async addBotMessage(message, chatMessages, timestamp = null, animate = true) {
         if (!chatMessages) return;
         
         const msgTimestamp = timestamp || Date.now();
-        const messageDiv = ChatUI.getInstance.createElement('div', {
-            classList: ['message', 'bot'],
-            attributes: {
-                'data-timestamp': msgTimestamp.toString(),
-                'role': 'region',
-                'aria-label': 'AIからの返答'
-            }
-        });
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', 'bot');
+        messageDiv.dataset.timestamp = msgTimestamp.toString();
+        messageDiv.setAttribute('role', 'region');
+        messageDiv.setAttribute('aria-label', 'AIからの返答');
         
-        const contentDiv = ChatUI.getInstance.createElement('div', { classList: 'message-content' });
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
         const copyButton = this.#createCopyButton(message || '');
-        const messageContent = ChatUI.getInstance.createElement('div', { classList: 'markdown-content' });
+        const messageContent = document.createElement('div');
+        messageContent.className = 'markdown-content';
         
         if (animate) {
             messageContent.innerHTML = '';
@@ -138,6 +146,10 @@ class ChatRenderer {
 
     /**
      * ストリーミング用のボットメッセージを追加する
+     * チャットメッセージ領域に、AIの応答を表示するためのメッセージ要素を追加します
+     * @param {HTMLElement} chatMessages - メッセージを表示する要素
+     * @param {number|null} timestamp - メッセージのタイムスタンプ
+     * @returns {{messageDiv: HTMLElement, contentContainer: HTMLElement}} メッセージ要素とコンテンツコンテナ
      */
     addStreamingBotMessage(chatMessages, timestamp = null) {
         if (!chatMessages) return null;
@@ -160,6 +172,12 @@ class ChatRenderer {
 
     /**
      * ストリーミング中にボットメッセージを更新する
+     * ストリーミングAPIから返されるチャンクをリアルタイムに表示します
+     * @param {HTMLElement} container - 更新するメッセージコンテナ
+     * @param {string} chunk - 新しく受信したテキストチャンク
+     * @param {string} currentFullText - これまでに受信したテキスト全体
+     * @param {boolean} isFirstChunk - 最初のチャンクかどうかのフラグ
+     * @returns {Promise<void>}
      */
     async updateStreamingBotMessage(container, chunk, currentFullText, isFirstChunk = false) {
         if (!container) return;
@@ -187,6 +205,11 @@ class ChatRenderer {
 
     /**
      * ストリーミングが完了したらボットメッセージを完成させる
+     * マークダウンレンダリングを適用し、コピーボタンを追加して最終的な表示を整えます
+     * @param {HTMLElement} messageDiv - メッセージの親要素
+     * @param {HTMLElement} container - 内容を表示するコンテナ要素
+     * @param {string} fullText - 完全なレスポンステキスト
+     * @returns {Promise<void>}
      */
     async finalizeStreamingBotMessage(messageDiv, container, fullText) {
         if (!messageDiv || !container) return;
@@ -255,7 +278,10 @@ class ChatRenderer {
 
     /**
      * コードブロックのフォーマットとハイライトを適用する
+     * メッセージ内のコードブロックにシンタックスハイライトとコピーボタンを追加します
      * @private
+     * @param {HTMLElement} messageDiv - コードブロックを含むメッセージ要素
+     * @returns {void}
      */
     #applyCodeFormatting(messageDiv) {
         if (!messageDiv) return;
@@ -274,7 +300,11 @@ class ChatRenderer {
 
     /**
      * タイピングアニメーションを実行する
+     * ボットのメッセージを文字単位で徐々に表示するアニメーション効果を適用します
      * @private
+     * @param {string} message - 表示するメッセージ内容
+     * @param {HTMLElement} container - メッセージを表示する要素
+     * @returns {Promise<void>}
      */
     async #animateTyping(message, container) {
         if (!message || !container) return;
@@ -339,7 +369,10 @@ class ChatRenderer {
 
     /**
      * コピーボタンを作成する
+     * テキストをクリップボードにコピーするためのボタン要素を生成します
      * @private
+     * @param {string} textToCopy - コピー対象のテキスト
+     * @returns {HTMLElement} 作成されたコピーボタン要素
      */
     #createCopyButton(textToCopy) {
         const copyButton = document.createElement('button');
@@ -368,7 +401,7 @@ class ChatRenderer {
 
     
     /**
-     * コードブロックにコピーボタンと実行ボタンを追加します
+     * コードブロックにコピーボタン、編集ボタン、実行ボタンを追加します
      * @param {HTMLElement} messageElement - コードブロックを含むメッセージ要素
      */
     #addCodeBlockCopyButtons(messageElement) {
@@ -415,6 +448,10 @@ class ChatRenderer {
                 // コピーボタンを追加
                 const copyButton = this.#createCodeCopyButton(index, codeBlock);
                 toolbar.appendChild(copyButton);
+                
+                // 編集ボタンを追加
+                const editButton = this.#createEditButton(index, codeBlock, language);
+                toolbar.appendChild(editButton);
                 
                 // 実行可能言語の場合は実行ボタンを追加
                 if (this.#isExecutableLanguage(language)) {
@@ -639,6 +676,73 @@ class ChatRenderer {
     }
     
     /**
+     * コード編集ボタンを作成します
+     * @private
+     * @param {number} index - コードブロックのインデックス
+     * @param {HTMLElement} codeBlock - 対象のコードブロック要素
+     * @param {string} language - コードの言語
+     * @returns {HTMLElement} 作成された編集ボタン要素
+     */
+    #createEditButton(index, codeBlock, language) {
+        if (!codeBlock) return document.createElement('button');
+        
+        const editButton = document.createElement('button');
+        editButton.classList.add('code-edit-button');
+        editButton.innerHTML = '<i class="fas fa-edit"></i>';
+        editButton.title = 'コードを編集';
+        editButton.setAttribute('data-code-index', index);
+        editButton.setAttribute('data-language', language);
+        editButton.setAttribute('aria-label', 'コードを編集');
+        
+        // 編集ボタンのクリックイベント
+        editButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // イベント伝播を停止
+            this.#handleEditButtonClick(editButton, codeBlock, language);
+        });
+        
+        return editButton;
+    }
+    
+    /**
+     * 編集ボタンのクリックイベントを処理します
+     * @private
+     * @param {HTMLElement} button - クリックされたボタン
+     * @param {HTMLElement} codeBlock - 編集対象のコードブロック
+     * @param {string} language - コードの言語
+     */
+    #handleEditButtonClick(button, codeBlock, language) {
+        if (!button || !codeBlock) {
+            console.error('コード編集に必要な要素が見つかりません');
+            return;
+        }
+        
+        try {
+            // コードを取得して前後の空白を整理
+            const rawCode = codeBlock.textContent || '';
+            const code = rawCode.trim();
+                        
+            // 実際にコードがあるか確認
+            if (!code) {
+                console.warn('編集するコードが空です');
+            }
+            
+            // エディタにきちんとコードが渡るように少し遅延させる
+            setTimeout(() => {
+                // ChatUIのグローバル参照チェック
+                if (typeof ChatUI !== 'undefined' && ChatUI.getInstance) {
+                    ChatUI.getInstance.showCodeEditor(codeBlock, code, language);
+                } else {
+                    console.error('ChatUIが見つかりません。エディタは表示できません。');
+                    alert('コードエディタを開けませんでした。ページを再読み込みしてからお試しください。');
+                }
+            }, 100);
+            
+        } catch (error) {
+            console.error('コード編集の準備中にエラーが発生しました:', error);
+        }
+    }
+    
+    /**
      * コピーボタンのクリックイベントを処理します
      * @private
      * @param {HTMLElement} button - クリックされたボタン
@@ -775,5 +879,45 @@ class ChatRenderer {
         if (messageDiv && messageDiv.parentNode) {
             messageDiv.parentNode.removeChild(messageDiv);
         }
+    }
+
+    /**
+     * コードブロックからコードを取得します
+     * @private
+     * @param {HTMLElement} codeBlock - コードブロック要素
+     * @returns {string} 取得したコード
+     */
+    #getCodeFromBlock(codeBlock) {
+        if (!codeBlock) return '';
+        
+        try {
+            // preタグ内のcodeタグを検出
+            const codeElement = codeBlock.tagName.toLowerCase() === 'code' ? 
+                codeBlock : codeBlock.querySelector('code');
+            
+            if (codeElement) {
+                // HTMLエンティティをデコード
+                const text = codeElement.textContent || '';
+                return this.#decodeHtmlEntities(text.trim());
+            }
+            
+            // 直接テキストを取得
+            return this.#decodeHtmlEntities((codeBlock.textContent || '').trim());
+        } catch (error) {
+            console.error('コードの取得に失敗:', error);
+            return '';
+        }
+    }
+    
+    /**
+     * HTMLエンティティをデコードします
+     * @private
+     * @param {string} text - デコードするテキスト
+     * @returns {string} デコードされたテキスト
+     */
+    #decodeHtmlEntities(text) {
+        const element = document.createElement('div');
+        element.innerHTML = text;
+        return element.textContent || text;
     }
 }

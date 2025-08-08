@@ -140,10 +140,12 @@ class CodeExecutor {
 
             case 'result':
                 if (data.content.executionTime) {
-                    const timeInfo = document.createElement('div');
-                    timeInfo.classList.add('execution-time');
-                    timeInfo.innerHTML = `<span>実行時間: ${data.content.executionTime}</span>`;
-                    resultElement.prepend(timeInfo);
+                    // 既存の実行時間表示要素を更新
+                    const timeDisplay = resultElement.querySelector('#executionTimeDisplay');
+                    if (timeDisplay) {
+                        timeDisplay.innerHTML = `<span>実行時間: ${data.content.executionTime}</span>`;
+                        timeDisplay.style.display = 'block'; // 表示を確実にする
+                    }
                 }
 
                 if (language === 'html' && data.content.type === 'html' && data.content.html) {
