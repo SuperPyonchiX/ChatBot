@@ -45,8 +45,7 @@ class ApiSettingsModal {
             azureEndpointGpt5Mini: UICache.getInstance.get('azureEndpointGpt5Mini'),
             azureEndpointGpt5: UICache.getInstance.get('azureEndpointGpt5'),
             azureEndpointO1Mini: UICache.getInstance.get('azureEndpointO1Mini'),
-            azureEndpointO1: UICache.getInstance.get('azureEndpointO1'),
-            tavilyApiKeyInput: UICache.getInstance.get('tavilyApiKeyInput')
+            azureEndpointO1: UICache.getInstance.get('azureEndpointO1')
         };
         
         // APIタイプに応じて設定を表示
@@ -68,11 +67,6 @@ class ApiSettingsModal {
             elements.apiKeyInput.value = apiSettings.openaiApiKey;
             UIUtils.getInstance.toggleVisibility(elements.openaiSettings, true);
             UIUtils.getInstance.toggleVisibility(elements.azureSettings, false);
-        }
-
-        // Tavily APIキーの設定（Web検索用）
-        if (apiSettings.tavilyApiKey) {
-            elements.tavilyApiKeyInput.value = apiSettings.tavilyApiKey;
         }
     }
     

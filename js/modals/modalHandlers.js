@@ -39,16 +39,6 @@ class ModalHandlers {
             window.AppState.apiSettings.openaiApiKey = window.Elements.apiKeyInput.value.trim();
         }
         
-        // Tavily APIキーを設定
-        if (window.Elements.tavilyApiKeyInput) {
-            window.AppState.apiSettings.tavilyApiKey = window.Elements.tavilyApiKeyInput.value.trim();
-            // WebContentExtractorにもAPIキーを設定
-            const webExtractor = WebContentExtractor.getInstance;
-            if (webExtractor) {
-                webExtractor.setTavilyApiKey(window.AppState.apiSettings.tavilyApiKey);
-            }
-        }
-        
         // Azure OpenAI APIキーとエンドポイントを設定
         if (window.AppState.apiSettings.apiType === 'azure') {
             if (window.Elements.azureApiKeyInput) {

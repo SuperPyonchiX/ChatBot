@@ -37,10 +37,8 @@ class AIAPI {
      */
     async callOpenAIAPI(messages, model, attachments = [], options = {}) {
         try {
-            // OpenAI GPT-4o/GPT-5シリーズの場合のみResponses APIを使用
-            // Azure OpenAIは従来のChat Completions APIを継続使用
-            if ((model.startsWith('gpt-4o') || model.startsWith('gpt-5')) && 
-                window.apiSettings.apiType === 'openai') {
+            // GPT-4o/GPT-5シリーズはResponses APIを使用（OpenAI/Azure共通）
+            if (model.startsWith('gpt-4o') || model.startsWith('gpt-5')) {
                 const responsesApi = ResponsesAPI.getInstance;
                 return await responsesApi.callResponsesAPI(messages, model, attachments, options);
             }
@@ -369,10 +367,9 @@ class AIAPI {
             messages: messages
         };
 
-        // Web検索機能設定はResponses APIに移行（OpenAI GPT-4o/GPT-5のみResponses APIで処理）
-        if (enableWebSearch && 
-            !((model.startsWith('gpt-4o') || model.startsWith('gpt-5')) && window.apiSettings.apiType === 'openai')) {
-            console.log(`Chat Completions APIではWeb検索を無効化: ${model} (Tavily検索にフォールバック)`);
+        // Web検索機能設定はResponses APIに移行（GPT-4o/GPT-5はResponses APIで処理される）
+        if (enableWebSearch && !model.startsWith('gpt-4o') && !model.startsWith('gpt-5')) {
+            console.log(`Chat Completions APIではWeb検索を無効化: ${model}`);
         }
 
         // モデルに応じて適切なパラメータを設定

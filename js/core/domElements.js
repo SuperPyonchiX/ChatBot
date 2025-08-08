@@ -50,7 +50,6 @@ window.Elements = (function() {
         'apiKeyInput', 'azureApiKeyInput', 'azureEndpointGpt4oMini', 
         'azureEndpointGpt4o', 'azureEndpointGpt5Mini', 'azureEndpointGpt5',
         'azureEndpointO1Mini', 'azureEndpointO1',
-        'tavilyApiKeyInput',
         
         // チャット名前変更関連
         'saveRenameChat', 'cancelRenameChat', 'renameChatModal', 'chatTitleInput',

@@ -122,7 +122,6 @@ window.CONFIG = {
             SIDEBAR: 'sidebarCollapsed',
             OPENAI_API_KEY: 'openaiApiKey',
             AZURE_API_KEY: 'azureApiKey',
-            TAVILY_API_KEY: 'tavilyApiKey',
             API_TYPE: 'apiType',
             AZURE_ENDPOINT_PREFIX: 'azureEndpoint_',
             SYSTEM_PROMPT: 'systemPrompt',

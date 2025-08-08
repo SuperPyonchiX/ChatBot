@@ -135,14 +135,42 @@ class ResponsesAPI {
      * Responses APIリクエストを準備
      */
     #prepareResponsesRequest(input, model, enableWebSearch, stream = false) {
-        const endpoint = window.CONFIG.AIAPI.ENDPOINTS.RESPONSES;
+        let endpoint, headers = {}, body = {};
         
-        const headers = {
-            'Authorization': `Bearer ${window.apiSettings.openaiApiKey}`,
-            'Content-Type': 'application/json'
-        };
+        if (window.apiSettings.apiType === 'openai') {
+            // OpenAI API
+            endpoint = window.CONFIG.AIAPI.ENDPOINTS.RESPONSES;
+            headers = {
+                'Authorization': `Bearer ${window.apiSettings.openaiApiKey}`,
+                'Content-Type': 'application/json'
+            };
+        } else {
+            // Azure OpenAI API - 新しいv1 API形式を使用
+            const azureEndpoint = window.apiSettings.azureEndpoints[model];
+            if (azureEndpoint) {
+                // 既存のChat CompletionsエンドポイントをResponses APIに変換
+                // https://xxx.openai.azure.com/openai/deployments/xxx/chat/completions?api-version=xxx
+                // → https://xxx.openai.azure.com/openai/v1/responses?api-version=preview
+                const baseUrl = azureEndpoint.split('/openai/')[0];
+                endpoint = `${baseUrl}/openai/v1/responses?api-version=preview`;
+                
+                // エンドポイントURLからデプロイメント名を抽出
+                const deploymentMatch = azureEndpoint.match(/\/deployments\/([^\/]+)\//);
+                if (deploymentMatch) {
+                    // デプロイメント名が見つかった場合は、それをモデル名として使用
+                    model = deploymentMatch[1];
+                }
+            } else {
+                throw new Error(`Azure OpenAI: モデル ${model} のエンドポイントが設定されていません`);
+            }
+            
+            headers = {
+                'api-key': window.apiSettings.azureApiKey,
+                'Content-Type': 'application/json'
+            };
+        }
         
-        const body = {
+        body = {
             model: model,
             input: input
         };
