@@ -36,8 +36,8 @@
     width: 100%;
 }
 
-.message.bot.system-message {
-    opacity: 0.8;
+.message.bot.system-message.animate {
+    opacity: 1 !important; /* アニメーション完了後の透明度 */
 }
 
 .message.bot.system-message .message-content {

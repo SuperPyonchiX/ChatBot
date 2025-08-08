@@ -1,211 +1,147 @@
-/* システムメッセージの洗練されたアニメーション効果 */
+/* システムメッセージアニメーション - シンプルで確実 */
 
 /* システムメッセージの基本スタイル */
 .system-message {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 }
 
-.system-message .message-content {
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-/* ステータス別の微細なスタイリング */
+/* ステータス別のスタイリング */
 .system-message[data-status="thinking"] .message-content {
-    border-left: 2px solid rgba(59, 130, 246, 0.5);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.03), rgba(59, 130, 246, 0.08));
+    border-left: 3px solid #3b82f6 !important;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(59, 130, 246, 0.1)) !important;
 }
 
 .system-message[data-status="searching"] .message-content {
-    border-left: 2px solid rgba(245, 158, 11, 0.5);
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.03), rgba(245, 158, 11, 0.08));
+    border-left: 3px solid #f59e0b !important;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(245, 158, 11, 0.1)) !important;
 }
 
 .system-message[data-status="processing"] .message-content {
-    border-left: 2px solid rgba(16, 185, 129, 0.5);
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.03), rgba(16, 185, 129, 0.08));
+    border-left: 3px solid #10b981 !important;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.1)) !important;
 }
 
 .system-message[data-status="error"] .message-content {
-    border-left: 2px solid rgba(239, 68, 68, 0.5);
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.03), rgba(239, 68, 68, 0.08));
+    border-left: 3px solid #ef4444 !important;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(239, 68, 68, 0.1)) !important;
 }
 
-/* フェードイン効果 - より滑らか */
-.system-message-fade-in {
-    animation: systemMessageFadeIn 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+/* === アニメーション初期状態 === */
+.message.bot.system-message.anim-fade {
+    opacity: 0 !important;
+    transform: translateY(-12px) scale(0.95) !important;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1) !important;
 }
 
-/* フェードアウト効果 - より迅速 */
-.system-message-fade-out {
-    animation: systemMessageFadeOut 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+.message.bot.system-message.anim-slide {
+    opacity: 0 !important;
+    transform: translateX(-30px) scale(0.95) !important;
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* スライドイン効果 - より自然 */
-.system-message-slide-in {
-    animation: systemMessageSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.message.bot.system-message.anim-pulse {
+    opacity: 0 !important;
+    transform: scale(0.9) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.6, 1) !important;
 }
 
-/* スライドアウト効果 - より迅速 */
-.system-message-slide-out {
-    animation: systemMessageSlideOut 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+.message.bot.system-message.anim-gradient {
+    opacity: 0 !important;
+    transform: translateY(-8px) !important;
+    transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 }
 
-/* メッセージ変更時の効果 - より洗練 */
-.system-message-pulse {
-    animation: systemMessagePulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+.message.bot.system-message.anim-ripple {
+    opacity: 0 !important;
+    transform: scale(0.8) !important;
+    transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
 
-/* メッセージ内容の変更効果 - より滑らか */
-.system-message-content-changing {
-    animation: systemMessageContentChange 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+.message.bot.system-message.anim-particles {
+    opacity: 0 !important;
+    transform: translateY(-16px) scale(0.92) !important;
+    transition: all 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
-/* アニメーション定義 */
-
-@keyframes systemMessageFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-8px) scale(0.96);
-        filter: blur(2px);
-    }
-    50% {
-        opacity: 0.7;
-        filter: blur(1px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        filter: blur(0);
-    }
+/* === アニメーション実行状態 === */
+.message.bot.system-message.anim-fade.animate,
+.message.bot.system-message.anim-slide.animate,
+.message.bot.system-message.anim-pulse.animate,
+.message.bot.system-message.anim-gradient.animate,
+.message.bot.system-message.anim-ripple.animate,
+.message.bot.system-message.anim-particles.animate {
+    opacity: 1 !important;
+    transform: translateY(0) translateX(0) scale(1) !important;
 }
 
-@keyframes systemMessageFadeOut {
-    from {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        filter: blur(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-8px) scale(0.96);
-        filter: blur(2px);
-    }
-}
+/* === 特殊効果 === */
 
-@keyframes systemMessageSlideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-24px) scale(0.94);
-        filter: blur(1px);
-    }
-    60% {
-        opacity: 0.8;
-        transform: translateX(2px) scale(1.01);
-        filter: blur(0);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-        filter: blur(0);
-    }
-}
-
-@keyframes systemMessageSlideOut {
-    from {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-        filter: blur(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateX(24px) scale(0.94);
-        filter: blur(1px);
-    }
-}
-
-@keyframes systemMessagePulse {
-    0% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.0);
-    }
-    25% {
-        transform: scale(1.01);
-        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-    }
-    50% {
-        transform: scale(1.02);
-        box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.05);
-    }
-    75% {
-        transform: scale(1.01);
-        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-    }
-    100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.0);
-    }
-}
-
-@keyframes systemMessageContentChange {
-    0% {
-        opacity: 1;
-        transform: scale(1) rotateX(0deg);
-    }
-    50% {
-        opacity: 0.3;
-        transform: scale(0.98) rotateX(5deg);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1) rotateX(0deg);
-    }
-}
-
-/* グラデーション背景効果 - より洗練 */
-.system-message-gradient {
-    position: relative;
-    overflow: hidden;
-}
-
-.system-message-gradient::before {
+/* グラデーション効果 */
+.message.bot.system-message.anim-gradient::before {
     content: '';
     position: absolute;
-    top: -50%;
+    top: 0;
     left: -100%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(
-        45deg, 
-        transparent 40%, 
-        rgba(59, 130, 246, 0.08) 50%, 
-        transparent 60%
-    );
-    animation: intelligentShimmer 3s ease-in-out infinite;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(59, 130, 246, 0.15), 
+        transparent);
+    transition: left 1.5s ease-in-out;
     pointer-events: none;
-    z-index: 0;
-}
-
-.system-message-gradient .message-content {
-    position: relative;
     z-index: 1;
 }
 
-@keyframes intelligentShimmer {
-    0% {
-        transform: translateX(-100%) translateY(-100%) rotate(45deg);
-    }
-    50% {
-        transform: translateX(0%) translateY(0%) rotate(45deg);
-    }
-    100% {
-        transform: translateX(100%) translateY(100%) rotate(45deg);
-    }
+.message.bot.system-message.anim-gradient.animate::before {
+    left: 100%;
 }
 
-/* タイピングドットの改良 */
+/* リップル効果 */
+.message.bot.system-message.anim-ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.3);
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    transition: all 0.8s ease-out;
+}
+
+.message.bot.system-message.anim-ripple.animate::after {
+    width: 200px;
+    height: 200px;
+    opacity: 0;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+/* パーティクル効果 */
+.message.bot.system-message.anim-particles::before {
+    content: '✨';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 12px;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.6s ease-out 0.3s;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.message.bot.system-message.anim-particles.animate::before {
+    opacity: 1;
+    transform: scale(1) rotate(360deg);
+}
+
+/* タイピングドット */
 .system-message .typing-dots {
     display: inline-block;
     margin-left: 4px;
@@ -213,11 +149,11 @@
 
 .system-message .typing-dots span {
     display: inline-block;
-    animation: intelligentTyping 1.4s ease-in-out infinite;
+    animation: typingDots 1.4s ease-in-out infinite;
     opacity: 0.3;
     margin: 0 1px;
     font-size: 1.1em;
-    color: var(--text-secondary);
+    color: #666;
 }
 
 .system-message .typing-dots span:nth-child(2) {
@@ -228,7 +164,7 @@
     animation-delay: 0.4s;
 }
 
-@keyframes intelligentTyping {
+@keyframes typingDots {
     0%, 60%, 100% { 
         opacity: 0.3; 
         transform: scale(1);
@@ -239,316 +175,26 @@
     }
 }
 
-/* 波紋効果のスタイル */
-.system-message-ripple {
-    position: relative;
-    overflow: visible;
-}
-
-.system-message-ripple::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(59, 130, 246, 0.15);
-    transform: translate(-50%, -50%);
-    animation: rippleEffect 1.2s ease-out;
-    pointer-events: none;
-    z-index: 0;
-}
-
-@keyframes rippleEffect {
-    0% {
-        width: 0;
-        height: 0;
-        opacity: 0.8;
-    }
-    50% {
-        width: 200px;
-        height: 200px;
-        opacity: 0.4;
-    }
-    100% {
-        width: 400px;
-        height: 400px;
-        opacity: 0;
-    }
-}
-
-/* パーティクル効果 */
-.system-message-particles {
-    position: relative;
-    overflow: hidden;
-}
-
-.system-message-particles::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: 
-        radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 2px, transparent 2px),
-        radial-gradient(circle at 80% 80%, rgba(245, 158, 11, 0.1) 1px, transparent 1px),
-        radial-gradient(circle at 60% 30%, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
-    background-size: 40px 40px, 60px 60px, 80px 80px;
-    animation: particleFloat 8s linear infinite;
-    pointer-events: none;
-    z-index: 0;
-}
-
-@keyframes particleFloat {
-    0% {
-        transform: translateY(0px) rotate(0deg);
-        opacity: 0;
-    }
-    10% {
-        opacity: 1;
-    }
-    90% {
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(-20px) rotate(360deg);
-        opacity: 0;
-    }
-}
-
-/* レスポンシブ対応とアクセシビリティ */
+/* レスポンシブ対応 */
 @media (prefers-reduced-motion: reduce) {
-    .system-message-fade-in,
-    .system-message-fade-out,
-    .system-message-slide-in,
-    .system-message-slide-out,
-    .system-message-pulse,
-    .system-message-content-changing {
-        animation: none !important;
+    .system-message.anim-fade,
+    .system-message.anim-slide,
+    .system-message.anim-pulse,
+    .system-message.anim-gradient,
+    .system-message.anim-ripple,
+    .system-message.anim-particles {
         transition: opacity 0.2s ease !important;
+        transform: none !important;
     }
     
-    .system-message-gradient::before,
-    .system-message-ripple::after,
-    .system-message-particles::before {
-        animation: none !important;
+    .system-message.anim-gradient::before,
+    .system-message.anim-ripple::after,
+    .system-message.anim-particles::before {
+        display: none !important;
     }
     
     .system-message .typing-dots span {
         animation: none !important;
         opacity: 0.6 !important;
-    }
-}
-
-/* ダークテーマでの調整 */
-@media (prefers-color-scheme: dark) {
-    .system-message[data-status="thinking"] .message-content {
-        border-left-color: rgba(96, 165, 250, 0.6);
-        background: linear-gradient(135deg, rgba(96, 165, 250, 0.05), rgba(96, 165, 250, 0.12));
-    }
-
-    .system-message[data-status="searching"] .message-content {
-        border-left-color: rgba(251, 191, 36, 0.6);
-        background: linear-gradient(135deg, rgba(251, 191, 36, 0.05), rgba(251, 191, 36, 0.12));
-    }
-
-    .system-message[data-status="processing"] .message-content {
-        border-left-color: rgba(52, 211, 153, 0.6);
-        background: linear-gradient(135deg, rgba(52, 211, 153, 0.05), rgba(52, 211, 153, 0.12));
-    }
-
-    .system-message[data-status="error"] .message-content {
-        border-left-color: rgba(248, 113, 113, 0.6);
-        background: linear-gradient(135deg, rgba(248, 113, 113, 0.05), rgba(248, 113, 113, 0.12));
-    }
-}
-
-/* フェードアウト効果 */
-.system-message-fade-out {
-    animation: systemMessageFadeOut var(--animation-duration-fast) ease-in forwards;
-}
-
-/* スライドイン効果 */
-.system-message-slide-in {
-    animation: systemMessageSlideIn var(--animation-duration-normal) cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-/* スライドアウト効果 */
-.system-message-slide-out {
-    animation: systemMessageSlideOut var(--animation-duration-fast) cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-/* メッセージ変更時のパルス効果 */
-.system-message-pulse {
-    animation: systemMessagePulse 0.6s cubic-bezier(0.4, 0, 0.6, 1) forwards;
-}
-
-/* メッセージ内容のスムーズな変更効果 */
-.system-message-content-changing {
-    animation: systemMessageContentChange 0.4s ease-in-out forwards;
-}
-
-/* アニメーション定義 */
-
-@keyframes systemMessageFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px) scale(0.98);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-@keyframes systemMessageFadeOut {
-    from {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-10px) scale(0.98);
-    }
-}
-
-@keyframes systemMessageSlideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-20px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-    }
-}
-
-@keyframes systemMessageSlideOut {
-    from {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-    }
-    to {
-        opacity: 0;
-        transform: translateX(20px) scale(0.95);
-    }
-}
-
-@keyframes systemMessagePulse {
-    0% {
-        transform: scale(1);
-        background-color: var(--background-secondary);
-    }
-    50% {
-        transform: scale(1.02);
-        background-color: var(--accent-color-alpha);
-    }
-    100% {
-        transform: scale(1);
-        background-color: var(--background-secondary);
-    }
-}
-
-@keyframes systemMessageContentChange {
-    0% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.5;
-        transform: scale(0.98);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-/* グラデーション背景効果 */
-.system-message-gradient {
-    position: relative;
-    overflow: hidden;
-}
-
-.system-message-gradient::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(var(--accent-color-rgb), 0.1), 
-        transparent);
-    animation: shimmer 2s ease-in-out infinite;
-    pointer-events: none;
-}
-
-@keyframes shimmer {
-    0% {
-        left: -100%;
-    }
-    100% {
-        left: 100%;
-    }
-}
-
-/* メッセージタイプ別の色付け */
-.system-message[data-status="thinking"] .message-content {
-    border-left: 3px solid var(--info-color);
-    background-color: rgba(var(--info-color-rgb), 0.05);
-}
-
-.system-message[data-status="searching"] .message-content {
-    border-left: 3px solid var(--warning-color);
-    background-color: rgba(var(--warning-color-rgb), 0.05);
-}
-
-.system-message[data-status="processing"] .message-content {
-    border-left: 3px solid var(--success-color);
-    background-color: rgba(var(--success-color-rgb), 0.05);
-}
-
-.system-message[data-status="error"] .message-content {
-    border-left: 3px solid var(--error-color);
-    background-color: rgba(var(--error-color-rgb), 0.05);
-}
-
-/* レスポンシブ対応 */
-@media (prefers-reduced-motion: reduce) {
-    .system-message-fade-in,
-    .system-message-fade-out,
-    .system-message-slide-in,
-    .system-message-slide-out,
-    .system-message-pulse,
-    .system-message-content-changing {
-        animation: none;
-        transition: opacity 0.2s ease;
-    }
-    
-    .system-message-gradient::before {
-        animation: none;
-    }
-}
-
-/* ダークテーマでのコントラスト調整 */
-@media (prefers-color-scheme: dark) {
-    .system-message[data-status="thinking"] .message-content {
-        background-color: rgba(var(--info-color-rgb), 0.08);
-    }
-
-    .system-message[data-status="searching"] .message-content {
-        background-color: rgba(var(--warning-color-rgb), 0.08);
-    }
-
-    .system-message[data-status="processing"] .message-content {
-        background-color: rgba(var(--success-color-rgb), 0.08);
-    }
-
-    .system-message[data-status="error"] .message-content {
-        background-color: rgba(var(--error-color-rgb), 0.08);
     }
 }
