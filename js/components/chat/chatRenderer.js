@@ -851,22 +851,13 @@ class ChatRenderer {
         } = options;
         
         const messageDiv = ChatUI.getInstance.createElement('div', {
-            classList: ['message', 'bot', 'system-message'],
+            classList: ['message', 'bot', 'system-message', `anim-${animation}`],
             attributes: {
                 'role': 'status',
                 'aria-live': 'polite',
                 'data-status': status
             }
         });
-        
-        // 特殊効果を適用
-        if (animation === 'gradient') {
-            messageDiv.classList.add('system-message-gradient');
-        } else if (animation === 'ripple') {
-            messageDiv.classList.add('system-message-ripple');
-        } else if (animation === 'particles') {
-            messageDiv.classList.add('system-message-particles');
-        }
         
         const contentDiv = ChatUI.getInstance.createElement('div', { classList: 'message-content' });
         
@@ -878,19 +869,15 @@ class ChatRenderer {
         contentDiv.appendChild(messageContent);
         messageDiv.appendChild(contentDiv);
         
-        // 初期状態を非表示に設定してからアニメーション開始
-        messageDiv.style.opacity = '0';
-        messageDiv.style.transform = this.#getInitialTransform(animation);
-        
+        // DOMに追加
         chatMessages.appendChild(messageDiv);
         
-        // アニメーション開始
-        requestAnimationFrame(() => {
-            messageDiv.style.opacity = '';
-            messageDiv.style.transform = '';
-            
-            this.#applyEnterAnimation(messageDiv, animation);
-        });
+        console.log(`📝 messageDiv classes: ${messageDiv.className}`);
+        
+        // アニメーション開始（次フレームで実行してCSSが確実に適用されるようにする）
+        setTimeout(() => {
+            messageDiv.classList.add('animate');
+        }, 50);
         
         // スクロール調整
         this.#smoothScrollToBottom(chatMessages);
@@ -1039,59 +1026,6 @@ class ChatRenderer {
         const dotsHtml = showDots ? 
             '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>' : '';
         return `<p>${message}${dotsHtml}</p>`;
-    }
-
-    /**
-     * アニメーション用の初期変形を取得します
-     * @private
-     * @param {string} animation - アニメーションタイプ
-     * @returns {string} CSS変形文字列
-     */
-    #getInitialTransform(animation) {
-        switch (animation) {
-            case 'slide':
-                return 'translateX(-24px) scale(0.94)';
-            case 'ripple':
-                return 'scale(0.9)';
-            case 'particles':
-                return 'translateY(-12px) scale(0.96)';
-            default:
-                return 'translateY(-8px) scale(0.96)';
-        }
-    }
-
-    /**
-     * 登場アニメーションを適用します
-     * @private
-     * @param {HTMLElement} element - アニメーション対象の要素
-     * @param {string} animation - アニメーションタイプ
-     */
-    #applyEnterAnimation(element, animation) {
-        if (!element) return;
-        
-        switch (animation) {
-            case 'slide':
-                element.classList.add('system-message-slide-in');
-                break;
-            case 'pulse':
-                element.classList.add('system-message-pulse');
-                break;
-            case 'ripple':
-                element.classList.add('system-message-fade-in');
-                // 波紋効果は CSS の ::after で自動的に動作
-                break;
-            case 'particles':
-                element.classList.add('system-message-fade-in');
-                // パーティクル効果は CSS の ::before で自動的に動作
-                break;
-            case 'gradient':
-                element.classList.add('system-message-fade-in');
-                // グラデーション効果は CSS の ::before で自動的に動作
-                break;
-            default:
-                element.classList.add('system-message-fade-in');
-                break;
-        }
     }
 
     /**
