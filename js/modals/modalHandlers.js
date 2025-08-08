@@ -59,6 +59,8 @@ class ModalHandlers {
             const endpoints = {
                 'gpt-4o-mini': window.Elements.azureEndpointGpt4oMini,
                 'gpt-4o': window.Elements.azureEndpointGpt4o,
+                'gpt-5-mini': window.Elements.azureEndpointGpt5Mini,
+                'gpt-5': window.Elements.azureEndpointGpt5,
                 'o1-mini': window.Elements.azureEndpointO1Mini,
                 'o1': window.Elements.azureEndpointO1
             };

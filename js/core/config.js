@@ -217,7 +217,7 @@ window.CONFIG = {
      */
     MODELS: {
         // サポートされているモデル
-        SUPPORTED: ['gpt-4o-mini', 'gpt-4o', 'o1-mini', 'o1']
+        SUPPORTED: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5', 'o1-mini', 'o1']
     },
     
     /**

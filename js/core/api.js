@@ -48,14 +48,44 @@ class AIAPI {
             
             // ストリーミングモードの場合
             if (useStream) {
-                // ストリーミングモードでAPIリクエストを実行
-                return await this.#executeStreamAPIRequest(
-                    endpoint, 
-                    headers, 
-                    body, 
-                    options.onChunk, 
-                    options.onComplete
-                );
+                try {
+                    // ストリーミングモードでAPIリクエストを実行
+                    return await this.#executeStreamAPIRequest(
+                        endpoint, 
+                        headers, 
+                        body, 
+                        options.onChunk, 
+                        options.onComplete
+                    );
+                } catch (streamError) {
+                    // 組織認証エラーの場合は1回だけリトライを試行
+                    if (streamError.message.includes('organization must be verified')) {
+                        console.warn(`モデル ${model} でストリーミング組織認証エラーが発生しました。3秒後にリトライします。`);
+                        
+                        try {
+                            // 3秒待機してからリトライ
+                            await new Promise(resolve => setTimeout(resolve, 3000));
+                            
+                            console.log(`モデル ${model} でストリーミングをリトライします。`);
+                            return await this.#executeStreamAPIRequest(
+                                endpoint, 
+                                headers, 
+                                body, 
+                                options.onChunk, 
+                                options.onComplete
+                            );
+                        } catch (retryError) {
+                            console.error(`モデル ${model} でストリーミングリトライも失敗しました:`, retryError);
+                            
+                            // リトライでも失敗した場合は詳細なメッセージを表示
+                            throw new Error(`${model}モデルのストリーミング機能で一時的な問題が発生しています。\n\n【対処法】\n1. 少し時間をおいてから再試行してください\n2. 組織認証状況を確認: https://platform.openai.com/settings/organization/general\n3. 問題が継続する場合は、他のモデル（gpt-4o、gpt-4o-mini）をお試しください\n\n※組織認証完了後も一時的にこのエラーが発生することがあります。`);
+                        }
+                    }
+                    
+                    // その他のストリーミングエラーはそのまま投げる
+                    console.error(`モデル ${model} でストリーミングエラー:`, streamError);
+                    throw streamError;
+                }
             } else {
                 // 通常モードでAPIリクエストを実行（リトライロジック付き）
                 return await this.#executeAPIRequestWithRetry(endpoint, headers, body);
@@ -74,6 +104,16 @@ class AIAPI {
                 throw new Error('APIキーに十分な権限がありません。API設定を確認してください。');
             } else if (error.message.includes('404')) {
                 throw new Error('指定されたモデルまたはエンドポイントが見つかりません。API設定を確認してください。');
+            } else if (error.message.includes('organization must be verified')) {
+                const model = window.AppState?.getCurrentModel?.() || 'unknown';
+                if (model.startsWith('gpt-5') || model.startsWith('o1')) {
+                    throw new Error(`${model}モデルを使用するには組織の認証が必要です。\n\n【解決手順】\n1. https://platform.openai.com/settings/organization/general にアクセス\n2. 「Verify Organization」をクリックして組織認証を完了\n3. 認証後、反映まで最大15分お待ちください\n\n一時的に他のモデル（gpt-4o、gpt-4o-mini）のご利用をお勧めします。`);
+                } else {
+                    throw new Error('このモデルを使用するには組織の認証が必要です。https://platform.openai.com/settings/organization/general にアクセスして「Verify Organization」をクリックしてください。認証後、反映まで最大15分かかる場合があります。');
+                }
+            } else if (error.message.includes('Unsupported parameter')) {
+                const model = window.AppState?.getCurrentModel?.() || 'unknown';
+                throw new Error(`モデル "${model}" でサポートされていないパラメータが使用されています: ${error.message}`);
             }
             
             throw error;
@@ -164,9 +204,9 @@ class AIAPI {
             throw new Error('有効なメッセージが指定されていません');
         }
         
-        // o1/o1-miniモデルの場合はシステムメッセージをユーザーメッセージに変換
+        // o1/o1-mini/gpt-5/gpt-5-miniモデルの場合はシステムメッセージをユーザーメッセージに変換
         const model = window.AppState.getCurrentModel();
-        if (model && (model === 'o1' || model === 'o1-mini')) {
+        if (model && (model === 'o1' || model === 'o1-mini' || model === 'gpt-5' || model === 'gpt-5-mini')) {
             messages = this.#convertSystemToUserMessage(messages);
         }
         
@@ -305,8 +345,8 @@ class AIAPI {
     #prepareAPIRequest(messages, model, useStream) {
         let endpoint, headers = {}, body = {};
         
-        // o1/o1-miniモデルかどうかをチェック
-        const isO1Model = model.startsWith('o1');
+        // o1/o1-mini/gpt-5/gpt-5-miniモデルかどうかをチェック
+        const isSpecialModel = model.startsWith('o1') || model.startsWith('gpt-5');
 
         // 共通のボディパラメータを設定
         body = {
@@ -314,11 +354,17 @@ class AIAPI {
         };
 
         // モデルに応じて適切なパラメータを設定
-        if (isO1Model) {
+        if (isSpecialModel) {
+            // 推論モデルは最小限のパラメータのみサポート
             body.max_completion_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
+            // temperature, top_p, presence_penalty, frequency_penalty等は送信しない
         } else {
+            // 通常のGPTモデルは全パラメータをサポート
             body.temperature = window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature;
             body.max_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
+            body.top_p = window.CONFIG.AIAPI.DEFAULT_PARAMS.top_p;
+            body.frequency_penalty = window.CONFIG.AIAPI.DEFAULT_PARAMS.frequency_penalty;
+            body.presence_penalty = window.CONFIG.AIAPI.DEFAULT_PARAMS.presence_penalty;
         }
         
         if (window.apiSettings.apiType === 'openai') {
@@ -342,16 +388,6 @@ class AIAPI {
                 'api-key': window.apiSettings.azureApiKey,
                 'Content-Type': 'application/json'
             };
-        }
-        
-        // 非本番環境の場合はデバッグ情報を出力
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.log('APIリクエスト:', {
-                endpoint: endpoint,
-                model: model,
-                apiType: window.apiSettings.apiType,
-                messageCount: messages.length
-            });
         }
         
         return { 
@@ -533,7 +569,8 @@ class AIAPI {
             const timeoutId = setTimeout(() => controller.abort(), window.CONFIG.AIAPI.TIMEOUT_MS);
             
             const startTime = Date.now();
-            console.log(`ストリーミングAPIリクエスト送信: ${endpoint}`);
+            const modelName = body.model || 'unknown';
+            console.log(`ストリーミングAPIリクエスト送信 (${modelName}): ${endpoint}`);
             
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -624,7 +661,7 @@ class AIAPI {
             }
             
             const responseTime = Date.now() - startTime;
-            console.log(`ストリーミングAPIレスポンス完了 (${responseTime}ms, ${chunkCount}チャンク)`);
+            console.log(`ストリーミングAPIレスポンス完了: ${responseTime}ms, ${chunkCount}チャンク`);
             
             // すべてのデータを受信した後、完了コールバックを呼び出す
             onComplete(fullText);

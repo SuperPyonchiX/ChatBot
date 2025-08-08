@@ -42,6 +42,8 @@ class ApiSettingsModal {
             azureSettings: UICache.getInstance.get('azureSettings'),
             azureEndpointGpt4oMini: UICache.getInstance.get('azureEndpointGpt4oMini'),
             azureEndpointGpt4o: UICache.getInstance.get('azureEndpointGpt4o'),
+            azureEndpointGpt5Mini: UICache.getInstance.get('azureEndpointGpt5Mini'),
+            azureEndpointGpt5: UICache.getInstance.get('azureEndpointGpt5'),
             azureEndpointO1Mini: UICache.getInstance.get('azureEndpointO1Mini'),
             azureEndpointO1: UICache.getInstance.get('azureEndpointO1'),
             tavilyApiKeyInput: UICache.getInstance.get('tavilyApiKeyInput')
@@ -57,6 +59,8 @@ class ApiSettingsModal {
             // Azureエンドポイント設定を適用
             elements.azureEndpointGpt4oMini.value = apiSettings.azureEndpoints['gpt-4o-mini'];
             elements.azureEndpointGpt4o.value = apiSettings.azureEndpoints['gpt-4o'];
+            elements.azureEndpointGpt5Mini.value = apiSettings.azureEndpoints['gpt-5-mini'];
+            elements.azureEndpointGpt5.value = apiSettings.azureEndpoints['gpt-5'];
             elements.azureEndpointO1Mini.value = apiSettings.azureEndpoints['o1-mini'];
             elements.azureEndpointO1.value = apiSettings.azureEndpoints['o1'];
         } else {

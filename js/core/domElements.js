@@ -48,7 +48,8 @@ window.Elements = (function() {
         // API設定関連
         'apiKeyModal', 'saveApiKey', 'cancelApiKey', 'openaiRadio', 'azureRadio',
         'apiKeyInput', 'azureApiKeyInput', 'azureEndpointGpt4oMini', 
-        'azureEndpointGpt4o', 'azureEndpointO1Mini', 'azureEndpointO1',
+        'azureEndpointGpt4o', 'azureEndpointGpt5Mini', 'azureEndpointGpt5',
+        'azureEndpointO1Mini', 'azureEndpointO1',
         'tavilyApiKeyInput',
         
         // チャット名前変更関連
