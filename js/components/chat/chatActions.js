@@ -58,7 +58,7 @@ class ChatActions {
             this.#webSearchToggle.addEventListener('click', () => {
                 const webContentExtractor = WebContentExtractor.getInstance;
                 const currentState = webContentExtractor.isWebSearchEnabled();
-                webContentExtractor.toggleWebSearch(!currentState);
+                webContentExtractor.setWebSearchEnabled(!currentState);
                 this.#updateToggleButtonState();
             });
         }
@@ -276,30 +276,13 @@ class ChatActions {
             const webExtractor = WebContentExtractor.getInstance;
             const isWebSearchEnabled = webExtractor && webExtractor.isWebSearchEnabled();
 
-            // GPT-5シリーズはResponses API内蔵Web検索、その他はTavily検索
-            if (isWebSearchEnabled && currentModel.startsWith('gpt-5')) {
-                // GPT-5 Responses APIの内蔵Web検索を使用（APIレベルで自動処理）
-                console.log(`GPT-5 Responses API Web検索機能を有効にします: ${currentModel}`);
-            } else if (isWebSearchEnabled && webExtractor.hasTavilyApiKey()) {
-                // 従来のTavily検索を使用
-                console.log(`Web検索機能を有効にします (Tavily API): ${currentModel}`);
-                try {
-                    const model = currentModel || window.CONFIG.WEB_SEARCH.AUTO_SEARCH_MODEL;
-                    
-                    // 現在の会話からチャット履歴を取得
-                    const chatHistory = conversation.messages || [];
-                    
-                    // チャット履歴を含めて検索判断を行う
-                    const searchResult = await webExtractor.autoSearchWeb(userText, model, chatMessages, chatHistory);
-                    
-                    if (searchResult.searchPerformed && searchResult.hasResults) {
-                        // 検索結果がある場合、メッセージを更新
-                        messageWithSearchResults = searchResult.messageWithSearchResults;
-                        searchPerformed = true;
-                    }
-                } catch (searchError) {
-                    console.error('Tavily自動検索中にエラーが発生しました:', searchError);
-                }
+            // GPT-4o/GPT-5シリーズはResponses API内蔵Web検索を使用
+            if (isWebSearchEnabled && (currentModel.startsWith('gpt-4o') || currentModel.startsWith('gpt-5'))) {
+                // Responses APIの内蔵Web検索を使用（APIレベルで自動処理）
+                console.log(`Responses API Web検索機能を有効にします: ${currentModel}`);
+            } else if (isWebSearchEnabled) {
+                // GPT-4o/GPT-5シリーズ以外ではWeb検索は利用できません
+                console.log(`${currentModel}はWeb検索に対応していません。GPT-4o/GPT-5シリーズを使用してください。`);
             }
 
             if (attachments && attachments.length > 0) {

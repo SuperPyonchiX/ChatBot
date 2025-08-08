@@ -80,21 +80,28 @@
     border: none;
     padding: 8px;
     cursor: pointer;
-    color: var(--text-tertiary);
-    opacity: 0.6;
+    color: #888;  /* より灰色にして無効状態を明確に */
+    opacity: 0.3; /* より薄くして無効感を強調 */
     transition: all var(--transition-fast);
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 4px;
 }
 
 .toggle-button:hover {
-    opacity: 0.8;
+    opacity: 0.6; /* ホバー時も控えめに */
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .toggle-button.active {
     opacity: 1;
-    color: var(--accent-color);
+    color: #17a2b8; /* 青緑色で有効状態を明確に表示 */
+}
+
+.toggle-button.active:hover {
+    opacity: 1;
+    background-color: rgba(23, 162, 184, 0.15);
 }
 
 .file-upload-label {

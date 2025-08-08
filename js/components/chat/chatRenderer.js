@@ -154,7 +154,15 @@ class ChatRenderer {
     addStreamingBotMessage(chatMessages, timestamp = null) {
         if (!chatMessages) return null;
 
-        const { messageDiv, contentContainer } = this.addSystemMessage(chatMessages, 'Thinking');
+        const { messageDiv, contentContainer } = this.addSystemMessage(
+            chatMessages, 
+            'Thinking', 
+            { 
+                status: 'thinking', 
+                animation: 'fade', 
+                showDots: true 
+            }
+        );
         
         // システムメッセージのクラスを変更してボットメッセージに
         if (messageDiv) {
@@ -827,29 +835,65 @@ class ChatRenderer {
      * システムメッセージを表示する
      * @param {HTMLElement} chatMessages - チャットメッセージコンテナ
      * @param {string} message - 表示するメッセージ
+     * @param {Object} options - 表示オプション
+     * @param {string} options.status - メッセージの状態 ('thinking', 'searching', 'processing', 'error')
+     * @param {string} options.animation - アニメーション種類 ('fade', 'slide', 'pulse', 'gradient', 'ripple', 'particles')
+     * @param {boolean} options.showDots - タイピングドットを表示するか
      * @returns {Object} メッセージ要素の参照
      */
-    addSystemMessage(chatMessages, message) {
+    addSystemMessage(chatMessages, message, options = {}) {
         if (!chatMessages) return null;
+        
+        const {
+            status = 'thinking',
+            animation = 'slide',
+            showDots = true
+        } = options;
         
         const messageDiv = ChatUI.getInstance.createElement('div', {
             classList: ['message', 'bot', 'system-message'],
             attributes: {
                 'role': 'status',
-                'aria-live': 'polite'
+                'aria-live': 'polite',
+                'data-status': status
             }
         });
         
+        // 特殊効果を適用
+        if (animation === 'gradient') {
+            messageDiv.classList.add('system-message-gradient');
+        } else if (animation === 'ripple') {
+            messageDiv.classList.add('system-message-ripple');
+        } else if (animation === 'particles') {
+            messageDiv.classList.add('system-message-particles');
+        }
+        
         const contentDiv = ChatUI.getInstance.createElement('div', { classList: 'message-content' });
+        
         const messageContent = ChatUI.getInstance.createElement('div', {
             classList: 'markdown-content',
-            innerHTML: `<p>${message}<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>`
+            innerHTML: this.#formatSystemMessage(message, showDots)
         });
         
         contentDiv.appendChild(messageContent);
         messageDiv.appendChild(contentDiv);
+        
+        // 初期状態を非表示に設定してからアニメーション開始
+        messageDiv.style.opacity = '0';
+        messageDiv.style.transform = this.#getInitialTransform(animation);
+        
         chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // アニメーション開始
+        requestAnimationFrame(() => {
+            messageDiv.style.opacity = '';
+            messageDiv.style.transform = '';
+            
+            this.#applyEnterAnimation(messageDiv, animation);
+        });
+        
+        // スクロール調整
+        this.#smoothScrollToBottom(chatMessages);
         
         return {
             messageDiv: messageDiv,
@@ -861,23 +905,86 @@ class ChatRenderer {
      * システムメッセージを更新する
      * @param {HTMLElement} messageDiv - メッセージ要素
      * @param {string} message - 新しいメッセージ
+     * @param {Object} options - 更新オプション
+     * @param {string} options.status - メッセージの新しい状態
+     * @param {boolean} options.animate - 変更アニメーションを使用するか
+     * @param {boolean} options.showDots - タイピングドットを表示するか
      */
-    updateSystemMessage(messageDiv, message) {
+    updateSystemMessage(messageDiv, message, options = {}) {
         if (!messageDiv) return;
         
+        const {
+            status = null,
+            animate = true,
+            showDots = true
+        } = options;
+        
         const messageContent = messageDiv.querySelector('.markdown-content');
-        if (messageContent) {
-            messageContent.innerHTML = `<p>${message}<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>`;
+        if (!messageContent) return;
+        
+        // ステータスを更新
+        if (status && messageDiv.getAttribute('data-status') !== status) {
+            // ステータス変更のアニメーション
+            if (animate) {
+                messageDiv.classList.add('system-message-pulse');
+                setTimeout(() => {
+                    messageDiv.classList.remove('system-message-pulse');
+                }, 800);
+            }
+            messageDiv.setAttribute('data-status', status);
+        }
+        
+        if (animate && messageContent.innerHTML !== this.#formatSystemMessage(message, showDots)) {
+            // より洗練されたコンテンツ変更アニメーション
+            messageContent.style.transform = 'scale(0.98)';
+            messageContent.style.opacity = '0.3';
+            
+            setTimeout(() => {
+                messageContent.innerHTML = this.#formatSystemMessage(message, showDots);
+                messageContent.style.transform = 'scale(1)';
+                messageContent.style.opacity = '1';
+            }, 150);
+        } else if (!animate) {
+            messageContent.innerHTML = this.#formatSystemMessage(message, showDots);
         }
     }
 
     /**
      * システムメッセージを削除する
      * @param {HTMLElement} messageDiv - 削除するメッセージ要素
+     * @param {Object} options - 削除オプション
+     * @param {string} options.animation - 削除アニメーション ('fade', 'slide')
+     * @param {number} options.delay - 削除前の遅延時間（ミリ秒）
      */
-    removeSystemMessage(messageDiv) {
-        if (messageDiv && messageDiv.parentNode) {
-            messageDiv.parentNode.removeChild(messageDiv);
+    removeSystemMessage(messageDiv, options = {}) {
+        if (!messageDiv || !messageDiv.parentNode) return;
+        
+        const {
+            animation = 'fade',
+            delay = 0
+        } = options;
+        
+        const performRemoval = () => {
+            // 削除アニメーションクラスを追加
+            if (animation === 'slide') {
+                messageDiv.classList.add('system-message-slide-out');
+            } else {
+                messageDiv.classList.add('system-message-fade-out');
+            }
+            
+            // アニメーション完了後に要素を削除
+            const animationDuration = animation === 'slide' ? 300 : 200;
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, animationDuration);
+        };
+        
+        if (delay > 0) {
+            setTimeout(performRemoval, delay);
+        } else {
+            performRemoval();
         }
     }
 
@@ -919,5 +1026,95 @@ class ChatRenderer {
         const element = document.createElement('div');
         element.innerHTML = text;
         return element.textContent || text;
+    }
+
+    /**
+     * システムメッセージをフォーマットします
+     * @private
+     * @param {string} message - メッセージ
+     * @param {boolean} showDots - タイピングドットを表示するか
+     * @returns {string} フォーマット済みメッセージHTML
+     */
+    #formatSystemMessage(message, showDots) {
+        const dotsHtml = showDots ? 
+            '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>' : '';
+        return `<p>${message}${dotsHtml}</p>`;
+    }
+
+    /**
+     * アニメーション用の初期変形を取得します
+     * @private
+     * @param {string} animation - アニメーションタイプ
+     * @returns {string} CSS変形文字列
+     */
+    #getInitialTransform(animation) {
+        switch (animation) {
+            case 'slide':
+                return 'translateX(-24px) scale(0.94)';
+            case 'ripple':
+                return 'scale(0.9)';
+            case 'particles':
+                return 'translateY(-12px) scale(0.96)';
+            default:
+                return 'translateY(-8px) scale(0.96)';
+        }
+    }
+
+    /**
+     * 登場アニメーションを適用します
+     * @private
+     * @param {HTMLElement} element - アニメーション対象の要素
+     * @param {string} animation - アニメーションタイプ
+     */
+    #applyEnterAnimation(element, animation) {
+        if (!element) return;
+        
+        switch (animation) {
+            case 'slide':
+                element.classList.add('system-message-slide-in');
+                break;
+            case 'pulse':
+                element.classList.add('system-message-pulse');
+                break;
+            case 'ripple':
+                element.classList.add('system-message-fade-in');
+                // 波紋効果は CSS の ::after で自動的に動作
+                break;
+            case 'particles':
+                element.classList.add('system-message-fade-in');
+                // パーティクル効果は CSS の ::before で自動的に動作
+                break;
+            case 'gradient':
+                element.classList.add('system-message-fade-in');
+                // グラデーション効果は CSS の ::before で自動的に動作
+                break;
+            default:
+                element.classList.add('system-message-fade-in');
+                break;
+        }
+    }
+
+    /**
+     * スムーズにスクロールして最下部に移動します
+     * @private
+     * @param {HTMLElement} container - スクロール対象のコンテナ
+     */
+    #smoothScrollToBottom(container) {
+        if (!container) return;
+        
+        // スムーズスクロールをサポートしている場合は使用
+        if ('scrollBehavior' in document.documentElement.style) {
+            setTimeout(() => {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 50);
+        } else {
+            // フォールバック：通常のスクロール
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 50);
+        }
     }
 }

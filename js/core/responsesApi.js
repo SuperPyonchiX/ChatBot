@@ -434,7 +434,15 @@ class ResponsesAPI {
             const existingThinkingMessage = chatMessages.querySelector('.message.bot:last-child');
             if (existingThinkingMessage) {
                 try {
-                    chatRenderer.updateSystemMessage(existingThinkingMessage, '🔍 Web検索を実行中');
+                    chatRenderer.updateSystemMessage(
+                        existingThinkingMessage, 
+                        '🔍 Web検索を実行中',
+                        { 
+                            status: 'searching', 
+                            animate: true, 
+                            showDots: true 
+                        }
+                    );
                     return { statusMessage: existingThinkingMessage, shouldSkip: true };
                 } catch (error) {
                     console.error('🔍 Thinkingメッセージ更新エラー:', error);
@@ -444,7 +452,15 @@ class ResponsesAPI {
             
             if (!currentStatusMessage) {
                 try {
-                    const statusResult = chatRenderer.addSystemMessage(chatMessages, '🔍 Web検索を実行中');
+                    const statusResult = chatRenderer.addSystemMessage(
+                        chatMessages, 
+                        '🔍 Web検索を実行中',
+                        { 
+                            status: 'searching', 
+                            animation: 'gradient', 
+                            showDots: true 
+                        }
+                    );
                     return { statusMessage: statusResult.messageDiv, shouldSkip: true };
                 } catch (error) {
                     console.error('🔍 システムメッセージ作成エラー:', error);
@@ -452,7 +468,15 @@ class ResponsesAPI {
                 }
             } else {
                 try {
-                    chatRenderer.updateSystemMessage(currentStatusMessage, '🔍 Web検索を実行中');
+                    chatRenderer.updateSystemMessage(
+                        currentStatusMessage, 
+                        '🔍 Web検索を実行中',
+                        { 
+                            status: 'searching', 
+                            animate: true, 
+                            showDots: true 
+                        }
+                    );
                 } catch (error) {
                     console.error('🔍 システムメッセージ更新エラー:', error);
                 }
@@ -464,7 +488,15 @@ class ResponsesAPI {
         if (jsonData.type === 'response.web_search_call.completed') {
             if (currentStatusMessage) {
                 try {
-                    chatRenderer.updateSystemMessage(currentStatusMessage, 'Thinking');
+                    chatRenderer.updateSystemMessage(
+                        currentStatusMessage, 
+                        'Thinking',
+                        { 
+                            status: 'thinking', 
+                            animate: true, 
+                            showDots: true 
+                        }
+                    );
                     return { statusMessage: currentStatusMessage, shouldSkip: true };
                 } catch (error) {
                     console.error('🔍 システムメッセージ更新エラー:', error);
