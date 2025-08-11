@@ -58,6 +58,7 @@ class ResponsesAPI {
             console.log(`Responses APIリクエスト送信 (${model}):`, endpoint);
             console.log('🔍 Web検索有効:', options.enableWebSearch);
             console.log('📡 ストリーミング有効:', options.stream);
+            // console.log('📦 リクエストボディ:', body);
             
             // APIリクエストを実行
             if (options.stream) {
@@ -91,50 +92,94 @@ class ResponsesAPI {
      * メッセージを Responses API の input 形式に変換
      */
     #processInputForResponses(messages, attachments) {
-        // 最新のユーザーメッセージを取得
-        const userMessages = messages.filter(msg => msg.role === 'user');
-        const latestUserMessage = userMessages[userMessages.length - 1];
-        
-        if (!latestUserMessage) {
-            throw new Error('ユーザーメッセージが見つかりません');
+        if (!messages || messages.length === 0) {
+            throw new Error('メッセージが見つかりません');
         }
 
-        // 添付ファイルがある場合は content 配列形式に変換
-        if (attachments && attachments.length > 0) {
-            const content = [];
+        // システムプロンプトとメッセージを分離
+        const systemMessages = [];
+        const conversationMessages = [];
+        
+        // システムメッセージと会話メッセージを分別
+        for (const message of messages) {
+            if (message.role === 'system') {
+                systemMessages.push(message.content);
+            } else {
+                conversationMessages.push(message);
+            }
+        }
+        
+        // 会話メッセージを処理
+        const processedInput = [];
+        
+        for (let i = 0; i < conversationMessages.length; i++) {
+            const message = conversationMessages[i];
+            const isLastUserMessage = i === conversationMessages.length - 1 && message.role === 'user';
             
-            // テキスト部分を追加
-            if (typeof latestUserMessage.content === 'string') {
-                content.push({
-                    type: "input_text",
-                    text: latestUserMessage.content
+            // アシスタントメッセージの処理
+            if (message.role === 'assistant') {
+                processedInput.push({
+                    role: 'assistant',
+                    content: message.content
                 });
+                continue;
             }
             
-            // 添付ファイルを追加
-            for (const attachment of attachments) {
-                if (attachment.type === 'image') {
-                    content.push({
-                        type: "input_image",
-                        image_url: attachment.data
+            // ユーザーメッセージの処理
+            if (message.role === 'user') {
+                // 最新のユーザーメッセージで添付ファイルがある場合
+                if (isLastUserMessage && attachments && attachments.length > 0) {
+                    const content = [];
+                    
+                    // テキスト部分を追加
+                    if (typeof message.content === 'string' && message.content.trim()) {
+                        content.push({
+                            type: "text",
+                            text: message.content
+                        });
+                    }
+                    
+                    // 添付ファイルを追加（画像のみサポート）
+                    for (const attachment of attachments) {
+                        if (attachment.type === 'image') {
+                            content.push({
+                                type: "image_url",
+                                image_url: {
+                                    url: attachment.data
+                                }
+                            });
+                        }
+                    }
+                    
+                    processedInput.push({
+                        role: 'user',
+                        content: content
+                    });
+                } else {
+                    // 通常のテキストメッセージ
+                    processedInput.push({
+                        role: 'user',
+                        content: message.content
                     });
                 }
             }
-            
-            return [{
-                role: "user",
-                content: content
-            }];
         }
         
-        // シンプルなテキストメッセージの場合
-        return latestUserMessage.content;
+        if (processedInput.length === 0) {
+            throw new Error('処理可能なメッセージが見つかりません');
+        }
+        
+        // システムプロンプトと入力配列を返す
+        return {
+            instructions: systemMessages.length > 0 ? systemMessages.join('\n\n') : undefined,
+            input: processedInput
+        };
     }
 
     /**
      * Responses APIリクエストを準備
      */
-    #prepareResponsesRequest(input, model, enableWebSearch, stream = false) {
+    #prepareResponsesRequest(processedData, model, enableWebSearch, stream = false) {
         let endpoint, headers = {}, body = {};
         
         if (window.apiSettings.apiType === 'openai') {
@@ -170,10 +215,16 @@ class ResponsesAPI {
             };
         }
         
+        // Responses API形式でボディを構築
         body = {
             model: model,
-            input: input
+            input: processedData.input
         };
+        
+        // システムプロンプトがある場合はinstructionsに設定
+        if (processedData.instructions) {
+            body.instructions = processedData.instructions;
+        }
         
         // ストリーミングを追加
         if (stream) {
@@ -370,17 +421,22 @@ class ResponsesAPI {
      * Responses APIレスポンスからテキストを抽出
      */
     #extractTextFromResponse(responseData) {
+        // 最新のResponses API形式: output配列内のmessageタイプを探索
         if (!responseData.output || !responseData.output.length) {
             return '';
         }
 
         let text = '';
         for (const outputItem of responseData.output) {
+            // messageタイプのoutputアイテムを処理
             if (outputItem.type === 'message' && outputItem.content) {
                 for (const contentItem of outputItem.content) {
-                    if (contentItem.type === 'text' && contentItem.text) {
+                    // output_textタイプのコンテンツを抽出
+                    if (contentItem.type === 'output_text' && contentItem.text) {
                         text += contentItem.text;
-                    } else if (contentItem.type === 'output_text' && contentItem.text) {
+                    }
+                    // 下位互換性のためtextタイプも処理
+                    else if (contentItem.type === 'text' && contentItem.text) {
                         text += contentItem.text;
                     }
                 }
