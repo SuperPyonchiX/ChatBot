@@ -472,19 +472,42 @@ class ResponsesAPI {
             console.warn('ChatRendererが見つかりません。Web検索ステータスの更新はスキップされます。');
         }
 
+        // Web検索クエリを抽出する関数(OPENAI公式でまだ定義されていない)
+        const extractSearchQuery = (jsonData) => {
+            // console.log('🔍 Web検索クエリ抽出:', jsonData);
+            // output配列からweb_search_callを探す
+            if (jsonData.output && Array.isArray(jsonData.output)) {
+                const webSearchCall = jsonData.output.find(item => item.type === 'web_search_call');
+                if (webSearchCall && webSearchCall.query) {
+                    return webSearchCall.query;
+                }
+            }
+            // 直接queryフィールドがある場合
+            if (jsonData.query) {
+                return jsonData.query;
+            }
+            return null;
+        };
+
         // Web検索開始の検出（複数パターンに対応）
         const isWebSearchStarting = jsonData.type === 'response.web_search_call.in_progress' ||
                                    jsonData.type === 'response.web_search_call.searching' ||
                                    (jsonData.output && jsonData.output.some(item => item.type === 'web_search_call'));
                                    
         if (isWebSearchStarting) {
+            // 検索クエリを取得
+            const searchQuery = extractSearchQuery(jsonData);
+            const searchMessage = searchQuery ? 
+                `🔍 Web検索を実行中: "${searchQuery}"` : 
+                '🔍 Web検索を実行中';
+            
             // 既存のThinkingメッセージを探して更新
             const existingThinkingMessage = chatMessages.querySelector('.message.bot:last-child');
             if (existingThinkingMessage) {
                 try {
                     chatRenderer.updateSystemMessage(
                         existingThinkingMessage, 
-                        '🔍 Web検索を実行中',
+                        searchMessage,
                         { 
                             status: 'searching', 
                             animate: true, 
@@ -501,7 +524,7 @@ class ResponsesAPI {
                 try {
                     const statusResult = chatRenderer.addSystemMessage(
                         chatMessages, 
-                        '🔍 Web検索を実行中',
+                        searchMessage,
                         { 
                             status: 'searching', 
                             animation: 'gradient', 
@@ -516,7 +539,7 @@ class ResponsesAPI {
                 try {
                     chatRenderer.updateSystemMessage(
                         currentStatusMessage, 
-                        '🔍 Web検索を実行中',
+                        searchMessage,
                         { 
                             status: 'searching', 
                             animate: true, 
