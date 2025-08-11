@@ -461,23 +461,15 @@ class ResponsesAPI {
         
         // ChatRendererの存在チェック（複数のパターンに対応）
         let chatRenderer = null;
-        if (window.ChatRenderer) {
-            if (typeof window.ChatRenderer.getInstance === 'function') {
-                try {
-                    chatRenderer = window.ChatRenderer.getInstance();
-                } catch (error) {
-                    // エラーは無視して継続
-                }
+        try {
+            // ChatRendererクラスの存在確認
+            if (typeof ChatRenderer === 'undefined') {
+                throw new Error('ChatRenderer class is not defined');
             }
-            
-            if (!chatRenderer && typeof window.ChatRenderer.addSystemMessage === 'function') {
-                // 静的メソッドとして直接使用
-                chatRenderer = window.ChatRenderer;
-            }
-        }
-        
-        if (!chatRenderer) {
-            return this.#handleWebSearchStatusDirect(jsonData, currentStatusMessage, chatMessages);
+            // getInstance は静的なgetter
+            chatRenderer = ChatRenderer.getInstance;
+        } catch (error) {
+            console.warn('ChatRendererが見つかりません。Web検索ステータスの更新はスキップされます。');
         }
 
         // Web検索開始の検出（複数パターンに対応）
@@ -502,7 +494,6 @@ class ResponsesAPI {
                     return { statusMessage: existingThinkingMessage, shouldSkip: true };
                 } catch (error) {
                     console.error('🔍 Thinkingメッセージ更新エラー:', error);
-                    return this.#handleWebSearchStatusDirect(jsonData, currentStatusMessage, chatMessages);
                 }
             }
             
@@ -520,7 +511,6 @@ class ResponsesAPI {
                     return { statusMessage: statusResult.messageDiv, shouldSkip: true };
                 } catch (error) {
                     console.error('🔍 システムメッセージ作成エラー:', error);
-                    return this.#handleWebSearchStatusDirect(jsonData, currentStatusMessage, chatMessages);
                 }
             } else {
                 try {
@@ -568,61 +558,6 @@ class ResponsesAPI {
                     }
                 }
                 return { statusMessage: currentStatusMessage, shouldSkip: true };
-            }
-        }
-        
-        return { statusMessage: currentStatusMessage, shouldSkip: false };
-    }
-
-    // 代替のWeb検索ステータス処理（直接DOM操作）
-    #handleWebSearchStatusDirect(jsonData, currentStatusMessage, chatMessages) {
-        const isWebSearchStarting = jsonData.type === 'response.web_search_call.in_progress' ||
-                                   jsonData.type === 'response.web_search_call.searching';
-                                   
-        if (isWebSearchStarting) {
-            // 既存のThinkingメッセージを探して更新
-            const existingThinkingMessage = chatMessages.querySelector('.message.bot:last-child');
-            if (existingThinkingMessage) {
-                try {
-                    const messageContent = existingThinkingMessage.querySelector('.markdown-content');
-                    if (messageContent) {
-                        messageContent.innerHTML = `<p>🔍 Web検索を実行中...<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>`;
-                        return { statusMessage: existingThinkingMessage, shouldSkip: true };
-                    }
-                } catch (error) {
-                    // エラーは無視して継続
-                }
-            }
-            
-            if (!currentStatusMessage) {
-                try {
-                    const statusElement = document.createElement('div');
-                    statusElement.className = 'system-message web-search-status';
-                    statusElement.textContent = '🔍 Web検索を実行中...';
-                    statusElement.id = 'web-search-status-' + Date.now();
-                    chatMessages.appendChild(statusElement);
-                    return { statusMessage: statusElement, shouldSkip: true };
-                } catch (error) {
-                    console.error('🔍 直接DOM操作エラー:', error);
-                    return { statusMessage: currentStatusMessage, shouldSkip: false };
-                }
-            }
-        }
-        
-        if (jsonData.type === 'response.web_search_call.completed' && currentStatusMessage) {
-            try {
-                const messageContent = currentStatusMessage.querySelector('.markdown-content');
-                if (messageContent) {
-                    messageContent.innerHTML = `<p>Thinking<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>`;
-                    return { statusMessage: currentStatusMessage, shouldSkip: true };
-                } else {
-                    // 独立したWeb検索ステータス要素の場合は削除
-                    currentStatusMessage.remove();
-                    return { statusMessage: null, shouldSkip: true };
-                }
-            } catch (error) {
-                console.error('🔍 直接DOM削除エラー:', error);
-                return { statusMessage: null, shouldSkip: true };
             }
         }
         
