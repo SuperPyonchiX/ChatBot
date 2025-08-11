@@ -453,6 +453,7 @@ class ResponsesAPI {
      * @returns {Object} {statusMessage: HTMLElement|null, shouldSkip: boolean}
      */
     #handleWebSearchStatus(jsonData, currentStatusMessage) {
+        // console.log('🔍 jsonData抽出:', jsonData);
         const chatMessages = document.querySelector('#chatMessages');
 
         if (!chatMessages) {
@@ -474,7 +475,6 @@ class ResponsesAPI {
 
         // Web検索クエリを抽出する関数(OPENAI公式でまだ定義されていない)
         const extractSearchQuery = (jsonData) => {
-            // console.log('🔍 Web検索クエリ抽出:', jsonData);
             // output配列からweb_search_callを探す
             if (jsonData.output && Array.isArray(jsonData.output)) {
                 const webSearchCall = jsonData.output.find(item => item.type === 'web_search_call');
@@ -485,6 +485,19 @@ class ResponsesAPI {
             // 直接queryフィールドがある場合
             if (jsonData.query) {
                 return jsonData.query;
+            }
+            return null;
+        };
+
+        // Web検索完了時のクエリ抽出関数
+        const extractCompletedSearchQuery = (jsonData) => {
+            // response.output_item.doneでのweb_search_callからクエリを取得
+            if (jsonData.type === 'response.output_item.done' && 
+                jsonData.item && 
+                jsonData.item.type === 'web_search_call' &&
+                jsonData.item.action &&
+                jsonData.item.action.query) {
+                return jsonData.item.action.query;
             }
             return null;
         };
@@ -556,24 +569,35 @@ class ResponsesAPI {
         // Web検索完了の検出
         if (jsonData.type === 'response.web_search_call.completed') {
             if (currentStatusMessage) {
+                // 直後にWeb検索完了後の結果処理中メッセージに移行するためここでは何もしない
+                return { statusMessage: currentStatusMessage, shouldSkip: true };
+            }
+        }
+
+        // Web検索完了後の結果処理中メッセージ
+        const completedSearchQuery = extractCompletedSearchQuery(jsonData);
+        if (completedSearchQuery) {
+            if (currentStatusMessage) {
                 try {
+                    const processingMessage = `🔍 検索結果を分析中: "${completedSearchQuery}"`;
                     chatRenderer.updateSystemMessage(
                         currentStatusMessage, 
-                        'Thinking',
+                        processingMessage,
                         { 
-                            status: 'thinking', 
+                            status: 'processing', 
                             animate: true, 
                             showDots: true 
                         }
                     );
                     return { statusMessage: currentStatusMessage, shouldSkip: true };
                 } catch (error) {
-                    console.error('🔍 システムメッセージ更新エラー:', error);
+                    console.error('🔍 検索結果処理メッセージ更新エラー:', error);
                     // 代替として直接DOM更新を試行
                     try {
                         const messageContent = currentStatusMessage.querySelector('.markdown-content');
                         if (messageContent) {
-                            messageContent.innerHTML = `<p>Thinking<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>`;
+                            const processingMessage = `🔍 検索結果を分析中: "${completedSearchQuery}"`;
+                            messageContent.innerHTML = `<p>${processingMessage}<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>`;
                         }
                         return { statusMessage: currentStatusMessage, shouldSkip: true };
                     } catch (domError) {
