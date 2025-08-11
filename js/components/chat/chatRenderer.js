@@ -916,21 +916,36 @@ class ChatRenderer {
                 messageDiv.classList.add('system-message-pulse');
                 setTimeout(() => {
                     messageDiv.classList.remove('system-message-pulse');
-                }, 800);
+                }, 1200); // より長いパルスアニメーション時間
             }
             messageDiv.setAttribute('data-status', status);
         }
         
         if (animate && messageContent.innerHTML !== this.#formatSystemMessage(message, showDots)) {
-            // より洗練されたコンテンツ変更アニメーション
-            messageContent.style.transform = 'scale(0.98)';
-            messageContent.style.opacity = '0.3';
+            // より滑らかなコンテンツ変更アニメーション
+            // CSS transitionsを設定
+            messageContent.style.transition = 'transform 0.4s ease-in-out, opacity 0.4s ease-in-out';
+            messageContent.style.transform = 'scale(0.95)';
+            messageContent.style.opacity = '0.2';
             
             setTimeout(() => {
                 messageContent.innerHTML = this.#formatSystemMessage(message, showDots);
-                messageContent.style.transform = 'scale(1)';
+                // 復帰アニメーション
+                messageContent.style.transform = 'scale(1.02)'; // 少しオーバーシュート
                 messageContent.style.opacity = '1';
-            }, 150);
+                
+                // オーバーシュート後の最終調整
+                setTimeout(() => {
+                    messageContent.style.transform = 'scale(1)';
+                    
+                    // トランジション完了後にスタイルをクリア
+                    setTimeout(() => {
+                        messageContent.style.transition = '';
+                        messageContent.style.transform = '';
+                        messageContent.style.opacity = '';
+                    }, 200);
+                }, 150);
+            }, 300); // より長いフェードアウト時間
         } else if (!animate) {
             messageContent.innerHTML = this.#formatSystemMessage(message, showDots);
         }
