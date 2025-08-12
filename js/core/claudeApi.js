@@ -39,26 +39,18 @@ class ClaudeAPI {
      */
     async callClaudeAPI(messages, model, attachments = [], options = {}) {
         try {
-        console.log('DEBUG: Claude API 呼び出し開始', {
-            messagesCount: messages.length,
-            model: model,
-            attachmentsCount: attachments.length,
-            streamMode: !!options.stream,
-            useWebSearch: !!options.useWebSearch,
-            hasOnChunkCallback: typeof options.onChunk === 'function',
-            hasOnCompleteCallback: typeof options.onComplete === 'function'
-        });            // API設定を確認
+            // API設定を確認
             this.#validateAPISettings();
 
             // ClaudeAPIリクエストを準備
             const { headers, body } = this.#prepareClaudeRequest(messages, model, attachments, options);
 
-            console.log('DEBUG: Claude API リクエスト準備完了');
             console.log(`Claude API ${options.stream ? 'ストリーミング' : '通常'}リクエスト送信 (${model})`);
+            console.log('Claude API 送信ヘッダー:', headers);
+            console.log('Claude API 送信ボディ:', JSON.parse(body));
             
             // APIリクエストを実行
             if (options.stream) {
-                console.log('DEBUG: ストリーミングモードでリクエスト実行');
                 return await this.#executeStreamClaudeRequest(
                     headers, 
                     body, 
@@ -66,7 +58,6 @@ class ClaudeAPI {
                     options.onComplete
                 );
             } else {
-                console.log('DEBUG: 通常モードでリクエスト実行');
                 return await this.#executeClaudeRequest(headers, body);
             }
 
@@ -116,39 +107,18 @@ class ClaudeAPI {
         // Claude API 仕様: systemは文字列または複数ブロックの配列をサポート
         // 現在は文字列のみなので、そのまま文字列として使用
         if (typeof systemPrompt !== 'string') {
-            console.warn('DEBUG: システムプロンプトが文字列ではありません、文字列に変換します');
             systemPrompt = String(systemPrompt);
         }
-        
-        console.log('DEBUG: Claude 設定確認', {
-            hasApiKey: !!apiKey,
-            systemPromptLength: systemPrompt.length,
-            systemPromptType: typeof systemPrompt,
-            apiKeyPrefix: apiKey ? apiKey.substring(0, 10) + '...' : 'なし'
-        });
 
         const headers = {
             'Content-Type': 'application/json',
             'x-api-key': apiKey,
-            'anthropic-version': window.CONFIG.AIAPI.ANTHROPIC_API_VERSION
+            'anthropic-version': window.CONFIG.AIAPI.ANTHROPIC_API_VERSION,
+            'anthropic-dangerous-direct-browser-access': 'true'
         };
-        
-        console.log('DEBUG: Claude APIヘッダー設定完了', {
-            headers: {
-                'Content-Type': headers['Content-Type'],
-                'anthropic-version': headers['anthropic-version'],
-                'x-api-key': apiKey ? apiKey.substring(0, 10) + '...' : 'なし'
-            }
-        });
 
         // メッセージをClaude形式に変換
         const claudeMessages = this.#convertToClaudeMessages(messages, attachments);
-        
-        console.log('DEBUG: Claude メッセージ変換完了', {
-            originalMessagesCount: messages.length,
-            convertedMessagesCount: claudeMessages.length,
-            firstMessage: claudeMessages[0] ? { role: claudeMessages[0].role, contentType: typeof claudeMessages[0].content } : null
-        });
 
         const body = {
             model: model,
@@ -168,17 +138,8 @@ class ClaudeAPI {
         if (options.stream) {
             body.stream = true;
         }
-        
-        console.log('DEBUG: Claude リクエストボディ構築完了', {
-            model: body.model,
-            max_tokens: body.max_tokens,
-            messagesCount: body.messages.length,
-            systemPromptLength: body.system.length,
-            temperature: body.temperature,
-            stream: body.stream || false
-        });
 
-        return { headers, body };
+        return { headers, body: JSON.stringify(body) };
     }
 
     /**
@@ -188,18 +149,11 @@ class ClaudeAPI {
      * @returns {Array} Claude API形式のメッセージ
      */
     #convertToClaudeMessages(messages, attachments = []) {
-        console.log('DEBUG: Claude メッセージ変換開始', {
-            inputMessagesCount: messages.length,
-            attachmentsCount: attachments.length,
-            messageTypes: messages.map(m => ({ role: m.role, contentType: typeof m.content }))
-        });
-
         const claudeMessages = [];
         
         for (const message of messages) {
             if (message.role === 'system') {
                 // Claude APIではsystemメッセージは別パラメータで送信するためスキップ
-                console.log('DEBUG: システムメッセージをスキップ', { contentLength: message.content.length });
                 continue;
             }
 
@@ -207,8 +161,6 @@ class ClaudeAPI {
                 role: message.role,
                 content: []
             };
-
-            console.log('DEBUG: メッセージ変換中', { role: message.role, originalContent: typeof message.content });
 
             // テキストコンテンツを追加
             if (typeof message.content === 'string') {
@@ -262,11 +214,6 @@ class ClaudeAPI {
 
             claudeMessages.push(claudeMessage);
         }
-
-        console.log('DEBUG: Claude メッセージ変換完了', {
-            outputMessagesCount: claudeMessages.length,
-            totalContentBlocks: claudeMessages.reduce((sum, msg) => sum + msg.content.length, 0)
-        });
 
         return claudeMessages;
     }
@@ -433,11 +380,7 @@ class ClaudeAPI {
      */
     async #executeStreamClaudeRequest(headers, body, onChunk, onComplete) {
         try {
-            console.log('DEBUG: Claude ストリーミングリクエスト開始', {
-                endpoint: window.CONFIG.AIAPI.ENDPOINTS.CLAUDE,
-                hasOnChunk: typeof onChunk === 'function',
-                hasOnComplete: typeof onComplete === 'function'
-            });
+            console.log('Claude ストリーミングリクエスト開始:', window.CONFIG.AIAPI.ENDPOINTS.CLAUDE);
 
             const response = await fetch(window.CONFIG.AIAPI.ENDPOINTS.CLAUDE, {
                 method: 'POST',
@@ -445,15 +388,11 @@ class ClaudeAPI {
                 body: JSON.stringify({ ...body, stream: true })
             });
 
-            console.log('DEBUG: Claude API レスポンス受信', {
-                status: response.status,
-                ok: response.ok,
-                headers: Object.fromEntries(response.headers.entries())
-            });
+            console.log('Claude API レスポンス受信:', response.status, response.ok);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
-                console.error('DEBUG: Claude API エラーレスポンス', { status: response.status, errorData });
+                console.error('Claude API エラー:', response.status, errorData);
                 throw new Error(`Claude API Error ${response.status}: ${errorData?.error?.message || response.statusText}`);
             }
 
