@@ -42,8 +42,12 @@ for ($i=0; $i -lt 40; $i++) {
 }
 if (-not $healthy) { Write-Log "Warning: server health check not confirmed within timeout" }
 
-# Browser launch settings
-$targetUrl = "http://localhost:$Port/"
+# # Browser launch settings
+# $targetUrl = "http://localhost:$Port/"
+
+Write-Log "Starting ChatBot in local file mode (no server required)"
+# Browser launch settings - ローカルファイルとして開く
+$indexHtmlPath = Join-Path $projectRoot 'index.html'
 
 # Background monitor job using zero-process detection
 $monitorJob = Start-Job -ScriptBlock {
@@ -104,9 +108,18 @@ $monitorJob = Start-Job -ScriptBlock {
   return "ERROR"
 } -ArgumentList $logFile
 
-# Launch browser with default handler
-Start-Process $targetUrl | Out-Null
-Write-Log "Launched with default browser"
+# # Launch browser with default handler
+# Start-Process $targetUrl | Out-Null
+# Write-Log "Launched with default browser"
+
+# Launch browser with local HTML file
+if (Test-Path $indexHtmlPath) {
+  Start-Process $indexHtmlPath | Out-Null
+  Write-Log "Launched local index.html file: $indexHtmlPath"
+} else {
+  Write-Log "ERROR: index.html not found: $indexHtmlPath"
+  [Console]::Error.WriteLine("ERROR: index.html not found: $indexHtmlPath")
+}
 
 # モニタージョブがブラウザ終了を検出するまで待機
 Write-Log "Waiting for monitor job to detect browser exit..."
