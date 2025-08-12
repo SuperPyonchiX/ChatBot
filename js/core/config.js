@@ -233,11 +233,9 @@ window.CONFIG = {
         OPENAI: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5', 'o1-mini', 'o1'],
         GEMINI: ['gemini-2.5-pro', 'gemini-2.5-flash'],
         CLAUDE: [
-            'claude-3-5-haiku-20241022', 
-            'claude-3-5-sonnet-20241022', 
-            'claude-3-7-sonnet-20250219',
-            'claude-sonnet-4-20250514',
-            'claude-opus-4-20250514'
+            'claude-opus-4-1-20250805', 
+            'claude-sonnet-4-20250514', 
+            'claude-3-5-haiku-20241022'
         ]
     },
 
