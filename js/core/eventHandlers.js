@@ -215,7 +215,7 @@ class EventHandlers {
             !window.Elements.openaiRadio || !window.Elements.azureRadio) return;
         
         // APIキー保存
-        window.Elements.saveApiKey.addEventListener('click', ModalHandlers.getInstance.saveApiSettings);
+        window.Elements.saveApiKey.addEventListener('click', ModalHandlers.getInstance.saveApiSettings.bind(ModalHandlers.getInstance));
         
         // APIキーキャンセル
         window.Elements.cancelApiKey.addEventListener('click', ApiSettingsModal.getInstance.hideApiKeyModal);

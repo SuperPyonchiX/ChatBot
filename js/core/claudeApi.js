@@ -81,7 +81,7 @@ class ClaudeAPI {
      * @throws {Error} API設定に問題がある場合
      */
     #validateAPISettings() {
-        const storage = window.Storage?.getInstance;
+        const storage = Storage.getInstance;
         if (!storage) {
             throw new Error('ストレージインスタンスが見つかりません');
         }

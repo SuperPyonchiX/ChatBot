@@ -36,6 +36,7 @@ class ApiSettingsModal {
         const elements = {
             openaiSystemRadio: UICache.getInstance.get('openaiSystemRadio'),
             geminiSystemRadio: UICache.getInstance.get('geminiSystemRadio'),
+            claudeSystemRadio: UICache.getInstance.get('claudeSystemRadio'),
             openaiRadio: UICache.getInstance.get('openaiRadio'),
             azureRadio: UICache.getInstance.get('azureRadio'),
             apiKeyInput: UICache.getInstance.get('apiKeyInput'),

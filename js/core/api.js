@@ -3,21 +3,24 @@
  * AI API統合インターフェース - 各API専用クラスへのルーティングを提供します
  */
 class AIAPI {
+
+    // シングルトンインスタンス
+    static #instance = null;
     constructor() {
-        if (AIAPI._instance) {
-            return AIAPI._instance;
+        if (AIAPI.#instance) {
+            return AIAPI.#instance;
         }
-        AIAPI._instance = this;
+        AIAPI.#instance = this;
     }
 
     /**
      * シングルトンインスタンスを取得
      */
     static get getInstance() {
-        if (!AIAPI._instance) {
-            AIAPI._instance = new AIAPI();
+        if (!AIAPI.#instance) {
+            AIAPI.#instance = new AIAPI();
         }
-        return AIAPI._instance;
+        return AIAPI.#instance;
     }
 
     /**
@@ -79,7 +82,7 @@ class AIAPI {
      * @param {Object} options - APIオプション
      */
     #addClaudeWebSearchOptions(options) {
-        const storage = window.Storage?.getInstance;
+        const storage = Storage.getInstance;
         if (!storage) return;
 
         const webSearchSettings = storage.getClaudeWebSearchSettings();
