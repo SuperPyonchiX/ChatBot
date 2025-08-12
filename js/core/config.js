@@ -122,6 +122,7 @@ window.CONFIG = {
             SIDEBAR: 'sidebarCollapsed',
             OPENAI_API_KEY: 'openaiApiKey',
             AZURE_API_KEY: 'azureApiKey',
+            GEMINI_API_KEY: 'geminiApiKey',
             API_TYPE: 'apiType',
             AZURE_ENDPOINT_PREFIX: 'azureEndpoint_',
             SYSTEM_PROMPT: 'systemPrompt',
@@ -226,7 +227,8 @@ window.CONFIG = {
      */
     MODELS: {
         // サポートされているモデル
-        SUPPORTED: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5', 'o1-mini', 'o1']
+        OPENAI: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5', 'o1-mini', 'o1'],
+        GEMINI: ['gemini-2.5-pro', 'gemini-2.5-flash']
     },
 
     /**

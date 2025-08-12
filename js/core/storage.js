@@ -130,7 +130,8 @@ class Storage {
     loadApiSettings() {
         const azureEndpoints = {};
         
-        window.CONFIG.MODELS.SUPPORTED.forEach(model => {
+        // AzureエンドポイントはOpenAIモデルのみに適用
+        window.CONFIG.MODELS.OPENAI.forEach(model => {
             if (!model) return;
             
             const endpointKey = window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX + model;
@@ -140,6 +141,7 @@ class Storage {
         return {
             openaiApiKey: this.getItem(window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY, ''),
             azureApiKey: this.getItem(window.CONFIG.STORAGE.KEYS.AZURE_API_KEY, ''),
+            geminiApiKey: this.getItem(window.CONFIG.STORAGE.KEYS.GEMINI_API_KEY, ''),
             apiType: this.getItem(window.CONFIG.STORAGE.KEYS.API_TYPE, window.CONFIG.STORAGE.DEFAULT_API_TYPE),
             azureEndpoints
         };
@@ -154,10 +156,12 @@ class Storage {
         
         this.setItem(window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY, apiSettings.openaiApiKey || '');
         this.setItem(window.CONFIG.STORAGE.KEYS.AZURE_API_KEY, apiSettings.azureApiKey || '');
+        this.setItem(window.CONFIG.STORAGE.KEYS.GEMINI_API_KEY, apiSettings.geminiApiKey || '');
         this.setItem(window.CONFIG.STORAGE.KEYS.API_TYPE, apiSettings.apiType || window.CONFIG.STORAGE.DEFAULT_API_TYPE);
         
         if (apiSettings.azureEndpoints) {
-            window.CONFIG.MODELS.SUPPORTED.forEach(model => {
+            // AzureエンドポイントはOpenAIモデルのみに適用
+            window.CONFIG.MODELS.OPENAI.forEach(model => {
                 if (!model) return;
                 
                 const endpointKey = window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX + model;

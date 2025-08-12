@@ -327,7 +327,7 @@ class ChatActions {
             let isFirstChunk = true;
 
             // ストリーミングAPI呼び出し
-            await AIAPI.getInstance.callOpenAIAPI(
+            await AIAPI.getInstance.callAIAPI(
                 messagesWithSystem,
                 conversation.model,
                 displayAttachments,

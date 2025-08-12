@@ -37,9 +37,12 @@ class ApiSettingsModal {
             azureApiKeyInput: UICache.getInstance.get('azureApiKeyInput'),
             openaiRadio: UICache.getInstance.get('openaiRadio'),
             azureRadio: UICache.getInstance.get('azureRadio'),
+            geminiRadio: UICache.getInstance.get('geminiRadio'),
             apiKeyInput: UICache.getInstance.get('apiKeyInput'),
+            geminiApiKeyInput: UICache.getInstance.get('geminiApiKeyInput'),
             openaiSettings: UICache.getInstance.get('openaiSettings'),
             azureSettings: UICache.getInstance.get('azureSettings'),
+            geminiSettings: UICache.getInstance.get('geminiSettings'),
             azureEndpointGpt4oMini: UICache.getInstance.get('azureEndpointGpt4oMini'),
             azureEndpointGpt4o: UICache.getInstance.get('azureEndpointGpt4o'),
             azureEndpointGpt5Mini: UICache.getInstance.get('azureEndpointGpt5Mini'),
@@ -54,6 +57,7 @@ class ApiSettingsModal {
             elements.azureApiKeyInput.value = apiSettings.azureApiKey;
             UIUtils.getInstance.toggleVisibility(elements.openaiSettings, false);
             UIUtils.getInstance.toggleVisibility(elements.azureSettings, true);
+            UIUtils.getInstance.toggleVisibility(elements.geminiSettings, false);
             
             // Azureエンドポイント設定を適用
             elements.azureEndpointGpt4oMini.value = apiSettings.azureEndpoints['gpt-4o-mini'];
@@ -62,11 +66,18 @@ class ApiSettingsModal {
             elements.azureEndpointGpt5.value = apiSettings.azureEndpoints['gpt-5'];
             elements.azureEndpointO1Mini.value = apiSettings.azureEndpoints['o1-mini'];
             elements.azureEndpointO1.value = apiSettings.azureEndpoints['o1'];
+        } else if (apiSettings.apiType === 'gemini') {
+            elements.geminiRadio.checked = true;
+            elements.geminiApiKeyInput.value = apiSettings.geminiApiKey;
+            UIUtils.getInstance.toggleVisibility(elements.openaiSettings, false);
+            UIUtils.getInstance.toggleVisibility(elements.azureSettings, false);
+            UIUtils.getInstance.toggleVisibility(elements.geminiSettings, true);
         } else {
             elements.openaiRadio.checked = true;
             elements.apiKeyInput.value = apiSettings.openaiApiKey;
             UIUtils.getInstance.toggleVisibility(elements.openaiSettings, true);
             UIUtils.getInstance.toggleVisibility(elements.azureSettings, false);
+            UIUtils.getInstance.toggleVisibility(elements.geminiSettings, false);
         }
     }
     
@@ -83,9 +94,16 @@ class ApiSettingsModal {
     toggleAzureSettings() {
         const openaiSettings = UICache.getInstance.get('openaiSettings');
         const azureSettings = UICache.getInstance.get('azureSettings');
+        const geminiSettings = UICache.getInstance.get('geminiSettings');
         const azureRadio = UICache.getInstance.get('azureRadio');
+        const geminiRadio = UICache.getInstance.get('geminiRadio');
         
-        UIUtils.getInstance.toggleVisibility(openaiSettings, !azureRadio.checked);
-        UIUtils.getInstance.toggleVisibility(azureSettings, azureRadio.checked);
+        const isOpenai = !azureRadio.checked && !geminiRadio.checked;
+        const isAzure = azureRadio.checked;
+        const isGemini = geminiRadio.checked;
+        
+        UIUtils.getInstance.toggleVisibility(openaiSettings, isOpenai);
+        UIUtils.getInstance.toggleVisibility(azureSettings, isAzure);
+        UIUtils.getInstance.toggleVisibility(geminiSettings, isGemini);
     }
 }

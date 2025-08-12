@@ -46,10 +46,10 @@ window.Elements = (function() {
         'cancelSystemPrompt', 'saveNewSystemPrompt', 'newSystemPromptName', 'newTemplateCategory',
         
         // API設定関連
-        'apiKeyModal', 'saveApiKey', 'cancelApiKey', 'openaiRadio', 'azureRadio',
-        'apiKeyInput', 'azureApiKeyInput', 'azureEndpointGpt4oMini', 
+        'apiKeyModal', 'saveApiKey', 'cancelApiKey', 'openaiRadio', 'azureRadio', 'geminiRadio',
+        'apiKeyInput', 'azureApiKeyInput', 'geminiApiKeyInput', 'azureEndpointGpt4oMini', 
         'azureEndpointGpt4o', 'azureEndpointGpt5Mini', 'azureEndpointGpt5',
-        'azureEndpointO1Mini', 'azureEndpointO1',
+        'azureEndpointO1Mini', 'azureEndpointO1', 'openaiSettings', 'azureSettings', 'geminiSettings',
         
         // チャット名前変更関連
         'saveRenameChat', 'cancelRenameChat', 'renameChatModal', 'chatTitleInput',

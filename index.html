@@ -114,6 +114,8 @@
                         <option value="gpt-5">gpt-5</option>
                         <option value="o1-mini">o1-mini</option>
                         <option value="o1">o1</option>
+                        <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+                        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
                     </select>
                 </div>
             </div>
@@ -155,11 +157,19 @@
                     <label for="openaiRadio">OpenAI</label>
                     <input type="radio" id="azureRadio" name="apiType" value="azure">
                     <label for="azureRadio">Azure OpenAI</label>
+                    <input type="radio" id="geminiRadio" name="apiType" value="gemini">
+                    <label for="geminiRadio">Google Gemini</label>
                 </div>
             </div>
             <div id="openaiSettings" class="form-group">
                 <label for="apiKeyInput">OpenAI APIキー:</label>
                 <input type="password" id="apiKeyInput" placeholder="sk-...">
+            </div>
+            <div id="geminiSettings" class="hidden">
+                <div class="form-group">
+                    <label for="geminiApiKeyInput">Gemini APIキー:</label>
+                    <input type="password" id="geminiApiKeyInput" placeholder="Google Gemini APIキーを入力">
+                </div>
             </div>
             <div id="azureSettings" class="hidden">
                 <div class="form-group">
@@ -199,6 +209,7 @@
                     <h4>🌐 Web検索機能について</h4>
                     <div class="web-search-details">
                         • <strong>GPT-4o/GPT-5シリーズ</strong>: Responses API内蔵検索（設定不要）<br>
+                        • <strong>Geminiシリーズ</strong>: Web検索機能は利用できません<br>
                         • <strong>その他のモデル</strong>: Web検索機能は利用できません
                     </div>
                 </label>

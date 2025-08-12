@@ -29,14 +29,25 @@ class ModalHandlers {
      * API設定を保存します
      */
     saveApiSettings() {
-        if (!window.Elements.apiKeyInput || !window.Elements.openaiRadio || !window.Elements.azureRadio) return;
+        if (!window.Elements.apiKeyInput || !window.Elements.openaiRadio || !window.Elements.azureRadio || !window.Elements.geminiRadio) return;
         
         // API種別を設定
-        window.AppState.apiSettings.apiType = window.Elements.openaiRadio.checked ? 'openai' : 'azure';
+        if (window.Elements.geminiRadio.checked) {
+            window.AppState.apiSettings.apiType = 'gemini';
+        } else if (window.Elements.azureRadio.checked) {
+            window.AppState.apiSettings.apiType = 'azure';
+        } else {
+            window.AppState.apiSettings.apiType = 'openai';
+        }
         
         // OpenAI APIキーを設定
         if (window.Elements.apiKeyInput) {
             window.AppState.apiSettings.openaiApiKey = window.Elements.apiKeyInput.value.trim();
+        }
+        
+        // Gemini APIキーを設定
+        if (window.Elements.geminiApiKeyInput) {
+            window.AppState.apiSettings.geminiApiKey = window.Elements.geminiApiKeyInput.value.trim();
         }
         
         // Azure OpenAI APIキーとエンドポイントを設定

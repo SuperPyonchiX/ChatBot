@@ -23,6 +23,39 @@ class AIAPI {
     }
 
     /**
+     * AI APIを呼び出して応答を得る（統合エントリーポイント）
+     * @param {Array} messages - 会話メッセージの配列
+     * @param {string} model - 使用するモデル名
+     * @param {Array} attachments - 添付ファイルの配列（任意）
+     * @param {Object} options - 追加オプション
+     * @param {boolean} options.stream - ストリーミングを使用するかどうか
+     * @param {boolean} options.enableWebSearch - Web検索を有効にするかどうか
+     * @param {Function} options.onChunk - ストリーミング時のチャンク受信コールバック関数
+     * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
+     * @returns {Promise<string>} APIからの応答テキスト（ストリーミングの場合は空文字列）
+     * @throws {Error} API設定やリクエストに問題があった場合
+     */
+    async callAIAPI(messages, model, attachments = [], options = {}) {
+        try {
+            // サポートされているモデルかチェック
+            const allSupportedModels = [...window.CONFIG.MODELS.OPENAI, ...window.CONFIG.MODELS.GEMINI];
+            if (!allSupportedModels.includes(model)) {
+                throw new Error(`サポートされていないモデルです: ${model}`);
+            }
+            
+            // モデルに応じて適切なAPIを選択
+            if (window.CONFIG.MODELS.GEMINI.includes(model)) {
+                return await this.callGeminiAPI(messages, model, attachments, options);
+            } else {
+                return await this.callOpenAIAPI(messages, model, attachments, options);
+            }
+        } catch (error) {
+            console.error('AI API呼び出しエラー:', error);
+            throw error;
+        }
+    }
+
+    /**
      * OpenAIまたはAzure OpenAI APIを呼び出して応答を得る
      * @param {Array} messages - 会話メッセージの配列
      * @param {string} model - 使用するモデル名
@@ -776,5 +809,415 @@ class AIAPI {
             
             reader.readAsDataURL(file);
         });
+    }
+
+    /**
+     * Google Gemini APIを呼び出して応答を得る
+     * @param {Array} messages - 会話メッセージの配列
+     * @param {string} model - 使用するモデル名
+     * @param {Array} attachments - 添付ファイルの配列（任意）
+     * @param {Object} options - 追加オプション
+     * @param {boolean} options.stream - ストリーミングを使用するかどうか
+     * @param {Function} options.onChunk - ストリーミング時のチャンク受信コールバック関数
+     * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
+     * @returns {Promise<string>} APIからの応答テキスト（ストリーミングの場合は空文字列）
+     * @throws {Error} API設定やリクエストに問題があった場合
+     */
+    async callGeminiAPI(messages, model, attachments = [], options = {}) {
+        try {
+            // Gemini API設定を確認
+            this.#validateGeminiSettings();
+            
+            // メッセージをGemini形式に変換
+            const geminiContents = this.#convertToGeminiFormat(messages, attachments);
+            
+            // システムインストラクションを抽出
+            const systemInstruction = this.#extractSystemInstruction(messages);
+            
+            // APIリクエストの準備
+            const { endpoint, headers, body } = this.#prepareGeminiRequest(
+                model, 
+                geminiContents, 
+                systemInstruction, 
+                options
+            );
+            
+            console.log(`Gemini APIリクエスト送信 (${model}):`, endpoint);
+            console.log('📡 ストリーミング有効:', options.stream);
+            
+            // ストリーミングモードかどうかで分岐
+            if (options.stream) {
+                return await this.#executeStreamGeminiRequest(
+                    endpoint, 
+                    headers, 
+                    body, 
+                    options.onChunk, 
+                    options.onComplete
+                );
+            } else {
+                return await this.#executeGeminiRequest(endpoint, headers, body);
+            }
+            
+        } catch (error) {
+            console.error('Gemini API呼び出しエラー:', error);
+            
+            // より詳細なエラーメッセージを返す
+            if (error.name === 'AbortError') {
+                throw new Error('Gemini APIリクエストがタイムアウトしました。インターネット接続を確認するか、後でもう一度お試しください。');
+            } else if (error.message.includes('429')) {
+                throw new Error('Gemini APIリクエストの頻度が高すぎます。しばらく待ってから再試行してください。');
+            } else if (error.message.includes('400')) {
+                throw new Error('Gemini APIリクエストが無効です。メッセージ内容やモデル設定を確認してください。');
+            } else if (error.message.includes('401') || error.message.includes('403')) {
+                throw new Error('Gemini APIキーが無効です。API設定を確認してください。');
+            }
+            
+            throw error;
+        }
+    }
+
+    /**
+     * Gemini API設定を検証する
+     * @private
+     * @throws {Error} API設定に問題があった場合
+     */
+    #validateGeminiSettings() {
+        if (!window.apiSettings || !window.apiSettings.geminiApiKey || window.apiSettings.geminiApiKey.trim() === '') {
+            throw new Error('Gemini APIキーが設定されていません。設定画面でAPIキーを入力してください。');
+        }
+    }
+
+    /**
+     * メッセージをGemini API形式に変換する
+     * @private
+     * @param {Array} messages - 元のメッセージ配列
+     * @param {Array} attachments - 添付ファイルの配列
+     * @returns {Array} Gemini形式のコンテンツ配列
+     */
+    #convertToGeminiFormat(messages, attachments = []) {
+        const contents = [];
+        
+        for (let i = 0; i < messages.length; i++) {
+            const message = messages[i];
+            
+            // システムメッセージはスキップ（別途system_instructionとして処理）
+            if (message.role === 'system') {
+                continue;
+            }
+            
+            const isLastUserMessage = i === messages.length - 1 && message.role === 'user';
+            const parts = [];
+            
+            // テキスト部分を追加
+            if (message.content && typeof message.content === 'string' && message.content.trim()) {
+                parts.push({
+                    text: message.content
+                });
+            } else if (Array.isArray(message.content)) {
+                // OpenAI形式の複数コンテンツを処理
+                for (const contentItem of message.content) {
+                    if (contentItem.type === 'text' && contentItem.text) {
+                        parts.push({
+                            text: contentItem.text
+                        });
+                    } else if (contentItem.type === 'image_url' && contentItem.image_url) {
+                        // base64画像をGemini形式に変換
+                        const imageData = contentItem.image_url.url;
+                        if (imageData.startsWith('data:')) {
+                            const [header, base64Data] = imageData.split(',');
+                            const mimeType = header.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
+                            
+                            parts.push({
+                                inline_data: {
+                                    mime_type: mimeType,
+                                    data: base64Data
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // 最後のユーザーメッセージで添付ファイルがある場合
+            if (isLastUserMessage && attachments && attachments.length > 0) {
+                for (const attachment of attachments) {
+                    if (attachment.type === 'image' && attachment.data) {
+                        // base64画像をGemini形式に変換
+                        const imageData = attachment.data;
+                        if (imageData.startsWith('data:')) {
+                            const [header, base64Data] = imageData.split(',');
+                            const mimeType = header.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
+                            
+                            parts.push({
+                                inline_data: {
+                                    mime_type: mimeType,
+                                    data: base64Data
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            
+            if (parts.length > 0) {
+                contents.push({
+                    role: message.role === 'assistant' ? 'model' : 'user',
+                    parts: parts
+                });
+            }
+        }
+        
+        return contents;
+    }
+
+    /**
+     * システムインストラクションを抽出する
+     * @private
+     * @param {Array} messages - メッセージ配列
+     * @returns {Object|null} システムインストラクション
+     */
+    #extractSystemInstruction(messages) {
+        const systemMessages = messages.filter(msg => msg.role === 'system');
+        if (systemMessages.length === 0) {
+            return null;
+        }
+        
+        const combinedSystemContent = systemMessages
+            .map(msg => msg.content)
+            .join('\n\n');
+            
+        return {
+            parts: [
+                {
+                    text: combinedSystemContent
+                }
+            ]
+        };
+    }
+
+    /**
+     * Gemini APIリクエストを準備する
+     * @private
+     * @param {string} model - モデル名
+     * @param {Array} contents - Gemini形式のコンテンツ
+     * @param {Object|null} systemInstruction - システムインストラクション
+     * @param {Object} options - オプション
+     * @returns {Object} エンドポイント、ヘッダー、ボディを含むオブジェクト
+     */
+    #prepareGeminiRequest(model, contents, systemInstruction, options) {
+        const baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
+        const action = options.stream ? 'streamGenerateContent' : 'generateContent';
+        const endpoint = `${baseUrl}/models/${model}:${action}`;
+        
+        const headers = {
+            'x-goog-api-key': window.apiSettings.geminiApiKey,
+            'Content-Type': 'application/json'
+        };
+        
+        const body = {
+            contents: contents
+        };
+        
+        // システムインストラクションを追加
+        if (systemInstruction) {
+            body.system_instruction = systemInstruction;
+        }
+        
+        // 生成設定を追加
+        body.generationConfig = {
+            temperature: window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature || 0.7,
+            topP: window.CONFIG.AIAPI.DEFAULT_PARAMS.top_p || 0.8,
+            topK: window.CONFIG.AIAPI.DEFAULT_PARAMS.top_k || 40,
+            maxOutputTokens: window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens || 2048,
+        };
+        
+        return { endpoint, headers, body };
+    }
+
+    /**
+     * 非ストリーミングでGemini APIリクエストを実行
+     * @private
+     * @param {string} endpoint - APIエンドポイントURL
+     * @param {Object} headers - リクエストヘッダー
+     * @param {Object} body - リクエストボディ
+     * @returns {Promise<string>} APIからの応答テキスト
+     */
+    async #executeGeminiRequest(endpoint, headers, body) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+            controller.abort();
+        }, window.CONFIG.AIAPI.REQUEST_TIMEOUT || 60000);
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(body),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Gemini APIエラー:', errorText);
+                throw new Error(`Gemini API error: ${response.status} ${errorText}`);
+            }
+
+            const responseData = await response.json();
+
+            // レスポンスからテキストを抽出
+            if (responseData.candidates && responseData.candidates.length > 0) {
+                const candidate = responseData.candidates[0];
+                if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+                    return candidate.content.parts
+                        .filter(part => part.text)
+                        .map(part => part.text)
+                        .join('');
+                }
+            }
+
+            return '';
+
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                throw new Error('Gemini APIリクエストがタイムアウトしました');
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * ストリーミングでGemini APIリクエストを実行
+     * @private
+     * @param {string} endpoint - APIエンドポイントURL
+     * @param {Object} headers - リクエストヘッダー
+     * @param {Object} body - リクエストボディ
+     * @param {Function} onChunk - チャンク受信コールバック
+     * @param {Function} onComplete - 完了コールバック
+     * @returns {Promise<string>} 空文字列
+     */
+    async #executeStreamGeminiRequest(endpoint, headers, body, onChunk, onComplete) {
+        const controller = new AbortController();
+        let timeoutId;
+        let fullText = '';
+        let chunkCount = 0;
+
+        const resetTimeout = () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                controller.abort();
+            }, window.CONFIG.AIAPI.STREAM_TIMEOUT || 30000);
+        };
+
+        resetTimeout();
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(body),
+                signal: controller.signal
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Gemini APIストリーミングエラー:', errorText);
+                throw new Error(`Gemini API streaming error: ${response.status} ${errorText}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let lineCount = 0;
+            let braceCount = 0;
+            let bracketCount = 0;
+            let currentJson = '';
+            let isInJson = false;
+
+            console.log('🌊 Geminiストリーミング開始');
+
+            while (true) {
+                const { done, value } = await reader.read();
+                
+                if (value) {
+                    resetTimeout();
+                    const chunk = decoder.decode(value, { stream: true });
+                    buffer += chunk;
+                    
+                    // デバッグ: 受信したチャンクを表示
+                    if (lineCount < 10) {
+                        console.log(`📦 受信チャンク ${lineCount + 1}:`, JSON.stringify(chunk));
+                        lineCount++;
+                    }
+                    
+                    // 文字ごとに処理してJSONオブジェクトを組み立て
+                    for (let i = 0; i < chunk.length; i++) {
+                        const char = chunk[i];
+                        currentJson += char;
+                        
+                        if (char === '[') {
+                            bracketCount++;
+                            if (!isInJson) isInJson = true;
+                        } else if (char === ']') {
+                            bracketCount--;
+                        } else if (char === '{') {
+                            braceCount++;
+                            if (!isInJson) isInJson = true;
+                        } else if (char === '}') {
+                            braceCount--;
+                        }
+                        
+                        // 完全なJSONが完成した場合（配列またはオブジェクト）
+                        if (isInJson && braceCount === 0 && bracketCount === 0 && currentJson.trim()) {
+                            try {
+                                console.log('� 完成したJSON:', currentJson.trim());
+                                const jsonData = JSON.parse(currentJson.trim());
+                                
+                                // Gemini APIは配列形式で応答するため、最初の要素を取得
+                                const responseData = Array.isArray(jsonData) ? jsonData[0] : jsonData;
+                                console.log('📋 処理対象データ:', responseData);
+                                
+                                if (responseData.candidates && responseData.candidates.length > 0) {
+                                    const candidate = responseData.candidates[0];
+                                    if (candidate.content && candidate.content.parts) {
+                                        for (const part of candidate.content.parts) {
+                                            if (part.text) {
+                                                console.log('✨ テキスト取得:', part.text);
+                                                onChunk(part.text);
+                                                fullText += part.text;
+                                                chunkCount++;
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (parseError) {
+                                console.warn('Gemini JSONパースエラー:', parseError, 'JSON:', currentJson.trim());
+                            }
+                            
+                            // 次のJSONオブジェクトのためにリセット
+                            currentJson = '';
+                            isInJson = false;
+                            braceCount = 0;
+                            bracketCount = 0;
+                        }
+                    }
+                }
+                if (done) break;
+            }
+            clearTimeout(timeoutId);
+            console.log('✅ Geminiストリーミング完了');
+            
+            onComplete(fullText);
+            return '';
+
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                throw new Error('Gemini APIストリーミングがタイムアウトしました');
+            }
+            throw error;
+        }
     }
 }

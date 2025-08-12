@@ -211,7 +211,7 @@ class EventHandlers {
      */
     #setupApiKeyModal() {
         if (!window.Elements.saveApiKey || !window.Elements.cancelApiKey || 
-            !window.Elements.openaiRadio || !window.Elements.azureRadio) return;
+            !window.Elements.openaiRadio || !window.Elements.azureRadio || !window.Elements.geminiRadio) return;
         
         // APIキー保存
         window.Elements.saveApiKey.addEventListener('click', ModalHandlers.getInstance.saveApiSettings);
@@ -222,6 +222,7 @@ class EventHandlers {
         // APIタイプ切り替え
         window.Elements.openaiRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleAzureSettings);
         window.Elements.azureRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleAzureSettings);
+        window.Elements.geminiRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleAzureSettings);
     }
 
     /**
