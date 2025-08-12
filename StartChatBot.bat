@@ -2,91 +2,34 @@
 cd /d "%~dp0"
 
 REM ポート番号の設定（デフォルト：8000）
+
 set PORT=8000
 if not "%1"=="" set PORT=%1
 
-echo ローカルサーバーを起動中...（ポート: %PORT%）
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-"^
-$port = $env:PORT; ^
-$url = 'http://localhost:' + $port + '/'; ^
-try { ^
-    $listener = New-Object System.Net.HttpListener; ^
-    $listener.Prefixes.Add($url); ^
-    $listener.Start(); ^
-    Write-Host 'サーバーを開始しました: ' -NoNewline; ^
-    Write-Host $url -ForegroundColor Green; ^
-    Write-Host 'Ctrl + C で終了' -ForegroundColor Yellow; ^
-    Start-Process $url; ^
-    Write-Host 'ブラウザでindex.htmlを開きました' -ForegroundColor Cyan; ^
-    while ($listener.IsListening) { ^
-        try { ^
-            $context = $listener.GetContext(); ^
-            $path = $context.Request.Url.LocalPath.TrimStart('/'); ^
-            if ([string]::IsNullOrWhiteSpace($path)) { $path = 'index.html' } ^
-            $file = Join-Path (Get-Location) $path; ^
-            $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'; ^
-            $logMessage = """$timestamp $($context.Request.HttpMethod) $path - """; ^
-            Write-Host $timestamp -NoNewline; ^
-            Write-Host (' ' + $context.Request.HttpMethod + ' ' + $path + ' - ') -NoNewline; ^
-            Add-Content -Path """server.log""" -Value """$logMessage""" -Encoding UTF8; ^
-            if (Test-Path $file) { ^
-                $contentType = 'text/plain; charset=utf-8'; ^
-                switch ([System.IO.Path]::GetExtension($file).ToLower()) { ^
-                    '.html' { $contentType = 'text/html; charset=utf-8' } ^
-                    '.css' { $contentType = 'text/css; charset=utf-8' } ^
-                    '.js' { $contentType = 'text/javascript; charset=utf-8' } ^
-                    '.png' { $contentType = 'image/png' } ^
-                    '.jpg' { $contentType = 'image/jpeg' } ^
-                    '.jpeg' { $contentType = 'image/jpeg' } ^
-                    '.gif' { $contentType = 'image/gif' } ^
-                    '.svg' { $contentType = 'image/svg+xml' } ^
-                    '.json' { $contentType = 'application/json; charset=utf-8' } ^
-                    '.ico' { $contentType = 'image/x-icon' } ^
-                    '.pdf' { $contentType = 'application/pdf' } ^
-                    '.woff' { $contentType = 'font/woff' } ^
-                    '.woff2' { $contentType = 'font/woff2' } ^
-                    '.mp4' { $contentType = 'video/mp4' } ^
-                    '.mp3' { $contentType = 'audio/mpeg' } ^
-                    '.webm' { $contentType = 'video/webm' } ^
-                } ^
-                $bytes = [System.IO.File]::ReadAllBytes($file); ^
-                $context.Response.StatusCode = 200; ^
-                $context.Response.ContentType = $contentType; ^
-                $context.Response.Headers.Add('Access-Control-Allow-Origin', '*'); ^
-                $context.Response.Headers.Add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); ^
-                $context.Response.Headers.Add('Access-Control-Allow-Headers', 'Content-Type'); ^
-                $context.Response.ContentLength64 = $bytes.Length; ^
-                $context.Response.OutputStream.Write($bytes, 0, $bytes.Length); ^
-                Write-Host ('200 OK - ' + $contentType) -ForegroundColor Green ^
-            } else { ^
-                $context.Response.StatusCode = 404; ^
-                $errorMessage = [System.Text.Encoding]::UTF8.GetBytes('404 Not Found'); ^
-                $context.Response.ContentType = 'text/plain; charset=utf-8'; ^
-                $context.Response.ContentLength64 = $errorMessage.Length; ^
-                $context.Response.OutputStream.Write($errorMessage, 0, $errorMessage.Length); ^
-                Write-Host '404 Not Found' -ForegroundColor Yellow ^
-            } ^
-            $context.Response.Close() ^
-        } catch { ^
-            $errorMessage = $_.Exception.Message; ^
-            Write-Host $errorMessage -ForegroundColor Red; ^
-            if ($context -ne $null) { ^
-                $context.Response.StatusCode = 500; ^
-                $errorBytes = [System.Text.Encoding]::UTF8.GetBytes('500 Internal Server Error'); ^
-                $context.Response.ContentType = 'text/plain; charset=utf-8'; ^
-                $context.Response.ContentLength64 = $errorBytes.Length; ^
-                $context.Response.OutputStream.Write($errorBytes, 0, $errorBytes.Length); ^
-                $context.Response.Close() ^
-            } ^
-        } ^
-    } ^
-} catch { ^
-    Write-Host ('サーバーの起動に失敗しました: ' + $_.Exception.Message) -ForegroundColor Red ^
-} finally { ^
-    if ($listener -ne $null) { ^
-        $listener.Stop(); ^
-        $listener.Close(); ^
-        Write-Host 'サーバーを停止しました。' -ForegroundColor Yellow ^
-    } ^
-}"
+REM Node.js の存在確認
+
+where node >nul 2>nul
+if errorlevel 1 (
+    echo Node.js が見つかりませんでした。https://nodejs.org/ からインストールしてください。
+    pause
+    exit /b 1
+)
+
+echo サーバーを起動します...（ポート: %PORT%）
+
+REM サーバーを別ウィンドウで起動（環境変数 PORT を引き継ぐ）
+
+start "ChatBot Server" cmd /c "set PORT=%PORT% && node server\server.js"
+
+echo サーバーの起動を待機中...
+powershell -NoProfile -ExecutionPolicy Bypass -Command " $p=$env:PORT; $url='http://localhost:'+ $p + '/'; $ok=$false; for ($i=0;$i -lt 40;$i++){ try { $r=Invoke-WebRequest -UseBasicParsing -Uri $url -TimeoutSec 1 -Method GET; if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500){ $ok=$true; break } } catch {} Start-Sleep -Milliseconds 250 }; if($ok){exit 0}else{exit 1}"
+
+if %errorlevel%==0 (
+    echo ブラウザを開きます: http://localhost:%PORT%/
+    start "" http://localhost:%PORT%/
+) else (
+    echo サーバーの応答が確認できませんでした。ブラウザを開きます。
+    start "" http://localhost:%PORT%/
+)
+
+exit /b 0

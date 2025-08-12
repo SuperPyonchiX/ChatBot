@@ -276,13 +276,13 @@ class ClaudeAPI {
         try {
             console.log('DEBUG: Claude 通常リクエスト開始', {
                 endpoint: window.CONFIG.AIAPI.ENDPOINTS.CLAUDE,
-                bodySize: JSON.stringify(body).length
+                bodySize: (typeof body === 'string' ? body.length : JSON.stringify(body).length)
             });
 
             const response = await fetch(window.CONFIG.AIAPI.ENDPOINTS.CLAUDE, {
                 method: 'POST',
                 headers: headers,
-                body: JSON.stringify(body)
+                body: (typeof body === 'string' ? body : JSON.stringify(body))
             });
 
             console.log('DEBUG: Claude API レスポンス受信（通常）', {
@@ -382,10 +382,23 @@ class ClaudeAPI {
         try {
             console.log('Claude ストリーミングリクエスト開始:', window.CONFIG.AIAPI.ENDPOINTS.CLAUDE);
 
+            // Ensure stream flag is present in payload
+            const payloadStr = (function(){
+                if (typeof body === 'string') {
+                    try {
+                        const obj = JSON.parse(body);
+                        obj.stream = true;
+                        return JSON.stringify(obj);
+                    } catch (_) { return body; }
+                }
+                const obj2 = { ...(body || {}), stream: true };
+                return JSON.stringify(obj2);
+            })();
+
             const response = await fetch(window.CONFIG.AIAPI.ENDPOINTS.CLAUDE, {
                 method: 'POST',
                 headers: headers,
-                body: JSON.stringify({ ...body, stream: true })
+                body: payloadStr
             });
 
             console.log('Claude API レスポンス受信:', response.status, response.ok);

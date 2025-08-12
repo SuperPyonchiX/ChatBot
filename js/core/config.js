@@ -67,7 +67,7 @@ window.CONFIG = {
             OPENAI: 'https://api.openai.com/v1/chat/completions',
             RESPONSES: 'https://api.openai.com/v1/responses',
             GEMINI: 'https://generativelanguage.googleapis.com/v1beta/models',
-            CLAUDE: 'https://api.anthropic.com/v1/messages'
+            CLAUDE: '/anthropic/v1/messages'
             // Azure用エンドポイントはユーザー設定から生成
         }
     },
@@ -332,3 +332,20 @@ window.CONFIG = {
         }
     }
 };
+
+// 動的エンドポイント切替（file://で直接開いた場合のCORS対策）
+(function() {
+    try {
+        const isFile = typeof window !== 'undefined' && window.location && window.location.protocol === 'file:';
+        if (isFile) {
+            // file:// からの相対パスは使用できないため、ローカル同一オリジンプロキシを絶対URLで指定
+            window.CONFIG.AIAPI.ENDPOINTS.CLAUDE = 'http://localhost:8000/anthropic/v1/messages';
+        } else {
+            // http(s) で配信されている場合は同一オリジンパスを維持
+            window.CONFIG.AIAPI.ENDPOINTS.CLAUDE = '/anthropic/v1/messages';
+        }
+    } catch (e) {
+        // 失敗時は安全側（同一オリジンパス）
+        window.CONFIG.AIAPI.ENDPOINTS.CLAUDE = '/anthropic/v1/messages';
+    }
+})();
