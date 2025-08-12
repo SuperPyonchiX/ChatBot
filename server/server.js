@@ -66,8 +66,21 @@ function handleAnthropicProxy(req, res) {
   };
 
   const upstream = https.request(options, (upstreamRes) => {
+    // Filter out upstream CORS and hop-by-hop headers to avoid duplicates
+    const filtered = { ...upstreamRes.headers };
+    [
+      'access-control-allow-origin',
+      'access-control-allow-methods',
+      'access-control-allow-headers',
+      'access-control-expose-headers',
+      'access-control-allow-credentials',
+      'connection',
+      'transfer-encoding',
+      'content-length'
+    ].forEach((h) => delete filtered[h]);
+
     res.writeHead(upstreamRes.statusCode || 500, {
-      ...upstreamRes.headers,
+      ...filtered,
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Expose-Headers': '*',
       'Cache-Control': 'no-cache'
