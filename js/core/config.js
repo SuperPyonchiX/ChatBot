@@ -56,7 +56,8 @@ window.CONFIG = {
         ENDPOINTS: {
             OPENAI: 'https://api.openai.com/v1/chat/completions',
             RESPONSES: 'https://api.openai.com/v1/responses',
-            GEMINI: 'https://generativelanguage.googleapis.com/v1beta/models'
+            GEMINI: 'https://generativelanguage.googleapis.com/v1beta/models',
+            CLAUDE: 'https://api.anthropic.com/v1/messages'
             // Azure用エンドポイントはユーザー設定から生成
         }
     },
@@ -124,6 +125,7 @@ window.CONFIG = {
             OPENAI_API_KEY: 'openaiApiKey',
             AZURE_API_KEY: 'azureApiKey',
             GEMINI_API_KEY: 'geminiApiKey',
+            CLAUDE_API_KEY: 'claudeApiKey',
             API_TYPE: 'apiType',
             AZURE_ENDPOINT_PREFIX: 'azureEndpoint_',
             SYSTEM_PROMPT: 'systemPrompt',
@@ -229,7 +231,14 @@ window.CONFIG = {
     MODELS: {
         // サポートされているモデル
         OPENAI: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5', 'o1-mini', 'o1'],
-        GEMINI: ['gemini-2.5-pro', 'gemini-2.5-flash']
+        GEMINI: ['gemini-2.5-pro', 'gemini-2.5-flash'],
+        CLAUDE: [
+            'claude-3-5-haiku-20241022', 
+            'claude-3-5-sonnet-20241022', 
+            'claude-3-7-sonnet-20250219',
+            'claude-sonnet-4-20250514',
+            'claude-opus-4-20250514'
+        ]
     },
 
     /**

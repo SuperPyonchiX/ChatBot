@@ -41,8 +41,10 @@ class ApiSettingsModal {
             apiKeyInput: UICache.getInstance.get('apiKeyInput'),
             azureApiKeyInput: UICache.getInstance.get('azureApiKeyInput'),
             geminiApiKeyInput: UICache.getInstance.get('geminiApiKeyInput'),
+            claudeApiKeyInput: UICache.getInstance.get('claudeApiKeyInput'),
             openaiSystemSettings: UICache.getInstance.get('openaiSystemSettings'),
             geminiSystemSettings: UICache.getInstance.get('geminiSystemSettings'),
+            claudeSystemSettings: UICache.getInstance.get('claudeSystemSettings'),
             openaiSettings: UICache.getInstance.get('openaiSettings'),
             azureSettings: UICache.getInstance.get('azureSettings'),
             azureEndpointGpt4oMini: UICache.getInstance.get('azureEndpointGpt4oMini'),
@@ -63,17 +65,27 @@ class ApiSettingsModal {
         if (elements.geminiApiKeyInput) {
             elements.geminiApiKeyInput.value = apiSettings.geminiApiKey || '';
         }
+        if (elements.claudeApiKeyInput) {
+            elements.claudeApiKeyInput.value = apiSettings.claudeApiKey || '';
+        }
         
         // API系統を設定
         if (apiSettings.apiType === 'gemini') {
             elements.geminiSystemRadio.checked = true;
             UIUtils.getInstance.toggleVisibility(elements.openaiSystemSettings, false);
             UIUtils.getInstance.toggleVisibility(elements.geminiSystemSettings, true);
+            UIUtils.getInstance.toggleVisibility(elements.claudeSystemSettings, false);
+        } else if (apiSettings.apiType === 'claude') {
+            elements.claudeSystemRadio.checked = true;
+            UIUtils.getInstance.toggleVisibility(elements.openaiSystemSettings, false);
+            UIUtils.getInstance.toggleVisibility(elements.geminiSystemSettings, false);
+            UIUtils.getInstance.toggleVisibility(elements.claudeSystemSettings, true);
         } else {
             // openai または azure の場合はOpenAI系を選択
             elements.openaiSystemRadio.checked = true;
             UIUtils.getInstance.toggleVisibility(elements.openaiSystemSettings, true);
             UIUtils.getInstance.toggleVisibility(elements.geminiSystemSettings, false);
+            UIUtils.getInstance.toggleVisibility(elements.claudeSystemSettings, false);
             
             // OpenAI系内でのサービス選択を設定
             if (apiSettings.apiType === 'azure') {
@@ -106,19 +118,23 @@ class ApiSettingsModal {
     }
     
     /**
-     * API系統の表示/非表示を切り替えます (OpenAI系 / Gemini)
+     * API系統の表示/非表示を切り替えます (OpenAI系 / Gemini / Claude)
      */
     toggleApiSystem() {
         const openaiSystemSettings = UICache.getInstance.get('openaiSystemSettings');
         const geminiSystemSettings = UICache.getInstance.get('geminiSystemSettings');
+        const claudeSystemSettings = UICache.getInstance.get('claudeSystemSettings');
         const openaiSystemRadio = UICache.getInstance.get('openaiSystemRadio');
         const geminiSystemRadio = UICache.getInstance.get('geminiSystemRadio');
+        const claudeSystemRadio = UICache.getInstance.get('claudeSystemRadio');
         
         const isOpenAISystem = openaiSystemRadio.checked;
         const isGeminiSystem = geminiSystemRadio.checked;
+        const isClaudeSystem = claudeSystemRadio.checked;
         
         UIUtils.getInstance.toggleVisibility(openaiSystemSettings, isOpenAISystem);
         UIUtils.getInstance.toggleVisibility(geminiSystemSettings, isGeminiSystem);
+        UIUtils.getInstance.toggleVisibility(claudeSystemSettings, isClaudeSystem);
         
         // OpenAI系の場合は、デフォルトでOpenAI APIを選択
         if (isOpenAISystem) {

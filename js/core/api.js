@@ -38,7 +38,7 @@ class AIAPI {
     async callAIAPI(messages, model, attachments = [], options = {}) {
         try {
             // サポートされているモデルかチェック
-            const allSupportedModels = [...window.CONFIG.MODELS.OPENAI, ...window.CONFIG.MODELS.GEMINI];
+            const allSupportedModels = [...window.CONFIG.MODELS.OPENAI, ...window.CONFIG.MODELS.GEMINI, ...window.CONFIG.MODELS.CLAUDE];
             if (!allSupportedModels.includes(model)) {
                 throw new Error(`サポートされていないモデルです: ${model}`);
             }
@@ -52,6 +52,8 @@ class AIAPI {
             // モデルに応じて適切なAPIクラスにルーティング
             if (window.CONFIG.MODELS.GEMINI.includes(model)) {
                 return await GeminiAPI.getInstance.callGeminiAPI(messages, model, attachments, options);
+            } else if (window.CONFIG.MODELS.CLAUDE.includes(model)) {
+                return await ClaudeAPI.getInstance.callClaudeAPI(messages, model, attachments, options);
             } else {
                 return await OpenAIAPI.getInstance.callOpenAIAPI(messages, model, attachments, options);
             }
@@ -73,5 +75,4 @@ class AIAPI {
     }
 }
 
-// グローバルに登録
-window.AIAPI = AIAPI;
+

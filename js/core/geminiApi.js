@@ -360,6 +360,3 @@ class GeminiAPI {
         return text;
     }
 }
-
-// グローバルに登録
-window.GeminiAPI = GeminiAPI;

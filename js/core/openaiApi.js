@@ -318,6 +318,3 @@ class OpenAIAPI {
         return '';
     }
 }
-
-// グローバルに登録
-window.OpenAIAPI = OpenAIAPI;

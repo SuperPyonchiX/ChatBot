@@ -220,9 +220,10 @@ class EventHandlers {
         // APIキーキャンセル
         window.Elements.cancelApiKey.addEventListener('click', ApiSettingsModal.getInstance.hideApiKeyModal);
         
-        // API系統切り替え (OpenAI系 / Gemini)
+        // API系統切り替え (OpenAI系 / Gemini / Claude)
         window.Elements.openaiSystemRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleApiSystem);
         window.Elements.geminiSystemRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleApiSystem);
+        window.Elements.claudeSystemRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleApiSystem);
         
         // OpenAI系内のサービス切り替え (OpenAI / Azure OpenAI)
         window.Elements.openaiRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleOpenAIService);

@@ -675,6 +675,3 @@ class ResponsesAPI {
         return '';
     }
 }
-
-// グローバルに登録
-window.ResponsesAPI = ResponsesAPI;

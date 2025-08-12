@@ -30,7 +30,7 @@ class ModalHandlers {
      */
     saveApiSettings() {
         if (!window.Elements.apiKeyInput || !window.Elements.openaiSystemRadio || 
-            !window.Elements.geminiSystemRadio || !window.Elements.openaiRadio || 
+            !window.Elements.geminiSystemRadio || !window.Elements.claudeSystemRadio || !window.Elements.openaiRadio || 
             !window.Elements.azureRadio) return;
         
         // 現在の設定を取得（既存のAPIキーを保持）
@@ -44,6 +44,14 @@ class ModalHandlers {
             // Gemini APIキーのみ更新
             if (window.Elements.geminiApiKeyInput) {
                 window.AppState.apiSettings.geminiApiKey = window.Elements.geminiApiKeyInput.value.trim();
+            }
+        } else if (window.Elements.claudeSystemRadio.checked) {
+            // Claude系を選択
+            window.AppState.apiSettings.apiType = 'claude';
+            
+            // Claude APIキーのみ更新
+            if (window.Elements.claudeApiKeyInput) {
+                window.AppState.apiSettings.claudeApiKey = window.Elements.claudeApiKeyInput.value.trim();
             }
         } else {
             // OpenAI系を選択 - OpenAI または Azure OpenAI を判定
@@ -86,6 +94,7 @@ class ModalHandlers {
         window.AppState.apiSettings.openaiApiKey = window.AppState.apiSettings.openaiApiKey || currentSettings.openaiApiKey;
         window.AppState.apiSettings.azureApiKey = window.AppState.apiSettings.azureApiKey || currentSettings.azureApiKey;
         window.AppState.apiSettings.geminiApiKey = window.AppState.apiSettings.geminiApiKey || currentSettings.geminiApiKey;
+        window.AppState.apiSettings.claudeApiKey = window.AppState.apiSettings.claudeApiKey || currentSettings.claudeApiKey;
         window.AppState.apiSettings.azureEndpoints = window.AppState.apiSettings.azureEndpoints || currentSettings.azureEndpoints;
 
         // グローバル設定を更新
