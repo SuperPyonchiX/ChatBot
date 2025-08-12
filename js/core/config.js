@@ -339,7 +339,7 @@ window.CONFIG = {
         const isFile = typeof window !== 'undefined' && window.location && window.location.protocol === 'file:';
         if (isFile) {
             // file:// からの相対パスは使用できないため、ローカル同一オリジンプロキシを絶対URLで指定
-            window.CONFIG.AIAPI.ENDPOINTS.CLAUDE = 'http://localhost:8000/anthropic/v1/messages';
+            window.CONFIG.AIAPI.ENDPOINTS.CLAUDE = 'http://localhost:50000/anthropic/v1/messages';
         } else {
             // http(s) で配信されている場合は同一オリジンパスを維持
             window.CONFIG.AIAPI.ENDPOINTS.CLAUDE = '/anthropic/v1/messages';

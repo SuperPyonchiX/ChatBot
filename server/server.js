@@ -9,7 +9,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = Number(process.env.PORT) || 8000;
+const PORT = Number(process.env.PORT) || 50000;
 const PROJECT_ROOT = path.join(__dirname, '..');
 const ANTHROPIC_BASE = 'api.anthropic.com';
 

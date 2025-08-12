@@ -1,8 +1,8 @@
 @echo off
 cd /d "%~dp0"
 
-REM ポート番号の設定（デフォルト：8001）
-set PORT=8001
+REM ポート番号の設定（デフォルト：50000）
+set PORT=50000
 if not "%1"=="" set PORT=%1
 
 REM PowerShell ランチャーを隠れウィンドウで起動（サーバー起動＋ブラウザ監視＋自動停止）
