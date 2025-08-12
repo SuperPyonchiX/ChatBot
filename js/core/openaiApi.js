@@ -3,23 +3,21 @@
  * OpenAI/Azure OpenAI API専用の通信機能を提供します
  */
 class OpenAIAPI {
-    static #instance = null;
-
     constructor() {
-        if (OpenAIAPI.#instance) {
-            return OpenAIAPI.#instance;
+        if (OpenAIAPI._instance) {
+            return OpenAIAPI._instance;
         }
-        OpenAIAPI.#instance = this;
+        OpenAIAPI._instance = this;
     }
 
     /**
      * シングルトンインスタンスを取得
      */
     static get getInstance() {
-        if (!OpenAIAPI.#instance) {
-            OpenAIAPI.#instance = new OpenAIAPI();
+        if (!OpenAIAPI._instance) {
+            OpenAIAPI._instance = new OpenAIAPI();
         }
-        return OpenAIAPI.#instance;
+        return OpenAIAPI._instance;
     }
 
     /**
@@ -159,8 +157,8 @@ class OpenAIAPI {
             model: model,
             messages: messages,
             stream: stream,
-            temperature: 0.7,
-            max_tokens: 4096
+            temperature: window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature,
+            max_tokens: window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens
         };
 
         return { endpoint, headers, body };

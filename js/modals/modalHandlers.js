@@ -53,6 +53,9 @@ class ModalHandlers {
             if (window.Elements.claudeApiKeyInput) {
                 window.AppState.apiSettings.claudeApiKey = window.Elements.claudeApiKeyInput.value.trim();
             }
+            
+            // Claude Web検索設定を取得・更新
+            window.AppState.apiSettings.claudeWebSearchSettings = this.#getClaudeWebSearchSettings();
         } else {
             // OpenAI系を選択 - OpenAI または Azure OpenAI を判定
             if (window.Elements.azureRadio.checked) {
@@ -205,5 +208,52 @@ class ModalHandlers {
             );
             UI.getInstance.Core.Notification.show('システムプロンプトを削除しました', 'success');
         }
+    }
+
+    /**
+     * Claude Web検索設定を取得
+     * @private
+     * @returns {Object} Web検索設定
+     */
+    #getClaudeWebSearchSettings() {
+        const settings = {
+            enabled: false,
+            maxSearches: 5,
+            allowedDomains: [],
+            blockedDomains: [],
+            searchRegion: ''
+        };
+
+        // Web検索有効フラグ
+        const webSearchToggle = window.Elements.claudeWebSearchToggle;
+        if (webSearchToggle) {
+            settings.enabled = webSearchToggle.checked;
+        }
+
+        // 最大検索回数
+        const maxSearches = window.Elements.claudeMaxSearches;
+        if (maxSearches && maxSearches.value) {
+            settings.maxSearches = parseInt(maxSearches.value) || 5;
+        }
+
+        // 許可ドメイン
+        const allowedDomains = window.Elements.claudeAllowedDomains;
+        if (allowedDomains && allowedDomains.value.trim()) {
+            settings.allowedDomains = allowedDomains.value.split(',').map(domain => domain.trim()).filter(Boolean);
+        }
+
+        // 禁止ドメイン
+        const blockedDomains = window.Elements.claudeBlockedDomains;
+        if (blockedDomains && blockedDomains.value.trim()) {
+            settings.blockedDomains = blockedDomains.value.split(',').map(domain => domain.trim()).filter(Boolean);
+        }
+
+        // 検索地域
+        const searchRegion = window.Elements.claudeSearchRegion;
+        if (searchRegion && searchRegion.value) {
+            settings.searchRegion = searchRegion.value;
+        }
+
+        return settings;
     }
 }

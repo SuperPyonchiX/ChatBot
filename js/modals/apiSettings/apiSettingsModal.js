@@ -42,6 +42,12 @@ class ApiSettingsModal {
             azureApiKeyInput: UICache.getInstance.get('azureApiKeyInput'),
             geminiApiKeyInput: UICache.getInstance.get('geminiApiKeyInput'),
             claudeApiKeyInput: UICache.getInstance.get('claudeApiKeyInput'),
+            claudeWebSearchToggle: UICache.getInstance.get('claudeWebSearchToggle'),
+            claudeWebSearchSettings: UICache.getInstance.get('claudeWebSearchSettings'),
+            claudeMaxSearches: UICache.getInstance.get('claudeMaxSearches'),
+            claudeAllowedDomains: UICache.getInstance.get('claudeAllowedDomains'),
+            claudeBlockedDomains: UICache.getInstance.get('claudeBlockedDomains'),
+            claudeSearchRegion: UICache.getInstance.get('claudeSearchRegion'),
             openaiSystemSettings: UICache.getInstance.get('openaiSystemSettings'),
             geminiSystemSettings: UICache.getInstance.get('geminiSystemSettings'),
             claudeSystemSettings: UICache.getInstance.get('claudeSystemSettings'),
@@ -68,6 +74,9 @@ class ApiSettingsModal {
         if (elements.claudeApiKeyInput) {
             elements.claudeApiKeyInput.value = apiSettings.claudeApiKey || '';
         }
+
+        // Claude Web検索設定を読み込み
+        this.#loadClaudeWebSearchSettings(elements, apiSettings.claudeWebSearchSettings);
         
         // API系統を設定
         if (apiSettings.apiType === 'gemini') {
@@ -174,5 +183,57 @@ class ApiSettingsModal {
         // 後方互換性のため残しておくが、新しいメソッドにリダイレクト
         this.toggleApiSystem();
         this.toggleOpenAIService();
+    }
+
+    /**
+     * Claude Web検索設定を読み込み
+     * @private
+     * @param {Object} elements - UI要素
+     * @param {Object} webSearchSettings - Web検索設定
+     */
+    #loadClaudeWebSearchSettings(elements, webSearchSettings) {
+        if (!webSearchSettings) {
+            webSearchSettings = {
+                enabled: false,
+                maxSearches: 5,
+                allowedDomains: [],
+                blockedDomains: [],
+                searchRegion: ''
+            };
+        }
+
+        // Web検索有効フラグ
+        if (elements.claudeWebSearchToggle) {
+            elements.claudeWebSearchToggle.checked = webSearchSettings.enabled || false;
+            
+            // 設定パネルの表示/非表示
+            if (elements.claudeWebSearchSettings) {
+                if (webSearchSettings.enabled) {
+                    elements.claudeWebSearchSettings.classList.remove('hidden');
+                } else {
+                    elements.claudeWebSearchSettings.classList.add('hidden');
+                }
+            }
+        }
+
+        // 最大検索回数
+        if (elements.claudeMaxSearches) {
+            elements.claudeMaxSearches.value = webSearchSettings.maxSearches || 5;
+        }
+
+        // 許可ドメイン
+        if (elements.claudeAllowedDomains) {
+            elements.claudeAllowedDomains.value = (webSearchSettings.allowedDomains || []).join(', ');
+        }
+
+        // 禁止ドメイン
+        if (elements.claudeBlockedDomains) {
+            elements.claudeBlockedDomains.value = (webSearchSettings.blockedDomains || []).join(', ');
+        }
+
+        // 検索地域
+        if (elements.claudeSearchRegion) {
+            elements.claudeSearchRegion.value = webSearchSettings.searchRegion || '';
+        }
     }
 }

@@ -49,6 +49,8 @@ window.Elements = (function() {
         'apiKeyModal', 'saveApiKey', 'cancelApiKey', 
         'openaiSystemRadio', 'geminiSystemRadio', 'claudeSystemRadio', 'openaiRadio', 'azureRadio',
         'apiKeyInput', 'azureApiKeyInput', 'geminiApiKeyInput', 'claudeApiKeyInput', 'azureEndpointGpt4oMini', 
+        'claudeWebSearchToggle', 'claudeWebSearchSettings', 'claudeMaxSearches', 'claudeAllowedDomains', 
+        'claudeBlockedDomains', 'claudeSearchRegion',
         'azureEndpointGpt4o', 'azureEndpointGpt5Mini', 'azureEndpointGpt5',
         'azureEndpointO1Mini', 'azureEndpointO1', 
         'openaiSystemSettings', 'geminiSystemSettings', 'claudeSystemSettings', 'openaiSettings', 'azureSettings',

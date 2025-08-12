@@ -1,0 +1,100 @@
+/**
+ * claude-websearch.css
+ * Claude Web検索設定フォームのスタイル
+ */
+
+/* Claude Web検索設定パネル */
+#claudeWebSearchSettings {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: opacity 0.3s ease;
+}
+
+#claudeWebSearchSettings.hidden {
+    display: none;
+}
+
+/* Web検索設定のヘルプテキスト */
+#claudeWebSearchSettings .help-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    line-height: 1.4;
+}
+
+/* Web検索ドメイン設定の入力フィールド */
+#claudeAllowedDomains,
+#claudeBlockedDomains {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+/* 最大検索回数の入力フィールド */
+#claudeMaxSearches {
+    width: 80px;
+    text-align: center;
+}
+
+/* 検索地域選択 */
+#claudeSearchRegion {
+    min-width: 150px;
+}
+
+/* Web検索機能の説明テキスト */
+.web-search-info h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.web-search-details {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    background-color: var(--bg-tertiary);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border-left: 4px solid var(--accent-color);
+}
+
+.web-search-details strong {
+    color: var(--text-primary);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    #claudeWebSearchSettings {
+        padding: 0.75rem;
+        margin-top: 0.75rem;
+    }
+    
+    #claudeAllowedDomains,
+    #claudeBlockedDomains {
+        font-size: 0.85rem;
+    }
+    
+    .web-search-details {
+        font-size: 0.85rem;
+        padding: 0.5rem;
+    }
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+    #claudeWebSearchSettings {
+        background-color: var(--bg-secondary-dark);
+        border-color: var(--border-color-dark);
+    }
+    
+    .web-search-details {
+        background-color: var(--bg-tertiary-dark);
+        color: var(--text-secondary-dark);
+    }
+    
+    .web-search-details strong {
+        color: var(--text-primary-dark);
+    }
+}

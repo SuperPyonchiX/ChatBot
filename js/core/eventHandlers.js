@@ -225,6 +225,11 @@ class EventHandlers {
         window.Elements.geminiSystemRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleApiSystem);
         window.Elements.claudeSystemRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleApiSystem);
         
+        // Claude Web検索設定
+        if (window.Elements.claudeWebSearchToggle) {
+            window.Elements.claudeWebSearchToggle.addEventListener('change', this.#toggleClaudeWebSearchSettings);
+        }
+        
         // OpenAI系内のサービス切り替え (OpenAI / Azure OpenAI)
         window.Elements.openaiRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleOpenAIService);
         window.Elements.azureRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleOpenAIService);
@@ -283,6 +288,22 @@ class EventHandlers {
             addPromptButton.addEventListener('click', () => {
                 PromptManagerModal.getInstance.showPromptEditModal(null);
             });
+        }
+    }
+
+    /**
+     * Claude Web検索設定の表示/非表示を切り替え
+     */
+    #toggleClaudeWebSearchSettings() {
+        const toggle = window.Elements.claudeWebSearchToggle;
+        const settings = window.Elements.claudeWebSearchSettings;
+        
+        if (toggle && settings) {
+            if (toggle.checked) {
+                settings.classList.remove('hidden');
+            } else {
+                settings.classList.add('hidden');
+            }
         }
     }
 }

@@ -3,23 +3,21 @@
  * AI API統合インターフェース - 各API専用クラスへのルーティングを提供します
  */
 class AIAPI {
-    static #instance = null;
-
     constructor() {
-        if (AIAPI.#instance) {
-            return AIAPI.#instance;
+        if (AIAPI._instance) {
+            return AIAPI._instance;
         }
-        AIAPI.#instance = this;
+        AIAPI._instance = this;
     }
 
     /**
      * シングルトンインスタンスを取得
      */
     static get getInstance() {
-        if (!AIAPI.#instance) {
-            AIAPI.#instance = new AIAPI();
+        if (!AIAPI._instance) {
+            AIAPI._instance = new AIAPI();
         }
-        return AIAPI.#instance;
+        return AIAPI._instance;
     }
 
     /**
@@ -53,6 +51,8 @@ class AIAPI {
             if (window.CONFIG.MODELS.GEMINI.includes(model)) {
                 return await GeminiAPI.getInstance.callGeminiAPI(messages, model, attachments, options);
             } else if (window.CONFIG.MODELS.CLAUDE.includes(model)) {
+                // Claude Web検索設定を追加
+                this.#addClaudeWebSearchOptions(options);
                 return await ClaudeAPI.getInstance.callClaudeAPI(messages, model, attachments, options);
             } else {
                 return await OpenAIAPI.getInstance.callOpenAIAPI(messages, model, attachments, options);
@@ -66,12 +66,47 @@ class AIAPI {
 
     /**
      * Web検索対応モデルかどうかを判定
+     * @private
      * @param {string} model - モデル名
      * @returns {boolean} Web検索対応モデルかどうか
      */
     #isWebSearchCompatibleModel(model) {
         // OpenAIのResponses APIでWeb検索をサポートするモデル
-        return model.startsWith('gpt-5');
+        return window.CONFIG.MODELS.OPENAI_WEB_SEARCH_COMPATIBLE.includes(model);
+    }    /**
+     * Claude用のWeb検索設定をオプションに追加
+     * @private
+     * @param {Object} options - APIオプション
+     */
+    #addClaudeWebSearchOptions(options) {
+        const storage = window.Storage?.getInstance;
+        if (!storage) return;
+
+        const webSearchSettings = storage.getClaudeWebSearchSettings();
+        if (webSearchSettings && webSearchSettings.enabled) {
+            console.log('DEBUG: Claude Web検索設定を適用', webSearchSettings);
+            
+            options.useWebSearch = true;
+            options.webSearchConfig = {
+                maxUses: webSearchSettings.maxSearches || window.CONFIG.WEB_SEARCH.CLAUDE.DEFAULT_CONFIG.maxUses,
+                allowedDomains: webSearchSettings.allowedDomains && webSearchSettings.allowedDomains.length > 0 
+                    ? webSearchSettings.allowedDomains 
+                    : undefined,
+                blockedDomains: webSearchSettings.blockedDomains && webSearchSettings.blockedDomains.length > 0 
+                    ? webSearchSettings.blockedDomains 
+                    : undefined,
+                userLocation: webSearchSettings.searchRegion 
+                    ? window.CONFIG.WEB_SEARCH.CLAUDE.LOCATION_TEMPLATES[webSearchSettings.searchRegion] 
+                    : undefined
+            };
+
+            // 未定義のフィールドを削除
+            Object.keys(options.webSearchConfig).forEach(key => {
+                if (options.webSearchConfig[key] === undefined) {
+                    delete options.webSearchConfig[key];
+                }
+            });
+        }
     }
 }
 

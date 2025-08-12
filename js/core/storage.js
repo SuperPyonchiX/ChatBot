@@ -3,18 +3,15 @@
  * ローカルストレージの読み書き機能を提供します
  */
 class Storage {
-    // シングルトンインスタンス
-    static #instance = null;
-
     /**
      * プライベートコンストラクタ
      * @private
      */
     constructor() {
-        if (Storage.#instance) {
-            return Storage.#instance;
+        if (Storage._instance) {
+            return Storage._instance;
         }
-        Storage.#instance = this;
+        Storage._instance = this;
     }
 
     /**
@@ -22,10 +19,10 @@ class Storage {
      * @returns {Storage} Storageのシングルトンインスタンス
      */
     static get getInstance() {
-        if (!Storage.#instance) {
-            Storage.#instance = new Storage();
+        if (!Storage._instance) {
+            Storage._instance = new Storage();
         }
-        return Storage.#instance;
+        return Storage._instance;
     }
 
     // Public API Methods ///////////////////////////////////////////////////////
@@ -144,7 +141,8 @@ class Storage {
             geminiApiKey: this.getItem(window.CONFIG.STORAGE.KEYS.GEMINI_API_KEY, ''),
             claudeApiKey: this.getItem(window.CONFIG.STORAGE.KEYS.CLAUDE_API_KEY, ''),
             apiType: this.getItem(window.CONFIG.STORAGE.KEYS.API_TYPE, window.CONFIG.STORAGE.DEFAULT_API_TYPE),
-            azureEndpoints
+            azureEndpoints,
+            claudeWebSearchSettings: this.getClaudeWebSearchSettings()
         };
     }
     
@@ -160,6 +158,11 @@ class Storage {
         this.setItem(window.CONFIG.STORAGE.KEYS.GEMINI_API_KEY, apiSettings.geminiApiKey || '');
         this.setItem(window.CONFIG.STORAGE.KEYS.CLAUDE_API_KEY, apiSettings.claudeApiKey || '');
         this.setItem(window.CONFIG.STORAGE.KEYS.API_TYPE, apiSettings.apiType || window.CONFIG.STORAGE.DEFAULT_API_TYPE);
+        
+        // Claude Web検索設定の保存
+        if (apiSettings.claudeWebSearchSettings) {
+            this.saveClaudeWebSearchSettings(apiSettings.claudeWebSearchSettings);
+        }
         
         if (apiSettings.azureEndpoints) {
             // AzureエンドポイントはOpenAIモデルのみに適用
@@ -677,5 +680,41 @@ class Storage {
             
             return optimized;
         }).filter(Boolean);
+    }
+
+    /**
+     * Claude Web検索設定を取得
+     * @returns {Object} Claude Web検索設定
+     */
+    getClaudeWebSearchSettings() {
+        try {
+            const settings = this.getItem('claudeWebSearchSettings', null);
+            if (settings) {
+                return JSON.parse(settings);
+            }
+        } catch (error) {
+            console.error('Claude Web検索設定の読み込みに失敗:', error);
+        }
+
+        // デフォルト設定を返す
+        return {
+            enabled: false,
+            maxSearches: window.CONFIG.WEB_SEARCH.CLAUDE.DEFAULT_CONFIG.maxUses,
+            allowedDomains: window.CONFIG.WEB_SEARCH.CLAUDE.DEFAULT_CONFIG.allowedDomains,
+            blockedDomains: window.CONFIG.WEB_SEARCH.CLAUDE.DEFAULT_CONFIG.blockedDomains,
+            searchRegion: ''
+        };
+    }
+
+    /**
+     * Claude Web検索設定を保存
+     * @param {Object} settings - Web検索設定
+     */
+    saveClaudeWebSearchSettings(settings) {
+        try {
+            this.setItem('claudeWebSearchSettings', JSON.stringify(settings));
+        } catch (error) {
+            console.error('Claude Web検索設定の保存に失敗:', error);
+        }
     }
 }

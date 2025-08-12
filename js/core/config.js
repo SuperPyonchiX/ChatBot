@@ -34,6 +34,9 @@ window.CONFIG = {
         // Azure OpenAI API バージョン
         AZURE_API_VERSION: '2023-05-15',
 
+        // Anthropic Claude API バージョン
+        ANTHROPIC_API_VERSION: '2023-06-01',
+
         // デフォルトのAPIリクエスト設定
         DEFAULT_PARAMS: {
             // 温度（0-2の範囲、低いと安定した応答、高いと創造的な応答）
@@ -50,6 +53,13 @@ window.CONFIG = {
 
             // 存在ペナルティ（0-2の範囲、新しいトピックを促進）
             presence_penalty: 0
+        },
+
+        // Gemini固有のパラメータ
+        GEMINI_PARAMS: {
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192
         },
 
         // APIエンドポイントURL
@@ -233,10 +243,13 @@ window.CONFIG = {
         OPENAI: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5', 'o1-mini', 'o1'],
         GEMINI: ['gemini-2.5-pro', 'gemini-2.5-flash'],
         CLAUDE: [
-            'claude-opus-4-1-20250805', 
-            'claude-sonnet-4-20250514', 
-            'claude-3-5-haiku-20241022'
-        ]
+            'claude-opus-4-1',
+            'claude-sonnet-4-0', 
+            'claude-3-5-haiku-latest'
+        ],
+        
+        // OpenAI Responses APIでのWeb検索をサポートするモデル
+        OPENAI_WEB_SEARCH_COMPATIBLE: ['gpt-5-mini', 'gpt-5']
     },
 
     /**
@@ -273,6 +286,31 @@ window.CONFIG = {
         AUTO_SEARCH_MODEL: 'gpt-4o-mini',
 
         // 特殊コマンドのプレフィックス
-        COMMAND_PREFIX: '!'
+        COMMAND_PREFIX: '!',
+
+        // Claude Web検索の設定
+        CLAUDE: {
+            // デフォルト設定
+            DEFAULT_CONFIG: {
+                maxUses: 5,  // 最大検索回数
+                allowedDomains: [],  // 許可ドメイン（空の場合は制限なし）
+                blockedDomains: [],  // 禁止ドメイン
+                userLocation: null   // ユーザー位置情報
+            },
+
+            // 地域別設定テンプレート
+            LOCATION_TEMPLATES: {
+                japan: {
+                    type: "approximate",
+                    country: "JP",
+                    timezone: "Asia/Tokyo"
+                },
+                usa: {
+                    type: "approximate",
+                    country: "US",
+                    timezone: "America/New_York"
+                }
+            }
+        }
     }
 };
