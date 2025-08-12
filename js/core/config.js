@@ -55,7 +55,8 @@ window.CONFIG = {
         // APIエンドポイントURL
         ENDPOINTS: {
             OPENAI: 'https://api.openai.com/v1/chat/completions',
-            RESPONSES: 'https://api.openai.com/v1/responses'
+            RESPONSES: 'https://api.openai.com/v1/responses',
+            GEMINI: 'https://generativelanguage.googleapis.com/v1beta/models'
             // Azure用エンドポイントはユーザー設定から生成
         }
     },
