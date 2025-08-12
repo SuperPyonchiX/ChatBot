@@ -34,15 +34,17 @@ class ApiSettingsModal {
         
         // 必要な要素を一度に取得
         const elements = {
-            azureApiKeyInput: UICache.getInstance.get('azureApiKeyInput'),
+            openaiSystemRadio: UICache.getInstance.get('openaiSystemRadio'),
+            geminiSystemRadio: UICache.getInstance.get('geminiSystemRadio'),
             openaiRadio: UICache.getInstance.get('openaiRadio'),
             azureRadio: UICache.getInstance.get('azureRadio'),
-            geminiRadio: UICache.getInstance.get('geminiRadio'),
             apiKeyInput: UICache.getInstance.get('apiKeyInput'),
+            azureApiKeyInput: UICache.getInstance.get('azureApiKeyInput'),
             geminiApiKeyInput: UICache.getInstance.get('geminiApiKeyInput'),
+            openaiSystemSettings: UICache.getInstance.get('openaiSystemSettings'),
+            geminiSystemSettings: UICache.getInstance.get('geminiSystemSettings'),
             openaiSettings: UICache.getInstance.get('openaiSettings'),
             azureSettings: UICache.getInstance.get('azureSettings'),
-            geminiSettings: UICache.getInstance.get('geminiSettings'),
             azureEndpointGpt4oMini: UICache.getInstance.get('azureEndpointGpt4oMini'),
             azureEndpointGpt4o: UICache.getInstance.get('azureEndpointGpt4o'),
             azureEndpointGpt5Mini: UICache.getInstance.get('azureEndpointGpt5Mini'),
@@ -51,33 +53,48 @@ class ApiSettingsModal {
             azureEndpointO1: UICache.getInstance.get('azureEndpointO1')
         };
         
-        // APIタイプに応じて設定を表示
-        if (apiSettings.apiType === 'azure') {
-            elements.azureRadio.checked = true;
-            elements.azureApiKeyInput.value = apiSettings.azureApiKey;
-            UIUtils.getInstance.toggleVisibility(elements.openaiSettings, false);
-            UIUtils.getInstance.toggleVisibility(elements.azureSettings, true);
-            UIUtils.getInstance.toggleVisibility(elements.geminiSettings, false);
-            
-            // Azureエンドポイント設定を適用
-            elements.azureEndpointGpt4oMini.value = apiSettings.azureEndpoints['gpt-4o-mini'];
-            elements.azureEndpointGpt4o.value = apiSettings.azureEndpoints['gpt-4o'];
-            elements.azureEndpointGpt5Mini.value = apiSettings.azureEndpoints['gpt-5-mini'];
-            elements.azureEndpointGpt5.value = apiSettings.azureEndpoints['gpt-5'];
-            elements.azureEndpointO1Mini.value = apiSettings.azureEndpoints['o1-mini'];
-            elements.azureEndpointO1.value = apiSettings.azureEndpoints['o1'];
-        } else if (apiSettings.apiType === 'gemini') {
-            elements.geminiRadio.checked = true;
-            elements.geminiApiKeyInput.value = apiSettings.geminiApiKey;
-            UIUtils.getInstance.toggleVisibility(elements.openaiSettings, false);
-            UIUtils.getInstance.toggleVisibility(elements.azureSettings, false);
-            UIUtils.getInstance.toggleVisibility(elements.geminiSettings, true);
+        // すべてのAPIキーを設定（保持）
+        if (elements.apiKeyInput) {
+            elements.apiKeyInput.value = apiSettings.openaiApiKey || '';
+        }
+        if (elements.azureApiKeyInput) {
+            elements.azureApiKeyInput.value = apiSettings.azureApiKey || '';
+        }
+        if (elements.geminiApiKeyInput) {
+            elements.geminiApiKeyInput.value = apiSettings.geminiApiKey || '';
+        }
+        
+        // API系統を設定
+        if (apiSettings.apiType === 'gemini') {
+            elements.geminiSystemRadio.checked = true;
+            UIUtils.getInstance.toggleVisibility(elements.openaiSystemSettings, false);
+            UIUtils.getInstance.toggleVisibility(elements.geminiSystemSettings, true);
         } else {
-            elements.openaiRadio.checked = true;
-            elements.apiKeyInput.value = apiSettings.openaiApiKey;
-            UIUtils.getInstance.toggleVisibility(elements.openaiSettings, true);
-            UIUtils.getInstance.toggleVisibility(elements.azureSettings, false);
-            UIUtils.getInstance.toggleVisibility(elements.geminiSettings, false);
+            // openai または azure の場合はOpenAI系を選択
+            elements.openaiSystemRadio.checked = true;
+            UIUtils.getInstance.toggleVisibility(elements.openaiSystemSettings, true);
+            UIUtils.getInstance.toggleVisibility(elements.geminiSystemSettings, false);
+            
+            // OpenAI系内でのサービス選択を設定
+            if (apiSettings.apiType === 'azure') {
+                elements.azureRadio.checked = true;
+                UIUtils.getInstance.toggleVisibility(elements.openaiSettings, false);
+                UIUtils.getInstance.toggleVisibility(elements.azureSettings, true);
+                
+                // Azureエンドポイント設定を適用
+                if (apiSettings.azureEndpoints) {
+                    elements.azureEndpointGpt4oMini.value = apiSettings.azureEndpoints['gpt-4o-mini'] || '';
+                    elements.azureEndpointGpt4o.value = apiSettings.azureEndpoints['gpt-4o'] || '';
+                    elements.azureEndpointGpt5Mini.value = apiSettings.azureEndpoints['gpt-5-mini'] || '';
+                    elements.azureEndpointGpt5.value = apiSettings.azureEndpoints['gpt-5'] || '';
+                    elements.azureEndpointO1Mini.value = apiSettings.azureEndpoints['o1-mini'] || '';
+                    elements.azureEndpointO1.value = apiSettings.azureEndpoints['o1'] || '';
+                }
+            } else {
+                elements.openaiRadio.checked = true;
+                UIUtils.getInstance.toggleVisibility(elements.openaiSettings, true);
+                UIUtils.getInstance.toggleVisibility(elements.azureSettings, false);
+            }
         }
     }
     
@@ -89,21 +106,57 @@ class ApiSettingsModal {
     }
     
     /**
-     * Azure設定の表示/非表示を切り替えます
+     * API系統の表示/非表示を切り替えます (OpenAI系 / Gemini)
      */
-    toggleAzureSettings() {
+    toggleApiSystem() {
+        const openaiSystemSettings = UICache.getInstance.get('openaiSystemSettings');
+        const geminiSystemSettings = UICache.getInstance.get('geminiSystemSettings');
+        const openaiSystemRadio = UICache.getInstance.get('openaiSystemRadio');
+        const geminiSystemRadio = UICache.getInstance.get('geminiSystemRadio');
+        
+        const isOpenAISystem = openaiSystemRadio.checked;
+        const isGeminiSystem = geminiSystemRadio.checked;
+        
+        UIUtils.getInstance.toggleVisibility(openaiSystemSettings, isOpenAISystem);
+        UIUtils.getInstance.toggleVisibility(geminiSystemSettings, isGeminiSystem);
+        
+        // OpenAI系の場合は、デフォルトでOpenAI APIを選択
+        if (isOpenAISystem) {
+            const openaiRadio = UICache.getInstance.get('openaiRadio');
+            const openaiSettings = UICache.getInstance.get('openaiSettings');
+            const azureSettings = UICache.getInstance.get('azureSettings');
+            
+            if (openaiRadio) {
+                openaiRadio.checked = true;
+                UIUtils.getInstance.toggleVisibility(openaiSettings, true);
+                UIUtils.getInstance.toggleVisibility(azureSettings, false);
+            }
+        }
+    }
+    
+    /**
+     * OpenAI系サービスの表示/非表示を切り替えます (OpenAI / Azure OpenAI)
+     */
+    toggleOpenAIService() {
         const openaiSettings = UICache.getInstance.get('openaiSettings');
         const azureSettings = UICache.getInstance.get('azureSettings');
-        const geminiSettings = UICache.getInstance.get('geminiSettings');
+        const openaiRadio = UICache.getInstance.get('openaiRadio');
         const azureRadio = UICache.getInstance.get('azureRadio');
-        const geminiRadio = UICache.getInstance.get('geminiRadio');
         
-        const isOpenai = !azureRadio.checked && !geminiRadio.checked;
+        const isOpenAI = openaiRadio.checked;
         const isAzure = azureRadio.checked;
-        const isGemini = geminiRadio.checked;
         
-        UIUtils.getInstance.toggleVisibility(openaiSettings, isOpenai);
+        UIUtils.getInstance.toggleVisibility(openaiSettings, isOpenAI);
         UIUtils.getInstance.toggleVisibility(azureSettings, isAzure);
-        UIUtils.getInstance.toggleVisibility(geminiSettings, isGemini);
+    }
+    
+    /**
+     * Azure設定の表示/非表示を切り替えます（後方互換性のため）
+     * @deprecated 新しいUI構造では toggleApiSystem と toggleOpenAIService を使用
+     */
+    toggleAzureSettings() {
+        // 後方互換性のため残しておくが、新しいメソッドにリダイレクト
+        this.toggleApiSystem();
+        this.toggleOpenAIService();
     }
 }

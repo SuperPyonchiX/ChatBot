@@ -153,54 +153,69 @@
             <div class="form-group">
                 <label>API種類:</label>
                 <div class="radio-group">
-                    <input type="radio" id="openaiRadio" name="apiType" value="openai" checked>
-                    <label for="openaiRadio">OpenAI</label>
-                    <input type="radio" id="azureRadio" name="apiType" value="azure">
-                    <label for="azureRadio">Azure OpenAI</label>
-                    <input type="radio" id="geminiRadio" name="apiType" value="gemini">
-                    <label for="geminiRadio">Google Gemini</label>
+                    <input type="radio" id="openaiSystemRadio" name="apiSystem" value="openai" checked>
+                    <label for="openaiSystemRadio">OpenAI系</label>
+                    <input type="radio" id="geminiSystemRadio" name="apiSystem" value="gemini">
+                    <label for="geminiSystemRadio">Google Gemini</label>
                 </div>
             </div>
-            <div id="openaiSettings" class="form-group">
-                <label for="apiKeyInput">OpenAI APIキー:</label>
-                <input type="password" id="apiKeyInput" placeholder="sk-...">
+            
+            <!-- OpenAI系の設定 -->
+            <div id="openaiSystemSettings">
+                <div class="form-group">
+                    <label>使用するサービス:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="openaiRadio" name="openaiType" value="openai" checked>
+                        <label for="openaiRadio">OpenAI</label>
+                        <input type="radio" id="azureRadio" name="openaiType" value="azure">
+                        <label for="azureRadio">Azure OpenAI</label>
+                    </div>
+                </div>
+                
+                <div id="openaiSettings" class="form-group">
+                    <label for="apiKeyInput">OpenAI APIキー:</label>
+                    <input type="password" id="apiKeyInput" placeholder="sk-...">
+                </div>
+                
+                <div id="azureSettings" class="hidden">
+                    <div class="form-group">
+                        <label for="azureApiKeyInput">Azure APIキー:</label>
+                        <input type="password" id="azureApiKeyInput" placeholder="Azure APIキーを入力">
+                    </div>
+                    <div class="azure-model-endpoints">
+                        <div class="form-group">
+                            <label for="azureEndpointGpt4oMini">gpt-4o-mini エンドポイントURL:</label>
+                            <input type="text" id="azureEndpointGpt4oMini" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
+                        </div>
+                        <div class="form-group">
+                            <label for="azureEndpointGpt4o">gpt-4o エンドポイントURL:</label>
+                            <input type="text" id="azureEndpointGpt4o" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
+                        </div>
+                        <div class="form-group">
+                            <label for="azureEndpointGpt5Mini">gpt-5-mini エンドポイントURL:</label>
+                            <input type="text" id="azureEndpointGpt5Mini" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
+                        </div>
+                        <div class="form-group">
+                            <label for="azureEndpointGpt5">gpt-5 エンドポイントURL:</label>
+                            <input type="text" id="azureEndpointGpt5" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
+                        </div>
+                        <div class="form-group">
+                            <label for="azureEndpointO1Mini">o1-mini エンドポイントURL:</label>
+                            <input type="text" id="azureEndpointO1Mini" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
+                        </div>
+                        <div class="form-group">
+                            <label for="azureEndpointO1">o1 エンドポイントURL:</label>
+                            <input type="text" id="azureEndpointO1" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="geminiSettings" class="hidden">
+            
+            <!-- Gemini系の設定 -->
+            <div id="geminiSystemSettings" class="hidden">
                 <div class="form-group">
                     <label for="geminiApiKeyInput">Gemini APIキー:</label>
                     <input type="password" id="geminiApiKeyInput" placeholder="Google Gemini APIキーを入力">
-                </div>
-            </div>
-            <div id="azureSettings" class="hidden">
-                <div class="form-group">
-                    <label for="azureApiKeyInput">Azure APIキー:</label>
-                    <input type="password" id="azureApiKeyInput" placeholder="Azure APIキーを入力">
-                </div>
-                <div class="azure-model-endpoints">
-                    <div class="form-group">
-                        <label for="azureEndpointGpt4oMini">gpt-4o-mini エンドポイントURL:</label>
-                        <input type="text" id="azureEndpointGpt4oMini" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
-                    </div>
-                    <div class="form-group">
-                        <label for="azureEndpointGpt4o">gpt-4o エンドポイントURL:</label>
-                        <input type="text" id="azureEndpointGpt4o" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
-                    </div>
-                    <div class="form-group">
-                        <label for="azureEndpointGpt5Mini">gpt-5-mini エンドポイントURL:</label>
-                        <input type="text" id="azureEndpointGpt5Mini" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
-                    </div>
-                    <div class="form-group">
-                        <label for="azureEndpointGpt5">gpt-5 エンドポイントURL:</label>
-                        <input type="text" id="azureEndpointGpt5" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
-                    </div>
-                    <div class="form-group">
-                        <label for="azureEndpointO1Mini">o1-mini エンドポイントURL:</label>
-                        <input type="text" id="azureEndpointO1Mini" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
-                    </div>
-                    <div class="form-group">
-                        <label for="azureEndpointO1">o1 エンドポイントURL:</label>
-                        <input type="text" id="azureEndpointO1" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
-                    </div>
                 </div>
             </div>
                         </div>

@@ -29,51 +29,64 @@ class ModalHandlers {
      * API設定を保存します
      */
     saveApiSettings() {
-        if (!window.Elements.apiKeyInput || !window.Elements.openaiRadio || !window.Elements.azureRadio || !window.Elements.geminiRadio) return;
+        if (!window.Elements.apiKeyInput || !window.Elements.openaiSystemRadio || 
+            !window.Elements.geminiSystemRadio || !window.Elements.openaiRadio || 
+            !window.Elements.azureRadio) return;
         
-        // API種別を設定
-        if (window.Elements.geminiRadio.checked) {
+        // 現在の設定を取得（既存のAPIキーを保持）
+        const currentSettings = Storage.getInstance.loadApiSettings();
+        
+        // API系統を判定
+        if (window.Elements.geminiSystemRadio.checked) {
+            // Gemini系を選択
             window.AppState.apiSettings.apiType = 'gemini';
-        } else if (window.Elements.azureRadio.checked) {
-            window.AppState.apiSettings.apiType = 'azure';
-        } else {
-            window.AppState.apiSettings.apiType = 'openai';
-        }
-        
-        // OpenAI APIキーを設定
-        if (window.Elements.apiKeyInput) {
-            window.AppState.apiSettings.openaiApiKey = window.Elements.apiKeyInput.value.trim();
-        }
-        
-        // Gemini APIキーを設定
-        if (window.Elements.geminiApiKeyInput) {
-            window.AppState.apiSettings.geminiApiKey = window.Elements.geminiApiKeyInput.value.trim();
-        }
-        
-        // Azure OpenAI APIキーとエンドポイントを設定
-        if (window.AppState.apiSettings.apiType === 'azure') {
-            if (window.Elements.azureApiKeyInput) {
-                window.AppState.apiSettings.azureApiKey = window.Elements.azureApiKeyInput.value.trim();
+            
+            // Gemini APIキーのみ更新
+            if (window.Elements.geminiApiKeyInput) {
+                window.AppState.apiSettings.geminiApiKey = window.Elements.geminiApiKeyInput.value.trim();
             }
-            
-            // モデルごとのエンドポイントを設定
-            const endpoints = {
-                'gpt-4o-mini': window.Elements.azureEndpointGpt4oMini,
-                'gpt-4o': window.Elements.azureEndpointGpt4o,
-                'gpt-5-mini': window.Elements.azureEndpointGpt5Mini,
-                'gpt-5': window.Elements.azureEndpointGpt5,
-                'o1-mini': window.Elements.azureEndpointO1Mini,
-                'o1': window.Elements.azureEndpointO1
-            };
-            
-            // 各エンドポイントを保存
-            Object.entries(endpoints).forEach(([model, element]) => {
-                if (element) {
-                    window.AppState.apiSettings.azureEndpoints = window.AppState.apiSettings.azureEndpoints || {};
-                    window.AppState.apiSettings.azureEndpoints[model] = element.value.trim();
+        } else {
+            // OpenAI系を選択 - OpenAI または Azure OpenAI を判定
+            if (window.Elements.azureRadio.checked) {
+                window.AppState.apiSettings.apiType = 'azure';
+                
+                // Azure OpenAI APIキーとエンドポイントを更新
+                if (window.Elements.azureApiKeyInput) {
+                    window.AppState.apiSettings.azureApiKey = window.Elements.azureApiKeyInput.value.trim();
                 }
-            });
+                
+                // モデルごとのエンドポイントを設定
+                const endpoints = {
+                    'gpt-4o-mini': window.Elements.azureEndpointGpt4oMini,
+                    'gpt-4o': window.Elements.azureEndpointGpt4o,
+                    'gpt-5-mini': window.Elements.azureEndpointGpt5Mini,
+                    'gpt-5': window.Elements.azureEndpointGpt5,
+                    'o1-mini': window.Elements.azureEndpointO1Mini,
+                    'o1': window.Elements.azureEndpointO1
+                };
+                
+                // 各エンドポイントを保存
+                Object.entries(endpoints).forEach(([model, element]) => {
+                    if (element) {
+                        window.AppState.apiSettings.azureEndpoints = window.AppState.apiSettings.azureEndpoints || {};
+                        window.AppState.apiSettings.azureEndpoints[model] = element.value.trim();
+                    }
+                });
+            } else {
+                window.AppState.apiSettings.apiType = 'openai';
+                
+                // OpenAI APIキーのみ更新
+                if (window.Elements.apiKeyInput) {
+                    window.AppState.apiSettings.openaiApiKey = window.Elements.apiKeyInput.value.trim();
+                }
+            }
         }
+        
+        // 他のAPIキーは既存の値を保持
+        window.AppState.apiSettings.openaiApiKey = window.AppState.apiSettings.openaiApiKey || currentSettings.openaiApiKey;
+        window.AppState.apiSettings.azureApiKey = window.AppState.apiSettings.azureApiKey || currentSettings.azureApiKey;
+        window.AppState.apiSettings.geminiApiKey = window.AppState.apiSettings.geminiApiKey || currentSettings.geminiApiKey;
+        window.AppState.apiSettings.azureEndpoints = window.AppState.apiSettings.azureEndpoints || currentSettings.azureEndpoints;
 
         // グローバル設定を更新
         window.AppState.updateGlobalSettings();

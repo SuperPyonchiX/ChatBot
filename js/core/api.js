@@ -1130,13 +1130,10 @@ class AIAPI {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
-            let lineCount = 0;
             let braceCount = 0;
             let bracketCount = 0;
             let currentJson = '';
             let isInJson = false;
-
-            console.log('🌊 Geminiストリーミング開始');
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -1145,12 +1142,6 @@ class AIAPI {
                     resetTimeout();
                     const chunk = decoder.decode(value, { stream: true });
                     buffer += chunk;
-                    
-                    // デバッグ: 受信したチャンクを表示
-                    if (lineCount < 10) {
-                        console.log(`📦 受信チャンク ${lineCount + 1}:`, JSON.stringify(chunk));
-                        lineCount++;
-                    }
                     
                     // 文字ごとに処理してJSONオブジェクトを組み立て
                     for (let i = 0; i < chunk.length; i++) {
@@ -1172,19 +1163,18 @@ class AIAPI {
                         // 完全なJSONが完成した場合（配列またはオブジェクト）
                         if (isInJson && braceCount === 0 && bracketCount === 0 && currentJson.trim()) {
                             try {
-                                console.log('� 完成したJSON:', currentJson.trim());
+                                // console.log('� 完成したJSON:', currentJson.trim());
                                 const jsonData = JSON.parse(currentJson.trim());
                                 
                                 // Gemini APIは配列形式で応答するため、最初の要素を取得
                                 const responseData = Array.isArray(jsonData) ? jsonData[0] : jsonData;
-                                console.log('📋 処理対象データ:', responseData);
+                                // console.log('📋 処理対象データ:', responseData);
                                 
                                 if (responseData.candidates && responseData.candidates.length > 0) {
                                     const candidate = responseData.candidates[0];
                                     if (candidate.content && candidate.content.parts) {
                                         for (const part of candidate.content.parts) {
                                             if (part.text) {
-                                                console.log('✨ テキスト取得:', part.text);
                                                 onChunk(part.text);
                                                 fullText += part.text;
                                                 chunkCount++;
@@ -1207,7 +1197,6 @@ class AIAPI {
                 if (done) break;
             }
             clearTimeout(timeoutId);
-            console.log('✅ Geminiストリーミング完了');
             
             onComplete(fullText);
             return '';

@@ -211,7 +211,8 @@ class EventHandlers {
      */
     #setupApiKeyModal() {
         if (!window.Elements.saveApiKey || !window.Elements.cancelApiKey || 
-            !window.Elements.openaiRadio || !window.Elements.azureRadio || !window.Elements.geminiRadio) return;
+            !window.Elements.openaiSystemRadio || !window.Elements.geminiSystemRadio ||
+            !window.Elements.openaiRadio || !window.Elements.azureRadio) return;
         
         // APIキー保存
         window.Elements.saveApiKey.addEventListener('click', ModalHandlers.getInstance.saveApiSettings);
@@ -219,10 +220,13 @@ class EventHandlers {
         // APIキーキャンセル
         window.Elements.cancelApiKey.addEventListener('click', ApiSettingsModal.getInstance.hideApiKeyModal);
         
-        // APIタイプ切り替え
-        window.Elements.openaiRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleAzureSettings);
-        window.Elements.azureRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleAzureSettings);
-        window.Elements.geminiRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleAzureSettings);
+        // API系統切り替え (OpenAI系 / Gemini)
+        window.Elements.openaiSystemRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleApiSystem);
+        window.Elements.geminiSystemRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleApiSystem);
+        
+        // OpenAI系内のサービス切り替え (OpenAI / Azure OpenAI)
+        window.Elements.openaiRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleOpenAIService);
+        window.Elements.azureRadio.addEventListener('change', ApiSettingsModal.getInstance.toggleOpenAIService);
     }
 
     /**
