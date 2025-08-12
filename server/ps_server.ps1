@@ -73,54 +73,70 @@ while ($listener.IsListening) {
     }
 
     if ($req.RawUrl -like '/anthropic/*') {
-      # Reverse proxy to Anthropic (using Invoke-WebRequest for PS 5.1 compatibility)
+      # Reverse proxy to Anthropic using HttpWebRequest (most compatible with PS 5.1)
       $upPath = ($req.RawUrl -replace '^/anthropic','')
       if ([string]::IsNullOrWhiteSpace($upPath)) { $upPath = '/v1/messages' }
       $uri = $upstreamBase + $upPath
 
-      # Prepare headers for upstream request
-      $headers = @{}
-      foreach ($name in $req.Headers.AllKeys) {
-        if ($name -match '^(Host|Content-Length|Connection|Accept-Encoding)$') { continue }
-        $headers[$name] = $req.Headers[$name]
-      }
-
-      # Prepare body
-      $body = $null
-      if ($req.HasEntityBody) {
-        $ms = New-Object System.IO.MemoryStream
-        $req.InputStream.CopyTo($ms)
-        $body = $ms.ToArray()
-        $ms.Dispose()
-      }
+      Write-Host "Proxy request to: $uri Method: $($req.HttpMethod)"
 
       try {
-        # Make upstream request using Invoke-RestMethod
-        $splat = @{
-          Uri = $uri
-          Method = $req.HttpMethod
-          Headers = $headers
-          TimeoutSec = 30
-        }
-        if ($body -ne $null) { 
-          $splat.Body = $body
-          if ($req.ContentType) { $splat.ContentType = $req.ContentType }
+        # Create HttpWebRequest
+        $webReq = [System.Net.HttpWebRequest]::Create($uri)
+        $webReq.Method = $req.HttpMethod
+        $webReq.Timeout = 30000
+        $webReq.KeepAlive = $false
+
+        # Copy headers (skip hop-by-hop headers)
+        if ($req.Headers -and $req.Headers.AllKeys) {
+          foreach ($name in $req.Headers.AllKeys) {
+            if ($name -match '^(Host|Content-Length|Connection|Accept-Encoding|Transfer-Encoding)$') { continue }
+            try {
+              $value = $req.Headers[$name]
+              if ($value) { 
+                $webReq.Headers.Add($name, $value)
+                Write-Host "Added header: $name = $value"
+              }
+            } catch {
+              Write-Host "Failed to add header $name : $($_.Exception.Message)"
+            }
+          }
         }
 
-        $upstreamResponse = Invoke-WebRequest @splat -UseBasicParsing
+        # Handle request body for POST
+        if ($req.HttpMethod -eq 'POST' -and $req.HasEntityBody) {
+          $webReq.ContentType = $req.ContentType
+          
+          try {
+            $requestStream = $webReq.GetRequestStream()
+            $req.InputStream.CopyTo($requestStream)
+            $requestStream.Close()
+            Write-Host "Request body copied successfully"
+          } catch {
+            Write-Host "Error copying request body: $($_.Exception.Message)"
+          }
+        }
 
-        # Set response status and headers
-        $res.StatusCode = $upstreamResponse.StatusCode
-        
-        # Filter and set headers from upstream
-        $skip = @('transfer-encoding','content-length','connection','access-control-allow-origin','access-control-allow-methods','access-control-allow-headers','access-control-expose-headers','access-control-allow-credentials')
-        foreach ($header in $upstreamResponse.Headers.GetEnumerator()) {
-          $name = $header.Name
-          if ($skip -contains $name.ToLowerInvariant()) { continue }
-          if ($name -eq 'Content-Type') { 
-            $res.ContentType = $header.Value 
-          } else { 
-            $res.Headers[$name] = $header.Value 
+        # Get response
+        $webResp = $webReq.GetResponse()
+        $statusCode = [int]$webResp.StatusCode
+        Write-Host "Upstream response status: $statusCode"
+
+        # Set response status and content type
+        $res.StatusCode = $statusCode
+        if ($webResp.ContentType) {
+          $res.ContentType = $webResp.ContentType
+        }
+
+        # Copy response headers (filter out hop-by-hop)
+        $skip = @('transfer-encoding','content-length','connection')
+        foreach ($headerName in $webResp.Headers.AllKeys) {
+          if ($skip -contains $headerName.ToLowerInvariant()) { continue }
+          try {
+            $headerValue = $webResp.Headers[$headerName]
+            $res.Headers[$headerName] = $headerValue
+          } catch {
+            Write-Host "Failed to copy response header $headerName : $($_.Exception.Message)"
           }
         }
 
@@ -129,17 +145,65 @@ while ($listener.IsListening) {
         $res.Headers['Access-Control-Expose-Headers'] = '*'
         $res.Headers['Cache-Control'] = 'no-cache'
 
-        # Write response body
-        $bytes = $upstreamResponse.Content
-        if ($bytes -is [string]) { $bytes = [System.Text.Encoding]::UTF8.GetBytes($bytes) }
-        $res.OutputStream.Write($bytes, 0, $bytes.Length)
+        # Stream response body (supports SSE)
+        $responseStream = $webResp.GetResponseStream()
+        $buffer = New-Object byte[] 8192
+        $totalBytes = 0
+        
+        while (($bytesRead = $responseStream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+          $res.OutputStream.Write($buffer, 0, $bytesRead)
+          $totalBytes += $bytesRead
+          try { $res.OutputStream.Flush() } catch {}
+        }
+        
+        $responseStream.Close()
+        $webResp.Close()
+        Write-Host "Response completed: $totalBytes bytes"
 
+      } catch [System.Net.WebException] {
+        $webEx = $_.Exception
+        Write-Host "WebException: $($webEx.Message)"
+        
+        $statusCode = 500
+        $errorResponse = ""
+        
+        if ($webEx.Response) {
+          $statusCode = [int]$webEx.Response.StatusCode
+          try {
+            $errorStream = $webEx.Response.GetResponseStream()
+            $reader = New-Object System.IO.StreamReader($errorStream)
+            $errorResponse = $reader.ReadToEnd()
+            $reader.Close()
+            $errorStream.Close()
+          } catch {}
+        }
+        
+        $res.StatusCode = $statusCode
+        Set-CorsHeaders $res
+        $res.ContentType = 'application/json; charset=utf-8'
+        
+        $errorDetails = @{
+          error = 'Proxy Error'
+          message = $webEx.Message
+          status = $statusCode
+          response = $errorResponse
+        }
+        $errorMsg = $errorDetails | ConvertTo-Json -Compress
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($errorMsg)
+        $res.OutputStream.Write($bytes, 0, $bytes.Length)
+        
       } catch {
-        # Error response
+        Write-Host "General proxy error: $($_.Exception.Message)"
         $res.StatusCode = 500
         Set-CorsHeaders $res
         $res.ContentType = 'application/json; charset=utf-8'
-        $errorMsg = @{ error = 'Proxy Error'; message = $_.Exception.Message } | ConvertTo-Json -Compress
+        
+        $errorDetails = @{
+          error = 'Proxy Error'
+          message = $_.Exception.Message
+          type = $_.Exception.GetType().Name
+        }
+        $errorMsg = $errorDetails | ConvertTo-Json -Compress
         $bytes = [System.Text.Encoding]::UTF8.GetBytes($errorMsg)
         $res.OutputStream.Write($bytes, 0, $bytes.Length)
       }
