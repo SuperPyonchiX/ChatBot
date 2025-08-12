@@ -240,7 +240,7 @@ window.CONFIG = {
      */
     MODELS: {
         // サポートされているモデル
-        OPENAI: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5', 'o1-mini', 'o1'],
+        OPENAI: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5'],
         GEMINI: ['gemini-2.5-pro', 'gemini-2.5-flash'],
         CLAUDE: [
             'claude-opus-4-1',
@@ -258,8 +258,6 @@ window.CONFIG = {
             'gpt-4o': 'GPT-4o',
             'gpt-5-mini': 'GPT-5 Mini',
             'gpt-5': 'GPT-5',
-            'o1-mini': 'o1 Mini',
-            'o1': 'o1',
             
             // Gemini
             'gemini-2.5-pro': 'Gemini 2.5 Pro',
