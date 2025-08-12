@@ -4,34 +4,38 @@ param(
 
 $ErrorActionPreference = 'SilentlyContinue'
 
-# Resolve paths
+# パス設定
 $serverDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Join-Path $serverDir '..'
 $serverJs = Join-Path $serverDir 'server.js'
 $psServer = Join-Path $serverDir 'ps_server.ps1'
 
-# Logging
+# ログ出力関数
 $logFile = Join-Path $serverDir 'launch.log'
-function Write-Log { param([string]$msg) $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss.fff'); "$ts `t $msg" | Out-File -FilePath $logFile -Encoding UTF8 -Append }
+function Write-Log { 
+  param([string]$msg) 
+  $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss.fff')
+  "$ts `t $msg" | Out-File -FilePath $logFile -Encoding UTF8 -Append 
+}
 
-# Start server (Node preferred; fallback to PowerShell server)
+# サーバー起動（Node.js優先、なければPowerShellサーバー）
 $env:PORT = "$Port"
 $serverProc = $null
 $nodeCmd = (Get-Command node -ErrorAction SilentlyContinue)
 if ($nodeCmd) {
-  Write-Log "Starting Node server: $serverJs"
+  Write-Log "Starting Node.js server: $serverJs"
   $serverProc = Start-Process -FilePath $nodeCmd.Source -ArgumentList "`"$serverJs`"" -WindowStyle Hidden -PassThru -WorkingDirectory $projectRoot
 } elseif (Test-Path $psServer) {
-  Write-Log "Starting PS server: $psServer"
+  Write-Log "Starting PowerShell server: $psServer"
   $psExe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
   $serverProc = Start-Process -FilePath $psExe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"$psServer",'-Port',"$Port") -WindowStyle Hidden -PassThru -WorkingDirectory $projectRoot
 } else {
-  [Console]::Error.WriteLine("Neither Node.js nor PowerShell server available. Expected: node or $psServer")
+  [Console]::Error.WriteLine("ERROR: Neither Node.js nor PS server available. Expected 'node' or $psServer")
   Write-Log "ERROR: Neither Node.js nor PS server found"
   exit 1
 }
 
-# Health check
+# サーバーの健康チェック
 $healthy = $false
 for ($i=0; $i -lt 40; $i++) {
   try {
@@ -40,68 +44,23 @@ for ($i=0; $i -lt 40; $i++) {
   } catch {}
   Start-Sleep -Milliseconds 250
 }
-if (-not $healthy) { Write-Log "WARN: Health check not confirmed within timeout" }
+if (-not $healthy) { Write-Log "Warning: server health check not confirmed within timeout" }
 
-# Browser resolution
-function Resolve-Exe {
-  param([string]$exeName, [string[]]$fallbacks)
-  # PATH
-  $cmd = (Get-Command $exeName -ErrorAction SilentlyContinue)
-  if ($cmd) { return $cmd.Source }
-  # Fallback known locations
-  foreach ($p in $fallbacks) { if (Test-Path $p) { return $p } }
-  return $null
-}
-
-$edgePath = Resolve-Exe 'msedge.exe' @(
-  (Join-Path ${env:ProgramFiles} 'Microsoft\Edge\Application\msedge.exe'),
-  (Join-Path ${env:"ProgramFiles(x86)"} 'Microsoft\Edge\Application\msedge.exe'),
-  (Join-Path ${env:LOCALAPPDATA} 'Microsoft\Edge\Application\msedge.exe')
-)
-$chromePath = Resolve-Exe 'chrome.exe' @(
-  (Join-Path ${env:ProgramFiles} 'Google\Chrome\Application\chrome.exe'),
-  (Join-Path ${env:"ProgramFiles(x86)"} 'Google\Chrome\Application\chrome.exe'),
-  (Join-Path ${env:LOCALAPPDATA} 'Google\Chrome\Application\chrome.exe')
-)
-$bravePath = Resolve-Exe 'brave.exe' @(
-  (Join-Path ${env:ProgramFiles} 'BraveSoftware\Brave-Browser\Application\brave.exe'),
-  (Join-Path ${env:"ProgramFiles(x86)"} 'BraveSoftware\Brave-Browser\Application\brave.exe'),
-  (Join-Path ${env:LOCALAPPDATA} 'BraveSoftware\Brave-Browser\Application\brave.exe')
-)
-Write-Log "Detected Edge='$edgePath' Chrome='$chromePath' Brave='$bravePath'"
-
+# Browser launch settings
 $targetUrl = "http://localhost:$Port/"
-$profileDir = Join-Path $env:TEMP ("ChatBotBrowser-" + $Port + "-" + $PID)
-New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
 
-# Helper: get process count by image name (prefer Get-Process, fallback to tasklist)
-function Get-ImageCount {
-  param([string]$imageName)
-  try {
-    $base = ($imageName -replace '\.exe$','')
-    $c = (Get-Process -Name $base -ErrorAction SilentlyContinue).Count
-    if ($c -ge 0) { return $c }
-  } catch {}
-  try {
-    $out = & cmd.exe /c "tasklist /FI \"IMAGENAME eq $imageName\" | findstr /B /C:$imageName"
-    if ($LASTEXITCODE -eq 0 -and $out) { return ($out -split "`n").Length }
-  } catch {}
-  return 0
-}
-
-# Get baseline counts for all browsers before launching
-$allBrowserBaselines = @{
-  'brave.exe' = (Get-ImageCount 'brave.exe')
-  'chrome.exe' = (Get-ImageCount 'chrome.exe')  
-  'msedge.exe' = (Get-ImageCount 'msedge.exe')
-  'firefox.exe' = (Get-ImageCount 'firefox.exe')
-}
-Write-Log "Baselines: brave=$($allBrowserBaselines['brave.exe']) chrome=$($allBrowserBaselines['chrome.exe']) edge=$($allBrowserBaselines['msedge.exe']) firefox=$($allBrowserBaselines['firefox.exe'])"
-
-# Start periodic monitoring in background job
+# Background monitor job using zero-process detection
 $monitorJob = Start-Job -ScriptBlock {
-  param($baselines, $logFile)
-  function Write-Log { param([string]$msg) $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss.fff'); "$ts `t $msg" | Out-File -FilePath $logFile -Encoding UTF8 -Append }
+  param($logFile)
+  
+  # Logging inside job
+  function Write-Log { 
+    param([string]$msg) 
+    $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss.fff')
+    "$ts `t $msg" | Out-File -FilePath $logFile -Encoding UTF8 -Append 
+  }
+  
+  # Process count inside job
   function Get-ImageCount {
     param([string]$imageName)
     try {
@@ -116,55 +75,45 @@ $monitorJob = Start-Job -ScriptBlock {
     return 0
   }
   
-  $idleCount = 0
-  Write-Log "Monitor-Job: started periodic monitoring"
+  $consecutiveZeroChecks = 0
+  Write-Log "Monitor job: started zero-process detection"
   
-  while ($true) { # monitor indefinitely until browser closes
-    Start-Sleep -Seconds 2
+  while ($true) {
+    Start-Sleep -Seconds 5
     
-    $anyIncreased = $false
-    foreach ($browser in $baselines.Keys) {
-      $current = Get-ImageCount $browser
-      $baseline = $baselines[$browser]
-      if ($current -gt $baseline) {
-        $anyIncreased = $true
-        $idleCount = 0
-        break
-      }
-    }
+    # Check if all major browser processes are zero
+    $braveCount = Get-ImageCount 'brave.exe'
+    $chromeCount = Get-ImageCount 'chrome.exe'  
+    $edgeCount = Get-ImageCount 'msedge.exe'
+    $firefoxCount = Get-ImageCount 'firefox.exe'
     
-    if (-not $anyIncreased) {
-      $idleCount++
-      if ($idleCount -ge 30) { # 1 minute of no activity
-        Write-Log "Monitor-Job: all browsers at/below baseline for 1min; server should stop"
+    $totalBrowsers = $braveCount + $chromeCount + $edgeCount + $firefoxCount
+    
+    if ($totalBrowsers -eq 0) {
+      $consecutiveZeroChecks++
+      Write-Log "Monitor job: no browser processes detected (check $consecutiveZeroChecks/3)"
+
+      if ($consecutiveZeroChecks -ge 2) { # 10s (2 checks * 5s) of zero browsers
+        Write-Log "Monitor job: no browser processes for 10s. Stopping server."
         return "STOP_SERVER"
       }
-      if ($idleCount % 15 -eq 0) { Write-Log "Monitor-Job: no browser activity ($idleCount/30 checks)" }
+    } else {
+      $consecutiveZeroChecks = 0  # Reset counter when browsers detected
+      if ($totalBrowsers -le 5) { # Log only when relatively few browsers
+        Write-Log "Monitor job: browsers active (brave=$braveCount chrome=$chromeCount edge=$edgeCount firefox=$firefoxCount)"
+      }
     }
   }
-  Write-Log "Monitor-Job: unexpected exit"
+  Write-Log "Monitor job: unexpected exit"
   return "ERROR"
-} -ArgumentList $allBrowserBaselines, $logFile
-# Launch browser (Brave > Chrome > Edge > default)
-if ($bravePath) {
-  $browserArgs = "--new-window --app=`"$targetUrl`" --user-data-dir=`"$profileDir`" --no-first-run --no-default-browser-check"
-  Start-Process -FilePath $bravePath -ArgumentList $browserArgs | Out-Null
-  Write-Log "Launching Brave: $bravePath"
-} elseif ($chromePath) {
-  $browserArgs = "--new-window --app=`"$targetUrl`" --user-data-dir=`"$profileDir`" --no-first-run --no-default-browser-check"
-  Start-Process -FilePath $chromePath -ArgumentList $browserArgs | Out-Null
-  Write-Log "Launching Chrome: $chromePath"
-} elseif ($edgePath) {
-  $browserArgs = "--new-window --app=`"$targetUrl`" --user-data-dir=`"$profileDir`" --no-first-run --no-default-browser-check"
-  Start-Process -FilePath $edgePath -ArgumentList $browserArgs | Out-Null
-  Write-Log "Launching Edge: $edgePath"
-} else {
-  Start-Process $targetUrl | Out-Null
-  Write-Log "Fallback: opened default browser"
-}
+} -ArgumentList $logFile
 
-# Wait for background monitor job result
-Write-Log "Waiting for monitor job to detect browser closure..."
+# Launch browser with default handler
+Start-Process $targetUrl | Out-Null
+Write-Log "Launched with default browser"
+
+# モニタージョブがブラウザ終了を検出するまで待機
+Write-Log "Waiting for monitor job to detect browser exit..."
 do {
   Start-Sleep -Seconds 1
   $jobResult = Receive-Job -Job $monitorJob -Keep
@@ -174,6 +123,10 @@ Write-Log "Monitor result: $jobResult"
 Remove-Job -Job $monitorJob -Force
 
 # Stop server and cleanup
-try { if (-not $serverProc.HasExited) { Write-Log "Stopping server PID=$($serverProc.Id)"; Stop-Process -Id $serverProc.Id -Force } } catch {}
-try { Start-Sleep -Milliseconds 100; Remove-Item -Path $profileDir -Recurse -Force -ErrorAction SilentlyContinue; Write-Log "Cleanup: removed $profileDir" } catch {}
-Write-Log "Launch script completed"
+try { 
+  if (-not $serverProc.HasExited) { 
+    Write-Log "Stopping server PID=$($serverProc.Id)"
+    Stop-Process -Id $serverProc.Id -Force 
+  } 
+} catch {}
+Write-Log "Launcher finished"
