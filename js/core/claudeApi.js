@@ -108,7 +108,7 @@ class ClaudeAPI {
             options: options
         });
 
-        const storage = window.Storage.getInstance;
+        const storage = Storage.getInstance;
         const apiKey = storage.getItem(window.CONFIG.STORAGE.KEYS.CLAUDE_API_KEY);
         let systemPrompt = storage.getItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT) || 
                           window.CONFIG.SYSTEM_PROMPTS.DEFAULT_SYSTEM_PROMPT;
