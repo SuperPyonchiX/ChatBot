@@ -4,10 +4,9 @@ param(
 
 $ErrorActionPreference = 'SilentlyContinue'
 
-# パス設定
+# Path settings
 $serverDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Join-Path $serverDir '..'
-$serverJs = Join-Path $serverDir 'server.js'
 $psServer = Join-Path $serverDir 'ps_server.ps1'
 
 # ログ出力関数
@@ -18,20 +17,17 @@ function Write-Log {
   "$ts `t $msg" | Out-File -FilePath $logFile -Encoding UTF8 -Append 
 }
 
-# サーバー起動（Node.js優先、なければPowerShellサーバー）
+# Windows standard PowerShell server startup
 $env:PORT = "$Port"
 $serverProc = $null
-$nodeCmd = (Get-Command node -ErrorAction SilentlyContinue)
-if ($nodeCmd) {
-  Write-Log "Starting Node.js server: $serverJs"
-  $serverProc = Start-Process -FilePath $nodeCmd.Source -ArgumentList "`"$serverJs`"" -WindowStyle Hidden -PassThru -WorkingDirectory $projectRoot
-} elseif (Test-Path $psServer) {
-  Write-Log "Starting PowerShell server: $psServer"
+
+if (Test-Path $psServer) {
+  Write-Log "Starting PowerShell server (Windows standard): $psServer"
   $psExe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
   $serverProc = Start-Process -FilePath $psExe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"$psServer",'-Port',"$Port") -WindowStyle Hidden -PassThru -WorkingDirectory $projectRoot
 } else {
-  [Console]::Error.WriteLine("ERROR: Neither Node.js nor PS server available. Expected 'node' or $psServer")
-  Write-Log "ERROR: Neither Node.js nor PS server found"
+  [Console]::Error.WriteLine("ERROR: PowerShell server not found: $psServer")
+  Write-Log "ERROR: PowerShell server not found"
   exit 1
 }
 
@@ -91,7 +87,7 @@ $monitorJob = Start-Job -ScriptBlock {
     
     if ($totalBrowsers -eq 0) {
       $consecutiveZeroChecks++
-      Write-Log "Monitor job: no browser processes detected (check $consecutiveZeroChecks/3)"
+      Write-Log "Monitor job: no browser processes detected (check $consecutiveZeroChecks/2)"
 
       if ($consecutiveZeroChecks -ge 2) { # 10s (2 checks * 5s) of zero browsers
         Write-Log "Monitor job: no browser processes for 10s. Stopping server."

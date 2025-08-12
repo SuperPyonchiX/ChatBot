@@ -23,10 +23,7 @@ $serverDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = [System.IO.Path]::GetFullPath((Join-Path $serverDir '..'))
 $prefix = "http://localhost:$Port/"
 
-# HttpClient for upstream proxy
-$handler = New-Object System.Net.Http.HttpClientHandler
-$handler.AutomaticDecompression = [System.Net.DecompressionMethods]::None
-$http = New-Object System.Net.Http.HttpClient($handler)
+# HttpClient for upstream proxy (PowerShell 5.1 compatible)
 $upstreamBase = 'https://api.anthropic.com'
 
 # HttpListener
@@ -34,12 +31,11 @@ $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add($prefix)
 try {
   $listener.Start()
+  Write-Host "PS Server started: $prefix (root: $projectRoot)"
 } catch {
   Write-Error "Failed to start listener on $prefix : $($_.Exception.Message)"
   exit 1
 }
-
-Write-Host "PS Server started: $prefix (root: $projectRoot)"
 
 function Get-ContentType($path) {
   $ext = [System.IO.Path]::GetExtension($path).ToLowerInvariant()
@@ -56,7 +52,12 @@ function Test-UnderRoot([string]$base, [string]$full) {
 while ($listener.IsListening) {
   try {
     $ctx = $listener.GetContext()
+  } catch [System.Net.HttpListenerException] {
+    # Normal shutdown or port conflict
+    break
   } catch {
+    # Unexpected error
+    Write-Host "Server error: $($_.Exception.Message)"
     break
   }
   $req = $ctx.Request
@@ -72,61 +73,77 @@ while ($listener.IsListening) {
     }
 
     if ($req.RawUrl -like '/anthropic/*') {
-      # Reverse proxy to Anthropic
+      # Reverse proxy to Anthropic (using Invoke-WebRequest for PS 5.1 compatibility)
       $upPath = ($req.RawUrl -replace '^/anthropic','')
       if ([string]::IsNullOrWhiteSpace($upPath)) { $upPath = '/v1/messages' }
       $uri = $upstreamBase + $upPath
 
-      $method = New-Object System.Net.Http.HttpMethod($req.HttpMethod)
-      $hreq = New-Object System.Net.Http.HttpRequestMessage($method, $uri)
-
-      # Copy headers (filter hop-by-hop)
+      # Prepare headers for upstream request
+      $headers = @{}
       foreach ($name in $req.Headers.AllKeys) {
         if ($name -match '^(Host|Content-Length|Connection|Accept-Encoding)$') { continue }
-        $value = $req.Headers[$name]
-        try { $hreq.Headers.TryAddWithoutValidation($name, $value) | Out-Null } catch {}
+        $headers[$name] = $req.Headers[$name]
       }
 
-      # Body
+      # Prepare body
+      $body = $null
       if ($req.HasEntityBody) {
         $ms = New-Object System.IO.MemoryStream
         $req.InputStream.CopyTo($ms)
-        $bytes = $ms.ToArray()
+        $body = $ms.ToArray()
         $ms.Dispose()
-        $content = New-Object System.Net.Http.ByteArrayContent($bytes)
-        if ($req.ContentType) { $content.Headers.TryAddWithoutValidation('Content-Type', $req.ContentType) | Out-Null }
-        $hreq.Content = $content
       }
 
-      $hres = $http.SendAsync($hreq, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).Result
-      $res.StatusCode = [int]$hres.StatusCode
+      try {
+        # Make upstream request using Invoke-RestMethod
+        $splat = @{
+          Uri = $uri
+          Method = $req.HttpMethod
+          Headers = $headers
+          TimeoutSec = 30
+        }
+        if ($body -ne $null) { 
+          $splat.Body = $body
+          if ($req.ContentType) { $splat.ContentType = $req.ContentType }
+        }
 
-      # Filter and set headers from upstream
-      $skip = @('transfer-encoding','content-length','connection','access-control-allow-origin','access-control-allow-methods','access-control-allow-headers','access-control-expose-headers','access-control-allow-credentials')
-      foreach ($kv in $hres.Headers) {
-        $name = $kv.Key; $vals = ($kv.Value -join ', ')
-        if ($skip -contains $name.ToLowerInvariant()) { continue }
-        $res.Headers[$name] = $vals
-      }
-      foreach ($kv in $hres.Content.Headers) {
-        $name = $kv.Key; $vals = ($kv.Value -join ', ')
-        if ($skip -contains $name.ToLowerInvariant()) { continue }
-        if ($name -eq 'Content-Type') { $res.ContentType = $vals } else { $res.Headers[$name] = $vals }
-      }
+        $upstreamResponse = Invoke-WebRequest @splat -UseBasicParsing
 
-      # Our CORS headers
-      Set-CorsHeaders $res
-      $res.Headers['Access-Control-Expose-Headers'] = '*'
-      $res.Headers['Cache-Control'] = 'no-cache'
+        # Set response status and headers
+        $res.StatusCode = $upstreamResponse.StatusCode
+        
+        # Filter and set headers from upstream
+        $skip = @('transfer-encoding','content-length','connection','access-control-allow-origin','access-control-allow-methods','access-control-allow-headers','access-control-expose-headers','access-control-allow-credentials')
+        foreach ($header in $upstreamResponse.Headers.GetEnumerator()) {
+          $name = $header.Name
+          if ($skip -contains $name.ToLowerInvariant()) { continue }
+          if ($name -eq 'Content-Type') { 
+            $res.ContentType = $header.Value 
+          } else { 
+            $res.Headers[$name] = $header.Value 
+          }
+        }
 
-      # Stream body (SSE compatible)
-      $upStream = $hres.Content.ReadAsStreamAsync().Result
-      $buf = New-Object byte[] 8192
-      while (($read = $upStream.Read($buf,0,$buf.Length)) -gt 0) {
-        $res.OutputStream.Write($buf,0,$read)
-        try { $res.OutputStream.Flush() } catch {}
+        # Our CORS headers
+        Set-CorsHeaders $res
+        $res.Headers['Access-Control-Expose-Headers'] = '*'
+        $res.Headers['Cache-Control'] = 'no-cache'
+
+        # Write response body
+        $bytes = $upstreamResponse.Content
+        if ($bytes -is [string]) { $bytes = [System.Text.Encoding]::UTF8.GetBytes($bytes) }
+        $res.OutputStream.Write($bytes, 0, $bytes.Length)
+
+      } catch {
+        # Error response
+        $res.StatusCode = 500
+        Set-CorsHeaders $res
+        $res.ContentType = 'application/json; charset=utf-8'
+        $errorMsg = @{ error = 'Proxy Error'; message = $_.Exception.Message } | ConvertTo-Json -Compress
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($errorMsg)
+        $res.OutputStream.Write($bytes, 0, $bytes.Length)
       }
-      $upStream.Dispose()
+      
       $res.OutputStream.Close()
       $res.Close()
       continue
@@ -171,4 +188,5 @@ while ($listener.IsListening) {
 }
 
 # Cleanup
-try { $listener.Stop(); $listener.Close() } catch {}
+Write-Host "Shutting down server..."
+try { $listener.Stop(); $listener.Close() } catch { Write-Host "Cleanup error: $($_.Exception.Message)" }
