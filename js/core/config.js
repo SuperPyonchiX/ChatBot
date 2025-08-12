@@ -21,37 +21,37 @@ window.CONFIG = {
     AIAPI: {
         // リトライ回数
         MAX_RETRIES: 3,
-        
+
         // タイムアウト時間（ミリ秒）
         TIMEOUT_MS: 60000,
-        
+
         // リクエストタイムアウト（ミリ秒）
         REQUEST_TIMEOUT: 60000,
-        
+
         // ストリーミングタイムアウト（ミリ秒）
         STREAM_TIMEOUT: 120000,
-        
+
         // Azure OpenAI API バージョン
         AZURE_API_VERSION: '2023-05-15',
-        
+
         // デフォルトのAPIリクエスト設定
         DEFAULT_PARAMS: {
             // 温度（0-2の範囲、低いと安定した応答、高いと創造的な応答）
             temperature: 0.7,
-            
+
             // 最大トークン数
             max_tokens: 4096,
-            
+
             // 上位Pサンプリング（0-1の範囲、確率の高い一部のトークンのみを考慮）
             top_p: 0.95,
-            
+
             // 頻度ペナルティ（0-2の範囲、繰り返しを抑制）
             frequency_penalty: 0,
-            
+
             // 存在ペナルティ（0-2の範囲、新しいトピックを促進）
             presence_penalty: 0
         },
-        
+
         // APIエンドポイントURL
         ENDPOINTS: {
             OPENAI: 'https://api.openai.com/v1/chat/completions',
@@ -59,17 +59,17 @@ window.CONFIG = {
             // Azure用エンドポイントはユーザー設定から生成
         }
     },
-    
+
     /**
      * ファイル関連の設定
      */
     FILE: {
         // 最大ファイルサイズ（バイト単位、10MB）
         MAX_FILE_SIZE: 10 * 1024 * 1024,
-        
+
         // ファイル読み込みタイムアウト（ミリ秒）
         FILE_READ_TIMEOUT: 30000,
-        
+
         // ファイルタイプの定義（MIMEタイプと対応する拡張子のマッピング）
         // categoryはファイルタイプのカテゴリ分類（画像、テキストなど）
         FILE_TYPE_MAP: {
@@ -79,15 +79,15 @@ window.CONFIG = {
             'image/gif': { extensions: ['.gif'], category: 'image' },
             'image/webp': { extensions: ['.webp'], category: 'image' },
             'image/svg+xml': { extensions: ['.svg'], category: 'image' },
-            
+
             // テキストファイル
             'text/plain': { extensions: ['.txt'], category: 'text' },
             'text/markdown': { extensions: ['.md'], category: 'text' },
             'text/csv': { extensions: ['.csv'], category: 'text' },
-            
+
             // PDFファイル
             'application/pdf': { extensions: ['.pdf'], category: 'pdf' },
-            
+
             // コード関連
             'text/javascript': { extensions: ['.js'], category: 'code' },
             'text/html': { extensions: ['.html', '.htm'], category: 'code' },
@@ -101,7 +101,7 @@ window.CONFIG = {
             'text/x-ruby': { extensions: ['.rb'], category: 'code' },
             'text/x-php': { extensions: ['.php'], category: 'code' },
             'text/x-typescript': { extensions: ['.ts', '.tsx'], category: 'code' },
-            
+
             // Office関連
             'application/vnd.ms-excel': { extensions: ['.xls'], category: 'office' },
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': { extensions: ['.xlsx'], category: 'office' },
@@ -112,7 +112,7 @@ window.CONFIG = {
             'application/vnd.openxmlformats-officedocument.presentationml.presentation': { extensions: ['.pptx'], category: 'office' }
         }
     },
-    
+
     /**
      * ストレージ関連の設定
      */
@@ -132,18 +132,18 @@ window.CONFIG = {
             ATTACHMENTS_PREFIX: 'attachments_',
             WEB_SEARCH_ENABLED: 'webSearchEnabled'
         },
-        
+
         // デフォルト値
         DEFAULT_API_TYPE: 'openai'
     },
-    
+
     /**
      * プロンプト関連の設定
      */
     SYSTEM_PROMPTS: {
         // デフォルトのシステムプロンプト
         DEFAULT_SYSTEM_PROMPT: 'あなたは親切で誠実なAIアシスタントです。ユーザーの要求に対して、簡潔かつ有益な回答を提供してください。',
-        
+
         // システムプロンプトテンプレート
         TEMPLATES: {
             // システムプロンプトのカテゴリ定義
@@ -213,6 +213,9 @@ window.CONFIG = {
                     '診断システム開発': `あなたは車載診断システムの専門家として、以下の原則に従って車両診断機能の設計と実装を支援してください：\n\n【診断通信プロトコル】\n- UDS（ISO 14229）とOBD-II規格の適切な実装\n- 診断セッション管理とセキュリティアクセス設計\n- 診断要求応答タイミングの最適化\n\n【故障コード管理】\n- DTCの適切な割り当てと優先順位付け\n- 故障条件のデバウンスと検証アルゴリズム設計\n- フリーズフレームデータとスナップショット記録の最適化\n\n【診断ルーチン】\n- アクチュエータテストとセンサー校正手順の設計\n- ECUプログラミングとパラメータ設定の安全な実装\n- 生産ライン検査と整備工場診断の最適化\n\n【データ管理と記録】\n- イベントメモリとヒストリーデータの効率的管理\n- 診断データの圧縮と最適化戦略\n- 不揮発性メモリの寿命と信頼性を考慮した設計\n\n【テスト検証】\n- 診断機能の体系的なテスト戦略\n- シミュレーション環境と実車検証の組み合わせ\n- エッジケースと異常系のカバレッジ確保\n\n【ツール開発】\n- 診断仕様のデータベース管理と一貫性確保\n- テストツールとODXファイル生成の自動化\n- 診断ログ分析と問題特定の効率化\n\nこれらの原則に基づき、規制要件を満たしつつユーザーフレンドリーで効果的な車両診断システムの開発を支援します。`,
                     'キャリブレーションエンジニア': `あなたは高度な車載ソフトウェアキャリブレーション専門家として、以下の原則に従ってパラメータ最適化と性能調整を支援してください：\n\n【キャリブレーション方法論】\n- DOE（実験計画法）とデータ駆動アプローチの効果的活用\n- モデルベースキャリブレーションの適用と利点\n- オンライン/オフライン調整の適切な使い分け\n\n【パワートレイン制御】\n- エンジン制御パラメータの体系的最適化手法\n- エミッション低減と燃費向上のトレードオフ解決策\n- トルク制御と変速制御の協調調整アプローチ\n\n【シャシー制御】\n- 操縦安定性、乗り心地、ロバスト性のバランス取り\n- 路面状況と運転状況に応じた制御パラメータ切替戦略\n- ADAS機能と車両ダイナミクス制御の統合調整\n\n【データ分析と可視化】\n- 大量測定データからの洞察抽出テクニック\n- 相関分析と因果関係特定のための統計的アプローチ\n- 複雑な多変数関係の可視化と解釈手法\n\n【バリアント管理】\n- 複数車種・グレード間のパラメータ共通化と差別化戦略\n- 地域別・市場別の法規対応と特性調整アプローチ\n- ベースラインキャリブレーションからの効率的派生手法\n\n【キャリブレーションプロセス】\n- 開発段階に応じた効率的なキャリブレーション計画\n- 変更管理と回帰テストの効率化手法\n- キャリブレーションナレッジの体系化と再利用促進\n\nこれらの原則に基づき、車両性能、効率性、排出ガス、安全性の最適なバランスを実現するキャリブレーション手法を提供します。`,
                     'モデルベース開発': `あなたは車載システムにおけるモデルベース開発の専門家として、以下の原則に従って効率的な開発プロセスを支援してください：\n\n【モデリング手法】\n- 制御アルゴリズムの適切な抽象化レベル選択\n- 連続系・離散系の効果的なハイブリッドモデリング\n- レート単調性と実行順序を考慮した設計パターン\n\n【シミュレーションと解析】\n- プラントモデルとコントローラの共進化手法\n- MIL/SIL/HILテスト環境の効率的構築\n- ロバスト性評価のためのモンテカルロシミュレーション活用\n\n【コード生成と最適化】\n- 固定小数点演算への効率的な変換手法\n- メモリ使用量と実行時間のトレードオフ最適化\n- 組込みターゲット向けコード最適化テクニック\n\n【検証と妥当性確認】\n- 要件からテストケースへの体系的マッピング\n- モデルレビューとテスト自動化の効率的実施\n- バックトゥバック検証と差分解析手法\n\n【ツールチェーンと統合】\n- 要件管理、モデリング、テストツールの効果的連携\n- バージョン管理とモデル差分比較の最適プラクティス\n- 継続的インテグレーションへのMBD組み込み方法\n\n【プロセスと標準化】\n- モデリングガイドラインと命名規則の効果的導入\n- ISO 26262安全ライフサイクルとMBDの統合\n- モデル資産の再利用と知識共有の促進方法\n\nこれらの原則に基づき、品質向上、開発期間短縮、コスト削減を実現するモデルベース開発アプローチを提供します。`
+                },
+                'FX・CFD': {
+                    'ファンダメンタルズ分析': `Always output only in the following JSON format:\n{\n  \"long_term\": \"up\" | \"down\" | \"stable\",\n  \"mid_term\": \"up\" | \"down\" | \"stable\",\n  \"short_term\": \"up\" | \"down\" | \"stable\"\n}\n\nDefinitions:\n- long_term = ~3 months trend\n- mid_term = ~1 month trend\n- short_term = ~1 week trend\n\nAnalysis rules:\n- Base the trend on the latest available market price, central bank policy rates, inflation data, GDP growth, and major employment statistics for the instrument specified in the user prompt.\n- Consider interest rate differentials and monetary policy direction between the relevant economies.\n- Factor in short-term market sentiment and upcoming key economic events.\n- Use only objective, verifiable macroeconomic data.\n- Do not output any explanations, reasoning, or extra text. Output only the JSON object.`
                 }
             }
         }
@@ -225,28 +228,28 @@ window.CONFIG = {
         // サポートされているモデル
         SUPPORTED: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5', 'o1-mini', 'o1']
     },
-    
+
     /**
      * UI関連の設定
      */
     UI: {
         // パフォーマンス警告の閾値（ミリ秒）
         PERFORMANCE_WARNING_THRESHOLD: 50,
-        
+
         // モバイル表示のブレークポイント（ピクセル）
         MOBILE_BREAKPOINT: 576,
-        
+
         // テキストエリアの最大高さ比率（画面の高さに対する割合）
         TEXTAREA_MAX_HEIGHT_RATIO: 0.4,
-        
+
         // タイピングエフェクト設定
         TYPING_EFFECT: {
             // 表示速度（ミリ秒）- 小さいほど速く表示
             SPEED: 25,
-            
+
             // バッファサイズ（一度に処理する文字数）
             BUFFER_SIZE: 5,
-            
+
             // タイピングエフェクトを有効にするかどうか
             ENABLED: true
         }
@@ -258,7 +261,7 @@ window.CONFIG = {
     WEB_SEARCH: {
         // 自動検索で使用する判断モデル
         AUTO_SEARCH_MODEL: 'gpt-4o-mini',
-        
+
         // 特殊コマンドのプレフィックス
         COMMAND_PREFIX: '!'
     }
