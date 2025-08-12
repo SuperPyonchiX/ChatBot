@@ -249,7 +249,27 @@ window.CONFIG = {
         ],
         
         // OpenAI Responses APIでのWeb検索をサポートするモデル
-        OPENAI_WEB_SEARCH_COMPATIBLE: ['gpt-5-mini', 'gpt-5']
+        OPENAI_WEB_SEARCH_COMPATIBLE: ['gpt-5-mini', 'gpt-5'],
+        
+        // モデルの表示名マッピング
+        DISPLAY_NAMES: {
+            // OpenAI
+            'gpt-4o-mini': 'GPT-4o Mini',
+            'gpt-4o': 'GPT-4o',
+            'gpt-5-mini': 'GPT-5 Mini',
+            'gpt-5': 'GPT-5',
+            'o1-mini': 'o1 Mini',
+            'o1': 'o1',
+            
+            // Gemini
+            'gemini-2.5-pro': 'Gemini 2.5 Pro',
+            'gemini-2.5-flash': 'Gemini 2.5 Flash',
+            
+            // Claude
+            'claude-opus-4-1': 'Claude 4.1 Opus',
+            'claude-sonnet-4-0': 'Claude 4 Sonnet',
+            'claude-3-5-haiku-latest': 'Claude 3.5 Haiku'
+        }
     },
 
     /**

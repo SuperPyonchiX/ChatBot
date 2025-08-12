@@ -5,24 +5,22 @@
  * @class UI
  */
 class UI {
-    static #instance = null;
-
     /**
      * シングルトンインスタンスを取得します
      * @returns {UI} UIのインスタンス
      */
     static get getInstance() {
-        if (!UI.#instance) {
-            UI.#instance = new UI();
+        if (!UI._instance) {
+            UI._instance = new UI();
         }
-        return UI.#instance;
+        return UI._instance;
     }
 
     /**
      * コンストラクタ - privateなので直接newはできません
      */
     constructor() {
-        if (UI.#instance) {
+        if (UI._instance) {
             throw new Error('UIクラスは直接インスタンス化できません。getInstance()を使用してください。');
         }
         this.Core = {
@@ -396,6 +394,39 @@ class UI {
         this.Core.TouchOptimization.setup();
         Sidebar.getInstance?.createSidebarToggle();
         this.Core.Performance.optimize();
+        this._initializeModelSelect();
         PromptSuggestions.getInstance.init();
+    }
+
+    /**
+     * モデル選択セレクトボックスを動的に初期化
+     * @private
+     */
+    _initializeModelSelect() {
+        const modelSelect = document.getElementById('modelSelect');
+        if (!modelSelect) return;
+
+        // 既存のオプションをクリア
+        modelSelect.innerHTML = '';
+
+        // 全モデルを取得して追加
+        const allModels = [
+            ...window.CONFIG.MODELS.OPENAI,
+            ...window.CONFIG.MODELS.GEMINI,
+            ...window.CONFIG.MODELS.CLAUDE
+        ];
+
+        allModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = window.CONFIG.MODELS.DISPLAY_NAMES[model] || model;
+            modelSelect.appendChild(option);
+        });
+
+        // デフォルト選択値の設定
+        const defaultModel = 'gpt-4o-mini';
+        if (allModels.includes(defaultModel)) {
+            modelSelect.value = defaultModel;
+        }
     }
 }
