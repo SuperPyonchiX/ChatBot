@@ -1114,6 +1114,7 @@ class AIAPI {
         resetTimeout();
 
         try {
+            // console.log(`Gemini APIストリーミングリクエスト送信: ${JSON.stringify(body)}`);
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: headers,
