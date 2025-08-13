@@ -44,10 +44,10 @@ class ClaudeAPI {
             // ClaudeAPIリクエストを準備
             const { headers, body } = this.#prepareClaudeRequest(messages, model, attachments, options);
 
-            console.log(`Claude API ${options.stream ? 'ストリーミング' : '通常'}リクエスト送信 (${model})`);
-            console.log('Claude API 送信ヘッダー:', headers);
-            console.log('Claude API 送信ボディ:', JSON.parse(body));
-            
+            // console.log(`Claude API ${options.stream ? 'ストリーミング' : '通常'}リクエスト送信 (${model})`);
+            // console.log('Claude API 送信ヘッダー:', headers);
+            // console.log('Claude API 送信ボディ:', JSON.parse(body));
+
             // APIリクエストを実行
             if (options.stream) {
                 return await this.#executeStreamClaudeRequest(
@@ -91,13 +91,6 @@ class ClaudeAPI {
      * @returns {Object} リクエストのheadersとbody
      */
     #prepareClaudeRequest(messages, model, attachments = [], options = {}) {
-        console.log('DEBUG: Claude API リクエスト準備開始', {
-            messagesCount: messages.length,
-            model: model,
-            attachmentsCount: attachments.length,
-            options: options
-        });
-
         const storage = Storage.getInstance;
         const apiKey = storage.getItem(window.CONFIG.STORAGE.KEYS.CLAUDE_API_KEY);
         let systemPrompt = storage.getItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT) || 
@@ -130,7 +123,6 @@ class ClaudeAPI {
         // Web検索ツールを追加
         if (options.enableWebSearch && this.#isWebSearchSupported(model)) {
             body.tools = this.#createWebSearchTool();
-            console.log('DEBUG: Web検索ツールを追加', { toolsCount: body.tools.length });
         }
         
         // ストリーミングが有効な場合のみstreamパラメーターを追加（公式仕様準拠）
@@ -226,7 +218,6 @@ class ClaudeAPI {
         // Claudeモデルは全てWeb検索をサポート
         const supportedModels = window.CONFIG.MODELS.CLAUDE;
         const isSupported = supportedModels.includes(model);
-        console.log('DEBUG: Web検索サポート確認', { model, isSupported, supportedModels });
         return isSupported;
     }
 
@@ -241,7 +232,6 @@ class ClaudeAPI {
             max_uses: window.CONFIG.WEB_SEARCH.CLAUDE.DEFAULT_CONFIG.MAX_USES
         };
 
-        console.log('DEBUG: Web検索ツール作成完了', webSearchTool);
         return [webSearchTool];
     }
 
@@ -253,90 +243,28 @@ class ClaudeAPI {
      */
     async #executeClaudeRequest(headers, body) {
         try {
-            console.log('DEBUG: Claude 通常リクエスト開始', {
-                endpoint: window.CONFIG.AIAPI.ENDPOINTS.CLAUDE,
-                bodySize: (typeof body === 'string' ? body.length : JSON.stringify(body).length)
-            });
-
             const response = await fetch(window.CONFIG.AIAPI.ENDPOINTS.CLAUDE, {
                 method: 'POST',
                 headers: headers,
                 body: (typeof body === 'string' ? body : JSON.stringify(body))
             });
 
-            console.log('DEBUG: Claude API レスポンス受信（通常）', {
-                status: response.status,
-                ok: response.ok,
-                contentType: response.headers.get('content-type')
-            });
-
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
-                console.error('DEBUG: Claude API エラーレスポンス（通常）', { status: response.status, errorData });
                 throw new Error(`Claude API Error ${response.status}: ${errorData?.error?.message || response.statusText}`);
             }
 
             const data = await response.json();
-            console.log('DEBUG: Claude API レスポンスデータ', {
-                hasContent: !!data.content,
-                contentCount: data.content ? data.content.length : 0,
-                responseStructure: Object.keys(data)
-            });
             
             // Claude APIのレスポンス形式から テキストを抽出
             let responseText = '';
-            let citations = [];
             
             if (data.content && Array.isArray(data.content)) {
                 for (const content of data.content) {
                     if (content.type === 'text') {
                         responseText += content.text;
-                        
-                        // 引用情報を収集
-                        if (content.citations && Array.isArray(content.citations)) {
-                            citations = citations.concat(content.citations);
-                        }
-                    }
-                    // Web検索結果の処理
-                    else if (content.type === 'web_search_tool_result') {
-                        console.log('DEBUG: Web検索結果受信', {
-                            toolUseId: content.tool_use_id,
-                            resultsCount: content.content ? content.content.length : 0
-                        });
-                        
-                        if (content.content && Array.isArray(content.content)) {
-                            for (const result of content.content) {
-                                if (result.type === 'web_search_result') {
-                                    console.log('DEBUG: Web検索結果詳細', {
-                                        url: result.url,
-                                        title: result.title,
-                                        pageAge: result.page_age
-                                    });
-                                }
-                            }
-                        }
-                    }
-                    // サーバーツール使用の処理
-                    else if (content.type === 'server_tool_use') {
-                        console.log('DEBUG: サーバーツール使用', {
-                            toolId: content.id,
-                            toolName: content.name,
-                            input: content.input
-                        });
                     }
                 }
-            }
-
-            console.log('DEBUG: Claude テキスト抽出完了', {
-                extractedLength: responseText.length,
-                citationsCount: citations.length,
-                preview: responseText.substring(0, 100) + (responseText.length > 100 ? '...' : '')
-            });
-
-            // 引用情報も含めて返す場合の処理（将来的な拡張用）
-            if (citations.length > 0) {
-                console.log('DEBUG: 引用情報あり', { citationsCount: citations.length });
-                // TODO: 引用情報を適切に処理・表示する仕組みを実装
             }
 
             return responseText;
@@ -359,8 +287,6 @@ class ClaudeAPI {
      */
     async #executeStreamClaudeRequest(headers, body, onChunk, onComplete) {
         try {
-            console.log('Claude ストリーミングリクエスト開始:', window.CONFIG.AIAPI.ENDPOINTS.CLAUDE);
-
             // Ensure stream flag is present in payload
             const payloadStr = (function(){
                 if (typeof body === 'string') {
@@ -380,8 +306,6 @@ class ClaudeAPI {
                 body: payloadStr
             });
 
-            console.log('Claude API レスポンス受信:', response.status, response.ok);
-
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
                 console.error('Claude API エラー:', response.status, errorData);
@@ -400,15 +324,9 @@ class ClaudeAPI {
             const chatMessages = document.querySelector('#chatMessages');
             const existingThinkingMessage = chatMessages?.querySelector('.message.bot:last-child');
 
-            console.log('DEBUG: Claude ストリーミング読み込み開始');
-
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) {
-                    console.log('DEBUG: Claude ストリーミング完了', { 
-                        totalChunks: chunkCount, 
-                        totalLength: fullResponse.length 
-                    });
                     break;
                 }
 
@@ -421,25 +339,19 @@ class ClaudeAPI {
                         const data = line.slice(6);
                         
                         if (data === '[DONE]') {
-                            console.log('DEBUG: Claude ストリーミング終了シグナル受信');
                             if (onComplete) onComplete(fullResponse);
                             return '';
                         }
 
                         try {
                             const parsed = JSON.parse(data);
-                            console.log('DEBUG: Claude ストリーミングイベント', { type: parsed.type, hasContent: !!parsed.delta });
                             
                             // message_start イベント
                             if (parsed.type === 'message_start') {
-                                console.log('DEBUG: Claude メッセージ開始', { messageId: parsed.message?.id });
+                                // message_start処理
                             }
                             // content_block_start イベント
                             else if (parsed.type === 'content_block_start') {
-                                console.log('DEBUG: Claude コンテンツブロック開始', { 
-                                    index: parsed.index, 
-                                    blockType: parsed.content_block?.type 
-                                });
                                 
                                 // Web検索ツール使用開始の検出
                                 if (parsed.content_block?.type === 'server_tool_use' && 
@@ -471,11 +383,6 @@ class ClaudeAPI {
                                     }
                                     // ツール使用の入力JSONデルタ
                                     else if (parsed.delta.type === 'input_json_delta') {
-                                        console.log('DEBUG: ツール入力デルタ', { 
-                                            index: parsed.index,
-                                            partialJson: parsed.delta.partial_json 
-                                        });
-                                        
                                         // Web検索クエリの抽出
                                         if (webSearchInProgress && parsed.delta.partial_json) {
                                             webSearchQuery += parsed.delta.partial_json;
@@ -500,19 +407,16 @@ class ClaudeAPI {
                                     }
                                     // 思考デルタ（Extended Thinking）
                                     else if (parsed.delta.type === 'thinking_delta') {
-                                        console.log('DEBUG: 思考デルタ', { 
-                                            thinkingLength: parsed.delta.thinking?.length || 0 
-                                        });
+                                        // 思考デルタ処理
                                     }
                                     // シグネチャデルタ
                                     else if (parsed.delta.type === 'signature_delta') {
-                                        console.log('DEBUG: シグネチャデルタ受信');
+                                        // シグネチャデルタ処理
                                     }
                                 }
                             }
                             // content_block_stop イベント
                             else if (parsed.type === 'content_block_stop') {
-                                console.log('DEBUG: コンテンツブロック終了', { index: parsed.index });
                                 
                                 // Web検索ツールの結果開始を検出
                                 if (webSearchInProgress && completedSearchQuery && !webSearchMessageUpdated) {
@@ -534,8 +438,6 @@ class ClaudeAPI {
                             // message_delta イベント
                             else if (parsed.type === 'message_delta') {
                                 if (parsed.delta && parsed.delta.stop_reason) {
-                                    console.log('DEBUG: Claude メッセージ終了', { stop_reason: parsed.delta.stop_reason });
-                                    
                                     // Web検索完了、通常のThinkingに戻す
                                     if (webSearchInProgress) {
                                         webSearchInProgress = false;
@@ -546,13 +448,11 @@ class ClaudeAPI {
                                 }
                                 // 使用量の更新
                                 if (parsed.usage) {
-                                    console.log('DEBUG: トークン使用量更新', parsed.usage);
+                                    // 使用量更新処理
                                 }
                             }
                             // message_stop イベント
                             else if (parsed.type === 'message_stop') {
-                                console.log('DEBUG: Claude メッセージストップイベント');
-                                
                                 // Web検索完了、通常のThinkingに戻す
                                 if (webSearchInProgress) {
                                     webSearchInProgress = false;
@@ -563,11 +463,10 @@ class ClaudeAPI {
                             }
                             // ping イベント
                             else if (parsed.type === 'ping') {
-                                console.log('DEBUG: Claude ping受信');
+                                // ping受信処理
                             }
                             // error イベント
                             else if (parsed.type === 'error') {
-                                console.error('DEBUG: Claude ストリーミングエラーイベント', parsed.error);
                                 
                                 // エラー時も通常のThinkingに戻す
                                 if (webSearchInProgress) {
