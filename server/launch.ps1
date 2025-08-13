@@ -9,8 +9,9 @@ $serverDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Join-Path $serverDir '..'
 $psServer = Join-Path $serverDir 'ps_server.ps1'
 
-# ログ出力関数
+# Log output function and PID file
 $logFile = Join-Path $serverDir 'launch.log'
+$pidFile = Join-Path $serverDir 'server.pid'
 function Write-Log { 
   param([string]$msg) 
   $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss.fff')
@@ -25,13 +26,19 @@ if (Test-Path $psServer) {
   Write-Log "Starting PowerShell server (Windows standard): $psServer"
   $psExe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
   $serverProc = Start-Process -FilePath $psExe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"$psServer",'-Port',"$Port") -WindowStyle Hidden -PassThru -WorkingDirectory $projectRoot
+  
+  # Save PID to file (for manual termination)
+  if ($serverProc -and $serverProc.Id) {
+    "$($serverProc.Id)" | Out-File -FilePath $pidFile -Encoding ASCII
+    Write-Log "Server PID $($serverProc.Id) saved to $pidFile"
+  }
 } else {
   [Console]::Error.WriteLine("ERROR: PowerShell server not found: $psServer")
   Write-Log "ERROR: PowerShell server not found"
   exit 1
 }
 
-# サーバーの健康チェック
+# Server health check
 $healthy = $false
 for ($i=0; $i -lt 40; $i++) {
   try {
@@ -42,11 +49,8 @@ for ($i=0; $i -lt 40; $i++) {
 }
 if (-not $healthy) { Write-Log "Warning: server health check not confirmed within timeout" }
 
-# # Browser launch settings
-# $targetUrl = "http://localhost:$Port/"
-
 Write-Log "Starting ChatBot in local file mode (no server required)"
-# Browser launch settings - ローカルファイルとして開く
+# Browser launch settings - open as local file
 $indexHtmlPath = Join-Path $projectRoot 'index.html'
 
 # Background monitor job using zero-process detection
@@ -108,10 +112,6 @@ $monitorJob = Start-Job -ScriptBlock {
   return "ERROR"
 } -ArgumentList $logFile
 
-# # Launch browser with default handler
-# Start-Process $targetUrl | Out-Null
-# Write-Log "Launched with default browser"
-
 # Launch browser with local HTML file
 if (Test-Path $indexHtmlPath) {
   Start-Process $indexHtmlPath | Out-Null
@@ -121,7 +121,7 @@ if (Test-Path $indexHtmlPath) {
   [Console]::Error.WriteLine("ERROR: index.html not found: $indexHtmlPath")
 }
 
-# モニタージョブがブラウザ終了を検出するまで待機
+# Wait for monitor job to detect browser exit
 Write-Log "Waiting for monitor job to detect browser exit..."
 do {
   Start-Sleep -Seconds 1
@@ -138,4 +138,11 @@ try {
     Stop-Process -Id $serverProc.Id -Force 
   } 
 } catch {}
+
+# Cleanup PID file
+if (Test-Path $pidFile) {
+  Remove-Item $pidFile -Force
+  Write-Log "PID file removed: $pidFile"
+}
+
 Write-Log "Launcher finished"
