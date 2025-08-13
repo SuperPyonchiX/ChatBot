@@ -301,7 +301,7 @@ window.CONFIG = {
      */
     WEB_SEARCH: {
         // 自動検索で使用する判断モデル
-        AUTO_SEARCH_MODEL: 'gpt-4o-mini',
+        AUTO_SEARCH_MODEL: 'gpt-5-mini',
 
         // 特殊コマンドのプレフィックス
         COMMAND_PREFIX: '!',

@@ -32,8 +32,7 @@ class ClaudeAPI {
      * @param {boolean} options.stream - ストリーミングを使用するかどうか
      * @param {Function} options.onChunk - ストリーミング時のチャンク受信コールバック関数
      * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
-     * @param {boolean} options.useWebSearch - Web検索機能を使用するかどうか
-     * @param {Object} options.webSearchConfig - Web検索の設定
+     * @param {boolean} options.enableWebSearch - Web検索機能を使用するかどうか
      * @returns {Promise<string>} APIからの応答テキスト（ストリーミングの場合は空文字列）
      * @throws {Error} API設定やリクエストに問題があった場合
      */
@@ -129,8 +128,8 @@ class ClaudeAPI {
         };
         
         // Web検索ツールを追加
-        if (options.useWebSearch && this.#isWebSearchSupported(model)) {
-            body.tools = this.#createWebSearchTool(options.webSearchConfig);
+        if (options.enableWebSearch && this.#isWebSearchSupported(model)) {
+            body.tools = this.#createWebSearchTool();
             console.log('DEBUG: Web検索ツールを追加', { toolsCount: body.tools.length });
         }
         
@@ -233,34 +232,14 @@ class ClaudeAPI {
 
     /**
      * Web検索ツール設定を作成
-     * @param {Object} config - Web検索設定
      * @returns {Array} ツール配列
      */
-    #createWebSearchTool(config = {}) {
+    #createWebSearchTool() {
         const webSearchTool = {
             type: "web_search_20250305",
-            name: "web_search"
+            name: "web_search",
+            max_uses: window.CONFIG.WEB_SEARCH.CLAUDE.DEFAULT_CONFIG.MAX_USES
         };
-
-        // オプションパラメータの追加
-        if (config.maxUses && config.maxUses > 0) {
-            webSearchTool.max_uses = config.maxUses;
-        }
-
-        if (config.allowedDomains && Array.isArray(config.allowedDomains) && config.allowedDomains.length > 0) {
-            webSearchTool.allowed_domains = config.allowedDomains;
-        }
-
-        if (config.blockedDomains && Array.isArray(config.blockedDomains) && config.blockedDomains.length > 0) {
-            webSearchTool.blocked_domains = config.blockedDomains;
-        }
-
-        if (config.userLocation) {
-            webSearchTool.user_location = {
-                type: "approximate",
-                ...config.userLocation
-            };
-        }
 
         console.log('DEBUG: Web検索ツール作成完了', webSearchTool);
         return [webSearchTool];

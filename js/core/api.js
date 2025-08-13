@@ -54,8 +54,6 @@ class AIAPI {
             if (window.CONFIG.MODELS.GEMINI.includes(model)) {
                 return await GeminiAPI.getInstance.callGeminiAPI(messages, model, attachments, options);
             } else if (window.CONFIG.MODELS.CLAUDE.includes(model)) {
-                // Claude Web検索設定を追加
-                this.#addClaudeWebSearchOptions(options);
                 return await ClaudeAPI.getInstance.callClaudeAPI(messages, model, attachments, options);
             } else {
                 return await OpenAIAPI.getInstance.callOpenAIAPI(messages, model, attachments, options);
@@ -76,40 +74,6 @@ class AIAPI {
     #isWebSearchCompatibleModel(model) {
         // OpenAIのResponses APIでWeb検索をサポートするモデル
         return window.CONFIG.MODELS.OPENAI_WEB_SEARCH_COMPATIBLE.includes(model);
-    }    /**
-     * Claude用のWeb検索設定をオプションに追加
-     * @private
-     * @param {Object} options - APIオプション
-     */
-    #addClaudeWebSearchOptions(options) {
-        const storage = Storage.getInstance;
-        if (!storage) return;
-
-        const webSearchSettings = storage.getClaudeWebSearchSettings();
-        if (webSearchSettings && webSearchSettings.enabled) {
-            console.log('DEBUG: Claude Web検索設定を適用', webSearchSettings);
-            
-            options.useWebSearch = true;
-            options.webSearchConfig = {
-                maxUses: webSearchSettings.maxSearches || window.CONFIG.WEB_SEARCH.CLAUDE.DEFAULT_CONFIG.maxUses,
-                allowedDomains: webSearchSettings.allowedDomains && webSearchSettings.allowedDomains.length > 0 
-                    ? webSearchSettings.allowedDomains 
-                    : undefined,
-                blockedDomains: webSearchSettings.blockedDomains && webSearchSettings.blockedDomains.length > 0 
-                    ? webSearchSettings.blockedDomains 
-                    : undefined,
-                userLocation: webSearchSettings.searchRegion 
-                    ? window.CONFIG.WEB_SEARCH.CLAUDE.LOCATION_TEMPLATES[webSearchSettings.searchRegion] 
-                    : undefined
-            };
-
-            // 未定義のフィールドを削除
-            Object.keys(options.webSearchConfig).forEach(key => {
-                if (options.webSearchConfig[key] === undefined) {
-                    delete options.webSearchConfig[key];
-                }
-            });
-        }
     }
 }
 

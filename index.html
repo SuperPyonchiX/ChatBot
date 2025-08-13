@@ -122,7 +122,7 @@
                     <div class="main-input-area">
                         <textarea id="userInput" placeholder="メッセージを入力..." rows="1"></textarea>
                         <div class="input-actions">
-                            <button id="webSearchToggle" class="toggle-button" title="Web検索機能の有効/無効を切り替え (GPT-5シリーズ: Responses API内蔵検索)">
+                            <button id="webSearchToggle" class="toggle-button" title="Web検索機能の有効/無効を切り替え (GPT-5、Claude 4系・3.5シリーズで利用可能)">
                                 <span>🌐</span>
                             </button>
                             <label class="file-upload-label" title="ファイルを添付する">
@@ -221,45 +221,6 @@
                     <label for="claudeApiKeyInput">Claude APIキー:</label>
                     <input type="password" id="claudeApiKeyInput" placeholder="Anthropic Claude APIキーを入力">
                 </div>
-                
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="claudeWebSearchToggle">
-                        Web検索機能を有効にする
-                    </label>
-                    <small class="help-text">
-                        Claude 4系、Claude 3.5 Sonnet、Claude 3.5 Haikuで利用可能
-                    </small>
-                </div>
-                
-                <div id="claudeWebSearchSettings" class="hidden">
-                    <div class="form-group">
-                        <label for="claudeMaxSearches">最大検索回数:</label>
-                        <input type="number" id="claudeMaxSearches" min="1" max="10" value="5">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="claudeAllowedDomains">許可ドメイン（カンマ区切り、空白で制限なし）:</label>
-                        <input type="text" id="claudeAllowedDomains" placeholder="example.com, wikipedia.org">
-                        <small class="help-text">これらのドメインのみから検索結果を取得します</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="claudeBlockedDomains">禁止ドメイン（カンマ区切り）:</label>
-                        <input type="text" id="claudeBlockedDomains" placeholder="spam.com, untrusted.org">
-                        <small class="help-text">これらのドメインからは検索結果を除外します</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="claudeSearchRegion">検索地域:</label>
-                        <select id="claudeSearchRegion">
-                            <option value="">地域指定なし</option>
-                            <option value="japan">日本</option>
-                            <option value="usa">アメリカ</option>
-                        </select>
-                        <small class="help-text">選択した地域に最適化された検索結果を取得します</small>
-                    </div>
-                </div>
             </div>
             
             <div class="form-group">
@@ -269,7 +230,9 @@
                         • <strong>GPT-5シリーズ</strong>: Responses API内蔵検索<br>
                         • <strong>Claude 4系・3.5シリーズ</strong>: Web検索ツールによる最新情報取得<br>
                         • <strong>Geminiシリーズ</strong>: Web検索機能は利用できません<br>
-                        • <strong>その他のモデル</strong>: Web検索機能は利用できません
+                        • <strong>その他のモデル</strong>: Web検索機能は利用できません<br>
+                        <br>
+                        <em>Web検索の有効/無効は、チャット画面の🌐ボタンで切り替えできます。</em>
                     </div>
                 </label>
             </div>

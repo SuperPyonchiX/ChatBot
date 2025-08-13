@@ -277,12 +277,15 @@ class ChatActions {
             const isWebSearchEnabled = webExtractor && webExtractor.isWebSearchEnabled();
 
             // GPT-4o/GPT-5シリーズはResponses API内蔵Web検索を使用
-            if (isWebSearchEnabled && (currentModel.startsWith('gpt-4o') || currentModel.startsWith('gpt-5'))) {
+            if (isWebSearchEnabled && window.CONFIG.MODELS.OPENAI_WEB_SEARCH_COMPATIBLE.includes(currentModel)) {
                 // Responses APIの内蔵Web検索を使用（APIレベルで自動処理）
                 console.log(`Responses API Web検索機能を有効にします: ${currentModel}`);
+            } else if (isWebSearchEnabled && window.CONFIG.MODELS.CLAUDE.includes(currentModel)) {
+                // Claude Web検索機能を有効にする
+                console.log(`Claude Web検索機能を有効にします: ${currentModel}`);
             } else if (isWebSearchEnabled) {
-                // GPT-4o/GPT-5シリーズ以外ではWeb検索は利用できません
-                console.log(`${currentModel}はWeb検索に対応していません。GPT-4o/GPT-5シリーズを使用してください。`);
+                // その他のモデルではWeb検索は利用できません
+                console.log(`${currentModel}はWeb検索に対応していません。GPT-4o/GPT-5シリーズまたはClaude 4系・3.5シリーズを使用してください。`);
             }
 
             if (attachments && attachments.length > 0) {
@@ -333,7 +336,7 @@ class ChatActions {
                 displayAttachments,
                 {
                     stream: true,
-                    enableWebSearch: isWebSearchEnabled && currentModel.startsWith('gpt-5'),
+                    enableWebSearch: isWebSearchEnabled && (window.CONFIG.MODELS.OPENAI_WEB_SEARCH_COMPATIBLE.includes(currentModel) || window.CONFIG.MODELS.CLAUDE.includes(currentModel)),
                     onChunk: (chunk) => {
                         fullResponseText += chunk;
                         // ストリーミング中のメッセージ更新
