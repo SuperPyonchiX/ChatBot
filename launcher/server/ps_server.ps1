@@ -20,7 +20,7 @@ $Mime = @{
 
 # Paths
 $serverDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$projectRoot = [System.IO.Path]::GetFullPath((Join-Path $serverDir '..'))
+$projectRoot = [System.IO.Path]::GetFullPath((Join-Path $serverDir '..' | Join-Path -ChildPath '..'))
 $prefix = "http://localhost:$Port/"
 
 # HttpClient for upstream proxy (PowerShell 5.1 compatible)
@@ -216,9 +216,12 @@ while ($listener.IsListening) {
     # Static files
     $pathOnly = $req.RawUrl.Split('?')[0]
     if ([string]::IsNullOrWhiteSpace($pathOnly) -or $pathOnly -eq '/') { $pathOnly = '/index.html' }
-    $fullPath = [System.IO.Path]::GetFullPath((Join-Path $projectRoot ($pathOnly.TrimStart('/'))))
+    
+    # Map root requests to app directory
+    $appRoot = Join-Path $projectRoot 'app'
+    $fullPath = [System.IO.Path]::GetFullPath((Join-Path $appRoot ($pathOnly.TrimStart('/'))))
 
-  if (-not (Test-UnderRoot $projectRoot $fullPath) -or -not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+  if (-not (Test-UnderRoot $appRoot $fullPath) -or -not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
       Set-CorsHeaders $res
       $res.StatusCode = 404
       $res.ContentType = 'text/plain; charset=utf-8'

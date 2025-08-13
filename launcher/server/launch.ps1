@@ -6,7 +6,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 
 # Path settings
 $serverDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$projectRoot = Join-Path $serverDir '..'
+$projectRoot = Join-Path $serverDir '..' | Join-Path -ChildPath '..' | Resolve-Path
 $psServer = Join-Path $serverDir 'ps_server.ps1'
 
 # Log output function and PID file
@@ -18,6 +18,11 @@ function Write-Log {
   "$ts `t $msg" | Out-File -FilePath $logFile -Encoding UTF8 -Append 
 }
 
+# Debug path information
+Write-Log "ServerDir: $serverDir"
+Write-Log "ProjectRoot: $projectRoot"
+Write-Log "PS Server: $psServer"
+
 # Windows standard PowerShell server startup
 $env:PORT = "$Port"
 $serverProc = $null
@@ -25,7 +30,7 @@ $serverProc = $null
 if (Test-Path $psServer) {
   Write-Log "Starting PowerShell server (Windows standard): $psServer"
   $psExe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-  $serverProc = Start-Process -FilePath $psExe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"$psServer",'-Port',"$Port") -WindowStyle Hidden -PassThru -WorkingDirectory $projectRoot
+  $serverProc = Start-Process -FilePath $psExe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"$psServer",'-Port',"$Port") -WindowStyle Hidden -PassThru -WorkingDirectory $serverDir
   
   # Save PID to file (for manual termination)
   if ($serverProc -and $serverProc.Id) {
@@ -40,18 +45,27 @@ if (Test-Path $psServer) {
 
 # Server health check
 $healthy = $false
-for ($i=0; $i -lt 40; $i++) {
+Write-Log "Waiting for server to start..."
+Start-Sleep -Seconds 2  # Give server more time to initialize
+
+for ($i=0; $i -lt 20; $i++) {  # Reduce total attempts but with longer intervals
   try {
-    $resp = Invoke-WebRequest -UseBasicParsing -Uri ("http://localhost:" + $Port + "/") -TimeoutSec 1 -Method GET
-    if ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 500) { $healthy = $true; break }
-  } catch {}
-  Start-Sleep -Milliseconds 250
+    $resp = Invoke-WebRequest -UseBasicParsing -Uri ("http://localhost:" + $Port + "/") -TimeoutSec 2 -Method GET
+    if ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 500) { 
+      $healthy = $true 
+      Write-Log "Server health check passed after $($i+1) attempts"
+      break 
+    }
+  } catch {
+    # Write-Log "Health check attempt $($i+1): $($_.Exception.Message)"
+  }
+  Start-Sleep -Milliseconds 500
 }
 if (-not $healthy) { Write-Log "Warning: server health check not confirmed within timeout" }
 
 Write-Log "Starting ChatBot in local file mode (no server required)"
 # Browser launch settings - open as local file
-$indexHtmlPath = Join-Path $projectRoot 'index.html'
+$indexHtmlPath = Join-Path $projectRoot 'app\index.html'
 
 # Background monitor job using zero-process detection
 $monitorJob = Start-Job -ScriptBlock {
