@@ -393,7 +393,13 @@ class ClaudeAPI {
             let buffer = '';
             let fullResponse = '';
             let chunkCount = 0;
-            
+            let webSearchInProgress = false;
+            let webSearchQuery = '';
+            let completedSearchQuery = '';
+            let webSearchMessageUpdated = false;
+            const chatMessages = document.querySelector('#chatMessages');
+            const existingThinkingMessage = chatMessages?.querySelector('.message.bot:last-child');
+
             console.log('DEBUG: Claude ストリーミング読み込み開始');
 
             while (true) {
@@ -434,6 +440,24 @@ class ClaudeAPI {
                                     index: parsed.index, 
                                     blockType: parsed.content_block?.type 
                                 });
+                                
+                                // Web検索ツール使用開始の検出
+                                if (parsed.content_block?.type === 'server_tool_use' && 
+                                    parsed.content_block?.name === 'web_search') {
+                                    webSearchInProgress = true;
+                                    webSearchQuery = '';
+                                    completedSearchQuery = '';
+                                    webSearchMessageUpdated = false;
+                                    
+                                    // 既存のThinkingメッセージを更新
+                                    if (existingThinkingMessage) {
+                                        ChatRenderer.getInstance.updateSystemMessage(
+                                            existingThinkingMessage,
+                                            '🔍 Web検索を実行しています...', 
+                                            { status: 'searching', showDots: true }
+                                        );
+                                    }
+                                }
                             }
                             // content_block_delta イベント（テキスト、ツール、思考など）
                             else if (parsed.type === 'content_block_delta') {
@@ -451,6 +475,28 @@ class ClaudeAPI {
                                             index: parsed.index,
                                             partialJson: parsed.delta.partial_json 
                                         });
+                                        
+                                        // Web検索クエリの抽出
+                                        if (webSearchInProgress && parsed.delta.partial_json) {
+                                            webSearchQuery += parsed.delta.partial_json;
+                                            
+                                            // 完全なJSONが形成されたかチェック
+                                            try {
+                                                const queryData = JSON.parse(webSearchQuery);
+                                                if (queryData.query && queryData.query !== completedSearchQuery) {
+                                                    completedSearchQuery = queryData.query;
+                                                    if (existingThinkingMessage) {
+                                                        ChatRenderer.getInstance.updateSystemMessage(
+                                                            existingThinkingMessage,
+                                                            `🔍 "${completedSearchQuery}" を検索中...`,
+                                                            { status: 'searching', showDots: true }
+                                                        );
+                                                    }
+                                                }
+                                            } catch (e) {
+                                                // JSONが未完成の場合は無視
+                                            }
+                                        }
                                     }
                                     // 思考デルタ（Extended Thinking）
                                     else if (parsed.delta.type === 'thinking_delta') {
@@ -467,11 +513,34 @@ class ClaudeAPI {
                             // content_block_stop イベント
                             else if (parsed.type === 'content_block_stop') {
                                 console.log('DEBUG: コンテンツブロック終了', { index: parsed.index });
+                                
+                                // Web検索ツールの結果開始を検出
+                                if (webSearchInProgress && completedSearchQuery && !webSearchMessageUpdated) {
+                                    // 次のブロックがweb_search_tool_resultの場合の準備
+                                    setTimeout(() => {
+                                        if (webSearchInProgress && completedSearchQuery && !webSearchMessageUpdated) {
+                                            if (existingThinkingMessage) {
+                                                ChatRenderer.getInstance.updateSystemMessage(
+                                                    existingThinkingMessage,
+                                                    `🔍 検索結果を分析中: "${completedSearchQuery}"`,
+                                                    { status: 'processing', showDots: true }
+                                                );
+                                                webSearchMessageUpdated = true;
+                                            }
+                                        }
+                                    }, 100);
+                                }
                             }
                             // message_delta イベント
                             else if (parsed.type === 'message_delta') {
                                 if (parsed.delta && parsed.delta.stop_reason) {
                                     console.log('DEBUG: Claude メッセージ終了', { stop_reason: parsed.delta.stop_reason });
+                                    
+                                    // Web検索完了、通常のThinkingに戻す
+                                    if (webSearchInProgress) {
+                                        webSearchInProgress = false;
+                                    }
+                                    
                                     if (onComplete) onComplete(fullResponse);
                                     return '';
                                 }
@@ -483,6 +552,12 @@ class ClaudeAPI {
                             // message_stop イベント
                             else if (parsed.type === 'message_stop') {
                                 console.log('DEBUG: Claude メッセージストップイベント');
+                                
+                                // Web検索完了、通常のThinkingに戻す
+                                if (webSearchInProgress) {
+                                    webSearchInProgress = false;
+                                }
+                                
                                 if (onComplete) onComplete(fullResponse);
                                 return '';
                             }
@@ -493,6 +568,21 @@ class ClaudeAPI {
                             // error イベント
                             else if (parsed.type === 'error') {
                                 console.error('DEBUG: Claude ストリーミングエラーイベント', parsed.error);
+                                
+                                // エラー時も通常のThinkingに戻す
+                                if (webSearchInProgress) {
+                                    const chatMessages = document.getElementById('chatMessages');
+                                    const existingThinkingMessage = chatMessages?.querySelector('.message.bot:last-child');
+                                    if (existingThinkingMessage) {
+                                        ChatRenderer.getInstance.updateSystemMessage(
+                                            existingThinkingMessage,
+                                            'Thinking',
+                                            { status: 'thinking', showDots: true }
+                                        );
+                                    }
+                                    webSearchInProgress = false;
+                                }
+                                
                                 throw new Error(`Claude Streaming Error: ${parsed.error.message}`);
                             }
                             // 未知のイベントタイプ
@@ -506,7 +596,6 @@ class ClaudeAPI {
                 }
             }
 
-            // ストリーミング完了
             if (onComplete) onComplete(fullResponse);
             return '';
 
