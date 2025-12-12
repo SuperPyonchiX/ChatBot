@@ -83,8 +83,24 @@ class ResponsesAPI {
      * API設定を検証
      */
     #validateAPISettings() {
-        if (!window.apiSettings || !window.apiSettings.openaiApiKey) {
-            throw new Error('OpenAI APIキーが設定されていません。設定画面で設定してください。');
+        // AppStateで初期化されたキャッシュを使用（存在しない場合はフォールバック）
+        if (!window.apiSettings) {
+            console.warn('window.apiSettingsが初期化されていません。Storageから再読み込みします。');
+            window.apiSettings = Storage.getInstance.loadApiSettings();
+        }
+        
+        const apiType = window.apiSettings.apiType || 'openai';
+        
+        if (apiType === 'openai') {
+            if (!window.apiSettings.openaiApiKey) {
+                throw new Error('OpenAI APIキーが設定されていません。設定画面で設定してください。');
+            }
+        } else if (apiType === 'azure') {
+            if (!window.apiSettings.azureApiKey) {
+                throw new Error('Azure OpenAI APIキーが設定されていません。設定画面で設定してください。');
+            }
+        } else {
+            throw new Error(`Responses APIは現在OpenAIとAzure OpenAIのみサポートしています。現在のapiType: ${apiType}`);
         }
     }
 
@@ -182,14 +198,22 @@ class ResponsesAPI {
     #prepareResponsesRequest(processedData, model, enableWebSearch, stream = false) {
         let endpoint, headers = {}, body = {};
         
-        if (window.apiSettings.apiType === 'openai') {
+        // AppStateで初期化されたキャッシュを使用（存在しない場合はフォールバック）
+        if (!window.apiSettings) {
+            console.warn('window.apiSettingsが初期化されていません。Storageから再読み込みします。');
+            window.apiSettings = Storage.getInstance.loadApiSettings();
+        }
+        
+        const apiType = window.apiSettings.apiType || 'openai';
+        
+        if (apiType === 'openai') {
             // OpenAI API
             endpoint = window.CONFIG.AIAPI.ENDPOINTS.RESPONSES;
             headers = {
                 'Authorization': `Bearer ${window.apiSettings.openaiApiKey}`,
                 'Content-Type': 'application/json'
             };
-        } else {
+        } else if (apiType === 'azure') {
             // Azure OpenAI API - 新しいv1 API形式を使用
             const azureEndpoint = window.apiSettings.azureEndpoints[model];
             if (azureEndpoint) {
@@ -201,6 +225,7 @@ class ResponsesAPI {
                 
                 // エンドポイントURLからデプロイメント名を抽出
                 const deploymentMatch = azureEndpoint.match(/\/deployments\/([^\/]+)\//);
+
                 if (deploymentMatch) {
                     // デプロイメント名が見つかった場合は、それをモデル名として使用
                     model = deploymentMatch[1];
@@ -213,6 +238,9 @@ class ResponsesAPI {
                 'api-key': window.apiSettings.azureApiKey,
                 'Content-Type': 'application/json'
             };
+        } else {
+            // apiTypeが'openai'でも'azure'でもない場合はエラー
+            throw new Error(`Responses APIは現在OpenAIとAzure OpenAIのみサポートしています。現在のapiType: ${apiType}`);
         }
         
         // Responses API形式でボディを構築

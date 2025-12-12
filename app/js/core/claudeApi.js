@@ -247,6 +247,19 @@ class ClaudeAPI {
                 method: 'POST',
                 headers: headers,
                 body: (typeof body === 'string' ? body : JSON.stringify(body))
+            }).catch(error => {
+                // ネットワークエラー（サーバー未起動など）の場合
+                if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                    const endpoint = window.CONFIG.AIAPI.ENDPOINTS.CLAUDE;
+                    throw new Error(
+                        `ローカルサーバーに接続できません (${endpoint})\n\n` +
+                        `以下のいずれかの方法でサーバーを起動してください:\n` +
+                        `1. ChatBot.lnk をダブルクリック\n` +
+                        `2. launcher\\StartChatBot.bat を実行\n` +
+                        `3. コマンドライン: cd launcher\\server && node server.js --port=50000`
+                    );
+                }
+                throw error;
             });
 
             if (!response.ok) {
@@ -304,6 +317,19 @@ class ClaudeAPI {
                 method: 'POST',
                 headers: headers,
                 body: payloadStr
+            }).catch(error => {
+                // ネットワークエラー（サーバー未起動など）の場合
+                if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                    const endpoint = window.CONFIG.AIAPI.ENDPOINTS.CLAUDE;
+                    throw new Error(
+                        `ローカルサーバーに接続できません (${endpoint})\n\n` +
+                        `以下のいずれかの方法でサーバーを起動してください:\n` +
+                        `1. ChatBot.lnk をダブルクリック\n` +
+                        `2. launcher\\StartChatBot.bat を実行\n` +
+                        `3. コマンドライン: cd launcher\\server && node server.js --port=50000`
+                    );
+                }
+                throw error;
             });
 
             if (!response.ok) {

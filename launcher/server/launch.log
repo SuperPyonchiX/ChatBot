@@ -1,0 +1,195 @@
+﻿2025-08-16 22:21:02.598 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-08-16 22:21:02.604 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-08-16 22:21:02.604 	 PS Server: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server\ps_server.ps1
+2025-08-16 22:21:02.608 	 Starting PowerShell server (Windows standard): D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server\ps_server.ps1
+2025-08-16 22:21:02.657 	 Server PID 30336 saved to D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server\server.pid
+2025-08-16 22:21:02.657 	 Waiting for server to start...
+2025-08-16 22:21:04.775 	 Server health check passed after 1 attempts
+2025-08-16 22:21:04.786 	 Starting ChatBot in local file mode (no server required)
+2025-08-16 22:21:04.980 	 Launched local index.html file: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\app\index.html
+2025-08-16 22:21:04.981 	 Waiting for monitor job to detect browser exit...
+2025-08-16 22:21:05.065 	 Monitor job: started zero-process detection
+2025-08-17 22:51:41.223 	 Monitor job: no browser processes detected (check 1/2)
+2025-08-17 22:51:46.257 	 Monitor job: no browser processes detected (check 2/2)
+2025-08-17 22:51:46.258 	 Monitor job: no browser processes for 10s. Stopping server.
+2025-08-17 22:51:46.340 	 Monitor result: STOP_SERVER
+2025-08-17 22:51:46.355 	 Stopping server PID=30336
+2025-08-17 22:51:46.383 	 PID file removed: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server\server.pid
+2025-08-17 22:51:46.384 	 Launcher finished
+2025-12-07 15:45:18.644 	 === ChatBot Launch Started ===
+2025-12-07 15:45:18.682 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-07 15:45:18.686 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-07 15:45:18.701 	 ERROR: Node.js not found
+2025-12-12 20:32:30.901 	 === ChatBot Launch Started ===
+2025-12-12 20:32:30.961 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-12 20:32:30.971 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-12 20:32:31.015 	 ERROR: Node.js not found
+2025-12-12 20:32:33.471 	 === ChatBot Launch Started ===
+2025-12-12 20:32:33.481 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-12 20:32:33.482 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-12 20:32:33.492 	 ERROR: Node.js not found
+2025-12-12 20:36:22.093 	 === ChatBot Launch Started ===
+2025-12-12 20:36:22.099 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-12 20:36:22.100 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-12 20:36:22.105 	 Node.js found: C:\Program Files\nodejs\node.exe
+2025-12-12 20:36:22.124 	 Node.js version: v24.11.1
+2025-12-12 20:36:22.125 	 Starting Node.js server with browser monitoring...
+2025-12-12 20:36:22.155 	 Server started with PID: 17700
+2025-12-12 20:36:22.155 	 Browser monitoring: ENABLED (auto-stop after 10s with no browsers)
+2025-12-12 20:36:22.155 	 Waiting for server to start...
+2025-12-12 20:36:24.259 	 Server health check passed
+2025-12-12 20:36:24.260 	 Opening browser: http://localhost:50000/
+2025-12-12 20:36:24.296 	 Browser launched successfully
+2025-12-12 20:36:24.297 	 === ChatBot Launch Completed ===
+2025-12-12 20:36:24.297 	 Server is running with automatic browser monitoring
+2025-12-12 20:36:24.298 	 Server will auto-stop 10 seconds after all browsers are closed
+2025-12-12 21:00:56.356 	 === ChatBot Launch Started ===
+2025-12-12 21:00:56.366 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-12 21:00:56.367 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-12 21:00:56.378 	 Node.js found: C:\Program Files\nodejs\node.exe
+2025-12-12 21:00:56.418 	 Node.js version: v24.11.1
+2025-12-12 21:00:56.423 	 Starting Node.js server with browser monitoring...
+2025-12-12 21:00:56.476 	 Server started with PID: 13152
+2025-12-12 21:00:56.477 	 Browser monitoring: ENABLED (auto-stop after 10s with no browsers)
+2025-12-12 21:00:56.478 	 Waiting for server to start...
+2025-12-12 21:00:58.876 	 Server health check passed
+2025-12-12 21:00:58.878 	 Opening browser: http://localhost:50000/
+2025-12-12 21:00:58.940 	 Browser launched successfully
+2025-12-12 21:00:58.940 	 === ChatBot Launch Completed ===
+2025-12-12 21:00:58.942 	 Server is running with automatic browser monitoring
+2025-12-12 21:00:58.943 	 Server will auto-stop 10 seconds after all browsers are closed
+2025-12-12 21:06:03.669 	 === ChatBot Launch Started ===
+2025-12-12 21:06:03.679 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-12 21:06:03.680 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-12 21:06:03.691 	 Node.js found: C:\Program Files\nodejs\node.exe
+2025-12-12 21:06:03.766 	 Node.js version: v24.11.1
+2025-12-12 21:06:03.775 	 Starting Node.js server with browser monitoring...
+2025-12-12 21:06:03.888 	 Server started with PID: 22292
+2025-12-12 21:06:03.892 	 Browser monitoring: ENABLED (auto-stop after 10s with no browsers)
+2025-12-12 21:06:03.895 	 Waiting for server to start...
+2025-12-12 21:06:06.275 	 Server health check passed
+2025-12-12 21:06:06.288 	 Opening browser: http://localhost:50000/
+2025-12-12 21:06:06.483 	 Browser launched successfully
+2025-12-12 21:06:06.484 	 === ChatBot Launch Completed ===
+2025-12-12 21:06:06.487 	 Server is running with automatic browser monitoring
+2025-12-12 21:06:06.489 	 Server will auto-stop 10 seconds after all browsers are closed
+2025-12-12 21:15:43.350 	 === ChatBot Launch Started ===
+2025-12-12 21:15:43.373 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-12 21:15:43.375 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-12 21:15:43.388 	 Node.js found: C:\Program Files\nodejs\node.exe
+2025-12-12 21:15:43.425 	 Node.js version: v24.11.1
+2025-12-12 21:15:43.429 	 Starting Node.js server with browser monitoring...
+2025-12-12 21:15:43.483 	 Server started with PID: 16960
+2025-12-12 21:15:43.483 	 Browser monitoring: ENABLED (auto-stop after 10s with no browsers)
+2025-12-12 21:15:43.484 	 Waiting for server to start...
+2025-12-12 21:15:45.887 	 Server health check passed
+2025-12-12 21:15:45.892 	 Opening browser: http://localhost:50000/
+2025-12-12 21:15:46.050 	 Browser launched successfully
+2025-12-12 21:15:46.053 	 === ChatBot Launch Completed ===
+2025-12-12 21:15:46.054 	 Server is running with automatic browser monitoring
+2025-12-12 21:15:46.054 	 Server will auto-stop 10 seconds after all browsers are closed
+2025-12-12 21:17:01.232 	 === ChatBot Launch Started ===
+2025-12-12 21:17:01.287 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-12 21:17:01.294 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-12 21:17:01.343 	 Node.js found: C:\Program Files\nodejs\node.exe
+2025-12-12 21:17:01.473 	 Node.js version: v24.11.1
+2025-12-12 21:17:01.482 	 Starting Node.js server with browser monitoring...
+2025-12-12 21:17:01.556 	 Server started with PID: 3960
+2025-12-12 21:17:01.560 	 Browser monitoring: ENABLED (auto-stop after 10s with no browsers)
+2025-12-12 21:17:01.563 	 Waiting for server to start...
+2025-12-12 21:17:04.089 	 Server health check passed
+2025-12-12 21:17:04.101 	 Opening browser: http://localhost:50000/
+2025-12-12 21:17:04.258 	 Browser launched successfully
+2025-12-12 21:17:04.259 	 === ChatBot Launch Completed ===
+2025-12-12 21:17:04.260 	 Server is running with automatic browser monitoring
+2025-12-12 21:17:04.261 	 Server will auto-stop 10 seconds after all browsers are closed
+2025-12-12 21:23:19.793 	 === ChatBot Launch Started ===
+2025-12-12 21:23:19.815 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-12 21:23:19.819 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-12 21:23:19.836 	 Node.js found: C:\Program Files\nodejs\node.exe
+2025-12-12 21:23:19.921 	 Node.js version: v24.11.1
+2025-12-12 21:23:19.933 	 Starting Node.js server with browser monitoring...
+2025-12-12 21:23:20.049 	 Server started with PID: 16468
+2025-12-12 21:23:20.052 	 Browser monitoring: ENABLED (auto-stop after 10s with no browsers)
+2025-12-12 21:23:20.055 	 Waiting for server to start...
+2025-12-12 21:23:22.556 	 Server health check passed
+2025-12-12 21:23:22.568 	 Opening browser: http://localhost:50000/
+2025-12-12 21:23:22.715 	 Browser launched successfully
+2025-12-12 21:23:22.716 	 === ChatBot Launch Completed ===
+2025-12-12 21:23:22.717 	 Server is running with automatic browser monitoring
+2025-12-12 21:23:22.720 	 Server will auto-stop 10 seconds after all browsers are closed
+2025-12-12 21:27:11.680 	 === ChatBot Launch Started ===
+2025-12-12 21:27:11.717 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-12 21:27:11.724 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-12 21:27:11.741 	 Node.js found: C:\Program Files\nodejs\node.exe
+2025-12-12 21:27:11.820 	 Node.js version: v24.11.1
+2025-12-12 21:27:11.833 	 Starting Node.js server with browser monitoring...
+2025-12-12 21:27:11.939 	 Server started with PID: 11156
+2025-12-12 21:27:11.942 	 Browser monitoring: ENABLED (auto-stop after 10s with no browsers)
+2025-12-12 21:27:11.944 	 Waiting for server to start...
+2025-12-12 21:27:14.255 	 Server health check passed
+2025-12-12 21:27:14.268 	 Opening browser: http://localhost:50000/
+2025-12-12 21:27:14.515 	 Browser launched successfully
+2025-12-12 21:27:14.518 	 === ChatBot Launch Completed ===
+2025-12-12 21:27:14.519 	 Server is running with automatic browser monitoring
+2025-12-12 21:27:14.520 	 Server will auto-stop 10 seconds after all browsers are closed
+2025-12-12 21:50:58.345 	 === ChatBot Launch Started ===
+2025-12-12 21:50:58.350 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-12 21:50:58.352 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-12 21:50:58.358 	 Node.js found: C:\Program Files\nodejs\node.exe
+2025-12-12 21:50:58.377 	 Node.js version: v24.11.1
+2025-12-12 21:50:58.379 	 Starting Node.js server with browser monitoring...
+2025-12-12 21:50:58.405 	 Server started with PID: 19876
+2025-12-12 21:50:58.407 	 Browser monitoring: ENABLED (auto-stop after 25s with no browsers)
+2025-12-12 21:50:58.407 	 Waiting for server to start...
+2025-12-12 21:51:00.480 	 Server health check passed
+2025-12-12 21:51:00.481 	 Opening browser: http://localhost:50000/
+2025-12-12 21:51:00.518 	 Browser launched successfully
+2025-12-12 21:51:00.519 	 === ChatBot Launch Completed ===
+2025-12-12 21:51:00.520 	 Server is running with automatic browser monitoring
+2025-12-12 21:51:00.520 	 Server will auto-stop 10 seconds after all browsers are closed
+2025-12-12 21:52:25.638 	 === ChatBot Launch Started ===
+2025-12-12 21:52:25.693 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-12 21:52:25.701 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-12 21:52:25.743 	 Node.js found: C:\Program Files\nodejs\node.exe
+2025-12-12 21:52:25.825 	 Node.js version: v24.11.1
+2025-12-12 21:52:25.827 	 Starting Node.js server with browser monitoring...
+2025-12-12 21:52:25.985 	 Server started with PID: 3940
+2025-12-12 21:52:25.986 	 Browser monitoring: ENABLED (auto-stop after 25s with no browsers)
+2025-12-12 21:52:25.988 	 Waiting for server to start...
+2025-12-12 21:52:28.373 	 Server health check passed
+2025-12-12 21:52:28.381 	 Opening browser: http://localhost:50000/
+2025-12-12 21:52:28.502 	 Browser launched successfully
+2025-12-12 21:52:28.504 	 === ChatBot Launch Completed ===
+2025-12-12 21:52:28.506 	 Server is running with automatic browser monitoring
+2025-12-12 21:52:28.510 	 Server will auto-stop 10 seconds after all browsers are closed
+2025-12-12 21:52:50.048 	 === ChatBot Launch Started ===
+2025-12-12 21:52:50.053 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-12 21:52:50.054 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-12 21:52:50.060 	 Node.js found: C:\Program Files\nodejs\node.exe
+2025-12-12 21:52:50.080 	 Node.js version: v24.11.1
+2025-12-12 21:52:50.082 	 Starting Node.js server with browser monitoring...
+2025-12-12 21:52:50.108 	 Server started with PID: 9620
+2025-12-12 21:52:50.109 	 Browser monitoring: ENABLED (auto-stop after 25s with no browsers)
+2025-12-12 21:52:50.109 	 Waiting for server to start...
+2025-12-12 21:52:52.187 	 Server health check passed
+2025-12-12 21:52:52.188 	 Opening browser: http://localhost:50000/
+2025-12-12 21:52:52.218 	 Browser launched successfully
+2025-12-12 21:52:52.218 	 === ChatBot Launch Completed ===
+2025-12-12 21:52:52.218 	 Server is running with automatic browser monitoring
+2025-12-12 21:52:52.219 	 Server will auto-stop 10 seconds after all browsers are closed
+2025-12-12 21:54:59.285 	 === ChatBot Launch Started ===
+2025-12-12 21:54:59.336 	 ServerDir: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot\launcher\server
+2025-12-12 21:54:59.344 	 ProjectRoot: D:\Users\ksk01\Documents\develop\vscode_develop\HTML\ChatBot
+2025-12-12 21:54:59.383 	 Node.js found: C:\Program Files\nodejs\node.exe
+2025-12-12 21:54:59.461 	 Node.js version: v24.11.1
+2025-12-12 21:54:59.465 	 Starting Node.js server with browser monitoring...
+2025-12-12 21:54:59.514 	 Server started with PID: 17876
+2025-12-12 21:54:59.514 	 Browser monitoring: ENABLED (auto-stop after 25s with no browsers)
+2025-12-12 21:54:59.515 	 Waiting for server to start...
+2025-12-12 21:55:01.835 	 Server health check passed
+2025-12-12 21:55:01.838 	 Opening browser: http://localhost:50000/
+2025-12-12 21:55:01.901 	 Browser launched successfully
+2025-12-12 21:55:01.902 	 === ChatBot Launch Completed ===
+2025-12-12 21:55:01.903 	 Server is running with automatic browser monitoring
+2025-12-12 21:55:01.903 	 Server will auto-stop 10 seconds after all browsers are closed

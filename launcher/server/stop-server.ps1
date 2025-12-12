@@ -35,24 +35,43 @@ if ($netstatOutput) {
     Write-Host "No processes found listening on port $Port"
 }
 
-# 2. PowerShell server processes（ps_server.ps1を実行中のもの）も終了
+# 2. Node.js server processes（server.jsを実行中のもの）も終了
 try {
-    $psProcesses = Get-WmiObject Win32_Process -ErrorAction Stop | Where-Object {
-        $_.CommandLine -like "*ps_server.ps1*" -or 
-        $_.CommandLine -like "*Port*$Port*"
+    # PIDファイルから直接読み込む方法を優先
+    $pidFile = Join-Path $PSScriptRoot 'server.pid'
+    if (Test-Path $pidFile) {
+        try {
+            $savedPid = Get-Content $pidFile -ErrorAction Stop
+            if ($savedPid -match '^\d+$') {
+                Write-Host "Stopping server from PID file: $savedPid"
+                Stop-Process -Id ([int]$savedPid) -Force -ErrorAction SilentlyContinue
+                Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
+                Write-Host "Server stopped from PID file"
+            }
+        } catch {
+            Write-Host "Failed to stop from PID file: $($_.Exception.Message)"
+        }
+    }
+    
+    # Node.jsプロセスを検索して終了
+    $nodeProcesses = Get-WmiObject Win32_Process -ErrorAction Stop | Where-Object {
+        $_.Name -eq 'node.exe' -and (
+            $_.CommandLine -like "*server.js*" -or 
+            $_.CommandLine -like "*--port=$Port*"
+        )
     } 
 
-    foreach ($process in $psProcesses) {
+    foreach ($process in $nodeProcesses) {
         try {
-            Write-Host "Stopping PowerShell server process PID: $($process.ProcessId)"
+            Write-Host "Stopping Node.js server process PID: $($process.ProcessId)"
             Stop-Process -Id $process.ProcessId -Force -ErrorAction Stop
-            Write-Host "PowerShell server process stopped"
+            Write-Host "Node.js server process stopped"
         } catch {
-            Write-Host "Failed to stop PowerShell server: $($_.Exception.Message)"
+            Write-Host "Failed to stop Node.js server: $($_.Exception.Message)"
         }
     }
 } catch {
-    Write-Host "Warning: Could not enumerate PowerShell processes: $($_.Exception.Message)"
+    Write-Host "Warning: Could not enumerate Node.js processes: $($_.Exception.Message)"
 }
 
 Write-Host "Server stop operation completed."

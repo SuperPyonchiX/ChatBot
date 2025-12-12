@@ -241,11 +241,11 @@ window.CONFIG = {
     MODELS: {
         // サポートされているモデル
         OPENAI: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5'],
-        GEMINI: ['gemini-2.5-pro', 'gemini-2.5-flash'],
+        GEMINI: ['gemini-3-pro-preview', 'gemini-2.5-pro', 'gemini-2.5-flash'],
         CLAUDE: [
-            'claude-opus-4-1',
-            'claude-sonnet-4-0', 
-            'claude-3-5-haiku-latest'
+            'claude-opus-4-5',
+            'claude-sonnet-4-5', 
+            'claude-haiku-4-5'
         ],
         
         // OpenAI Responses APIでのWeb検索をサポートするモデル
@@ -260,13 +260,14 @@ window.CONFIG = {
             'gpt-5': 'GPT-5',
             
             // Gemini
+            'gemini-3-pro-preview': 'Gemini 3 Pro Preview',
             'gemini-2.5-pro': 'Gemini 2.5 Pro',
             'gemini-2.5-flash': 'Gemini 2.5 Flash',
             
             // Claude
-            'claude-opus-4-1': 'Claude 4.1 Opus',
-            'claude-sonnet-4-0': 'Claude 4 Sonnet',
-            'claude-3-5-haiku-latest': 'Claude 3.5 Haiku'
+            'claude-opus-4-5': 'Claude 4.5 Opus',
+            'claude-sonnet-4-5': 'Claude 4.5 Sonnet',
+            'claude-haiku-4-5': 'Claude 4.5 Haiku'
         }
     },
 
@@ -340,6 +341,7 @@ window.CONFIG = {
         if (isFile) {
             // file:// からの相対パスは使用できないため、ローカル同一オリジンプロキシを絶対URLで指定
             window.CONFIG.AIAPI.ENDPOINTS.CLAUDE = 'http://localhost:50000/anthropic/v1/messages';
+            console.warn('⚠️ ファイルプロトコルで開かれています。サーバーが起動していることを確認してください: http://localhost:50000');
         } else {
             // http(s) で配信されている場合は同一オリジンパスを維持
             window.CONFIG.AIAPI.ENDPOINTS.CLAUDE = '/anthropic/v1/messages';

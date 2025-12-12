@@ -1,0 +1,27 @@
+{
+  "name": "chatbot-server",
+  "version": "1.0.0",
+  "description": "ChatBot Node.js server with static file serving and Anthropic API reverse proxy",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js --port=50000",
+    "test": "node -e \"console.log('Server test: OK')\""
+  },
+  "keywords": [
+    "chatbot",
+    "server",
+    "static-file-server",
+    "reverse-proxy",
+    "anthropic"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}

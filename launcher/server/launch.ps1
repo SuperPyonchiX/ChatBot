@@ -7,156 +7,128 @@ $ErrorActionPreference = 'SilentlyContinue'
 # Path settings
 $serverDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Join-Path $serverDir '..' | Join-Path -ChildPath '..' | Resolve-Path
-$psServer = Join-Path $serverDir 'ps_server.ps1'
+$nodeServer = Join-Path $serverDir 'server.js'
+$indexHtmlPath = Join-Path $projectRoot 'app\index.html'
 
-# Log output function and PID file
+# Log output function
 $logFile = Join-Path $serverDir 'launch.log'
-$pidFile = Join-Path $serverDir 'server.pid'
 function Write-Log { 
   param([string]$msg) 
   $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss.fff')
   "$ts `t $msg" | Out-File -FilePath $logFile -Encoding UTF8 -Append 
 }
 
-# Debug path information
+Write-Log "=== ChatBot Launch Started ==="
 Write-Log "ServerDir: $serverDir"
 Write-Log "ProjectRoot: $projectRoot"
-Write-Log "PS Server: $psServer"
 
-# Windows standard PowerShell server startup
-$env:PORT = "$Port"
-$serverProc = $null
+# Node.jsの存在確認（環境変数PATHから検索）
+$nodeExe = $null
+$nodePaths = @(
+  "node.exe",
+  "C:\Program Files\nodejs\node.exe",
+  "C:\Program Files (x86)\nodejs\node.exe",
+  "$env:ProgramFiles\nodejs\node.exe",
+  "$env:ProgramFiles(x86)\nodejs\node.exe",
+  "$env:LOCALAPPDATA\Programs\nodejs\node.exe"
+)
 
-if (Test-Path $psServer) {
-  Write-Log "Starting PowerShell server (Windows standard): $psServer"
-  $psExe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-  $serverProc = Start-Process -FilePath $psExe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',"$psServer",'-Port',"$Port") -WindowStyle Hidden -PassThru -WorkingDirectory $serverDir
-  
-  # Save PID to file (for manual termination)
-  if ($serverProc -and $serverProc.Id) {
-    "$($serverProc.Id)" | Out-File -FilePath $pidFile -Encoding ASCII
-    Write-Log "Server PID $($serverProc.Id) saved to $pidFile"
-  }
-} else {
-  [Console]::Error.WriteLine("ERROR: PowerShell server not found: $psServer")
-  Write-Log "ERROR: PowerShell server not found"
+foreach ($path in $nodePaths) {
+  try {
+    if ($path -eq "node.exe") {
+      # PATHから検索
+      $found = Get-Command node -ErrorAction SilentlyContinue
+      if ($found) { 
+        $nodeExe = $found.Source 
+        break 
+      }
+    } elseif (Test-Path $path) {
+      $nodeExe = $path
+      break
+    }
+  } catch {}
+}
+
+if (-not $nodeExe) {
+  [Console]::Error.WriteLine("ERROR: Node.js not found. Please install Node.js from https://nodejs.org/")
+  Write-Log "ERROR: Node.js not found"
+  Write-Log "Searched paths: $($nodePaths -join ', ')"
+  Start-Sleep -Seconds 5
   exit 1
 }
 
-# Server health check
-$healthy = $false
-Write-Log "Waiting for server to start..."
-Start-Sleep -Seconds 2  # Give server more time to initialize
+Write-Log "Node.js found: $nodeExe"
+try {
+  $nodeVersion = & $nodeExe --version 2>&1
+  Write-Log "Node.js version: $nodeVersion"
+} catch {
+  Write-Log "Warning: Could not get Node.js version"
+}
 
-for ($i=0; $i -lt 20; $i++) {  # Reduce total attempts but with longer intervals
+# Node.js server startup with browser monitoring
+if (-not (Test-Path $nodeServer)) {
+  [Console]::Error.WriteLine("ERROR: Node.js server not found: $nodeServer")
+  Write-Log "ERROR: Node.js server not found"
+  exit 1
+}
+
+Write-Log "Starting Node.js server with browser monitoring..."
+
+# Start Node.js server in background with browser monitoring enabled
+$startInfo = New-Object System.Diagnostics.ProcessStartInfo
+$startInfo.FileName = $nodeExe
+$startInfo.Arguments = "`"$nodeServer`" --port=$Port --monitor-browser"
+$startInfo.WorkingDirectory = $serverDir
+$startInfo.UseShellExecute = $false
+$startInfo.CreateNoWindow = $true
+$startInfo.RedirectStandardOutput = $true
+$startInfo.RedirectStandardError = $true
+
+# Inherit environment variables to ensure PATH is available
+$startInfo.EnvironmentVariables["PATH"] = $env:PATH
+
+$serverProc = [System.Diagnostics.Process]::Start($startInfo)
+
+if ($serverProc -and $serverProc.Id) {
+  Write-Log "Server started with PID: $($serverProc.Id)"
+  Write-Log "Browser monitoring: ENABLED (auto-stop after 10s with no browsers)"
+} else {
+  Write-Log "ERROR: Failed to start server"
+  exit 1
+}
+
+# Wait for server to be ready
+Write-Log "Waiting for server to start..."
+Start-Sleep -Seconds 2
+
+# Health check
+$healthy = $false
+for ($i=0; $i -lt 10; $i++) {
   try {
-    $resp = Invoke-WebRequest -UseBasicParsing -Uri ("http://localhost:" + $Port + "/") -TimeoutSec 2 -Method GET
+    $resp = Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:$Port/" -TimeoutSec 2 -Method GET -ErrorAction SilentlyContinue
     if ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 500) { 
       $healthy = $true 
-      Write-Log "Server health check passed after $($i+1) attempts"
+      Write-Log "Server health check passed"
       break 
     }
-  } catch {
-    # Write-Log "Health check attempt $($i+1): $($_.Exception.Message)"
-  }
+  } catch {}
   Start-Sleep -Milliseconds 500
 }
-if (-not $healthy) { Write-Log "Warning: server health check not confirmed within timeout" }
 
-Write-Log "Starting ChatBot in local file mode (no server required)"
-# Browser launch settings - open as local file
-$indexHtmlPath = Join-Path $projectRoot 'app\index.html'
+if (-not $healthy) { 
+  Write-Log "Warning: Server health check timeout (server may still be starting)"
+}
 
-# Background monitor job using zero-process detection
-$monitorJob = Start-Job -ScriptBlock {
-  param($logFile)
-  
-  # Logging inside job
-  function Write-Log { 
-    param([string]$msg) 
-    $ts = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss.fff')
-    "$ts `t $msg" | Out-File -FilePath $logFile -Encoding UTF8 -Append 
-  }
-  
-  # Process count inside job
-  function Get-ImageCount {
-    param([string]$imageName)
-    try {
-      $base = ($imageName -replace '\.exe$','')
-      $c = (Get-Process -Name $base -ErrorAction SilentlyContinue).Count
-      if ($c -ge 0) { return $c }
-    } catch {}
-    try {
-      $out = & cmd.exe /c "tasklist /FI \"IMAGENAME eq $imageName\" | findstr /B /C:$imageName"
-      if ($LASTEXITCODE -eq 0 -and $out) { return ($out -split "`n").Length }
-    } catch {}
-    return 0
-  }
-  
-  $consecutiveZeroChecks = 0
-  Write-Log "Monitor job: started zero-process detection"
-  
-  while ($true) {
-    Start-Sleep -Seconds 5
-    
-    # Check if all major browser processes are zero
-    $braveCount = Get-ImageCount 'brave.exe'
-    $chromeCount = Get-ImageCount 'chrome.exe'  
-    $edgeCount = Get-ImageCount 'msedge.exe'
-    $firefoxCount = Get-ImageCount 'firefox.exe'
-    
-    $totalBrowsers = $braveCount + $chromeCount + $edgeCount + $firefoxCount
-    
-    if ($totalBrowsers -eq 0) {
-      $consecutiveZeroChecks++
-      Write-Log "Monitor job: no browser processes detected (check $consecutiveZeroChecks/2)"
-
-      if ($consecutiveZeroChecks -ge 2) { # 10s (2 checks * 5s) of zero browsers
-        Write-Log "Monitor job: no browser processes for 10s. Stopping server."
-        return "STOP_SERVER"
-      }
-    } else {
-      $consecutiveZeroChecks = 0  # Reset counter when browsers detected
-      if ($totalBrowsers -le 5) { # Log only when relatively few browsers
-        Write-Log "Monitor job: browsers active (brave=$braveCount chrome=$chromeCount edge=$edgeCount firefox=$firefoxCount)"
-      }
-    }
-  }
-  Write-Log "Monitor job: unexpected exit"
-  return "ERROR"
-} -ArgumentList $logFile
-
-# Launch browser with local HTML file
+# Launch browser
 if (Test-Path $indexHtmlPath) {
-  Start-Process $indexHtmlPath | Out-Null
-  Write-Log "Launched local index.html file: $indexHtmlPath"
+  Write-Log "Opening browser: http://localhost:$Port/"
+  Start-Process "http://localhost:$Port/" | Out-Null
+  Write-Log "Browser launched successfully"
 } else {
   Write-Log "ERROR: index.html not found: $indexHtmlPath"
   [Console]::Error.WriteLine("ERROR: index.html not found: $indexHtmlPath")
 }
 
-# Wait for monitor job to detect browser exit
-Write-Log "Waiting for monitor job to detect browser exit..."
-do {
-  Start-Sleep -Seconds 1
-  $jobResult = Receive-Job -Job $monitorJob -Keep
-} while (-not $jobResult)
-
-Write-Log "Monitor result: $jobResult"
-Remove-Job -Job $monitorJob -Force
-
-# Stop server and cleanup
-try { 
-  if (-not $serverProc.HasExited) { 
-    Write-Log "Stopping server PID=$($serverProc.Id)"
-    Stop-Process -Id $serverProc.Id -Force 
-  } 
-} catch {}
-
-# Cleanup PID file
-if (Test-Path $pidFile) {
-  Remove-Item $pidFile -Force
-  Write-Log "PID file removed: $pidFile"
-}
-
-Write-Log "Launcher finished"
+Write-Log "=== ChatBot Launch Completed ==="
+Write-Log "Server is running with automatic browser monitoring"
+Write-Log "Server will auto-stop 10 seconds after all browsers are closed"

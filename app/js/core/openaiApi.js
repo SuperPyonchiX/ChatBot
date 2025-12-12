@@ -156,10 +156,29 @@ class OpenAIAPI {
         body = {
             model: model,
             messages: messages,
-            stream: stream,
-            temperature: window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature,
-            max_tokens: window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens
+            stream: stream
         };
+
+        // GPT-5系モデルの場合は特別な処理が必要
+        const isGPT5Model = model.startsWith('gpt-5');
+        if (isGPT5Model) {
+            // GPT-5系モデルはmax_completion_tokensを使用
+            body.max_completion_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
+            // temperatureはデフォルト値(1)のみサポートされているため、
+            // デフォルト値以外の場合は省略する（デフォルト値が使用される）
+            if (window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature === 1) {
+                body.temperature = 1;
+            }
+            // GPT-5系モデルでは他のパラメータ（top_p, frequency_penalty, presence_penalty）も
+            // 制限がある可能性があるため省略
+        } else {
+            // GPT-4系などの従来モデル
+            body.max_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
+            body.temperature = window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature;
+            body.top_p = window.CONFIG.AIAPI.DEFAULT_PARAMS.top_p;
+            body.frequency_penalty = window.CONFIG.AIAPI.DEFAULT_PARAMS.frequency_penalty;
+            body.presence_penalty = window.CONFIG.AIAPI.DEFAULT_PARAMS.presence_penalty;
+        }
 
         return { endpoint, headers, body };
     }
