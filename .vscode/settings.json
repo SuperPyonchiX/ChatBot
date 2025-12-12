@@ -1,0 +1,30 @@
+{
+  // JavaScript型チェック設定
+  "js/ts.implicitProjectConfig.checkJs": true,
+  "javascript.validate.enable": true,
+  "javascript.suggestionActions.enabled": true,
+  
+  // JSDoc設定
+  "javascript.suggest.completeFunctionCalls": true,
+  "javascript.suggest.jsdoc.generateReturns": true,
+  
+  // エディタ設定
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  
+  // ファイル除外設定
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/*.pid": true
+  },
+  
+  // 検索除外設定
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/*.code-search": true,
+    "**/launcher/server/launch.log": true
+  }
+}

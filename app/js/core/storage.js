@@ -28,9 +28,10 @@ class Storage {
     // Public API Methods ///////////////////////////////////////////////////////
     /**
      * ローカルストレージにアイテムを保存
-     * @private
+     * センシティブなデータは自動的に暗号化されます
      * @param {string} key - 保存するキー
-     * @param {*} value - 保存する値
+     * @param {any} value - 保存する値（オブジェクトは自動的にJSON化）
+     * @returns {void}
      */
     setItem(key, value) {
         if (!this.#isLocalStorageAvailable()) {
@@ -69,11 +70,11 @@ class Storage {
 
     /**
      * ローカルストレージからアイテムを取得
-     * @private
+     * センシティブなデータは自動的に復号化されます
      * @param {string} key - 取得するキー
-     * @param {*} defaultValue - 値が存在しない場合のデフォルト値
-     * @param {boolean} isJson - JSONとしてパースするかどうか
-     * @returns {*} 取得した値、またはデフォルト値
+     * @param {any} [defaultValue=''] - 値が存在しない場合のデフォルト値
+     * @param {boolean} [isJson=false] - JSONとしてパースするかどうか
+     * @returns {any} 取得した値、またはデフォルト値
      */
     getItem(key, defaultValue = '', isJson = false) {
         if (!this.#isLocalStorageAvailable()) {
@@ -122,7 +123,8 @@ class Storage {
 
     /**
      * APIキー設定を読み込む
-     * @returns {Object} API設定オブジェクト
+     * 暗号化されたAPIキーを自動的に復号化します
+     * @returns {ApiSettings} API設定オブジェクト
      */
     loadApiSettings() {
         const azureEndpoints = {};
@@ -148,7 +150,9 @@ class Storage {
     
     /**
      * APIキー設定を保存
-     * @param {Object} apiSettings - API設定オブジェクト
+     * APIキーは自動的に暗号化されて保存されます
+     * @param {ApiSettings} apiSettings - API設定オブジェクト
+     * @returns {void}
      */
     saveApiSettings(apiSettings) {
         if (!apiSettings) return;
@@ -343,6 +347,10 @@ class Storage {
      * 会話を読み込む
      * @returns {Array} 読み込んだ会話の配列
      */
+    /**
+     * ローカルストレージから会話一覧を読み込む
+     * @returns {Conversation[]} 会話オブジェクトの配列
+     */
     loadConversations() {
         try {
             const conversations = this.getItem(window.CONFIG.STORAGE.KEYS.CONVERSATIONS, [], true);
@@ -391,7 +399,8 @@ class Storage {
     /**
      * 添付ファイルをローカルストレージに保存
      * @param {string} conversationId - 会話ID
-     * @param {Object} attachmentData - タイムスタンプと添付ファイルを含むオブジェクト
+     * @param {Attachment[]|Object} attachmentData - 添付ファイルの配列、または{files: Attachment[], timestamp: number}形式のオブジェクト
+     * @returns {void}
      */
     saveAttachments(conversationId, attachmentData) {
         if (!conversationId) return;

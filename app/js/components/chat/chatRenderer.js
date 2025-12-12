@@ -30,10 +30,11 @@ class ChatRenderer {
     /**
      * ユーザーメッセージを追加する
      * ユーザーのメッセージとその添付ファイルをチャット画面に表示します
+     * @async
      * @param {string} message - ユーザーが入力したテキストメッセージ
-     * @param {HTMLElement} chatMessages - メッセージを表示する親要素
-     * @param {Array} attachments - 添付ファイルの配列
-     * @param {number|null} timestamp - メッセージのタイムスタンプ、nullの場合は現在時刻を使用
+     * @param {HTMLElement} chatMessages - メッセージを表示する親DOM要素
+     * @param {Attachment[]} [attachments=[]] - 添付ファイルの配列
+     * @param {number|null} [timestamp=null] - メッセージのタイムスタンプ、nullの場合は現在時刻を使用
      * @returns {Promise<void>}
      */
     async addUserMessage(message, chatMessages, attachments = [], timestamp = null) {

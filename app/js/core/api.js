@@ -25,16 +25,13 @@ class AIAPI {
 
     /**
      * AI APIを呼び出して応答を得る（統合エントリーポイント）
-     * @param {Array} messages - 会話メッセージの配列
-     * @param {string} model - 使用するモデル名
-     * @param {Array} attachments - 添付ファイルの配列（任意）
-     * @param {Object} options - 追加オプション
-     * @param {boolean} options.stream - ストリーミングを使用するかどうか
-     * @param {boolean} options.enableWebSearch - Web検索を有効にするかどうか
-     * @param {Function} options.onChunk - ストリーミング時のチャンク受信コールバック関数
-     * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
+     * @async
+     * @param {Message[]} messages - 会話メッセージの配列
+     * @param {string} model - 使用するモデル名 (例: 'gpt-4o', 'claude-sonnet-4-5', 'gemini-2.5-pro')
+     * @param {Attachment[]} [attachments=[]] - 添付ファイルの配列（任意）
+     * @param {ApiCallOptions} [options={}] - 追加オプション
      * @returns {Promise<string>} APIからの応答テキスト（ストリーミングの場合は空文字列）
-     * @throws {Error} API設定やリクエストに問題があった場合
+     * @throws {Error} API設定やリクエストに問題があった場合（APIキー未設定、サポート外モデル等）
      */
     async callAIAPI(messages, model, attachments = [], options = {}) {
         try {
@@ -68,7 +65,7 @@ class AIAPI {
     /**
      * Web検索対応モデルかどうかを判定
      * @private
-     * @param {string} model - モデル名
+     * @param {string} model - モデル名 (例: 'gpt-5', 'gpt-5-mini')
      * @returns {boolean} Web検索対応モデルかどうか
      */
     #isWebSearchCompatibleModel(model) {

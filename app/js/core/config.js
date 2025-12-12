@@ -3,6 +3,83 @@
  * アプリケーション全体で使用される設定値を管理します
  */
 
+// ===============================================
+// グローバル型定義 (Global Type Definitions)
+// ===============================================
+
+/**
+ * メッセージの役割を表す列挙型
+ * @typedef {'user'|'assistant'|'system'} MessageRole
+ */
+
+/**
+ * チャットメッセージを表すオブジェクト
+ * @typedef {Object} Message
+ * @property {MessageRole} role - メッセージの役割
+ * @property {string} content - メッセージの内容
+ * @property {number} [timestamp] - タイムスタンプ (ミリ秒)
+ * @property {Attachment[]} [attachments] - 添付ファイルの配列
+ */
+
+/**
+ * 添付ファイルを表すオブジェクト
+ * @typedef {Object} Attachment
+ * @property {string} id - 一意識別子
+ * @property {string} name - ファイル名
+ * @property {'file'|'image'} type - ファイルタイプ
+ * @property {number} size - ファイルサイズ (バイト)
+ * @property {string} mimeType - MIMEタイプ
+ * @property {string} [content] - テキストコンテンツ (テキストファイルの場合)
+ * @property {string} [data] - Base64エンコードされたデータ (画像の場合)
+ * @property {number} timestamp - 追加日時
+ */
+
+/**
+ * 会話を表すオブジェクト
+ * @typedef {Object} Conversation
+ * @property {string} id - 会話の一意識別子 (タイムスタンプベース)
+ * @property {string} title - 会話のタイトル
+ * @property {string} model - 使用するAIモデル名
+ * @property {number} timestamp - 作成/更新日時
+ * @property {Message[]} messages - メッセージの配列
+ */
+
+/**
+ * API設定を表すオブジェクト
+ * @typedef {Object} ApiSettings
+ * @property {'openai'|'azure'|'claude'|'gemini'} apiType - 使用するAPIタイプ
+ * @property {string} [openaiApiKey] - OpenAI APIキー (暗号化済み)
+ * @property {string} [azureApiKey] - Azure OpenAI APIキー (暗号化済み)
+ * @property {string} [claudeApiKey] - Claude APIキー (暗号化済み)
+ * @property {string} [geminiApiKey] - Gemini APIキー (暗号化済み)
+ * @property {Object.<string, string>} [azureEndpoints] - Azure OpenAIエンドポイント設定
+ */
+
+/**
+ * API呼び出しオプション
+ * @typedef {Object} ApiCallOptions
+ * @property {boolean} [stream=true] - ストリーミングを使用するか
+ * @property {boolean} [enableWebSearch=false] - Web検索を有効にするか
+ * @property {(chunk: string) => void} [onChunk] - ストリーミング時のチャンク受信コールバック
+ * @property {() => void} [onComplete] - ストリーミング完了時のコールバック
+ * @property {(error: Error) => void} [onError] - エラー時のコールバック
+ */
+
+/**
+ * ファイルタイプの定義
+ * @typedef {Object} FileTypeDefinition
+ * @property {string[]} extensions - 拡張子の配列
+ * @property {'image'|'text'|'pdf'|'code'|'office'} category - ファイルカテゴリ
+ */
+
+/**
+ * システムプロンプトテンプレート
+ * @typedef {Object} PromptTemplate
+ * @property {string} name - テンプレート名
+ * @property {string} content - プロンプト内容
+ * @property {string} category - カテゴリ
+ */
+
 // グローバルスコープに設定オブジェクトを公開
 window.CONFIG = {
     /**
