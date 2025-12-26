@@ -2,6 +2,7 @@
  * markdown.js
  * マークダウンのレンダリングとコードハイライト関連の機能を提供します
  * @class Markdown
+ * @implements {AppMarkdown}
  */
 class Markdown {
     static #instance = null;
@@ -38,7 +39,7 @@ class Markdown {
     /**
      * Markdownテキストをレンダリングします
      * @param {string} text - レンダリングするマークダウンテキスト
-     * @returns {string} レンダリングされたHTML
+     * @returns {Promise<string>} レンダリングされたHTML
      */
     async renderMarkdown(text) {
         if (!text) return '';
@@ -204,7 +205,7 @@ class Markdown {
                     // 要素を作成
                     const wrapperContainer = document.createElement('div');
                     wrapperContainer.classList.add('mermaid-wrapper');
-                    wrapperContainer.setAttribute('data-mermaid-index', i);
+                    wrapperContainer.setAttribute('data-mermaid-index', String(i));
                     
                     // ツールバーを作成
                     const toolbar = document.createElement('div');
@@ -222,7 +223,7 @@ class Markdown {
                     const downloadButton = document.createElement('button');
                     downloadButton.classList.add('mermaid-download');
                     downloadButton.setAttribute('type', 'button');
-                    downloadButton.setAttribute('data-mermaid-index', i);
+                    downloadButton.setAttribute('data-mermaid-index', String(i));
                     downloadButton.innerHTML = '<i class="fas fa-download"></i> SVG保存';
                     downloadButton.title = 'SVGファイルとして保存';
                     downloadButton.style.display = 'none'; // 初期状態では非表示
@@ -230,7 +231,7 @@ class Markdown {
                     const previewButton = document.createElement('button');
                     previewButton.classList.add('mermaid-preview-toggle');
                     previewButton.setAttribute('type', 'button');
-                    previewButton.setAttribute('data-mermaid-index', i);
+                    previewButton.setAttribute('data-mermaid-index', String(i));
                     previewButton.innerHTML = '<i class="fas fa-eye"></i> プレビュー表示';
                     previewButton.title = 'プレビュー表示/コード表示を切り替え';
                     
@@ -240,12 +241,12 @@ class Markdown {
                     
                     const codeContainer = document.createElement('div');
                     codeContainer.classList.add('mermaid-code-container');
-                    codeContainer.setAttribute('data-mermaid-index', i);
+                    codeContainer.setAttribute('data-mermaid-index', String(i));
                     
                     // ダイアグラム表示用の要素を作成
                     const diagramContainer = document.createElement('div');
                     diagramContainer.classList.add('mermaid-diagram', 'hidden');
-                    diagramContainer.setAttribute('data-mermaid-index', i);
+                    diagramContainer.setAttribute('data-mermaid-index', String(i));
                     
                     const renderedDiagramId = `mermaid-diagram-${Date.now()}-${i}`;
                     diagramContainer.setAttribute('data-diagram-id', renderedDiagramId);
@@ -254,12 +255,12 @@ class Markdown {
                     loadingElement.classList.add('mermaid-loading');
                     loadingElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ダイアグラムを生成中...';
                     loadingElement.style.display = 'none';
-                    loadingElement.setAttribute('data-mermaid-index', i);
+                    loadingElement.setAttribute('data-mermaid-index', String(i));
                     
                     const errorElement = document.createElement('div');
                     errorElement.classList.add('mermaid-error');
                     errorElement.style.display = 'none';
-                    errorElement.setAttribute('data-mermaid-index', i);
+                    errorElement.setAttribute('data-mermaid-index', String(i));
                     
                     // DOMツリーを構築
                     toolbar.appendChild(previewButton);
@@ -511,6 +512,7 @@ class Markdown {
         // Prismが利用可能で言語が指定されている場合のみハイライト
         if (typeof Prism !== 'undefined' && Prism.languages && lang && Prism.languages[lang]) {
             try {
+                // @ts-ignore - Prism.highlightは実際には存在する
                 return Prism.highlight(code, Prism.languages[lang], lang);
             } catch (error) {
                 console.error('構文ハイライトエラー:', error);
@@ -577,6 +579,7 @@ class Markdown {
             });
 
             // エラーハンドラーをオーバーライド
+            // @ts-ignore - mermaid.parseErrorは実際には存在する
             mermaid.parseError = (err, hash) => {
                 // エラーの表示を完全に抑制
                 console.debug('Mermaid構文エラー:', err);

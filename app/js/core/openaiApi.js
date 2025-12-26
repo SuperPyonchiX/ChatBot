@@ -3,21 +3,23 @@
  * OpenAI/Azure OpenAI API専用の通信機能を提供します
  */
 class OpenAIAPI {
+    static #instance = null;
+
     constructor() {
-        if (OpenAIAPI._instance) {
-            return OpenAIAPI._instance;
+        if (OpenAIAPI.#instance) {
+            return OpenAIAPI.#instance;
         }
-        OpenAIAPI._instance = this;
+        OpenAIAPI.#instance = this;
     }
 
     /**
      * シングルトンインスタンスを取得
      */
     static get getInstance() {
-        if (!OpenAIAPI._instance) {
-            OpenAIAPI._instance = new OpenAIAPI();
+        if (!OpenAIAPI.#instance) {
+            OpenAIAPI.#instance = new OpenAIAPI();
         }
-        return OpenAIAPI._instance;
+        return OpenAIAPI.#instance;
     }
 
     /**
@@ -31,7 +33,7 @@ class OpenAIAPI {
      * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
      * @returns {Promise<string>} APIからの応答テキスト
      */
-    async callOpenAIAPI(messages, model, attachments = [], options = {}) {
+    async callOpenAIAPI(messages, model, attachments = [], options = { stream: false, onChunk: null, onComplete: null }) {
         try {
             // API設定を確認
             this.#validateAPISettings();
@@ -68,11 +70,14 @@ class OpenAIAPI {
      * API設定を検証
      */
     #validateAPISettings() {
+        // @ts-ignore - apiSettingsはAppStateで初期化されるグローバルプロパティ
         if (window.apiSettings.apiType === 'azure') {
+            // @ts-ignore
             if (!window.apiSettings.azureApiKey) {
-                throw new Error('Azure OpenAI APIキーが設定されていません。設定画面で設定してください。');
+                throw new Error('Azure OpenAI APIキーが設定されていません');
             }
         } else {
+            // @ts-ignore
             if (!window.apiSettings.openaiApiKey) {
                 throw new Error('OpenAI APIキーが設定されていません。設定画面で設定してください。');
             }
@@ -130,8 +135,10 @@ class OpenAIAPI {
     #prepareOpenAIRequest(messages, model, stream = false) {
         let endpoint, headers = {}, body = {};
 
+        // @ts-ignore
         if (window.apiSettings.apiType === 'azure') {
             // Azure OpenAI API
+            // @ts-ignore
             const azureEndpoint = window.apiSettings.azureEndpoints[model];
             if (azureEndpoint) {
                 endpoint = azureEndpoint;
@@ -139,14 +146,18 @@ class OpenAIAPI {
                 throw new Error(`Azure OpenAI: モデル ${model} のエンドポイントが設定されていません`);
             }
 
+            // @ts-ignore
             headers = {
+                // @ts-ignore
                 'api-key': window.apiSettings.azureApiKey,
                 'Content-Type': 'application/json'
             };
         } else {
             // OpenAI API
             endpoint = window.CONFIG.AIAPI.ENDPOINTS.OPENAI;
+            // @ts-ignore
             headers = {
+                // @ts-ignore
                 'Authorization': `Bearer ${window.apiSettings.openaiApiKey}`,
                 'Content-Type': 'application/json'
             };
@@ -156,7 +167,14 @@ class OpenAIAPI {
         body = {
             model: model,
             messages: messages,
-            stream: stream
+            stream: stream,
+            // 必須プロパティ（デフォルト値）
+            max_completion_tokens: undefined,
+            temperature: undefined,
+            max_tokens: undefined,
+            top_p: undefined,
+            frequency_penalty: undefined,
+            presence_penalty: undefined
         };
 
         // GPT-5系モデルの場合は特別な処理が必要

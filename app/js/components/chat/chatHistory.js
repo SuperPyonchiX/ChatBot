@@ -439,7 +439,7 @@ class ChatHistory {
     /**
      * シンプルなアシスタントメッセージを表示する（ChatRendererフォールバック）
      */
-    #renderSimpleAssistantMessage(content, container, timestamp) {
+    async #renderSimpleAssistantMessage(content, container, timestamp) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', 'assistant');
         if (timestamp) messageDiv.dataset.timestamp = timestamp.toString();
@@ -452,18 +452,8 @@ class ChatHistory {
         
         // シンプルなテキスト表示
         if (typeof Markdown !== 'undefined' && Markdown.getInstance) {
-            const rendered = Markdown.getInstance.renderMarkdown(content);
-            // @ts-ignore - renderedはPromise<string>またはstring
-            if (rendered && typeof rendered.then === 'function') {
-                // @ts-ignore
-                rendered.then(html => {
-                    messageContent.innerHTML = html;
-                }).catch(() => {
-                    messageContent.textContent = content;
-                });
-            } else {
-                messageContent.innerHTML = /** @type {string} */ (rendered);
-            }
+            const rendered = await Markdown.getInstance.renderMarkdown(content);
+            messageContent.innerHTML = /** @type {string} */ (rendered);
         } else {
             messageContent.textContent = content;
         }

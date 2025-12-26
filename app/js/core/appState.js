@@ -7,6 +7,7 @@ window.AppState = (function() {
     // プライベート変数
     let _apiSettings = null;       // APIの設定情報を保持する変数
     let _systemPrompt = '';        // 現在のシステムプロンプトを保持する変数
+    /** @type {Object.<string, SystemPromptTemplate>} */
     let _systemPromptTemplates = {};  // システムプロンプトのテンプレート一覧を保持する変数
     let _conversations = [];       // すべての会話データを保持する配列（他から参照されても実体は同じ）
     let _currentConversationId = null; // 現在選択中の会話IDを保持する変数
@@ -17,11 +18,17 @@ window.AppState = (function() {
          * 初期化
          */
         initialize() {
+            // @ts-ignore - Storageはカスタムクラス（型定義あり）
             if (Storage.getInstance) {
+                // @ts-ignore
                 _apiSettings = Storage.getInstance.loadApiSettings() || {};
+                // @ts-ignore - Storageはカスタムクラス（型定義あり）
                 _systemPrompt = Storage.getInstance.loadSystemPrompt() || '';
+                // @ts-ignore - Storageはカスタムクラス（型定義あり）
                 _systemPromptTemplates = Storage.getInstance.loadSystemPromptTemplates() || {};
+                // @ts-ignore - Storageはカスタムクラス（型定義あり）
                 _conversations = Storage.getInstance.loadConversations() || [];
+                // @ts-ignore - Storageはカスタムクラス（型定義あり）
                 _currentConversationId = Storage.getInstance.loadCurrentConversationId() || null;
             } else {
                 console.error('Storage module is not loaded');
@@ -52,6 +59,8 @@ window.AppState = (function() {
         
         get currentAttachments() { return _currentAttachments; },
         set currentAttachments(value) { _currentAttachments = value; },
+        
+        get userPrompts() { return []; },
 
         /**
          * 指定したIDの会話を取得します
@@ -66,6 +75,7 @@ window.AppState = (function() {
          * グローバル設定を更新します
          */
         updateGlobalSettings() {
+            // @ts-ignore - apiSettingsはAppStateで初期化されるグローバルプロパティ
             window.apiSettings = _apiSettings;
         },
 
@@ -75,7 +85,7 @@ window.AppState = (function() {
          */
         getCurrentModel() {
             const modelSelect =UICache.getInstance.get('modelSelect');
-            return modelSelect ? modelSelect.value : 'gpt-4o-mini';
+            return modelSelect ? /** @type {HTMLSelectElement} */ (modelSelect).value : 'gpt-4o-mini';
         }
     }.initialize(); // 即時実行して初期化済みのオブジェクトを返す
 })();

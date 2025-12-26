@@ -13,15 +13,6 @@
  */
 
 /**
- * チャットメッセージを表すオブジェクト
- * @typedef {Object} Message
- * @property {MessageRole} role - メッセージの役割
- * @property {string} content - メッセージの内容
- * @property {number} [timestamp] - タイムスタンプ (ミリ秒)
- * @property {Attachment[]} [attachments] - 添付ファイルの配列
- */
-
-/**
  * 添付ファイルを表すオブジェクト
  * @typedef {Object} Attachment
  * @property {string} id - 一意識別子
@@ -32,16 +23,6 @@
  * @property {string} [content] - テキストコンテンツ (テキストファイルの場合)
  * @property {string} [data] - Base64エンコードされたデータ (画像の場合)
  * @property {number} timestamp - 追加日時
- */
-
-/**
- * 会話を表すオブジェクト
- * @typedef {Object} Conversation
- * @property {string} id - 会話の一意識別子 (タイムスタンプベース)
- * @property {string} title - 会話のタイトル
- * @property {string} model - 使用するAIモデル名
- * @property {number} timestamp - 作成/更新日時
- * @property {Message[]} messages - メッセージの配列
  */
 
 /**

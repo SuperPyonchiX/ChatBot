@@ -135,7 +135,7 @@ class ChatRenderer {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             } catch (e) {
                 console.error('ボットメッセージのMarkdown解析エラー:', e);
-                messageContent.textContent = this.#formatMessage(message || '');
+                messageContent.textContent = await this.#formatMessage(message || '');
                 contentDiv.appendChild(copyButton);
                 contentDiv.appendChild(messageContent);
                 messageDiv.appendChild(contentDiv);
@@ -257,13 +257,13 @@ class ChatRenderer {
     /**
      * メッセージをフォーマットします（改行やコードブロックを処理）
      * @param {string} message - フォーマットするメッセージ
-     * @returns {string} フォーマットされたメッセージHTML
+     * @returns {Promise<string>} フォーマットされたメッセージHTML
      */
-    #formatMessage(message) {
+    async #formatMessage(message) {
         if (!message) return '';
         
         try {
-            let formattedMessage = Markdown.getInstance.escapeHtml(message);
+            let formattedMessage = await Markdown.getInstance.renderMarkdown(message);
             
             // 改行を<br>に変換
             formattedMessage = formattedMessage.replace(/\n/g, '<br>');

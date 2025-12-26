@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     Markdown.getInstance.loadScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js')
         .then(() => {
             console.log('Marked.js loaded successfully');
-            Markdown.getInstance.initializeMarkdown();
         })
         .catch(err => console.error('Failed to load Marked.js:', err));
         
@@ -44,11 +43,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // プロンプトマネージャーの初期化
         PromptManager.getInstance;
-        
-        // プロンプトマネージャーのUIイベント設定
-        if (UI.getInstance && UI.getInstance.setupPromptManagerEvents) {
-            UI.getInstance.setupPromptManagerEvents();
-        }
         
         _loadConversations();
         _setupEventListeners();
@@ -96,10 +90,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         EventHandlers.getInstance.setupModalEvents();
         EventHandlers.getInstance.setupGlobalEvents();
         
-        // プロンプト候補表示機能を初期化
-        if (UI.getInstance && UI.getInstance.initPromptSuggestions) {
-            UI.getInstance.initPromptSuggestions();
-        }
+        // プロンプト候補表示はUI.initializeで初期化済み
     }
 
     /**

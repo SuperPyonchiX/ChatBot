@@ -178,15 +178,16 @@ declare var Storage: AppStorageConstructor;
  * Markdown クラスのシングルトンパターン
  */
 interface AppMarkdown {
-    renderMarkdown(content: string): Promise<string> | string;
+    renderMarkdown(content: string): Promise<string>;
+    escapeHtml(text: string): string;
+    loadScript(src: string, attributes?: Record<string, string>): Promise<void>;
+    initializeMarkdown(): void;
 }
 
 interface AppMarkdownConstructor {
     new (): AppMarkdown;
     readonly getInstance: AppMarkdown;
 }
-
-declare const Markdown: AppMarkdownConstructor;
 
 /**
  * ChatRenderer クラスのシングルトンパターン
