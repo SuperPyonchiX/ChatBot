@@ -27,51 +27,59 @@
 
 ## クイックスタート（推奨）
 
-1) ルートにある `CreateLauncher.bat` を実行してショートカットを作成
-2) 生成された `ChatBot.lnk` をダブルクリック
+### 初回セットアップ
+
+1. **Node.jsのインストール**
+   - [Node.js公式サイト](https://nodejs.org/)から v14.0.0 以降をインストール
+   - インストール後、`node -v` でバージョン確認
+
+2. **アプリケーションの起動**
+   ```bash
+   # 方法1: バッチファイルから起動（推奨）
+   launcher\StartChatBot.bat
+   
+   # 方法2: 手動起動
+   cd launcher\server
+   npm install  # 初回のみ
+   node server.js --port=50000
+   ```
+
+3. **ブラウザで開く**
+   - 自動的にブラウザが開きます（`http://localhost:50000`）
+   - 手動で開く場合: `http://localhost:50000` にアクセス
 
 初回起動時にAPI設定モーダルが開きます。利用するプロバイダを選び、APIキー等を入力してください。
 
-補足:
-- ランチャーはバックグラウンドでNode.jsベースのローカルサーバーを起動し、`app/index.html` をブラウザで開きます（コンソールは非表示）。
-- 既定ポートは 50000 です。変更したい場合は `launcher/StartChatBot.bat 50001` のように引数で指定できます。
-- サーバーは自動ポート検出機能を備えており、指定ポートが使用中の場合は自動的に次の利用可能なポートを使用します。
+### 補足事項
+
+- **ポート番号**: デフォルトは 50000 です
+- **依存パッケージ**: 初回起動時に自動インストールされます（Express, http-proxy-middleware, cors）
+- **プロキシサーバー**: Node.jsサーバーがAPIリクエストをプロキシし、CORS問題を解決します
 
 ## 停止方法
 
-- **自動停止**（推奨）: すべてのブラウザを閉じると、25秒後にサーバーが自動停止します
-- **手動停止**: 緊急時のみ `launcher/server/stop-server.ps1` を実行
+**サーバーを停止するには**:
+1. サーバーコンソールウィンドウで `Ctrl+C` を押す
+2. ブラウザを閉じるだけではサーバーは停止しません
 
-⚠️ **重要**: ブラウザで直接 `app/index.html` を開いた場合、サーバーが起動していないためClaude APIが使用できません。必ず `ChatBot.lnk` または `StartChatBot.bat` 経由で起動してください。
-
-ログ/診断:
-- 起動ログ: `launcher/server/launch.log`
-- サーバーPID: `launcher/server/server.pid`
-- サーバー状態確認: `http://localhost:50000/health`
 
 ## ディレクトリ構成
 
 ```
 ChatBot/
-├─ ChatBot.lnk                # メインランチャー（クリックで起動）
-├─ CreateLauncher.bat         # ランチャーショートカット作成
+├─ launcher/                  # 起動・サーバー関連
+│  ├─ StartChatBot.bat        # サーバー起動バッチ
+│  └─ server/
+│     ├─ server.js            # Node.jsプロキシサーバー
+│     ├─ package.json         # Node.js依存関係定義
+│     └─ node_modules/        # 依存パッケージ（初回起動時に作成）
 ├─ app/                       # アプリ本体（静的ファイル）
 │  ├─ index.html
 │  ├─ main.js
 │  ├─ css/
 │  └─ js/
-├─ launcher/                  # 起動・サーバー関連
-│  ├─ StartChatBot.bat        # サイレント起動バッチ（引数でポート指定可）
-│  └─ server/
-│     ├─ server.js            # Node.jsサーバー（逆プロキシ/静的配信）
-│     ├─ package.json         # Node.jsプロジェクト設定
-│     ├─ launch.ps1           # サーバー起動・ブラウザ監視・自動停止
-│     ├─ stop-server.ps1      # 停止スクリプト（PS）
-│     ├─ StopServer.bat       # 停止スクリプト（BAT）
-│     ├─ launch.log           # 起動ログ
-│     └─ server.pid           # サーバーPID
 ├─ icon/                      # アイコン等
-└─ doc/                       # ドキュメント
+└─ README.md                  # このファイル
 ```
 
 ## API設定ガイド
@@ -113,48 +121,70 @@ Web検索:
 
 ## アーキテクチャ概略
 
-- ブラウザは Node.jsサーバー経由で `app/index.html` を開き、各APIへ直接/プロキシ経由で通信します。
-- Claude（Anthropic）は同一オリジン制約回避のため、Node.jsサーバーが `/anthropic/v1/messages` をプロキシします。
-- Node.jsサーバーがブラウザプロセスを監視し、すべて閉じられると自動停止します（PowerShellスクリプト不要）。
+### システム構成
+
+```
+ブラウザ (http://localhost:50000)
+    ↓
+Node.jsローカルプロキシサーバー (port 50000)
+    ↓ プロキシ
+    ├─ /openai/* → https://api.openai.com/*
+    ├─ /responses/* → https://api.openai.com/*
+    ├─ /anthropic/* → https://api.anthropic.com/*
+    └─ /gemini/* → https://generativelanguage.googleapis.com/*
+```
+
+### 主要な設計
+
+1. **CORS問題の解決**
+   - ブラウザから直接各AI APIを呼び出すとCORSエラーが発生
+   - Node.jsプロキシサーバーを経由することで回避
+   - すべてのAPIリクエストは `http://localhost:50000/*` 経由で送信
+
+2. **プロキシエンドポイント**
+   - OpenAI API: `/openai/v1/chat/completions`
+   - Responses API: `/responses/v1/responses`
+   - Claude API: `/anthropic/v1/messages`
+   - Gemini API: `/gemini/v1beta/models/*`
+
+3. **セキュリティ**
+   - APIキーはクライアント側（ブラウザ）で暗号化して保存
+   - プロキシサーバーはAPIキーを保存せず、透過的に転送
+   - ローカルホストのみでアクセス可能
+
+4. **静的ファイル配信**
+   - Node.jsサーバーが `app/` ディレクトリを静的ファイルとして配信
+   - `http://localhost:50000` → `app/index.html`
 
 ### サーバーの特徴
 
-- **ブラウザ監視**: Windows環境でブラウザプロセスを5秒ごとに監視し、25秒間検出されなければ自動停止
-- **自動ポート検出**: 指定ポートが使用中の場合、自動的に次の利用可能なポートを検出
-- **グレースフルシャットダウン**: SIGINT/SIGTERMシグナルでの安全な停止
-- **セキュリティ**: ディレクトリトラバーサル攻撃対策
+- **CORSサポート**: すべてのオリジンからのリクエストを許可（ローカル開発用）
 - **エラーハンドリング**: 詳細なログ出力と適切なエラーレスポンス
-- **拡張性**: モジュール化された設計により、機能追加が容易
-- **ヘルスチェック**: `/health` エンドポイントでサーバー状態を確認可能
+- **拡張性**: モジュール化された設計により、新しいAPIプロバイダの追加が容易
+- **軽量**: 必要最小限の依存パッケージ（Express, http-proxy-middleware, cors）
 
 ### 開発者向けオプション
+または「Failed to fetch」エラーが発生する**
+- **原因**: ローカルプロキシサーバーが起動していません
+- **解決策**: 
+  1. `launcher\StartChatBot.bat` を実行してサーバーを起動
+  2. ブラウザで直接 `app/index.html` を開かないでください（必ずサーバー経由でアクセス）
+  3. サーバーの起動を確認: コンソールに「ChatBot ローカルプロキシサーバー起動」が表示されているか確認
+# 依存パッケージのインストール（初回のみ）
+npm install
 
-手動でサーバーを起動する場合、以下のオプションが使用できます：
+# サーバー起動（デフォルトポート: 50000）
+npm start
+デフォルトポート（50000）が使用中の場合、`node server.js --port=別のポート番号` で変更可能
+- または、使用中のポート50000を使用しているプロセスを終了してください
 
-```bash
-cd launcher\server
+**API呼び出しエラー「APIキーが設定されていません」**
+- 右上の設定アイコンからAPI設定を開き、使用するプロバイダのAPIキーを入力してください
+- APIキーは暗号化されてブラウザのローカルストレージに保存されます
 
-# 通常起動（ブラウザ監視あり）
-node server.js --port=50000 --monitor-browser
-
-# 開発モード（ブラウザ監視なし、サーバーは停止しません）
-node server.js --port=50000 --no-monitor
-
-# サーバー状態確認
-curl http://localhost:50000/health
-```
-
-開発中は `--no-monitor` オプションを使用することで、ブラウザの開閉に関係なくサーバーを継続実行できます。
-
-## プライバシー
-
-- 会話や設定はブラウザのローカルストレージに保存され、APIキーは暗号化して保存されます。
-- 入力した内容は選択したAPIプロバイダにのみ送信されます（添付ファイル含む）。
-- クリアしたい場合は設定画面からキー/履歴を削除できます。
-
-## トラブルシューティング
-
-### よくある問題と解決方法
+**依存パッケージのインストールエラー**
+- `launcher\server\` ディレクトリで `npm install` を手動実行してください
+- Node.jsのバージョンが v14.0.0 以降であることを確認してください
 
 **「ERR_CONNECTION_REFUSED」エラーが発生する**
 - **原因**: ローカルサーバーが起動していません

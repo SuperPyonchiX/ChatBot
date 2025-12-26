@@ -140,11 +140,12 @@ window.CONFIG = {
         },
 
         // APIエンドポイントURL
+        // （ローカルプロキシサーバー経由）
         ENDPOINTS: {
-            OPENAI: 'https://api.openai.com/v1/chat/completions',
-            RESPONSES: 'https://api.openai.com/v1/responses',
-            GEMINI: 'https://generativelanguage.googleapis.com/v1beta/models',
-            CLAUDE: '/anthropic/v1/messages'
+            OPENAI: 'http://localhost:50000/openai/v1/chat/completions',
+            RESPONSES: 'http://localhost:50000/responses/v1/responses',
+            GEMINI: 'http://localhost:50000/gemini/v1beta/models',
+            CLAUDE: 'http://localhost:50000/anthropic/v1/messages'
             // Azure用エンドポイントはユーザー設定から生成
         }
     },
@@ -411,20 +412,23 @@ window.CONFIG = {
     }
 };
 
-// 動的エンドポイント切替（file://で直接開いた場合のCORS対策）
+// エンドポイントの検証ログ（開発用）
 (function() {
-    try {
-        const isFile = typeof window !== 'undefined' && window.location && window.location.protocol === 'file:';
-        if (isFile) {
-            // file:// からの相対パスは使用できないため、ローカル同一オリジンプロキシを絶対URLで指定
-            window.CONFIG.AIAPI.ENDPOINTS.CLAUDE = 'http://localhost:50000/anthropic/v1/messages';
-            console.warn('⚠️ ファイルプロトコルで開かれています。サーバーが起動していることを確認してください: http://localhost:50000');
+    if (typeof window !== 'undefined' && window.location) {
+        console.log('🌐 現在のプロトコル:', window.location.protocol);
+        console.log('📍 APIエンドポイント:');
+        console.log('   - OpenAI:', window.CONFIG.AIAPI.ENDPOINTS.OPENAI);
+        console.log('   - Responses:', window.CONFIG.AIAPI.ENDPOINTS.RESPONSES);
+        console.log('   - Claude:', window.CONFIG.AIAPI.ENDPOINTS.CLAUDE);
+        console.log('   - Gemini:', window.CONFIG.AIAPI.ENDPOINTS.GEMINI);
+        
+        if (window.location.protocol === 'file:') {
+            console.warn('⚠️ ファイルプロトコルで開かれています。');
+            console.warn('💡 推奨: launcher/StartChatBot.bat でサーバー経由で起動してください');
+        } else if (window.location.port !== '50000') {
+            console.warn('⚠️ 推奨ポート50000以外で実行されています');
         } else {
-            // http(s) で配信されている場合は同一オリジンパスを維持
-            window.CONFIG.AIAPI.ENDPOINTS.CLAUDE = '/anthropic/v1/messages';
+            console.log('✅ ローカルプロキシサーバー経由で実行中');
         }
-    } catch (e) {
-        // 失敗時は安全側（同一オリジンパス）
-        window.CONFIG.AIAPI.ENDPOINTS.CLAUDE = '/anthropic/v1/messages';
     }
 })();

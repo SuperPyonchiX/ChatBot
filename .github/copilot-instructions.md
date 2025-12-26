@@ -45,17 +45,11 @@ ChatBot/
 │   ├── StartChatBot.bat          # メインランチャー
 │   └── server/                   # ローカルサーバー
 │       ├── server.js             # Node.jsサーバー
-│       ├── package.json          # Node.js設定
-│       ├── launch.ps1            # 起動・監視スクリプト
-│       └── stop-server.ps1       # 停止スクリプト
+│       └── package.json          # Node.js設定
 ├── icon/                          # アイコン
-├── doc/                           # ドキュメント
-│   ├── ChatBot_設計仕様書.md     # 詳細設計書
-│   └── ChatBot_system_architecture.xml
 ├── ChatBot.lnk                    # メインショートカット
 ├── CreateLauncher.bat             # ランチャー作成
-├── README.md                      # プロジェクト概要
-└── USER_GUIDE.md                  # ユーザーガイド
+└── README.md                      # プロジェクト概要
 ```
 
 ### 主要な依存関係
@@ -477,7 +471,6 @@ async function handleStreamingResponse(response, onChunk, onComplete) {
     }
 }
 ```
-```
 
 ## セキュリティ考慮事項
 
@@ -554,16 +547,7 @@ try {
 
 ### ローカル開発環境
 
-```bash
-# ランチャーでアプリケーションを起動
-.\launcher\StartChatBot.bat
 
-# またはショートカット経由
-# ChatBot.lnk をダブルクリック
-
-# サーバー停止
-.\launcher\server\stop-server.ps1
-```
 
 ### ブラウザ開発者ツール
 

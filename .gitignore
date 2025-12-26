@@ -1,0 +1,20 @@
+# Node.js
+launcher/server/node_modules/
+launcher/server/package-lock.json
+launcher/server/*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
