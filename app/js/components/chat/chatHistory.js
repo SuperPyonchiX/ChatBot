@@ -1,4 +1,4 @@
-/**
+﻿/**
  * chatHistory.js
  * 会話履歴の管理機能を提供します
  */
@@ -19,7 +19,6 @@ class ChatHistory {
 
     /**
      * プライベートコンストラクタ
-     * @private
      */
     constructor() {
         if (ChatHistory.#instance) {
@@ -127,6 +126,7 @@ class ChatHistory {
         Object.entries(promptGroups).forEach(([promptKey, groupConversations]) => {
             if (!Array.isArray(groupConversations) || groupConversations.length === 0) return;
             
+            // @ts-ignore - Storageはカスタムクラス（型定義あり）
             const categoryStates = Storage.getInstance.loadCategoryStates();
             const isExpanded = categoryStates[promptKey] !== false;
             
@@ -178,7 +178,6 @@ class ChatHistory {
 
     /**
      * メッセージ表示の内容をクリーンアップする
-     * @private
      */
     #cleanDisplayContent(content) {
         if (!content) return '';
@@ -191,7 +190,6 @@ class ChatHistory {
 
     /**
      * 配列型のコンテンツを処理する
-     * @private
      */
     #processContentArray(content) {
         if (typeof content === 'string') return content;
@@ -214,7 +212,6 @@ class ChatHistory {
 
     /**
      * カテゴリーセクションを作成する
-     * @private
      */
     #createCategorySection(promptKey, groupConversations, isExpanded, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
         if (!promptKey || !Array.isArray(groupConversations)) {
@@ -237,7 +234,7 @@ class ChatHistory {
         
         const countBadge = document.createElement('span');
         countBadge.className = 'category-count';
-        countBadge.textContent = groupConversations.length;
+        countBadge.textContent = String(groupConversations.length);
         
         categoryHeader.appendChild(toggleIcon);
         categoryHeader.appendChild(categoryName);
@@ -274,7 +271,6 @@ class ChatHistory {
     
     /**
      * カテゴリー展開/折りたたみを切り替え
-     * @private
      */
     #toggleCategoryExpansion(toggleIcon, conversationList, promptKey) {
         if (!toggleIcon || !conversationList || !promptKey) return;
@@ -289,12 +285,13 @@ class ChatHistory {
             conversationList.style.display = 'block';
         }
         
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.saveCategoryState(promptKey, !isNowExpanded);
     }
     
     /**
      * 履歴アイテムを作成する
-     * @private
      */
     #createHistoryItem(conversation, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
         if (!conversation || !conversation.id) {
@@ -356,7 +353,6 @@ class ChatHistory {
 
     /**
      * 会話をシステムプロンプトでグループ化する
-     * @private
      */
     #groupConversationsByPrompt(conversations) {
         if (!Array.isArray(conversations)) {
@@ -391,7 +387,6 @@ class ChatHistory {
     
     /**
      * システムプロンプトからカテゴリを判定する
-     * @private
      */
     #getPromptCategory(promptText) {
         if (!promptText) return '未分類';
@@ -409,7 +404,6 @@ class ChatHistory {
     
     /**
      * シンプルなユーザーメッセージを表示する（ChatRendererフォールバック）
-     * @private
      */
     #renderSimpleUserMessage(content, container, timestamp) {
         const messageDiv = document.createElement('div');
@@ -424,8 +418,10 @@ class ChatHistory {
         
         // シンプルなテキスト表示
         if (typeof Markdown !== 'undefined' && Markdown.getInstance) {
-            Markdown.getInstance.renderMarkdown(content)
-                .then(html => {
+            // @ts-ignore - Markdown.renderMarkdownはPromise<string>またはstringを返す
+            const renderPromise = Markdown.getInstance.renderMarkdown(content);
+            // @ts-ignore
+            renderPromise.then(html => {
                     messageContent.innerHTML = html;
                 })
                 .catch(() => {
@@ -442,7 +438,6 @@ class ChatHistory {
     
     /**
      * シンプルなアシスタントメッセージを表示する（ChatRendererフォールバック）
-     * @private
      */
     #renderSimpleAssistantMessage(content, container, timestamp) {
         const messageDiv = document.createElement('div');
@@ -457,13 +452,18 @@ class ChatHistory {
         
         // シンプルなテキスト表示
         if (typeof Markdown !== 'undefined' && Markdown.getInstance) {
-            Markdown.getInstance.renderMarkdown(content)
-                .then(html => {
+            const rendered = Markdown.getInstance.renderMarkdown(content);
+            // @ts-ignore - renderedはPromise<string>またはstring
+            if (rendered && typeof rendered.then === 'function') {
+                // @ts-ignore
+                rendered.then(html => {
                     messageContent.innerHTML = html;
-                })
-                .catch(() => {
+                }).catch(() => {
                     messageContent.textContent = content;
                 });
+            } else {
+                messageContent.innerHTML = /** @type {string} */ (rendered);
+            }
         } else {
             messageContent.textContent = content;
         }

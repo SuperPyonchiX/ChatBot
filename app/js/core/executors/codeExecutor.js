@@ -1,4 +1,4 @@
-/**
+﻿/**
  * codeExecutor.js
  * コードスニペット実行機能を提供します
  */
@@ -71,7 +71,6 @@ class CodeExecutor {
 
     /**
      * 実行結果の出力を処理する
-     * @private
      * @param {Object} data - 出力データ
      * @param {HTMLElement} resultElement - 表示要素
      */

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * markdown.js
  * マークダウンのレンダリングとコードハイライト関連の機能を提供します
  * @class Markdown
@@ -27,7 +27,6 @@ class Markdown {
 
         /**
          * ライブラリの準備状況
-         * @private
          * @type {Object}
          */
         this._libraryStatus = {
@@ -170,7 +169,6 @@ class Markdown {
     
     /**
      * レンダリング済みHTMLからmermaidブロックを探して処理します
-     * @private
      * @param {string} html - 処理するHTML
      * @returns {Promise<string>} 処理後のHTML
      */
@@ -503,7 +501,6 @@ class Markdown {
 
     /**
      * コードブロックの構文ハイライトを行います
-     * @private
      * @param {string} code - ハイライトするコード
      * @param {string} lang - 言語識別子
      * @returns {string} ハイライトされたHTML

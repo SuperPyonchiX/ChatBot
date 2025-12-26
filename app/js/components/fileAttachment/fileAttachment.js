@@ -1,6 +1,7 @@
-/**
+﻿/**
  * ファイル添付関連の機能を管理するクラス
  */
+// @ts-ignore - FileAttachmentはグローバルクラス（型定義あり）
 class FileAttachment {
     static #instance = null;
     
@@ -93,6 +94,7 @@ class FileAttachment {
             });
             
             // 添付ファイルをローカルストレージに保存
+            // @ts-ignore - Storageはカスタムクラス（型定義あり）
             Storage.getInstance.saveAttachments(conversationId, {
                 files: allAttachments
             });
@@ -188,6 +190,7 @@ class FileAttachment {
         
         try {
             // ローカルストレージから添付ファイルを読み込む
+            // @ts-ignore - Storageはカスタムクラス（型定義あり）
             const attachmentData = Storage.getInstance.loadAttachments(conversationId);
             
             // 添付ファイルデータをチェック
@@ -206,7 +209,6 @@ class FileAttachment {
 
     /**
      * タイムスタンプに最も近いメッセージのインデックスを効率的に検索
-     * @private
      * @param {Array} messages - ソート済みのメッセージ配列
      * @param {number} timestamp - 検索するタイムスタンプ
      * @returns {number} 最も近いメッセージのインデックス

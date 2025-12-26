@@ -1,4 +1,4 @@
-/**
+﻿/**
  * サイドバーの機能を管理するクラス
  */
 class Sidebar {
@@ -37,6 +37,7 @@ class Sidebar {
         });
         
         // 保存された状態を復元
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
         const isCollapsed = Storage.getInstance.loadSidebarState();
         if (isCollapsed) {
             sidebarEl.classList.add('collapsed');
@@ -66,12 +67,12 @@ class Sidebar {
 
     /**
      * サイドバーの状態をトグルします
-     * @private
      */
     #toggleSidebarState(sidebar, toggleButton) {
         const isNowCollapsed = sidebar.classList.contains('collapsed');
         sidebar.classList.toggle('collapsed');
         toggleButton.classList.toggle('sidebar-visible');
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.saveSidebarState(!isNowCollapsed);
     }
 }

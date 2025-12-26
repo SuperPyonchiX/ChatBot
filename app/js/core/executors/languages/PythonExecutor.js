@@ -31,6 +31,7 @@ class PythonExecutor extends ExecutorBase {
      */
     async execute(code, outputCallback) {
         try {
+            // @ts-ignore - loadPyodideは外部ライブラリのグローバル関数
             if (typeof loadPyodide === 'undefined') {
                 if (typeof outputCallback === 'function') {
                     outputCallback({
@@ -57,6 +58,8 @@ class PythonExecutor extends ExecutorBase {
             
             const startTime = performance.now();
             
+            // @ts-ignore - pyodideInstanceは動的に追加されるプロパティ
+            // @ts-ignore - pyodideInstance は動的に追加されるプロパティ
             if (!window.pyodideInstance) {
                 if (typeof outputCallback === 'function') {
                     outputCallback({
@@ -64,6 +67,7 @@ class PythonExecutor extends ExecutorBase {
                         content: 'Pythonインタプリタを初期化しています...'
                     });
                 }
+                // @ts-ignore - pyodideInstance と loadPyodide は動的プロパティ/グローバル関数
                 window.pyodideInstance = await loadPyodide();
             }
             
@@ -97,6 +101,7 @@ class PythonExecutor extends ExecutorBase {
                     });
                 }
                 
+                // @ts-ignore - pyodideInstanceは動的に追加されるプロパティ
                 await window.pyodideInstance.loadPackagesFromImports(`
                     import micropip
                 `);
@@ -116,6 +121,7 @@ class PythonExecutor extends ExecutorBase {
                     }
                     
                     try {
+                        // @ts-ignore - pyodideInstanceは動的に追加されるプロパティ
                         const micropip = window.pyodideInstance.pyimport('micropip');
                         for (const pkg of packagesToInstall) {
                             try {
@@ -179,6 +185,7 @@ class PythonExecutor extends ExecutorBase {
             };
             
             try {
+                // @ts-ignore - pyodideInstanceは動的に追加されるプロパティ
                 window.pyodideInstance.globals.set("realtimeOutput", realtimeOutput);
                 
                 const pythonCode = `
@@ -211,6 +218,7 @@ if stderr_content:
     print(stderr_content)
 `;
 
+                // @ts-ignore - pyodideInstanceは動的に追加されるプロパティ
                 await window.pyodideInstance.runPythonAsync(pythonCode);
                 
             } catch (pythonError) {

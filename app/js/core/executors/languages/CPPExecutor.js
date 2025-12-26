@@ -1,4 +1,4 @@
-/**
+﻿/**
  * CPPExecutor.js
  * C++コードの実行を担当するクラス
  */
@@ -31,6 +31,7 @@ class CPPExecutor extends ExecutorBase {
      */
     async execute(code, outputCallback) {
         try {
+            // @ts-ignore - JSCPPは外部ライブラリのグローバル変数
             if (typeof JSCPP === 'undefined') {
                 if (typeof outputCallback === 'function') {
                     outputCallback({
@@ -84,6 +85,7 @@ class CPPExecutor extends ExecutorBase {
             };
             
             try {
+                // @ts-ignore - JSCPPは外部ライブラリのグローバル変数
                 const exitCode = JSCPP.run(preprocessedCode, "", config);
                 const endTime = performance.now();
                 const executionTime = (endTime - startTime).toFixed(2);
@@ -146,6 +148,7 @@ class CPPExecutor extends ExecutorBase {
      */
     _loadRuntime() {
         return new Promise((resolve, reject) => {
+            // @ts-ignore - JSCPPは外部ライブラリのグローバル変数
             if (typeof JSCPP !== 'undefined') {
                 console.log('JSCPPはすでに読み込まれています');
                 resolve();
@@ -173,7 +176,6 @@ class CPPExecutor extends ExecutorBase {
 
     /**
      * C++コードをJSCPPで実行できるように前処理する
-     * @private
      * @param {string} code - 元のC++コード
      * @returns {string} 前処理後のコード
      */

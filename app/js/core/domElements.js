@@ -1,4 +1,4 @@
-/**
+﻿/**
  * domElements.js
  * UIで使用する主要なDOM要素の管理を担当するモジュール
  */
@@ -8,7 +8,6 @@ window.Elements = (function() {
      * 指定したIDのDOM要素を取得します
      * @param {Array<string>} selectors - 取得するDOM要素のID
      * @returns {Object} ID名をキーとした要素オブジェクト
-     * @private
      */
     function getElements(selectors) {
         const elements = {};

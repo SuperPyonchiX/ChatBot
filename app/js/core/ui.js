@@ -1,4 +1,4 @@
-/**
+﻿/**
  * UI操作のための機能を提供するクラス
  * メインのUI機能を管理します
  * 
@@ -128,7 +128,6 @@ class UI {
 
                 /**
                  * 通知を削除します
-                 * @private
                  */
                 remove: function(notification) {
                     if (!notification) return;
@@ -298,7 +297,6 @@ class UI {
 
                 /**
                  * スワイプジェスチャーのサポートを設定します
-                 * @private
                  */
                 _setupSwipeGestures: function() {
                     let startX, startY, distX, distY;
@@ -371,7 +369,6 @@ class UI {
 
                 /**
                  * リソースを非同期に読み込みます
-                 * @private
                  */
                 _lazyLoadResources: function() {
                     setTimeout(() => {
@@ -400,7 +397,6 @@ class UI {
 
     /**
      * モデル選択セレクトボックスを動的に初期化
-     * @private
      */
     _initializeModelSelect() {
         const modelSelect = document.getElementById('modelSelect');

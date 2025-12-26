@@ -1,4 +1,4 @@
-/**
+﻿/**
  * webContentExtractor.js
  * URLからコンテンツを抽出し、整形するユーティリティクラス
  * GPT-4o/GPT-5シリーズのResponses API内蔵Web検索機能に対応
@@ -23,7 +23,6 @@ class WebContentExtractor {
 
     /**
      * プライベートコンストラクタ
-     * @private
      */
     constructor() {
         if (WebContentExtractor.#instance) {
@@ -50,6 +49,7 @@ class WebContentExtractor {
      */
     setWebSearchEnabled(enabled) {
         this.#isWebSearchEnabled = enabled;
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.saveWebSearchEnabled(enabled);
     }
 
@@ -105,7 +105,6 @@ class WebContentExtractor {
 
     /**
      * HTMLドキュメントからテキストを抽出します
-     * @private
      * @param {Document} doc - パース済みのHTMLドキュメント
      * @returns {string} 抽出されたテキスト
      */

@@ -87,7 +87,7 @@ class FileAttachmentUI {
             this.#createFilePreview(file, fileItem);
             
             // ファイル情報とクローズボタンを追加
-            this.#createFileInfo(file, fileItem, previewArea, fileIndex);
+            this.#createFileInfo(file, fileItem);
             
             previewArea.appendChild(fileItem);
         });
@@ -166,7 +166,7 @@ class FileAttachmentUI {
                 }
                 
                 const img = document.createElement('img');
-                img.src = e.target.result;
+                img.src = /** @type {string} */ (e.target.result);
                 img.classList.add('image-preview');
                 img.style.maxWidth = '150px';
                 img.style.maxHeight = '100px';
@@ -174,7 +174,7 @@ class FileAttachmentUI {
                 
                 // 画像クリックで拡大表示
                 img.addEventListener('click', () => {
-                    ChatAttachmentViewer.getInstance.showFullSizeImage?.(e.target.result, file.name);
+                    ChatAttachmentViewer.getInstance.showFullSizeImage?.(/** @type {string} */ (e.target.result), file.name);
                 });
 
                 fileItem.appendChild(img);

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * モーダルのイベントハンドラークラス
  * @class ModalHandlers
  */
@@ -104,6 +104,7 @@ class ModalHandlers {
         window.AppState.updateGlobalSettings();
 
         // ローカルストレージに保存
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.saveApiSettings(window.AppState.apiSettings);
         UI.getInstance.Core.Notification.show('API設定を保存しました', 'success');
         ApiSettingsModal.getInstance.hideApiKeyModal();
@@ -123,6 +124,7 @@ class ModalHandlers {
             const conversation = window.AppState.getConversationById(conversationId);
             if (conversation) {
                 conversation.title = newTitle;
+                // @ts-ignore - Storageはカスタムクラス（型定義あり）
                 Storage.getInstance.saveConversations(window.AppState.conversations);
                 ChatActions.getInstance.renderChatHistory();
             }
@@ -166,6 +168,8 @@ class ModalHandlers {
             tags: []
         };
         
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
+        
         Storage.getInstance.saveSystemPromptTemplates(templates);
         
         // 入力をクリア
@@ -198,6 +202,7 @@ class ModalHandlers {
     onTemplateDelete(promptName) {
         if (confirm(`システムプロンプト "${promptName}" を削除してもよろしいですか？`)) {
             delete window.AppState.systemPromptTemplates[promptName];
+            // @ts-ignore - Storageはカスタムクラス（型定義あり）
             Storage.getInstance.saveSystemPromptTemplates(window.AppState.systemPromptTemplates);
             
             // システムプロンプト一覧を更新
@@ -212,7 +217,6 @@ class ModalHandlers {
 
     /**
      * Claude Web検索設定を取得
-     * @private
      * @returns {Object} Web検索設定
      */
     #getClaudeWebSearchSettings() {

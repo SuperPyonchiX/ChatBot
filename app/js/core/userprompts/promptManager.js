@@ -1,4 +1,4 @@
-/**
+﻿/**
  * promptManager.js
  * ユーザープロンプト管理機能を提供します
  * - 階層的プロンプト管理
@@ -165,15 +165,16 @@ class PromptManager {
      * @returns {Array} プロンプトの配列
      */
     loadPromptLibrary() {
+        // @ts-ignore - Storageはカスタムクラス(型定義あり)
         return Storage.getInstance.getItem(this.STORAGE_KEYS.PROMPT_LIBRARY, [], true);
     }
 
     /**
      * カテゴリを読み込む
-     * @public
      * @returns {Object} カテゴリオブジェクト
      */
     loadCategories() {
+        // @ts-ignore - Storageはカスタムクラス(型定義あり)
         return Storage.getInstance.getItem(this.STORAGE_KEYS.PROMPT_CATEGORIES, {}, true);
     }
 
@@ -475,46 +476,45 @@ class PromptManager {
 
     /**
      * プロンプトライブラリを保存
-     * @public
      * @param {Array} promptLibrary - プロンプトの配列
      */
     #savePromptLibrary(promptLibrary) {
         if (!Array.isArray(promptLibrary)) return;
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.setItem(this.STORAGE_KEYS.PROMPT_LIBRARY, promptLibrary);
     }
 
     /**
      * カテゴリを保存
-     * @public
      * @param {Object} categories - カテゴリオブジェクト
      */
     #saveCategories(categories) {
         if (!categories || typeof categories !== 'object') return;
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.setItem(this.STORAGE_KEYS.PROMPT_CATEGORIES, categories);
     }
 
     /**
      * 変数を読み込む
-     * @public
      * @returns {Object} 変数オブジェクト
      */
     #loadVariables() {
+        // @ts-ignore - Storageはカスタムクラス(型定義あり)
         return Storage.getInstance.getItem(this.STORAGE_KEYS.PROMPT_VARIABLES, {}, true);
     }
 
     /**
      * 変数を保存
-     * @public
      * @param {Object} variables - 変数オブジェクト
      */
     #saveVariables(variables) {
         if (!variables || typeof variables !== 'object') return;
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.setItem(this.STORAGE_KEYS.PROMPT_VARIABLES, variables);
     }
 
     /**
      * カテゴリを作成
-     * @public
      * @param {string} categoryKey - カテゴリキー
      * @param {Object} categoryData - カテゴリデータ
      * @returns {boolean} 作成成功時true
@@ -543,7 +543,6 @@ class PromptManager {
 
     /**
      * プロンプトテンプレートを処理する（変数置換と条件処理）
-     * @private
      * @param {string} template - プロンプトテンプレート
      * @param {Object} customVariables - カスタム変数
      * @returns {string} 処理されたプロンプト
@@ -582,7 +581,6 @@ class PromptManager {
 
     /**
      * 条件分岐を処理する
-     * @private
      * @param {string} template - プロンプトテンプレート
      * @param {Object} variables - 変数オブジェクト
      * @returns {string} 条件処理後のテンプレート
@@ -602,7 +600,6 @@ class PromptManager {
 
     /**
      * 条件式を評価する
-     * @private
      * @param {string} condition - 条件式
      * @param {Object} variables - 変数オブジェクト
      * @returns {boolean} 評価結果
@@ -645,7 +642,6 @@ class PromptManager {
 
     /**
      * テンプレートから変数を抽出する
-     * @private
      * @param {string} template - プロンプトテンプレート
      * @returns {Array} 変数名の配列
      */
@@ -665,7 +661,6 @@ class PromptManager {
 
     /**
      * 一意のIDを生成する
-     * @private
      * @returns {string} 生成されたID
      */
     #generateUniqueId() {
@@ -674,7 +669,6 @@ class PromptManager {
 
     /**
      * 日本語を含むカテゴリ名を一意のキーに変換する
-     * @private
      * @param {string} categoryName - カテゴリ名
      * @returns {string} 一意のカテゴリキー
      */

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * main.js
  * アプリケーションのエントリーポイントとなるファイルです
  * 
@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', async function() {
      * API設定の確認、会話履歴の読み込み、イベントリスナーの設定を行います
      * 
      * @function _init
-     * @private
      */
     function _init() {
         // UI初期化
@@ -60,7 +59,6 @@ document.addEventListener('DOMContentLoaded', async function() {
      * 保存されている会話をロードし、現在の会話を設定します
      * 
      * @function _loadConversations
-     * @private
      */
     function _loadConversations() {
         if (!window.AppState) {
@@ -85,7 +83,6 @@ document.addEventListener('DOMContentLoaded', async function() {
      * アプリケーションで使用する全てのイベントリスナーを初期化します
      * 
      * @function _setupEventListeners
-     * @private
      */
     function _setupEventListeners() {
         if (!EventHandlers.getInstance) {
@@ -110,7 +107,6 @@ document.addEventListener('DOMContentLoaded', async function() {
      * 現在選択されている会話をUIに表示します
      * 
      * @function _loadCurrentConversation
-     * @private
      */
     function _loadCurrentConversation() {
         if (!window.AppState.currentConversationId || 
@@ -142,7 +138,6 @@ document.addEventListener('DOMContentLoaded', async function() {
      * Prism.jsの各言語コンポーネントを動的に読み込みます
      * 
      * @function _loadPrismComponents
-     * @private
      */
     function _loadPrismComponents() {
         const prismComponents = [

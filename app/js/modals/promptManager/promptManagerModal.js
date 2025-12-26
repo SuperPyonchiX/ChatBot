@@ -1,4 +1,4 @@
-/**
+﻿/**
  * プロンプトマネージャーモーダルを管理するクラス
  * @class PromptManagerModal
  */
@@ -145,7 +145,6 @@ class PromptManagerModal {
 
     /**
      * カテゴリ追加ボタンのクリックイベントを処理する
-     * @private
      */
     handleAddCategory() {
         const categoryName = prompt('新しいカテゴリ名を入力してください:');
@@ -314,7 +313,6 @@ class PromptManagerModal {
 
     /**
      * プロンプト項目のイベントリスナーを設定する
-     * @private
      */
     #setupPromptItemEventListeners(promptItem, prompt) {
         promptItem.querySelector('.edit-prompt-button').addEventListener('click', (e) => {
@@ -339,7 +337,6 @@ class PromptManagerModal {
     
     /**
      * プロンプトを使用する
-     * @private
      */
     #usePrompt(promptId) {
         try {
@@ -361,7 +358,6 @@ class PromptManagerModal {
     
     /**
      * カテゴリごとのプロンプト数を更新する
-     * @private
      */
     #updateCategoryCounts() {
         const categories = document.querySelectorAll('.category-item');
@@ -393,7 +389,6 @@ class PromptManagerModal {
 
     /**
      * プロンプトを削除する
-     * @private
      */
     #deletePrompt(promptId) {
         if (confirm('このプロンプトを削除してもよろしいですか？')) {
@@ -422,7 +417,6 @@ class PromptManagerModal {
 
     /**
      * カテゴリを編集する
-     * @private
      */
     #editCategory(categoryKey, currentName) {
         const newName = prompt('新しいカテゴリ名を入力してください:', currentName);
@@ -448,7 +442,6 @@ class PromptManagerModal {
 
     /**
      * カテゴリを削除する
-     * @private
      */
     #deleteCategory(categoryKey) {
         this.confirm(
@@ -479,7 +472,6 @@ class PromptManagerModal {
 
     /**
      * カテゴリ選択肢を更新する
-     * @private
      */
     #updateCategorySelect(select, currentCategory) {
         if (!select) return;
@@ -507,7 +499,6 @@ class PromptManagerModal {
 
     /**
      * プロンプトを保存する
-     * @private
      */
     #savePromptEdit(modal) {
         const nameInput = UICache.getInstance.get('promptNameInput');

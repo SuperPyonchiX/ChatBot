@@ -1,4 +1,4 @@
-/**
+﻿/**
  * HTMLExecutor.js
  * HTMLコードの実行（プレビュー表示）を担当するクラス
  */
@@ -25,7 +25,6 @@ class HTMLExecutor extends ExecutorBase {
 
     /**
      * HTMLをサニタイズする
-     * @private
      * @param {string} html - サニタイズするHTML
      * @returns {string} サニタイズされたHTML
      */

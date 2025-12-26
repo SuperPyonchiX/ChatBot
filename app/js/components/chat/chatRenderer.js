@@ -1,7 +1,8 @@
-/**
+﻿/**
  * chatRenderer.js
  * チャットメッセージのレンダリング機能を提供します
  */
+// @ts-ignore - グローバル型定義との競合
 class ChatRenderer {
     // シングルトンインスタンス
     static #instance = null;
@@ -19,7 +20,6 @@ class ChatRenderer {
 
     /**
      * プライベートコンストラクタ
-     * @private
      */
     constructor() {
         if (ChatRenderer.#instance) {
@@ -288,7 +288,6 @@ class ChatRenderer {
     /**
      * コードブロックのフォーマットとハイライトを適用する
      * メッセージ内のコードブロックにシンタックスハイライトとコピーボタンを追加します
-     * @private
      * @param {HTMLElement} messageDiv - コードブロックを含むメッセージ要素
      * @returns {void}
      */
@@ -310,7 +309,6 @@ class ChatRenderer {
     /**
      * タイピングアニメーションを実行する
      * ボットのメッセージを文字単位で徐々に表示するアニメーション効果を適用します
-     * @private
      * @param {string} message - 表示するメッセージ内容
      * @param {HTMLElement} container - メッセージを表示する要素
      * @returns {Promise<void>}
@@ -379,7 +377,6 @@ class ChatRenderer {
     /**
      * コピーボタンを作成する
      * テキストをクリップボードにコピーするためのボタン要素を生成します
-     * @private
      * @param {string} textToCopy - コピー対象のテキスト
      * @returns {HTMLElement} 作成されたコピーボタン要素
      */
@@ -425,7 +422,7 @@ class ChatRenderer {
                 if (!pre) return;
                 
                 // すでにラッパーがある場合はスキップ
-                if (pre.parentNode && pre.parentNode.classList.contains('code-block')) {
+                if (pre.parentNode && /** @type {HTMLElement} */ (pre.parentNode).classList.contains('code-block')) {
                     return;
                 }
                 
@@ -455,16 +452,16 @@ class ChatRenderer {
                 toolbar.classList.add('code-block-toolbar');
                 
                 // コピーボタンを追加
-                const copyButton = this.#createCodeCopyButton(index, codeBlock);
+                const copyButton = this.#createCodeCopyButton(index, /** @type {HTMLElement} */ (codeBlock));
                 toolbar.appendChild(copyButton);
                 
                 // 編集ボタンを追加
-                const editButton = this.#createEditButton(index, codeBlock, language);
+                const editButton = this.#createEditButton(index, /** @type {HTMLElement} */ (codeBlock), language);
                 toolbar.appendChild(editButton);
                 
                 // 実行可能言語の場合は実行ボタンを追加
                 if (this.#isExecutableLanguage(language)) {
-                    const executeButton = this.#createExecuteButton(index, codeBlock, language);
+                    const executeButton = this.#createExecuteButton(index, /** @type {HTMLElement} */ (codeBlock), language);
                     toolbar.appendChild(executeButton);
                 }
                 
@@ -477,7 +474,6 @@ class ChatRenderer {
     
     /**
      * 言語が実行可能かどうかを判定します
-     * @private
      * @param {string} language - 判定する言語
      * @returns {boolean} 実行可能な場合はtrue
      */
@@ -488,7 +484,6 @@ class ChatRenderer {
     
     /**
      * コード実行ボタンを作成します
-     * @private
      * @param {number} index - コードブロックのインデックス
      * @param {HTMLElement} codeBlock - 対象のコードブロック要素
      * @param {string} language - コードの言語
@@ -501,7 +496,7 @@ class ChatRenderer {
         executeButton.classList.add('code-execute-button');
         executeButton.innerHTML = '<i class="fas fa-play"></i>';
         executeButton.title = 'コードを実行';
-        executeButton.setAttribute('data-code-index', index);
+        executeButton.setAttribute('data-code-index', String(index));
         executeButton.setAttribute('data-language', language);
         executeButton.setAttribute('aria-label', 'コードを実行');
         
@@ -516,7 +511,6 @@ class ChatRenderer {
     
     /**
      * 実行ボタンのクリックイベントを処理します
-     * @private
      * @param {HTMLElement} button - クリックされたボタン
      * @param {HTMLElement} codeBlock - 実行対象のコードブロック
      * @param {string} language - コードの言語
@@ -532,7 +526,7 @@ class ChatRenderer {
 
         try {
             // ボタンの状態を実行中に変更
-            button.disabled = true;
+            /** @type {HTMLButtonElement} */ (button).disabled = true;
             button.classList.add('code-executing');
             button.innerHTML = '<span class="executing-spinner"></span>';
 
@@ -606,7 +600,7 @@ class ChatRenderer {
             }
         } finally {
             // ボタンを元の状態に戻す
-            button.disabled = false;
+            /** @type {HTMLButtonElement} */ (button).disabled = false;
             button.classList.remove('code-executing');
             button.innerHTML = originalButtonHtml;
         }
@@ -614,7 +608,6 @@ class ChatRenderer {
     
     /**
      * 言語IDから表示用の言語名を取得
-     * @private
      * @param {string} langId - 言語ID
      * @returns {string} 表示用言語名
      */
@@ -660,7 +653,6 @@ class ChatRenderer {
 
     /**
      * コードブロック用のコピーボタンを作成します
-     * @private
      * @param {number} index - コードブロックのインデックス
      * @param {HTMLElement} codeBlock - 対象のコードブロック要素
      * @returns {HTMLElement} 作成されたコピーボタン要素
@@ -672,7 +664,7 @@ class ChatRenderer {
         copyButton.classList.add('code-copy-button');
         copyButton.innerHTML = '<i class="fas fa-copy"></i>';
         copyButton.title = 'コードをコピー';
-        copyButton.setAttribute('data-code-index', index);
+        copyButton.setAttribute('data-code-index', String(index));
         copyButton.setAttribute('aria-label', 'コードをクリップボードにコピー');
         
         // コピーボタンのクリックイベント
@@ -686,7 +678,6 @@ class ChatRenderer {
     
     /**
      * コード編集ボタンを作成します
-     * @private
      * @param {number} index - コードブロックのインデックス
      * @param {HTMLElement} codeBlock - 対象のコードブロック要素
      * @param {string} language - コードの言語
@@ -699,7 +690,7 @@ class ChatRenderer {
         editButton.classList.add('code-edit-button');
         editButton.innerHTML = '<i class="fas fa-edit"></i>';
         editButton.title = 'コードを編集';
-        editButton.setAttribute('data-code-index', index);
+        editButton.setAttribute('data-code-index', String(index));
         editButton.setAttribute('data-language', language);
         editButton.setAttribute('aria-label', 'コードを編集');
         
@@ -714,7 +705,6 @@ class ChatRenderer {
     
     /**
      * 編集ボタンのクリックイベントを処理します
-     * @private
      * @param {HTMLElement} button - クリックされたボタン
      * @param {HTMLElement} codeBlock - 編集対象のコードブロック
      * @param {string} language - コードの言語
@@ -753,7 +743,6 @@ class ChatRenderer {
     
     /**
      * コピーボタンのクリックイベントを処理します
-     * @private
      * @param {HTMLElement} button - クリックされたボタン
      * @param {HTMLElement} codeBlock - コピー対象のコードブロック
      */
@@ -780,7 +769,6 @@ class ChatRenderer {
     
     /**
      * コードをコピー用に整形する
-     * @private
      * @param {string} code - 整形するコード
      * @returns {string} 整形されたコード
      */
@@ -798,7 +786,6 @@ class ChatRenderer {
 
     /**
      * コピー成功時の表示を更新
-     * @private
      */
     #showCopySuccess(button) {
         if (!button) return;
@@ -816,7 +803,6 @@ class ChatRenderer {
 
     /**
      * コピー失敗時の表示を更新
-     * @private
      */
     #showCopyError(button) {
         if (!button) return;
@@ -842,7 +828,7 @@ class ChatRenderer {
      * @param {boolean} options.showDots - タイピングドットを表示するか
      * @returns {Object} メッセージ要素の参照
      */
-    addSystemMessage(chatMessages, message, options = {}) {
+    addSystemMessage(chatMessages, message, options = { status: 'info', animation: 'fade', showDots: false }) {
         if (!chatMessages) return null;
         
         const {
@@ -898,7 +884,7 @@ class ChatRenderer {
      * @param {boolean} options.animate - 変更アニメーションを使用するか
      * @param {boolean} options.showDots - タイピングドットを表示するか
      */
-    updateSystemMessage(messageDiv, message, options = {}) {
+    updateSystemMessage(messageDiv, message, options = { status: 'info', animate: true, showDots: false }) {
         if (!messageDiv) return;
         
         const {
@@ -959,7 +945,7 @@ class ChatRenderer {
      * @param {string} options.animation - 削除アニメーション ('fade', 'slide')
      * @param {number} options.delay - 削除前の遅延時間（ミリ秒）
      */
-    removeSystemMessage(messageDiv, options = {}) {
+    removeSystemMessage(messageDiv, options = { animation: 'fade', delay: 0 }) {
         if (!messageDiv || !messageDiv.parentNode) return;
         
         const {
@@ -993,7 +979,6 @@ class ChatRenderer {
 
     /**
      * コードブロックからコードを取得します
-     * @private
      * @param {HTMLElement} codeBlock - コードブロック要素
      * @returns {string} 取得したコード
      */
@@ -1021,7 +1006,6 @@ class ChatRenderer {
     
     /**
      * HTMLエンティティをデコードします
-     * @private
      * @param {string} text - デコードするテキスト
      * @returns {string} デコードされたテキスト
      */
@@ -1033,7 +1017,6 @@ class ChatRenderer {
 
     /**
      * システムメッセージをフォーマットします
-     * @private
      * @param {string} message - メッセージ
      * @param {boolean} showDots - タイピングドットを表示するか
      * @returns {string} フォーマット済みメッセージHTML
@@ -1046,7 +1029,6 @@ class ChatRenderer {
 
     /**
      * スムーズにスクロールして最下部に移動します
-     * @private
      * @param {HTMLElement} container - スクロール対象のコンテナ
      */
     #smoothScrollToBottom(container) {

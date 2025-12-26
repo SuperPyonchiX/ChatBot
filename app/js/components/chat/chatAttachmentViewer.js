@@ -1,4 +1,4 @@
-/**
+﻿/**
  * chatAttachmentViewer.js
  * 添付ファイルの表示機能を提供します
  */
@@ -19,7 +19,6 @@ class ChatAttachmentViewer {
 
     /**
      * プライベートコンストラクタ
-     * @private
      */
     constructor() {
         if (ChatAttachmentViewer.#instance) {
@@ -71,7 +70,6 @@ class ChatAttachmentViewer {
 
     /**
      * 画像をフルサイズで表示
-     * @private
      */
     showFullSizeImage(src, name) {
         if (!src) return;
@@ -130,7 +128,6 @@ class ChatAttachmentViewer {
 
     /**
      * 画像プレビューを作成
-     * @private
      */
     #createImagePreview(attachment) {
         const imgContainer = ChatUI.getInstance.createElement('div', {
@@ -155,7 +152,6 @@ class ChatAttachmentViewer {
 
     /**
      * PDFプレビューを作成
-     * @private
      */
     #createPdfPreview(attachment) {
         const pdfContainer = ChatUI.getInstance.createElement('div', {
@@ -194,7 +190,6 @@ class ChatAttachmentViewer {
 
     /**
      * Officeファイルプレビューを作成
-     * @private
      */
     #createOfficePreview(attachment) {
         const officeContainer = ChatUI.getInstance.createElement('div', {
@@ -244,7 +239,6 @@ class ChatAttachmentViewer {
 
     /**
      * ファイルプレビューを作成
-     * @private
      */
     #createFilePreview(attachment) {
         const fileContainer = ChatUI.getInstance.createElement('div', {
@@ -278,7 +272,6 @@ class ChatAttachmentViewer {
 
     /**
      * テキストファイルの内容を表示
-     * @private
      */
     #showTextFileContent(content, name) {
         if (!content) {
@@ -342,7 +335,6 @@ class ChatAttachmentViewer {
 
     /**
      * テキストファイルの内容をフォーマット
-     * @private
      */
     #formatTextContent(content, fileName) {
         if (!content) return '';
@@ -367,7 +359,6 @@ class ChatAttachmentViewer {
 
     /**
      * PDFプレビューを表示
-     * @private
      */
     #showPDFPreview(src, name) {
         if (!src) return;
@@ -433,7 +424,6 @@ class ChatAttachmentViewer {
 
     /**
      * Officeファイルの内容を表示
-     * @private
      */
     #showOfficeContent(content, name) {
         if (!content) {
@@ -491,4 +481,3 @@ class ChatAttachmentViewer {
         document.body.appendChild(overlay);
     }
 }
-

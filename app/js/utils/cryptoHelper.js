@@ -1,4 +1,4 @@
-/**
+﻿/**
  * cryptoHelper.js
  * APIキーやセンシティブな情報の暗号化・復号化を担当するクラス
  * @class CryptoHelper
@@ -104,7 +104,6 @@ class CryptoHelper {
 
     /**
      * AES暗号化のためのキー導出関数（PBKDF2ベース）
-     * @private
      */
     #deriveKeyFromPassphrase(passphrase) {
         // パスフレーズとソルトから簡易的なキーを生成
@@ -126,7 +125,6 @@ class CryptoHelper {
     
     /**
      * 文字列をUTF-8バイト配列に変換
-     * @private
      */
     #stringToBytes(str) {
         const bytes = [];
@@ -139,7 +137,6 @@ class CryptoHelper {
     
     /**
      * バイト配列をUTF-8文字列に変換
-     * @private
      */
     #bytesToString(bytes) {
         let str = '';
@@ -151,7 +148,6 @@ class CryptoHelper {
     
     /**
      * XORベースの簡易暗号化（AES-256の代わり）
-     * @private
      */
     #xorEncrypt(data, key) {
         const dataBytes = this.#stringToBytes(data);
@@ -168,7 +164,6 @@ class CryptoHelper {
     
     /**
      * XORベースの簡易復号化
-     * @private
      */
     #xorDecrypt(encryptedBytes, key) {
         const keyBytes = this.#stringToBytes(key);

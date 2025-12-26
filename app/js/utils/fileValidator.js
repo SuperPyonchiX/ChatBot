@@ -1,4 +1,4 @@
-/**
+﻿/**
  * fileValidator.js
  * ファイルのバリデーション機能を提供します
  * @class FileValidator
@@ -64,7 +64,6 @@ class FileValidator {
 
     /**
      * ファイルの種類が許可されているかを確認します
-     * @private
      * @param {File} file - 確認するファイル
      * @returns {boolean} 許可されている場合はtrue
      */

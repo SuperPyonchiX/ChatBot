@@ -1,4 +1,4 @@
-/**
+﻿/**
  * chatActions.js
  * チャット関連のアクション（メッセージ送信、会話管理など）を担当するモジュール
  */
@@ -23,7 +23,6 @@ class ChatActions {
 
     /**
      * プライベートコンストラクタ
-     * @private
      */
     constructor() {
         if (ChatActions.#instance) {
@@ -36,7 +35,6 @@ class ChatActions {
 
     /**
      * DOM要素を初期化します
-     * @private
      */
     #initializeElements() {
         this.#webSearchToggle = document.getElementById('webSearchToggle');
@@ -51,7 +49,6 @@ class ChatActions {
 
     /**
      * イベントリスナーを設定します
-     * @private
      */
     #setupEventListeners() {
         if (this.#webSearchToggle) {
@@ -66,7 +63,6 @@ class ChatActions {
 
     /**
      * トグルボタンの状態を更新します
-     * @private
      */
     #updateToggleButtonState() {
         if (!this.#webSearchToggle) return;
@@ -126,6 +122,7 @@ class ChatActions {
             
             if (!result?.error) {
                 // 会話を保存
+                // @ts-ignore - Storageはカスタムクラス（型定義あり）
                 Storage.getInstance.saveConversations(window.AppState.conversations);
                 
                 // 添付ファイルを保存（正常送信時のみ）
@@ -167,6 +164,7 @@ class ChatActions {
      * @returns {void}
      */
     createNewConversation() {
+        /** @type {Conversation} */
         const newConversation = {
             id: Date.now().toString(),
             title: '新しいチャット',
@@ -176,13 +174,16 @@ class ChatActions {
                     content: window.AppState.systemPrompt || ''
                 }
             ],
-            model: window.AppState.getCurrentModel()
+            model: window.AppState.getCurrentModel(),
+            timestamp: Date.now()
         };
         
         window.AppState.conversations.unshift(newConversation);
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.saveConversations(window.AppState.conversations);
         
         window.AppState.currentConversationId = newConversation.id;
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.saveCurrentConversationId(window.AppState.currentConversationId);
         
         this.renderChatHistory();
@@ -224,11 +225,13 @@ class ChatActions {
             // すべての添付ファイルを削除
             window.AppState.conversations.forEach(conversation => {
                 if (conversation.id) {
+                    // @ts-ignore - Storageはカスタムクラス（型定義あり）
                     Storage.getInstance.removeAttachments(conversation.id);
                 }
             });
             
             window.AppState.conversations = [];
+            // @ts-ignore - Storageはカスタムクラス（型定義あり）
             Storage.getInstance.saveConversations(window.AppState.conversations);
             this.createNewConversation();
         }
@@ -371,7 +374,6 @@ class ChatActions {
 
     /**
      * エラーメッセージを表示
-     * @private
      * @param {string} errorMessage - エラーメッセージ
      * @param {HTMLElement} chatMessages - メッセージ表示要素
      */
@@ -392,7 +394,6 @@ class ChatActions {
 
     /**
      * 添付ファイルの内容を処理する
-     * @private
      * @param {Array} attachments - 添付ファイルの配列
      * @returns {Promise<string>} 処理された添付ファイルの内容
      */
@@ -418,7 +419,6 @@ class ChatActions {
     /**
      * 会話を切り替えます
      * 指定されたIDの会話に切り替え、UIを更新し、関連する添付ファイルを表示します
-     * @private
      * @param {string} conversationId - 切り替え先の会話ID
      * @returns {void}
      */
@@ -426,6 +426,7 @@ class ChatActions {
         if (!conversationId) return;
         
         window.AppState.currentConversationId = conversationId;
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.saveCurrentConversationId(window.AppState.currentConversationId);
         
         // アクティブチャットを更新
@@ -448,7 +449,6 @@ class ChatActions {
      * 会話を削除します
      * 指定された会話IDの会話を削除し、関連する添付ファイルも削除します
      * 削除した会話が現在表示中だった場合、別のチャットに切り替えるか新しいチャットを作成します
-     * @private
      * @param {string} conversationId - 削除する会話ID
      * @returns {void}
      */
@@ -461,9 +461,11 @@ class ChatActions {
         
         // チャットを削除
         window.AppState.conversations = window.AppState.conversations.filter(conv => conv.id !== conversationId);
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.saveConversations(window.AppState.conversations);
         
         // 添付ファイルも削除
+        // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.removeAttachments(conversationId);
         
         // 削除したチャットが現在表示中だった場合、別のチャットに切り替える
@@ -471,6 +473,7 @@ class ChatActions {
             if (window.AppState.conversations.length > 0) {
                 // 最初のチャットに切り替え
                 window.AppState.currentConversationId = window.AppState.conversations[0].id;
+                // @ts-ignore - Storageはカスタムクラス（型定義あり）
                 Storage.getInstance.saveCurrentConversationId(window.AppState.currentConversationId);
                 
                 if (window.Elements.chatMessages && window.Elements.modelSelect) {

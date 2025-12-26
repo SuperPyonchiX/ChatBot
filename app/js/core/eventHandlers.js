@@ -1,4 +1,4 @@
-/**
+﻿/**
  * eventHandlers.js
  * アプリケーション全体のイベントハンドラー設定を管理するモジュール
  */
@@ -8,7 +8,6 @@ class EventHandlers {
 
     /**
      * プライベートコンストラクタ
-     * @private
      */
     constructor() {
         if (EventHandlers.#instance) {
@@ -139,6 +138,7 @@ class EventHandlers {
                 const currentConversation = window.AppState.getConversationById(window.AppState.currentConversationId);
                 if (currentConversation) {
                     currentConversation.model = window.Elements.modelSelect.value;
+                    // @ts-ignore - Storageはカスタムクラス（型定義あり）
                     Storage.getInstance.saveConversations(window.AppState.conversations);
                 }
             });
@@ -186,6 +186,7 @@ class EventHandlers {
             if (!window.Elements.systemPromptInput) return;
             
             window.AppState.systemPrompt = window.Elements.systemPromptInput.value.trim();
+            // @ts-ignore - Storageはカスタムクラス（型定義あり）
             Storage.getInstance.saveSystemPrompt(window.AppState.systemPrompt);
             SystemPromptModal.getInstance.hideSystemPromptModal();
         });

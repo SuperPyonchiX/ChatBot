@@ -30,6 +30,7 @@
   },
   "include": [
     "app/**/*.js",
+    "app/types.d.ts",
     "launcher/server/**/*.js"
   ],
   "exclude": [

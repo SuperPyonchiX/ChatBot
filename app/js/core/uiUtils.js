@@ -1,4 +1,4 @@
-class UIUtils {
+﻿class UIUtils {
     // シングルトンインスタンス
     static #instance = null;
 
@@ -147,7 +147,6 @@ class UIUtils {
 
     /**
      * ESCキーが押されたときのハンドラー
-     * @private
      * @param {KeyboardEvent} e - キーボードイベント
      */
     #escapeKeyHandler(e) {

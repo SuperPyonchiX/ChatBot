@@ -1,7 +1,8 @@
-/**
+﻿/**
  * ChatUI.js
  * チャットUIの基本機能を提供します
  */
+// @ts-ignore - ChatUIはグローバルクラス（型定義あり）
 class ChatUI {
     // シングルトンインスタンス
     static #instance = null;
@@ -21,7 +22,6 @@ class ChatUI {
 
     /**
      * プライベートコンストラクタ
-     * @private
      */
     constructor() {
         if (ChatUI.#instance) {
@@ -104,7 +104,7 @@ class ChatUI {
         const languageSelect = document.getElementById('editorLanguageSelect');
         if (languageSelect) {
             languageSelect.addEventListener('change', (e) => {
-                const language = e.target.value;
+                const language = /** @type {HTMLSelectElement} */ (e.target).value;
                 this.#currentLanguage = language;
                 
                 // エディターのモデルを更新
@@ -195,7 +195,7 @@ class ChatUI {
         // 言語セレクタを更新
         const languageSelect = document.getElementById('editorLanguageSelect');
         if (languageSelect) {
-            languageSelect.value = this.#currentLanguage;
+            /** @type {HTMLSelectElement} */ (languageSelect).value = this.#currentLanguage;
         }
         
         // 言語に基づいて実行ボタンと実行結果の表示を切り替え
@@ -314,7 +314,7 @@ class ChatUI {
                             // インライン要素としてDOM内に追加すると確実に表示される
                             const containerParent = editorContainer.parentNode;
                             if (containerParent) {
-                                containerParent.style.display = 'block';
+                                /** @type {HTMLElement} */ (containerParent).style.display = 'block';
                             }
                         }
                         
@@ -448,7 +448,6 @@ class ChatUI {
 
     /**
      * エディターのコードを実行します
-     * @private
      */
     #executeEditorCode() {
         // エディターからコードと言語を取得
@@ -469,7 +468,7 @@ class ChatUI {
             // シンプルなエディタからコードを取得
             const simpleEditor = document.getElementById('simpleCodeEditor');
             if (simpleEditor) {
-                code = simpleEditor.value || '';
+                code = /** @type {HTMLTextAreaElement} */ (simpleEditor).value || '';
                 console.log('シンプルエディタからコード実行:', code);
             } else {
                 console.error('有効なエディタが見つかりません');
@@ -519,7 +518,6 @@ class ChatUI {
 
     /**
      * コードエディターモーダルを閉じます
-     * @private
      */
     #hideCodeEditorModal() {
         if (this.#codeEditorModal) {
@@ -531,7 +529,6 @@ class ChatUI {
 
     /**
      * モーダル内のエディタと実行結果の表示順序を修正する
-     * @private
      */
     #fixEditorContainerOrder() {
         try {
@@ -581,7 +578,6 @@ class ChatUI {
      * @param {HTMLElement} container - エディタを表示するコンテナ要素
      * @param {string} code - 初期コード
      * @param {string} language - プログラミング言語
-     * @private
      */
     #showSimpleEditorFallback(container, code, language) {
         console.log('[ChatUI] シンプルエディタフォールバックを表示します');
@@ -668,7 +664,6 @@ class ChatUI {
     /**
      * 言語に基づいて実行ボタンと実行結果の表示を切り替えます
      * @param {string} language - 現在の言語
-     * @private
      */
     #toggleExecutionFeaturesBasedOnLanguage(language) {
         // 実行可能な言語かどうかをチェック
@@ -679,10 +674,10 @@ class ChatUI {
         if (runButton) {
             if (isExecutable) {
                 runButton.style.display = 'block';
-                runButton.disabled = false;
+                /** @type {HTMLButtonElement} */ (runButton).disabled = false;
             } else {
                 runButton.style.display = 'none';
-                runButton.disabled = true;
+                /** @type {HTMLButtonElement} */ (runButton).disabled = true;
             }
         }
         

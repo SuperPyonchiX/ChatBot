@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MonacoEditorController.js
  * Monaco Editorの管理と操作を行うクラス
  */
@@ -15,7 +15,6 @@ class MonacoEditorController {
     
     /**
      * プライベートコンストラクタ
-     * @private
      */
     constructor() {
         if (MonacoEditorController.#instance) {
@@ -205,6 +204,7 @@ class MonacoEditorController {
             };
             
             // Monaco が既にロードされているか確認
+            // @ts-ignore - monaco は動的にロードされるグローバル変数
             if (window.monaco && window.monaco.editor) {
                 console.log('[MonacoEditorController] Monaco はすでに利用可能です');
                 this.#setupMonacoEditor(container, code, language);
@@ -220,6 +220,7 @@ class MonacoEditorController {
                     console.log('[MonacoEditorController] Monaco スクリプトはページ内に既に存在します');
                     // スクリプトがあるけどmonaco objectがまだない場合は少し待つ
                     setTimeout(() => {
+                        // @ts-ignore - monaco は動的にロードされるグローバル変数
                         if (window.monaco) {
                             this.#setupMonacoEditor(container, code, language);
                             resolve(this.#editor);
@@ -239,7 +240,6 @@ class MonacoEditorController {
      * @param {HTMLElement} container - エディタを配置するコンテナ要素
      * @param {string} code - 初期コード
      * @param {string} language - コードの言語
-     * @private
      */
     #setupMonacoEditor(container, code, language) {
         console.log("[MonacoEditorController] setupMonacoEditor 開始");
@@ -251,12 +251,14 @@ class MonacoEditorController {
                 this.#editor = null;
             }
             
+            // @ts-ignore - monaco は動的にロードされるグローバル変数
             if (!window.monaco) {
                 console.error("Monaco が初期化されていません");
                 container.innerHTML = '<div style="color:red; padding:20px;">Monaco Editorが見つかりません。</div>';
                 return;
             }
             
+            // @ts-ignore - monaco は動的にロードされるグローバル変数
             this.#monaco = window.monaco;
             
             // コードのデバッグログ追加
@@ -529,7 +531,6 @@ class MonacoEditorController {
      * 言語名をMonacoエディタで使用される言語IDにマッピングします
      * @param {string} languageName - マッピングする言語名
      * @returns {string} Monacoエディタの言語ID
-     * @private
      */
     #mapLanguage(languageName) {
         if (!languageName) return 'plaintext';

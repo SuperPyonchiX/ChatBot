@@ -1,4 +1,4 @@
-/**
+﻿/**
  * プロンプト候補表示機能
  * ユーザー入力時にプロンプト候補を表示し、選択できるようにします
  */
@@ -74,8 +74,7 @@ class PromptSuggestions {
 
     /**
      * 入力イベントを処理します
-     * @param {Event} e - 入力イベント（省略可能）
-     * @private
+
      */
     #handleInput() {
         const value = this.#inputElement.value.trim();
@@ -113,7 +112,6 @@ class PromptSuggestions {
     /**
      * キーボードイベントを処理します
      * @param {KeyboardEvent} e - キーボードイベント
-     * @private
      */
     #handleKeyDown(e) {
         // 候補が表示されていない場合は通常の動作
@@ -155,10 +153,9 @@ class PromptSuggestions {
     /**
      * 候補クリックイベントを処理します
      * @param {MouseEvent} e - マウスイベント
-     * @private
      */
     #handleSuggestionClick(e) {
-        const item = e.target.closest('.prompt-suggestion-item');
+        const item = /** @type {HTMLElement} */ (e.target).closest('.prompt-suggestion-item');
         if (!item) return;
         
         const index = parseInt(item.dataset.index, 10);
@@ -170,7 +167,6 @@ class PromptSuggestions {
     /**
      * 候補を表示します
      * @param {string} query - 検索クエリ
-     * @private
      */
     #showSuggestionsForQuery(query) {
         // プロンプトライブラリから候補を検索
@@ -189,7 +185,7 @@ class PromptSuggestions {
         this.#suggestions.forEach((suggestion, index) => {
             const item = document.createElement('div');
             item.className = 'prompt-suggestion-item';
-            item.dataset.index = index;
+            item.dataset.index = String(index);
             
             const categoryName = this.#getCategoryName(suggestion.category);
             const categoryLabel = categoryName ? 
@@ -222,7 +218,6 @@ class PromptSuggestions {
 
     /**
      * 次の候補を選択します
-     * @private
      */
     #selectNextSuggestion() {
         if (this.#suggestions.length === 0) return;
@@ -243,7 +238,6 @@ class PromptSuggestions {
 
     /**
      * 前の候補を選択します
-     * @private
      */
     #selectPrevSuggestion() {
         if (this.#suggestions.length === 0) return;
@@ -264,7 +258,6 @@ class PromptSuggestions {
 
     /**
      * 選択された候補が見えるようにスクロールします
-     * @private
      */
     #scrollToSelectedSuggestion() {
         const selectedItem = this.#suggestionsElement.querySelector('.prompt-suggestion-item.selected');
@@ -285,7 +278,6 @@ class PromptSuggestions {
     /**
      * 選択された候補を適用します
      * @param {Object} suggestion - 適用する候補
-     * @private
      */
     #applySuggestion(suggestion) {
         if (!suggestion) return;
@@ -354,7 +346,6 @@ class PromptSuggestions {
      * プロンプトライブラリから候補を検索します
      * @param {string} query - 検索クエリ
      * @returns {Array} 候補の配列
-     * @private
      */
     #searchPrompts(query) {
         // PromptManagerからプロンプトを検索
@@ -380,7 +371,6 @@ class PromptSuggestions {
      * カテゴリIDから表示名を取得します
      * @param {string} categoryId - カテゴリID
      * @returns {string} カテゴリ表示名
-     * @private
      */
     #getCategoryName(categoryId) {
         if (!categoryId) return '';

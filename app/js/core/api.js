@@ -64,7 +64,6 @@ class AIAPI {
 
     /**
      * Web検索対応モデルかどうかを判定
-     * @private
      * @param {string} model - モデル名 (例: 'gpt-5', 'gpt-5-mini')
      * @returns {boolean} Web検索対応モデルかどうか
      */

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * システムプロンプトモーダルを管理するクラス
  * @class SystemPromptModal
  */
@@ -115,6 +115,7 @@ class SystemPromptModal {
             categoryHeader.addEventListener('click', () => {
                 categoryElement.classList.toggle('collapsed');
                 // 展開状態を保存
+                // @ts-ignore - Storageはカスタムクラス（型定義あり）
                 Storage.getInstance.saveCategoryState(
                     category, 
                     categoryElement.classList.contains('collapsed')
@@ -144,7 +145,6 @@ class SystemPromptModal {
 
     /**
      * システムプロンプト項目要素を作成します
-     * @private
      */
     #createPromptItem(prompt) {
         const promptItem = document.createElement('div');

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * JavaScriptExecutor.js
  * JavaScriptコードの実行を担当するクラス
  */
@@ -25,7 +25,6 @@ class JavaScriptExecutor extends ExecutorBase {
 
     /**
      * コンソール引数をフォーマットする
-     * @private
      * @param {Array} args - コンソール出力の引数
      * @param {string} type - ログタイプ
      * @returns {Object} フォーマットされた出力
@@ -55,7 +54,6 @@ class JavaScriptExecutor extends ExecutorBase {
 
     /**
      * サンドボックス環境を作成する
-     * @private
      * @returns {Object} サンドボックスオブジェクト
      */
     static #createSandbox() {
