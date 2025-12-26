@@ -4,7 +4,7 @@ echo Creating ChatBot launcher shortcut...
 echo.
 
 REM PowerShellでショートカットを作成
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%~dp0ChatBot.lnk'); $Shortcut.TargetPath = '%~dp0launcher\StartChatBot.bat'; $Shortcut.WorkingDirectory = '%~dp0launcher'; $Shortcut.IconLocation = '%~dp0icon\ChatBot.ico'; $Shortcut.Description = 'Start ChatBot application'; $Shortcut.Save()"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%~dp0ChatBot.lnk'); $Shortcut.TargetPath = '%~dp0launcher\StartChatBot.bat'; $Shortcut.WorkingDirectory = '%~dp0launcher'; $Shortcut.IconLocation = '%~dp0app\icon\ChatBot.ico'; $Shortcut.Description = 'Start ChatBot application'; $Shortcut.Save()"
 
 if exist "%~dp0ChatBot.lnk" (
     echo [SUCCESS] ChatBot launcher shortcut created successfully!
