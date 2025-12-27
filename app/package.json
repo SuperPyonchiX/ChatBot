@@ -1,18 +1,19 @@
 {
-  "name": "chatbot-proxy-server",
+  "name": "chatbot",
   "version": "1.0.0",
-  "description": "ChatBotアプリケーション用ローカルプロキシサーバー",
-  "main": "server.js",
+  "description": "ChatBot - Node.js/Express統合版",
+  "main": "server/index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js --port=50000"
+    "start": "node server/index.js",
+    "dev": "node server/index.js"
   },
   "keywords": [
-    "proxy",
     "chatbot",
     "openai",
     "claude",
-    "gemini"
+    "gemini",
+    "express",
+    "proxy"
   ],
   "author": "",
   "license": "MIT",
@@ -22,6 +23,6 @@
     "cors": "^2.8.5"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   }
 }

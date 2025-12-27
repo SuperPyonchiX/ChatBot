@@ -4,6 +4,8 @@
 .system-message {
     position: relative;
     overflow: hidden;
+    border-radius: 8px; /* 角丸を追加 */
+    margin: 8px 0;
 }
 
 /* ステータス別のスタイリング */
@@ -64,18 +66,79 @@
     transition: all 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
+.message.bot.system-message.anim-tech-scan {
+    opacity: 0 !important;
+    transform: perspective(1000px) rotateX(10deg) translateY(-10px) !important;
+    transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+.message.bot.system-message.anim-neon-pulse {
+    opacity: 0 !important;
+    transform: scale(0.95) !important;
+    box-shadow: 0 0 0 rgba(59, 130, 246, 0);
+    transition: all 0.5s ease-out !important;
+}
+
 /* === アニメーション実行状態 === */
 .message.bot.system-message.anim-fade.animate,
 .message.bot.system-message.anim-slide.animate,
 .message.bot.system-message.anim-pulse.animate,
 .message.bot.system-message.anim-gradient.animate,
 .message.bot.system-message.anim-ripple.animate,
-.message.bot.system-message.anim-particles.animate {
+.message.bot.system-message.anim-particles.animate,
+.message.bot.system-message.anim-tech-scan.animate,
+.message.bot.system-message.anim-neon-pulse.animate {
     opacity: 1 !important;
-    transform: translateY(0) translateX(0) scale(1) !important;
+    transform: translateY(0) translateX(0) scale(1) rotateX(0) !important;
 }
 
 /* === 特殊効果 === */
+
+/* Tech Scan Effect */
+.message.bot.system-message.anim-tech-scan::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 20%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(59, 130, 246, 0.4), 
+        rgba(59, 130, 246, 0.8),
+        rgba(59, 130, 246, 0.4),
+        transparent);
+    transform: skewX(-25deg);
+    transition: left 1s ease-in-out;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+}
+
+.message.bot.system-message.anim-tech-scan.animate::before {
+    left: 150%;
+    opacity: 0.5;
+    transition: left 1.5s ease-in-out;
+    animation: techScanLoop 3s infinite 1.5s;
+}
+
+@keyframes techScanLoop {
+    0% { left: -50%; opacity: 0; }
+    10% { opacity: 0.5; }
+    90% { opacity: 0.5; }
+    100% { left: 150%; opacity: 0; }
+}
+
+/* Neon Pulse Effect */
+.message.bot.system-message.anim-neon-pulse.animate {
+    animation: neonPulseBorder 2s infinite;
+}
+
+@keyframes neonPulseBorder {
+    0% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.2); }
+    50% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.6), 0 0 30px rgba(59, 130, 246, 0.2); }
+    100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.2); }
+}
 
 /* グラデーション効果 */
 .message.bot.system-message.anim-gradient::before {
@@ -116,10 +179,10 @@
 }
 
 .message.bot.system-message.anim-ripple.animate::after {
-    width: 200px;
-    height: 200px;
+    width: 300px; /* 大きくして全体をカバー */
+    height: 300px;
     opacity: 0;
-    background: rgba(59, 130, 246, 0.1);
+    background: rgba(59, 130, 246, 0.0);
 }
 
 /* パーティクル効果 */
@@ -128,7 +191,7 @@
     position: absolute;
     top: 10px;
     right: 10px;
-    font-size: 12px;
+    font-size: 14px;
     opacity: 0;
     transform: scale(0);
     transition: all 0.6s ease-out 0.3s;
@@ -139,39 +202,55 @@
 .message.bot.system-message.anim-particles.animate::before {
     opacity: 1;
     transform: scale(1) rotate(360deg);
+    animation: particleFloat 3s ease-in-out infinite alternate;
 }
 
-/* タイピングドット */
+@keyframes particleFloat {
+    0% { transform: scale(1) rotate(0deg) translateY(0); }
+    100% { transform: scale(1.2) rotate(10deg) translateY(-5px); }
+}
+
+/* タイピングドット - モダンなウェーブアニメーション */
 .system-message .typing-dots {
-    display: inline-block;
-    margin-left: 4px;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    height: 1em;
+    vertical-align: middle;
 }
 
 .system-message .typing-dots span {
     display: inline-block;
-    animation: typingDots 1.4s ease-in-out infinite;
-    opacity: 0.3;
-    margin: 0 1px;
-    font-size: 1.1em;
-    color: #666;
+    width: 4px;
+    height: 4px;
+    margin: 0 2px;
+    background-color: currentColor;
+    border-radius: 50%;
+    opacity: 0.4;
+    animation: typingWave 1.4s infinite ease-in-out both;
+    transform-origin: center;
+}
+
+.system-message .typing-dots span:nth-child(1) {
+    animation-delay: -0.32s;
 }
 
 .system-message .typing-dots span:nth-child(2) {
-    animation-delay: 0.2s;
+    animation-delay: -0.16s;
 }
 
 .system-message .typing-dots span:nth-child(3) {
-    animation-delay: 0.4s;
+    animation-delay: 0s;
 }
 
-@keyframes typingDots {
-    0%, 60%, 100% { 
-        opacity: 0.3; 
-        transform: scale(1);
+@keyframes typingWave {
+    0%, 80%, 100% { 
+        transform: scale(0.6) translateY(0);
+        opacity: 0.4;
     }
-    30% { 
-        opacity: 1; 
-        transform: scale(1.2);
+    40% { 
+        transform: scale(1.2) translateY(-3px);
+        opacity: 1;
     }
 }
 
@@ -182,14 +261,18 @@
     .system-message.anim-pulse,
     .system-message.anim-gradient,
     .system-message.anim-ripple,
-    .system-message.anim-particles {
+    .system-message.anim-particles,
+    .system-message.anim-tech-scan,
+    .system-message.anim-neon-pulse {
         transition: opacity 0.2s ease !important;
         transform: none !important;
+        animation: none !important;
     }
     
     .system-message.anim-gradient::before,
     .system-message.anim-ripple::after,
-    .system-message.anim-particles::before {
+    .system-message.anim-particles::before,
+    .system-message.anim-tech-scan::before {
         display: none !important;
     }
     

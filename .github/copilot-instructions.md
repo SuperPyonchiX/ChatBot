@@ -2,12 +2,12 @@
 
 ## プロジェクト概要
 
-マルチAIプロバイダ対応のWebベースチャットボットアプリケーションです。OpenAI、Azure OpenAI、Claude (Anthropic)、Geminiの各APIをサポートし、ローカル環境で動作するクライアントサイドSPA (Single Page Application) として設計されています。
+マルチAIプロバイダ対応のWebベースチャットボットアプリケーションです。OpenAI、Azure OpenAI、Claude (Anthropic)、Geminiの各APIをサポートし、Node.js + Expressサーバーで動作するローカル環境向けアプリケーションとして設計されています。
 
 - **対応プロバイダ**: OpenAI, Azure OpenAI, Claude (Anthropic), Gemini
 - **対応モデル**: GPT-4o, GPT-4o-mini, GPT-5, Claude Opus/Sonnet/Haiku, Gemini 2.5 Pro/Flash
 - **主要機能**: ストリーミング表示、Web検索連携、ファイル添付、コード実行、Markdown/Mermaid表示、チャット履歴管理
-- **技術スタック**: HTML5, CSS3, JavaScript (ES6+), PowerShell (ローカルプロキシ)
+- **技術スタック**: HTML5, CSS3, JavaScript (ES6+), Node.js, Express
 
 ## 一般的な指示事項
 
@@ -16,43 +16,50 @@
 ```
 ChatBot/
 ├── app/                           # アプリケーション本体
-│   ├── index.html                # メインHTML
-│   ├── main.js                   # エントリーポイント
-│   ├── css/                      # スタイルシート
-│   │   ├── base/                 # 基本スタイル・変数
-│   │   ├── components/           # コンポーネント別CSS
-│   │   └── layouts/              # レイアウトCSS
-│   └── js/                       # JavaScriptモジュール
-│       ├── components/           # UIコンポーネント
-│       │   ├── chat/             # チャット機能
-│       │   ├── fileAttachment/   # ファイル添付
-│       │   └── sidebar/          # サイドバー
-│       ├── core/                 # コア機能
-│       │   ├── api.js            # API通信
-│       │   ├── config.js         # 設定管理
-│       │   ├── storage.js        # ローカルストレージ
-│       │   ├── executors/        # コード実行機能
-│       │   └── monaco/           # Monaco Editor
-│       ├── modals/               # モーダルダイアログ
-│       │   ├── apiSettings/      # API設定
-│       │   ├── promptManager/    # プロンプト管理
-│       │   └── systemPrompt/     # システムプロンプト
-│       └── utils/                # ユーティリティ
-│           ├── markdown.js       # Markdown処理
-│           ├── cryptoHelper.js   # 暗号化
-│           └── file*.js          # ファイル処理
-├── launcher/                      # 起動スクリプト
-│   ├── StartChatBot.bat          # メインランチャー
-│   └── server/                   # ローカルサーバー
-│       ├── server.js             # Node.jsサーバー
-│       └── package.json          # Node.js設定
-├── icon/                          # アイコン
+│   ├── server/                    # Node.js/Expressサーバー
+│   │   └── index.js               # サーバーエントリーポイント
+│   ├── public/                    # フロントエンド（静的ファイル）
+│   │   ├── index.html             # メインHTML
+│   │   ├── main.js                # エントリーポイント
+│   │   ├── css/                   # スタイルシート
+│   │   │   ├── base/              # 基本スタイル・変数
+│   │   │   ├── components/        # コンポーネント別CSS
+│   │   │   └── layouts/           # レイアウトCSS
+│   │   ├── js/                    # JavaScriptモジュール
+│   │   │   ├── components/        # UIコンポーネント
+│   │   │   │   ├── chat/          # チャット機能
+│   │   │   │   ├── fileAttachment/ # ファイル添付
+│   │   │   │   └── sidebar/       # サイドバー
+│   │   │   ├── core/              # コア機能
+│   │   │   │   ├── api.js         # API通信
+│   │   │   │   ├── config.js      # 設定管理
+│   │   │   │   ├── storage.js     # ローカルストレージ
+│   │   │   │   ├── executors/     # コード実行機能
+│   │   │   │   └── monaco/        # Monaco Editor
+│   │   │   ├── modals/            # モーダルダイアログ
+│   │   │   │   ├── apiSettings/   # API設定
+│   │   │   │   ├── promptManager/ # プロンプト管理
+│   │   │   │   └── systemPrompt/  # システムプロンプト
+│   │   │   └── utils/             # ユーティリティ
+│   │   │       ├── markdown.js    # Markdown処理
+│   │   │       ├── cryptoHelper.js # 暗号化
+│   │   │       └── file*.js       # ファイル処理
+│   │   └── icon/                  # アイコン
+│   ├── node_modules/              # 依存パッケージ
+│   └── package.json               # Node.js設定
+├── scripts/                       # 起動スクリプト
+│   ├── StartChatBot.bat           # メインランチャー
+│   └── CreateLauncher.bat         # ショートカット作成
 ├── ChatBot.lnk                    # メインショートカット
-├── CreateLauncher.bat             # ランチャー作成
 └── README.md                      # プロジェクト概要
 ```
 
 ### 主要な依存関係
+
+**サーバー依存関係 (package.json)**:
+- `express`: Webフレームワーク
+- `http-proxy-middleware`: APIプロキシ
+- `cors`: CORS対応
 
 **CDNライブラリ**:
 - `marked.js`: Markdown処理
@@ -113,7 +120,7 @@ class AIAPI {
         try {
             const apiSettings = Storage.getInstance.loadApiSettings();
             const apiType = apiSettings.apiType || 'openai';
-            
+
             if (apiType === 'openai') {
                 return await this.#performOpenAIRequest(messages, model, onChunk, onComplete);
             } else if (apiType === 'azure') {
@@ -155,7 +162,7 @@ async function sendMessage() {
 
     } catch (error) {
         console.error('Send message error:', error);
-        
+
         // ユーザーフレンドリーなエラーメッセージ
         let errorMessage = 'メッセージの送信中にエラーが発生しました';
         if (error.message.includes('API key')) {
@@ -163,7 +170,7 @@ async function sendMessage() {
         } else if (error.message.includes('network')) {
             errorMessage = 'ネットワークエラーが発生しました';
         }
-        
+
         UI.getInstance.Core.Notification.show(errorMessage, 'error');
     } finally {
         // クリーンアップ処理
@@ -182,42 +189,42 @@ async function sendMessage() {
 class FileValidator {
     static validateFiles(files) {
         const errors = [];
-        
+
         for (const file of files) {
             // ファイルタイプ検証
             if (!this.#checkFileType(file)) {
                 errors.push(`${file.name}: サポートされていないファイル形式`);
                 continue;
             }
-            
+
             // ファイルサイズ検証
             if (!this.#checkFileSize(file)) {
                 errors.push(`${file.name}: ファイルサイズが大きすぎます (最大: 10MB)`);
                 continue;
             }
-            
+
             // 拡張子検証
             if (!this.#checkFileExtension(file)) {
                 errors.push(`${file.name}: サポートされていない拡張子`);
             }
         }
-        
+
         return { valid: errors.length === 0, errors };
     }
-    
+
     static #checkFileType(file) {
         const allowedTypes = Object.keys(CONFIG.FILE.FILE_TYPE_MAP);
         return allowedTypes.includes(file.type);
     }
-    
+
     static #checkFileSize(file) {
         return file.size <= CONFIG.FILE.MAX_FILE_SIZE;
     }
-    
+
     static #checkFileExtension(file) {
         const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
         const typeMap = CONFIG.FILE.FILE_TYPE_MAP;
-        
+
         for (const mimeType in typeMap) {
             if (typeMap[mimeType].extensions.includes(ext)) {
                 return true;
@@ -236,13 +243,13 @@ function validateMessage(messageText, attachments) {
     if (!messageText.trim() && (!attachments || attachments.length === 0)) {
         throw new Error('メッセージまたは添付ファイルが必要です');
     }
-    
+
     // 最大長チェック
     const maxLength = 32000;
     if (messageText.length > maxLength) {
         throw new Error(`メッセージが長すぎます (最大: ${maxLength}文字)`);
     }
-    
+
     return true;
 }
 ```
@@ -251,13 +258,14 @@ function validateMessage(messageText, attachments) {
 
 ### ファイル組織
 
-- **HTML**: `app/index.html` – メインHTMLファイル
-- **エントリーポイント**: `app/main.js` – アプリ初期化
-- **コアモジュール**: `app/js/core/` – API通信、状態管理、ストレージ
-- **コンポーネント**: `app/js/components/` – UIコンポーネント
-- **ユーティリティ**: `app/js/utils/` – 共通ユーティリティ
-- **モーダル**: `app/js/modals/` – モーダルダイアログ
-- **スタイル**: `app/css/` – コンポーネント別CSS
+- **サーバー**: `app/server/index.js` – Expressサーバー
+- **HTML**: `app/public/index.html` – メインHTMLファイル
+- **エントリーポイント**: `app/public/main.js` – アプリ初期化
+- **コアモジュール**: `app/public/js/core/` – API通信、状態管理、ストレージ
+- **コンポーネント**: `app/public/js/components/` – UIコンポーネント
+- **ユーティリティ**: `app/public/js/utils/` – 共通ユーティリティ
+- **モーダル**: `app/public/js/modals/` – モーダルダイアログ
+- **スタイル**: `app/public/css/` – コンポーネント別CSS
 
 ### 命名規則
 
@@ -316,7 +324,7 @@ window.CONFIG = {
 ```javascript
 /**
  * メッセージを送信します
- * 
+ *
  * @async
  * @param {string} messageText - 送信するメッセージテキスト
  * @param {Array} attachments - 添付ファイルの配列
@@ -326,7 +334,6 @@ window.CONFIG = {
 async sendMessage(messageText, attachments) {
     // 実装
 }
-```
 ```
 
 ## 一般的なパターン
@@ -409,19 +416,19 @@ class Storage {
         const data = JSON.stringify(window.AppState.conversations);
         localStorage.setItem('conversations', data);
     }
-    
+
     // 会話を読み込み
     loadConversations() {
         const data = localStorage.getItem('conversations');
         return data ? JSON.parse(data) : [];
     }
-    
+
     // API設定を保存（暗号化）
     saveApiSettings(settings) {
         const encrypted = CryptoHelper.getInstance.encrypt(settings);
         localStorage.setItem('apiSettings', encrypted);
     }
-    
+
     // API設定を読み込み（復号化）
     loadApiSettings() {
         const encrypted = localStorage.getItem('apiSettings');
@@ -438,21 +445,21 @@ async function handleStreamingResponse(response, onChunk, onComplete) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
-    
+
     try {
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            
+
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split('\n');
             buffer = lines.pop(); // 最後の不完全な行を保持
-            
+
             for (const line of lines) {
                 if (line.startsWith('data: ')) {
                     const data = line.slice(6);
                     if (data === '[DONE]') continue;
-                    
+
                     try {
                         const parsed = JSON.parse(data);
                         const content = parsed.choices[0]?.delta?.content;
@@ -547,7 +554,14 @@ try {
 
 ### ローカル開発環境
 
+```bash
+# サーバー起動
+cd app
+npm install
+npm start
 
+# ブラウザで http://localhost:50000 にアクセス
+```
 
 ### ブラウザ開発者ツール
 
@@ -582,3 +596,4 @@ try {
 - [OpenAI API リファレンス](https://platform.openai.com/docs/api-reference)
 - [Anthropic Claude API](https://docs.anthropic.com/claude/reference)
 - [Google Gemini API](https://ai.google.dev/docs)
+- [Express ドキュメント](https://expressjs.com/)

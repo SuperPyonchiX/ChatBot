@@ -1,13 +1,13 @@
 /**
- * ChatBot ローカルプロキシサーバー
- * 
+ * ChatBot Node.js サーバー
+ *
  * 目的:
+ * - Expressサーバーでフロントエンドを配信
  * - ブラウザから直接APIを呼び出す際のCORS問題を回避
- * - APIキーをクライアント側で管理しつつ、安全にリクエストを転送
  * - OpenAI、Claude、Geminiの各APIへのプロキシ機能を提供
- * 
+ *
  * 起動方法:
- * - node server.js [--port=ポート番号]
+ * - npm start
  * - デフォルトポート: 50000
  */
 
@@ -16,10 +16,8 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const cors = require('cors');
 const path = require('path');
 
-// コマンドライン引数からポート番号を取得
-const args = process.argv.slice(2);
-const portArg = args.find(arg => arg.startsWith('--port='));
-const PORT = portArg ? parseInt(portArg.split('=')[1]) : 50000;
+// ポート設定
+const PORT = process.env.PORT || 50000;
 
 const app = express();
 
@@ -36,8 +34,8 @@ app.use(cors({
 // ========================================
 // 静的ファイルの配信（アプリケーション本体）
 // ========================================
-const appPath = path.join(__dirname, '../../app');
-app.use(express.static(appPath));
+const publicPath = path.join(__dirname, '../public');
+app.use(express.static(publicPath));
 
 // ========================================
 // OpenAI API プロキシ
@@ -135,7 +133,7 @@ app.use('/gemini', createProxyMiddleware({
 // ルートアクセス時のリダイレクト
 // ========================================
 app.get('/', (req, res) => {
-    res.sendFile(path.join(appPath, 'index.html'));
+    res.sendFile(path.join(publicPath, 'index.html'));
 });
 
 // ========================================
@@ -143,24 +141,22 @@ app.get('/', (req, res) => {
 // ========================================
 app.listen(PORT, () => {
     console.log('');
-    console.log('╔════════════════════════════════════════════════════════════╗');
-    console.log('║                                                            ║');
-    console.log('║           ChatBot ローカルプロキシサーバー起動             ║');
-    console.log('║                                                            ║');
-    console.log('╚════════════════════════════════════════════════════════════╝');
+    console.log('========================================');
+    console.log('   ChatBot Node.js Server');
+    console.log('========================================');
     console.log('');
-    console.log(`🌐 サーバーURL: http://localhost:${PORT}`);
-    console.log(`📁 アプリケーションパス: ${appPath}`);
+    console.log(`Server URL: http://localhost:${PORT}`);
+    console.log(`Public Path: ${publicPath}`);
     console.log('');
-    console.log('🔄 プロキシエンドポイント:');
+    console.log('Proxy Endpoints:');
     console.log(`   - OpenAI:    http://localhost:${PORT}/openai/*`);
     console.log(`   - Responses: http://localhost:${PORT}/responses/*`);
     console.log(`   - Claude:    http://localhost:${PORT}/anthropic/*`);
     console.log(`   - Gemini:    http://localhost:${PORT}/gemini/*`);
     console.log('');
-    console.log('💡 ブラウザで http://localhost:' + PORT + ' を開いてください');
+    console.log(`Open http://localhost:${PORT} in your browser`);
     console.log('');
-    console.log('⏹  サーバーを停止するには Ctrl+C を押してください');
+    console.log('Press Ctrl+C to stop the server');
     console.log('');
 });
 
@@ -168,9 +164,9 @@ app.listen(PORT, () => {
 // エラーハンドリング
 // ========================================
 process.on('uncaughtException', (err) => {
-    console.error('未処理の例外:', err);
+    console.error('Uncaught Exception:', err);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('未処理のPromise拒否:', reason);
+    console.error('Unhandled Rejection:', reason);
 });

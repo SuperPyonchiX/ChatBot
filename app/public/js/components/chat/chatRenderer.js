@@ -39,38 +39,38 @@ class ChatRenderer {
      */
     async addUserMessage(message, chatMessages, attachments = [], timestamp = null) {
         if (!chatMessages) return;
-        
+
         const msgTimestamp = timestamp || Date.now();
         const fragment = document.createDocumentFragment();
-        
+
         // 直接DOMを操作して要素を作成
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', 'user');
         messageDiv.dataset.timestamp = msgTimestamp.toString();
         messageDiv.setAttribute('role', 'region');
         messageDiv.setAttribute('aria-label', 'あなたのメッセージ');
-        
+
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
         const copyButton = this.#createCopyButton(message || '');
-        
+
         try {
             const renderedMarkdown = await Markdown.getInstance.renderMarkdown(message || '');
             const markdownContent = document.createElement('div');
             markdownContent.className = 'markdown-content';
             markdownContent.innerHTML = renderedMarkdown;
-        
+
             contentDiv.appendChild(copyButton);
             contentDiv.appendChild(markdownContent);
-            
+
             if (attachments && attachments.length > 0) {
                 contentDiv.appendChild(ChatAttachmentViewer.getInstance.createAttachmentsElement(attachments));
             }
-            
+
             messageDiv.appendChild(contentDiv);
             fragment.appendChild(messageDiv);
             chatMessages.appendChild(fragment);
-        
+
             this.#applyCodeFormatting(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         } catch (e) {
@@ -78,7 +78,7 @@ class ChatRenderer {
             const markdownContent = document.createElement('div');
             markdownContent.className = 'markdown-content';
             markdownContent.textContent = message || '';
-            
+
             contentDiv.appendChild(copyButton);
             contentDiv.appendChild(markdownContent);
             messageDiv.appendChild(contentDiv);
@@ -99,20 +99,20 @@ class ChatRenderer {
      */
     async addBotMessage(message, chatMessages, timestamp = null, animate = true) {
         if (!chatMessages) return;
-        
+
         const msgTimestamp = timestamp || Date.now();
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', 'bot');
         messageDiv.dataset.timestamp = msgTimestamp.toString();
         messageDiv.setAttribute('role', 'region');
         messageDiv.setAttribute('aria-label', 'AIからの返答');
-        
+
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
         const copyButton = this.#createCopyButton(message || '');
         const messageContent = document.createElement('div');
         messageContent.className = 'markdown-content';
-        
+
         if (animate) {
             messageContent.innerHTML = '';
             contentDiv.appendChild(copyButton);
@@ -120,7 +120,7 @@ class ChatRenderer {
             messageDiv.appendChild(contentDiv);
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
-            
+
             this.#animateTyping(message, messageContent);
         } else {
             try {
@@ -129,7 +129,7 @@ class ChatRenderer {
                 contentDiv.appendChild(copyButton);
                 contentDiv.appendChild(messageContent);
                 messageDiv.appendChild(contentDiv);
-                
+
                 chatMessages.appendChild(messageDiv);
                 this.#applyCodeFormatting(messageDiv);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -156,15 +156,15 @@ class ChatRenderer {
         if (!chatMessages) return null;
 
         const { messageDiv, contentContainer } = this.addSystemMessage(
-            chatMessages, 
-            'Thinking', 
-            { 
-                status: 'thinking', 
-                animation: 'fade', 
-                showDots: true 
+            chatMessages,
+            'Thinking',
+            {
+                status: 'thinking',
+                animation: 'fade',
+                showDots: true
             }
         );
-        
+
         // システムメッセージのクラスを変更してボットメッセージに
         if (messageDiv) {
             messageDiv.classList.remove('system-message');
@@ -190,18 +190,18 @@ class ChatRenderer {
      */
     async updateStreamingBotMessage(container, chunk, currentFullText, isFirstChunk = false) {
         if (!container) return;
-        
+
         try {
             const renderedHTML = await Markdown.getInstance.renderMarkdown(currentFullText);
             const chatMessages = container.closest('.chat-messages');
             if (chatMessages) {
                 const isNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
                 container.innerHTML = renderedHTML;
-                
+
                 if (typeof Prism !== 'undefined') {
                     Prism.highlightAllUnder(container);
                 }
-                
+
                 if (isNearBottom) {
                     chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
@@ -222,18 +222,18 @@ class ChatRenderer {
      */
     async finalizeStreamingBotMessage(messageDiv, container, fullText) {
         if (!messageDiv || !container) return;
-        
+
         try {
             const renderedHTML = await Markdown.getInstance.renderMarkdown(fullText);
             container.innerHTML = renderedHTML;
-            
+
             const contentDiv = messageDiv.querySelector('.message-content');
             if (contentDiv) {
                 const existingButton = contentDiv.querySelector('.copy-button');
                 if (existingButton) {
                     contentDiv.removeChild(existingButton);
                 }
-                
+
                 const copyButton = this.#createCopyButton(fullText);
                 if (contentDiv.firstChild) {
                     contentDiv.insertBefore(copyButton, contentDiv.firstChild);
@@ -241,13 +241,13 @@ class ChatRenderer {
                     contentDiv.appendChild(copyButton);
                 }
             }
-            
+
             if (typeof Prism !== 'undefined') {
                 Prism.highlightAllUnder(messageDiv);
             }
-            
+
             this.#addCodeBlockCopyButtons(messageDiv);
-            
+
         } catch (e) {
             console.error('ストリーミング完了時のMarkdown解析エラー:', e);
             container.textContent = fullText;
@@ -261,29 +261,29 @@ class ChatRenderer {
      */
     async #formatMessage(message) {
         if (!message) return '';
-        
+
         try {
             let formattedMessage = await Markdown.getInstance.renderMarkdown(message);
-            
+
             // 改行を<br>に変換
             formattedMessage = formattedMessage.replace(/\n/g, '<br>');
-            
+
             // インラインコードを処理
             formattedMessage = formattedMessage.replace(/`([^`]+)`/g, '<code>$1</code>');
-            
+
             // コードブロックを処理
             formattedMessage = formattedMessage.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
                 const language = lang ? ` class="language-${lang}"` : '';
                 return `<pre><code${language}>${code}</code></pre>`;
             });
-            
+
             return formattedMessage;
         } catch (error) {
             console.error('メッセージフォーマットエラー:', error);
             return Markdown.getInstance.escapeHtml(message).replace(/\n/g, '<br>');
         }
     }
-    
+
 
     /**
      * コードブロックのフォーマットとハイライトを適用する
@@ -293,7 +293,7 @@ class ChatRenderer {
      */
     #applyCodeFormatting(messageDiv) {
         if (!messageDiv) return;
-        
+
         requestAnimationFrame(() => {
             try {
                 this.#addCodeBlockCopyButtons(messageDiv);
@@ -315,19 +315,19 @@ class ChatRenderer {
      */
     async #animateTyping(message, container) {
         if (!message || !container) return;
-        
+
         const typingConfig = window.CONFIG?.UI?.TYPING_EFFECT || {};
         const typingEnabled = typingConfig.ENABLED !== undefined ? typingConfig.ENABLED : true;
-        
+
         if (!typingEnabled) {
             try {
                 const renderedHTML = await Markdown.getInstance.renderMarkdown(message);
                 container.innerHTML = renderedHTML;
-                
+
                 if (typeof Prism !== 'undefined') {
                     Prism.highlightAllUnder(container);
                 }
-                
+
                 this.#addCodeBlockCopyButtons(container.closest('.message'));
                 return;
             } catch (e) {
@@ -336,28 +336,28 @@ class ChatRenderer {
                 return;
             }
         }
-        
+
         let markdownText = '';
         const typingSpeed = typingConfig.SPEED !== undefined ? typingConfig.SPEED : 5;
         const bufferSize = typingConfig.BUFFER_SIZE !== undefined ? typingConfig.BUFFER_SIZE : 5;
         let currentIndex = 0;
-        
+
         const typeNextCharacters = async () => {
             if (currentIndex < message.length) {
                 const charsToAdd = Math.min(bufferSize, message.length - currentIndex);
                 markdownText += message.substring(currentIndex, currentIndex + charsToAdd);
                 currentIndex += charsToAdd;
-                
+
                 try {
                     const renderedHTML = await Markdown.getInstance.renderMarkdown(markdownText);
                     container.innerHTML = renderedHTML;
-                    
+
                     if (typeof Prism !== 'undefined') {
                         Prism.highlightAllUnder(container);
                     }
-                    
+
                     this.#addCodeBlockCopyButtons(container.closest('.message'));
-                    
+
                     const chatMessages = container.closest('.chat-messages');
                     if (chatMessages) {
                         chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -366,11 +366,11 @@ class ChatRenderer {
                     console.error('タイピング中のMarkdown解析エラー:', e);
                     container.textContent = markdownText;
                 }
-                
+
                 setTimeout(typeNextCharacters, typingSpeed);
             }
         };
-        
+
         await typeNextCharacters();
     }
 
@@ -385,13 +385,13 @@ class ChatRenderer {
         copyButton.classList.add('copy-button');
         copyButton.title = 'コピーする';
         copyButton.innerHTML = '<i class="fas fa-copy"></i>';
-        
+
         copyButton.addEventListener('click', () => {
             if (!textToCopy) {
                 console.warn('コピーするテキストが空です');
                 return;
             }
-            
+
             navigator.clipboard.writeText(textToCopy)
                 .then(() => {
                     this.#showCopySuccess(copyButton);
@@ -401,40 +401,40 @@ class ChatRenderer {
                     this.#showCopyError(copyButton);
                 });
         });
-        
+
         return copyButton;
     }
 
-    
+
     /**
      * コードブロックにコピーボタン、編集ボタン、実行ボタンを追加します
      * @param {HTMLElement} messageElement - コードブロックを含むメッセージ要素
      */
     #addCodeBlockCopyButtons(messageElement) {
         if (!messageElement) return;
-        
+
         try {
             const codeBlocks = messageElement.querySelectorAll('pre code');
             if (!codeBlocks || codeBlocks.length === 0) return;
-            
+
             codeBlocks.forEach((codeBlock, index) => {
                 const pre = codeBlock.parentElement;
                 if (!pre) return;
-                
+
                 // すでにラッパーがある場合はスキップ
                 if (pre.parentNode && /** @type {HTMLElement} */ (pre.parentNode).classList.contains('code-block')) {
                     return;
                 }
-                
+
                 // 言語クラスからコード言語を特定
                 const langClass = Array.from(codeBlock.classList)
                     .find(cls => cls.startsWith('language-'));
                 const language = langClass ? langClass.replace('language-', '') : '';
-                
+
                 // ラッパーでコードブロックを囲む
                 const wrapper = document.createElement('div');
                 wrapper.classList.add('code-block');
-                
+
                 // 言語表示を追加
                 if (language && language !== 'plaintext' && language !== 'none') {
                     const langLabel = document.createElement('div');
@@ -442,36 +442,36 @@ class ChatRenderer {
                     langLabel.textContent = this.#getNiceLanguageName(language);
                     wrapper.appendChild(langLabel);
                 }
-                
+
                 // ラッパーに元のpreを移動
                 pre.parentNode.insertBefore(wrapper, pre);
                 wrapper.appendChild(pre);
-                
+
                 // ツールバーを作成
                 const toolbar = document.createElement('div');
                 toolbar.classList.add('code-block-toolbar');
-                
+
                 // コピーボタンを追加
-                const copyButton = this.#createCodeCopyButton(index, /** @type {HTMLElement} */ (codeBlock));
+                const copyButton = this.#createCodeCopyButton(index, /** @type {HTMLElement} */(codeBlock));
                 toolbar.appendChild(copyButton);
-                
+
                 // 編集ボタンを追加
-                const editButton = this.#createEditButton(index, /** @type {HTMLElement} */ (codeBlock), language);
+                const editButton = this.#createEditButton(index, /** @type {HTMLElement} */(codeBlock), language);
                 toolbar.appendChild(editButton);
-                
+
                 // 実行可能言語の場合は実行ボタンを追加
                 if (this.#isExecutableLanguage(language)) {
-                    const executeButton = this.#createExecuteButton(index, /** @type {HTMLElement} */ (codeBlock), language);
+                    const executeButton = this.#createExecuteButton(index, /** @type {HTMLElement} */(codeBlock), language);
                     toolbar.appendChild(executeButton);
                 }
-                
+
                 wrapper.appendChild(toolbar);
             });
         } catch (error) {
             console.error('コードブロックボタン追加エラー:', error);
         }
     }
-    
+
     /**
      * 言語が実行可能かどうかを判定します
      * @param {string} language - 判定する言語
@@ -481,7 +481,7 @@ class ChatRenderer {
         if (!language) return false;
         return window.CONFIG.EXECUTABLE_LANGUAGES.includes(language.toLowerCase());
     }
-    
+
     /**
      * コード実行ボタンを作成します
      * @param {number} index - コードブロックのインデックス
@@ -491,7 +491,7 @@ class ChatRenderer {
      */
     #createExecuteButton(index, codeBlock, language) {
         if (!codeBlock || !language) return document.createElement('button');
-        
+
         const executeButton = document.createElement('button');
         executeButton.classList.add('code-execute-button');
         executeButton.innerHTML = '<i class="fas fa-play"></i>';
@@ -499,16 +499,16 @@ class ChatRenderer {
         executeButton.setAttribute('data-code-index', String(index));
         executeButton.setAttribute('data-language', language);
         executeButton.setAttribute('aria-label', 'コードを実行');
-        
+
         // 実行ボタンのクリックイベント
         executeButton.addEventListener('click', (e) => {
             e.stopPropagation(); // イベント伝播を停止
             this.#handleExecuteButtonClick(executeButton, codeBlock, language);
         });
-        
+
         return executeButton;
     }
-    
+
     /**
      * 実行ボタンのクリックイベントを処理します
      * @param {HTMLElement} button - クリックされたボタン
@@ -572,29 +572,29 @@ class ChatRenderer {
 
         } catch (error) {
             console.error('コード実行中にエラーが発生しました:', error);
-            
+
             // エラーメッセージを表示
             const errorMsg = {
                 error: `実行エラー: ${error.message || '不明なエラー'}`,
                 errorDetail: error.stack
             };
-            
+
             const parentBlock = codeBlock.closest('.code-block');
             if (parentBlock) {
                 const errorElement = document.createElement('div');
                 errorElement.classList.add('code-execution-result');
-                
+
                 const errorDiv = document.createElement('div');
                 errorDiv.classList.add('execution-error');
                 errorDiv.textContent = errorMsg.error;
-                
+
                 if (errorMsg.errorDetail) {
                     const errorDetail = document.createElement('pre');
                     errorDetail.classList.add('error-details');
                     errorDetail.textContent = errorMsg.errorDetail;
                     errorDiv.appendChild(errorDetail);
                 }
-                
+
                 errorElement.appendChild(errorDiv);
                 parentBlock.appendChild(errorElement);
             }
@@ -605,7 +605,7 @@ class ChatRenderer {
             button.innerHTML = originalButtonHtml;
         }
     }
-    
+
     /**
      * 言語IDから表示用の言語名を取得
      * @param {string} langId - 言語ID
@@ -613,7 +613,7 @@ class ChatRenderer {
      */
     #getNiceLanguageName(langId) {
         if (!langId) return '';
-        
+
         const languageMap = {
             'js': 'JavaScript',
             'javascript': 'JavaScript',
@@ -647,7 +647,7 @@ class ChatRenderer {
             'xml': 'XML',
             'plaintext': 'Text'
         };
-        
+
         return languageMap[langId.toLowerCase()] || langId;
     }
 
@@ -659,23 +659,23 @@ class ChatRenderer {
      */
     #createCodeCopyButton(index, codeBlock) {
         if (!codeBlock) return document.createElement('button');
-        
+
         const copyButton = document.createElement('button');
         copyButton.classList.add('code-copy-button');
         copyButton.innerHTML = '<i class="fas fa-copy"></i>';
         copyButton.title = 'コードをコピー';
         copyButton.setAttribute('data-code-index', String(index));
         copyButton.setAttribute('aria-label', 'コードをクリップボードにコピー');
-        
+
         // コピーボタンのクリックイベント
         copyButton.addEventListener('click', (e) => {
             e.stopPropagation(); // イベント伝播を停止
             this.#handleCopyButtonClick(copyButton, codeBlock);
         });
-        
+
         return copyButton;
     }
-    
+
     /**
      * コード編集ボタンを作成します
      * @param {number} index - コードブロックのインデックス
@@ -685,7 +685,7 @@ class ChatRenderer {
      */
     #createEditButton(index, codeBlock, language) {
         if (!codeBlock) return document.createElement('button');
-        
+
         const editButton = document.createElement('button');
         editButton.classList.add('code-edit-button');
         editButton.innerHTML = '<i class="fas fa-edit"></i>';
@@ -693,16 +693,16 @@ class ChatRenderer {
         editButton.setAttribute('data-code-index', String(index));
         editButton.setAttribute('data-language', language);
         editButton.setAttribute('aria-label', 'コードを編集');
-        
+
         // 編集ボタンのクリックイベント
         editButton.addEventListener('click', (e) => {
             e.stopPropagation(); // イベント伝播を停止
             this.#handleEditButtonClick(editButton, codeBlock, language);
         });
-        
+
         return editButton;
     }
-    
+
     /**
      * 編集ボタンのクリックイベントを処理します
      * @param {HTMLElement} button - クリックされたボタン
@@ -714,17 +714,17 @@ class ChatRenderer {
             console.error('コード編集に必要な要素が見つかりません');
             return;
         }
-        
+
         try {
             // コードを取得して前後の空白を整理
             const rawCode = codeBlock.textContent || '';
             const code = rawCode.trim();
-                        
+
             // 実際にコードがあるか確認
             if (!code) {
                 console.warn('編集するコードが空です');
             }
-            
+
             // エディタにきちんとコードが渡るように少し遅延させる
             setTimeout(() => {
                 // ChatUIのグローバル参照チェック
@@ -735,12 +735,12 @@ class ChatRenderer {
                     alert('コードエディタを開けませんでした。ページを再読み込みしてからお試しください。');
                 }
             }, 100);
-            
+
         } catch (error) {
             console.error('コード編集の準備中にエラーが発生しました:', error);
         }
     }
-    
+
     /**
      * コピーボタンのクリックイベントを処理します
      * @param {HTMLElement} button - クリックされたボタン
@@ -748,11 +748,11 @@ class ChatRenderer {
      */
     #handleCopyButtonClick(button, codeBlock) {
         if (!button || !codeBlock) return;
-        
+
         try {
             // トリミングしてコピー（余分な空白行を削除）
             const codeText = this.#cleanCodeForCopy(codeBlock.textContent);
-            
+
             navigator.clipboard.writeText(codeText)
                 .then(() => {
                     this.#showCopySuccess(button);
@@ -766,7 +766,7 @@ class ChatRenderer {
             this.#showCopyError(button);
         }
     }
-    
+
     /**
      * コードをコピー用に整形する
      * @param {string} code - 整形するコード
@@ -774,13 +774,13 @@ class ChatRenderer {
      */
     #cleanCodeForCopy(code) {
         if (!code) return '';
-        
+
         // 前後の空白を削除
         let cleanCode = code.trim();
-        
+
         // 連続する空行を単一の空行に置換
         cleanCode = cleanCode.replace(/\n\s*\n\s*\n/g, '\n\n');
-        
+
         return cleanCode;
     }
 
@@ -789,10 +789,10 @@ class ChatRenderer {
      */
     #showCopySuccess(button) {
         if (!button) return;
-        
+
         button.classList.add('copied');
         button.innerHTML = '<i class="fas fa-check"></i>';
-        
+
         setTimeout(() => {
             if (button) {
                 button.classList.remove('copied');
@@ -806,10 +806,10 @@ class ChatRenderer {
      */
     #showCopyError(button) {
         if (!button) return;
-        
+
         button.classList.add('error');
         button.innerHTML = '<i class="fas fa-times"></i>';
-        
+
         setTimeout(() => {
             if (button) {
                 button.classList.remove('error');
@@ -830,13 +830,13 @@ class ChatRenderer {
      */
     addSystemMessage(chatMessages, message, options = { status: 'info', animation: 'fade', showDots: false }) {
         if (!chatMessages) return null;
-        
+
         const {
             status = 'thinking',
-            animation = 'slide',
+            animation = 'tech-scan',
             showDots = true
         } = options;
-        
+
         const messageDiv = ChatUI.getInstance.createElement('div', {
             classList: ['message', 'bot', 'system-message', `anim-${animation}`],
             attributes: {
@@ -845,30 +845,30 @@ class ChatRenderer {
                 'data-status': status
             }
         });
-        
+
         const contentDiv = ChatUI.getInstance.createElement('div', { classList: 'message-content' });
-        
+
         const messageContent = ChatUI.getInstance.createElement('div', {
             classList: 'markdown-content',
             innerHTML: this.#formatSystemMessage(message, showDots)
         });
-        
+
         contentDiv.appendChild(messageContent);
         messageDiv.appendChild(contentDiv);
-        
+
         // DOMに追加
         chatMessages.appendChild(messageDiv);
-        
+
         console.log(`📝 messageDiv classes: ${messageDiv.className}`);
-        
+
         // アニメーション開始（次フレームで実行してCSSが確実に適用されるようにする）
         setTimeout(() => {
             messageDiv.classList.add('animate');
         }, 50);
-        
+
         // スクロール調整
         this.#smoothScrollToBottom(chatMessages);
-        
+
         return {
             messageDiv: messageDiv,
             contentContainer: messageContent
@@ -886,16 +886,16 @@ class ChatRenderer {
      */
     updateSystemMessage(messageDiv, message, options = { status: 'info', animate: true, showDots: false }) {
         if (!messageDiv) return;
-        
+
         const {
             status = null,
             animate = true,
             showDots = true
         } = options;
-        
+
         const messageContent = messageDiv.querySelector('.markdown-content');
         if (!messageContent) return;
-        
+
         // ステータスを更新
         if (status && messageDiv.getAttribute('data-status') !== status) {
             // ステータス変更のアニメーション
@@ -907,24 +907,24 @@ class ChatRenderer {
             }
             messageDiv.setAttribute('data-status', status);
         }
-        
+
         if (animate && messageContent.innerHTML !== this.#formatSystemMessage(message, showDots)) {
             // より滑らかなコンテンツ変更アニメーション
             // CSS transitionsを設定
             messageContent.style.transition = 'transform 0.4s ease-in-out, opacity 0.4s ease-in-out';
             messageContent.style.transform = 'scale(0.95)';
             messageContent.style.opacity = '0.2';
-            
+
             setTimeout(() => {
                 messageContent.innerHTML = this.#formatSystemMessage(message, showDots);
                 // 復帰アニメーション
                 messageContent.style.transform = 'scale(1.02)'; // 少しオーバーシュート
                 messageContent.style.opacity = '1';
-                
+
                 // オーバーシュート後の最終調整
                 setTimeout(() => {
                     messageContent.style.transform = 'scale(1)';
-                    
+
                     // トランジション完了後にスタイルをクリア
                     setTimeout(() => {
                         messageContent.style.transition = '';
@@ -947,12 +947,12 @@ class ChatRenderer {
      */
     removeSystemMessage(messageDiv, options = { animation: 'fade', delay: 0 }) {
         if (!messageDiv || !messageDiv.parentNode) return;
-        
+
         const {
             animation = 'fade',
             delay = 0
         } = options;
-        
+
         const performRemoval = () => {
             // 削除アニメーションクラスを追加
             if (animation === 'slide') {
@@ -960,7 +960,7 @@ class ChatRenderer {
             } else {
                 messageDiv.classList.add('system-message-fade-out');
             }
-            
+
             // アニメーション完了後に要素を削除
             const animationDuration = animation === 'slide' ? 300 : 200;
             setTimeout(() => {
@@ -969,7 +969,7 @@ class ChatRenderer {
                 }
             }, animationDuration);
         };
-        
+
         if (delay > 0) {
             setTimeout(performRemoval, delay);
         } else {
@@ -984,18 +984,18 @@ class ChatRenderer {
      */
     #getCodeFromBlock(codeBlock) {
         if (!codeBlock) return '';
-        
+
         try {
             // preタグ内のcodeタグを検出
-            const codeElement = codeBlock.tagName.toLowerCase() === 'code' ? 
+            const codeElement = codeBlock.tagName.toLowerCase() === 'code' ?
                 codeBlock : codeBlock.querySelector('code');
-            
+
             if (codeElement) {
                 // HTMLエンティティをデコード
                 const text = codeElement.textContent || '';
                 return this.#decodeHtmlEntities(text.trim());
             }
-            
+
             // 直接テキストを取得
             return this.#decodeHtmlEntities((codeBlock.textContent || '').trim());
         } catch (error) {
@@ -1003,7 +1003,7 @@ class ChatRenderer {
             return '';
         }
     }
-    
+
     /**
      * HTMLエンティティをデコードします
      * @param {string} text - デコードするテキスト
@@ -1022,7 +1022,7 @@ class ChatRenderer {
      * @returns {string} フォーマット済みメッセージHTML
      */
     #formatSystemMessage(message, showDots) {
-        const dotsHtml = showDots ? 
+        const dotsHtml = showDots ?
             '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>' : '';
         return `<p>${message}${dotsHtml}</p>`;
     }
@@ -1033,7 +1033,7 @@ class ChatRenderer {
      */
     #smoothScrollToBottom(container) {
         if (!container) return;
-        
+
         // スムーズスクロールをサポートしている場合は使用
         if ('scrollBehavior' in document.documentElement.style) {
             setTimeout(() => {

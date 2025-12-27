@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Get-ChildItem -Path app -File | Select-Object Name\")",
+      "Bash(powershell -Command \"Get-Item -Path app/js -Recurse | Measure-Object | Select-Object Count\")",
+      "Bash(powershell -Command \"Get-Item -Path app/css -Recurse | Measure-Object | Select-Object Count\")",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(xcopy:*)",
+      "Bash(robocopy:*)",
+      "Bash(powershell:*)",
+      "Bash(npm install:*)",
+      "Bash(cmd /c \"cd /d D:\\\\Users\\\\ksk01\\\\Documents\\\\develop\\\\vscode_develop\\\\HTML\\\\ChatBot && ren app_nodejs app\")"
+    ]
+  }
+}

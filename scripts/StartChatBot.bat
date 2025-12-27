@@ -34,17 +34,18 @@ for /f "tokens=*" %%i in ('node -v') do set NODE_VERSION=%%i
 echo ✅ Node.js %NODE_VERSION% が見つかりました
 echo.
 
+:: appディレクトリに移動（scripts から一つ上へ）
+cd ..\app
+
 :: 依存関係のインストール確認
-if not exist "server\node_modules" (
+if not exist "node_modules" (
     echo 📦 依存パッケージをインストールしています...
-    cd server
     call npm install
     if %ERRORLEVEL% NEQ 0 (
         echo ❌ エラー: パッケージのインストールに失敗しました
         pause
         exit /b 1
     )
-    cd ..
     echo ✅ パッケージのインストールが完了しました
     echo.
 )
@@ -53,8 +54,7 @@ if not exist "server\node_modules" (
 echo 🚀 ローカルサーバーを起動しています...
 echo.
 
-cd server
-start "ChatBot Server" cmd /k "node server.js --port=50000"
+start "ChatBot Server" cmd /k "node server/index.js"
 
 :: サーバーの起動を待つ
 timeout /t 3 /nobreak > nul

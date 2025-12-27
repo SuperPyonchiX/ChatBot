@@ -121,12 +121,12 @@ window.CONFIG = {
         },
 
         // APIエンドポイントURL
-        // （ローカルプロキシサーバー経由）
+        // （同一オリジンプロキシ経由）
         ENDPOINTS: {
-            OPENAI: 'http://localhost:50000/openai/v1/chat/completions',
-            RESPONSES: 'http://localhost:50000/responses/v1/responses',
-            GEMINI: 'http://localhost:50000/gemini/v1beta/models',
-            CLAUDE: 'http://localhost:50000/anthropic/v1/messages'
+            OPENAI: '/openai/v1/chat/completions',
+            RESPONSES: '/responses/v1/responses',
+            GEMINI: '/gemini/v1beta/models',
+            CLAUDE: '/anthropic/v1/messages'
             // Azure用エンドポイントはユーザー設定から生成
         }
     },
@@ -405,11 +405,9 @@ window.CONFIG = {
         
         if (window.location.protocol === 'file:') {
             console.warn('⚠️ ファイルプロトコルで開かれています。');
-            console.warn('💡 推奨: launcher/StartChatBot.bat でサーバー経由で起動してください');
-        } else if (window.location.port !== '50000') {
-            console.warn('⚠️ 推奨ポート50000以外で実行されています');
+            console.warn('💡 推奨: npm start でサーバー経由で起動してください');
         } else {
-            console.log('✅ ローカルプロキシサーバー経由で実行中');
+            console.log('✅ Node.jsサーバー経由で実行中');
         }
     }
 })();

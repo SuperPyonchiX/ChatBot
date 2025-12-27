@@ -1,10 +1,9 @@
 # Node.js
-launcher/server/node_modules/
-launcher/server/package-lock.json
-launcher/server/*.log
+node_modules/
+package-lock.json
+*.log
 
 # IDE
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -18,3 +17,12 @@ desktop.ini
 # Temporary files
 *.tmp
 *.temp
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build
+dist/
+build/
