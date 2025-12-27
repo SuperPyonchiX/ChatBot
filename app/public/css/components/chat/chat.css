@@ -208,6 +208,8 @@
 .message.user .copy-button {
     left: -32px;
     right: auto;
+    border-color: rgba(255, 0, 255, 0.2);
+    color: rgba(255, 0, 255, 0.6);
 }
 
 .message:hover .copy-button {
@@ -219,6 +221,14 @@
     border-color: var(--cyber-primary);
     color: var(--cyber-primary);
     box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+/* ユーザーメッセージのコピーボタン（紫色に合わせる） */
+.message.user .copy-button:hover {
+    background: rgba(255, 0, 255, 0.1);
+    border-color: var(--cyber-secondary);
+    color: var(--cyber-secondary);
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.2);
 }
 
 .copy-button.copied {
