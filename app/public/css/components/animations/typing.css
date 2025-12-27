@@ -50,3 +50,247 @@
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* ===== サイバー風タイピングインジケーター ===== */
+
+/* サイバー風インジケーターコンテナ */
+.typing-indicator.cyber-style {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 0, 0, 0.8) 0%,
+        rgba(0, 20, 30, 0.9) 100%
+    );
+    border: 1px solid var(--cyber-border-color);
+    position: relative;
+    overflow: hidden;
+}
+
+/* スキャンライン効果 */
+.typing-indicator.cyber-style::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(0, 255, 255, 0.02) 2px,
+        rgba(0, 255, 255, 0.02) 4px
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* パルスボーダーグロー */
+.typing-indicator.cyber-style::after {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    border-radius: inherit;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(0, 255, 255, 0.3) 50%,
+        transparent 70%
+    );
+    background-size: 200% 200%;
+    animation: borderGlowMove 3s linear infinite;
+    z-index: -1;
+}
+
+@keyframes borderGlowMove {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+/* ネオンパルスドット */
+.typing-dots.cyber-neon span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin: 0 4px;
+    background: var(--cyber-primary);
+    border-radius: 50%;
+    box-shadow:
+        0 0 5px var(--cyber-primary),
+        0 0 10px var(--cyber-primary),
+        0 0 20px var(--cyber-primary);
+    animation: cyberDotPulse 1.4s ease-in-out infinite;
+}
+
+.typing-dots.cyber-neon span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.typing-dots.cyber-neon span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dots.cyber-neon span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes cyberDotPulse {
+    0%, 100% {
+        transform: scale(0.6);
+        opacity: 0.4;
+        box-shadow:
+            0 0 2px var(--cyber-primary),
+            0 0 5px var(--cyber-primary);
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+        box-shadow:
+            0 0 10px var(--cyber-primary),
+            0 0 20px var(--cyber-primary),
+            0 0 40px var(--cyber-primary);
+    }
+}
+
+/* イコライザー風バー */
+.typing-dots.cyber-wave {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 20px;
+}
+
+.typing-dots.cyber-wave span {
+    display: inline-block;
+    width: 4px;
+    height: 16px;
+    background: linear-gradient(
+        180deg,
+        var(--cyber-primary) 0%,
+        var(--cyber-secondary) 100%
+    );
+    border-radius: 2px;
+    animation: cyberWave 1s ease-in-out infinite;
+    box-shadow: 0 0 8px var(--cyber-primary);
+}
+
+.typing-dots.cyber-wave span:nth-child(1) { animation-delay: 0s; }
+.typing-dots.cyber-wave span:nth-child(2) { animation-delay: 0.1s; }
+.typing-dots.cyber-wave span:nth-child(3) { animation-delay: 0.2s; }
+.typing-dots.cyber-wave span:nth-child(4) { animation-delay: 0.3s; }
+.typing-dots.cyber-wave span:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes cyberWave {
+    0%, 100% {
+        height: 6px;
+        opacity: 0.5;
+    }
+    50% {
+        height: 20px;
+        opacity: 1;
+    }
+}
+
+/* 回転リング */
+.typing-dots.cyber-ring {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    position: relative;
+}
+
+.typing-dots.cyber-ring::before {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border: 2px solid transparent;
+    border-top-color: var(--cyber-primary);
+    border-right-color: var(--cyber-secondary);
+    border-radius: 50%;
+    animation: cyberRingSpin 1s linear infinite;
+    box-shadow:
+        0 0 10px var(--cyber-primary),
+        inset 0 0 10px rgba(0, 255, 255, 0.1);
+}
+
+.typing-dots.cyber-ring::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 2px solid transparent;
+    border-bottom-color: var(--cyber-tertiary);
+    border-left-color: var(--cyber-primary);
+    border-radius: 50%;
+    animation: cyberRingSpin 0.7s linear infinite reverse;
+}
+
+@keyframes cyberRingSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* データストリーム風ドット */
+.typing-dots.cyber-stream {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding: 4px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.typing-dots.cyber-stream::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0, 255, 255, 0.2),
+        transparent
+    );
+    animation: streamFlow 1.5s linear infinite;
+}
+
+@keyframes streamFlow {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(50%); }
+}
+
+.typing-dots.cyber-stream span {
+    width: 6px;
+    height: 6px;
+    margin: 0 3px;
+    background: var(--cyber-primary);
+    border-radius: 50%;
+    position: relative;
+    z-index: 1;
+    animation: streamDot 1.2s ease-in-out infinite;
+}
+
+.typing-dots.cyber-stream span:nth-child(1) { animation-delay: 0s; }
+.typing-dots.cyber-stream span:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots.cyber-stream span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes streamDot {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+        box-shadow: 0 0 5px var(--cyber-primary);
+    }
+    50% {
+        transform: translateY(-4px) scale(1.3);
+        box-shadow:
+            0 0 10px var(--cyber-primary),
+            0 0 20px var(--cyber-primary);
+    }
+}

@@ -17,6 +17,11 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    /* サイバー風グリッド背景 */
+    background-image:
+        linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
 }
 
 /* 共通の要素スタイル */
@@ -32,7 +37,8 @@ input, textarea {
 /* サイドバースタイル */
 .sidebar-header {
     padding: 15px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+    background: linear-gradient(180deg, rgba(0, 255, 255, 0.02), transparent);
 }
 
 .chat-history {
@@ -49,15 +55,19 @@ input, textarea {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: background-color var(--transition-fast);
+    transition: all var(--transition-fast);
+    border: 1px solid transparent;
 }
 
 .history-item:hover {
-    background-color: #343541;
+    background-color: rgba(0, 255, 255, 0.05);
+    border-color: rgba(0, 255, 255, 0.2);
 }
 
 .history-item.active {
-    background-color: #40414f;
+    background-color: rgba(0, 255, 255, 0.1);
+    border-color: rgba(0, 255, 255, 0.3);
+    box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.05);
 }
 
 .history-item-content {
@@ -94,4 +104,32 @@ input, textarea {
 
 .delete-button:hover {
     color: var(--error-color);
+}
+
+/* サイバー風スクロールバー */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.1));
+    border-radius: 4px;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(0, 255, 255, 0.5), rgba(0, 255, 255, 0.2));
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+/* Firefox用スクロールバー */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 255, 255, 0.3) rgba(0, 0, 0, 0.3);
 }

@@ -45,7 +45,7 @@ class ChatRenderer {
 
         // 直接DOMを操作して要素を作成
         const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'user');
+        messageDiv.classList.add('message', 'user', 'cyber-style');
         messageDiv.dataset.timestamp = msgTimestamp.toString();
         messageDiv.setAttribute('role', 'region');
         messageDiv.setAttribute('aria-label', 'あなたのメッセージ');
@@ -102,7 +102,7 @@ class ChatRenderer {
 
         const msgTimestamp = timestamp || Date.now();
         const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'bot');
+        messageDiv.classList.add('message', 'bot', 'cyber-style');
         messageDiv.dataset.timestamp = msgTimestamp.toString();
         messageDiv.setAttribute('role', 'region');
         messageDiv.setAttribute('aria-label', 'AIからの返答');
@@ -838,7 +838,7 @@ class ChatRenderer {
         } = options;
 
         const messageDiv = ChatUI.getInstance.createElement('div', {
-            classList: ['message', 'bot', 'system-message', `anim-${animation}`],
+            classList: ['message', 'bot', 'system-message', 'cyber-style', `anim-${animation}`],
             attributes: {
                 'role': 'status',
                 'aria-live': 'polite',
@@ -1023,7 +1023,7 @@ class ChatRenderer {
      */
     #formatSystemMessage(message, showDots) {
         const dotsHtml = showDots ?
-            '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>' : '';
+            '<span class="typing-dots cyber-neon"><span></span><span></span><span></span></span>' : '';
         return `<p>${message}${dotsHtml}</p>`;
     }
 

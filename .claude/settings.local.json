@@ -10,7 +10,12 @@
       "Bash(robocopy:*)",
       "Bash(powershell:*)",
       "Bash(npm install:*)",
-      "Bash(cmd /c \"cd /d D:\\\\Users\\\\ksk01\\\\Documents\\\\develop\\\\vscode_develop\\\\HTML\\\\ChatBot && ren app_nodejs app\")"
+      "Bash(cmd /c \"cd /d D:\\\\Users\\\\ksk01\\\\Documents\\\\develop\\\\vscode_develop\\\\HTML\\\\ChatBot && ren app_nodejs app\")",
+      "Bash(claude mcp add:*)",
+      "Bash(claude mcp list:*)",
+      "Bash(claude mcp remove:*)",
+      "Bash(npm start)",
+      "Bash(timeout /t 3 /nobreak:*)"
     ]
   }
 }

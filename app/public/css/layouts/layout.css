@@ -17,6 +17,8 @@
     flex-direction: column;
     overflow: hidden;
     transition: transform var(--transition-normal) ease, width var(--transition-normal) ease;
+    border-right: 1px solid rgba(0, 255, 255, 0.1);
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.5);
 }
 
 .sidebar.collapsed {
@@ -26,10 +28,11 @@
 /* サイドバーフッター */
 .sidebar-footer {
     padding: var(--spacing-md);
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid rgba(0, 255, 255, 0.1);
     display: flex;
     justify-content: space-around;
     gap: var(--spacing-sm);
+    background: linear-gradient(180deg, transparent, rgba(0, 255, 255, 0.02));
 }
 
 /* サイドバートグルボタン */
@@ -85,17 +88,31 @@
 
 /* チャットヘッダー */
 .chat-header {
-    background-color: var(--background-tertiary);
+    background: linear-gradient(90deg, var(--background-tertiary), rgba(0, 255, 255, 0.03));
     color: var(--text-primary);
     padding: var(--spacing-md) var(--spacing-lg);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+    position: relative;
+}
+
+.chat-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.3), transparent);
 }
 
 .chat-header h1 {
     font-size: var(--font-size-xl);
     font-weight: 600;
+    color: var(--cyber-primary);
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
 }
 
 /* チャットメッセージエリアレイアウト */
@@ -107,16 +124,32 @@
     flex-direction: column;
     gap: var(--spacing-md);
     background-color: var(--background-primary);
+    /* サイバー風グリッド背景 */
+    background-image:
+        linear-gradient(rgba(0, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 30px 30px;
 }
 
 /* チャット入力エリアレイアウト */
 .chat-input-container {
     display: flex;
     padding: var(--spacing-md);
-    border-top: 1px solid var(--border-color);
-    background-color: var(--background-secondary);
+    border-top: 1px solid rgba(0, 255, 255, 0.1);
+    background: linear-gradient(0deg, rgba(0, 255, 255, 0.02), transparent);
     align-items: flex-end;
     gap: var(--spacing-sm);
+    position: relative;
+}
+
+.chat-input-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.3), transparent);
 }
 
 /* レスポンシブデザイン */
