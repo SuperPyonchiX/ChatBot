@@ -7,6 +7,7 @@
 
 .prompt-manager-container {
     display: flex;
+    flex-direction: column;
     height: var(--prompt-manager-height);
     overflow: hidden;
     border: 1px solid var(--border-color);
@@ -15,33 +16,69 @@
     background-color: var(--background-primary);
 }
 
-.prompt-manager-sidebar {
-    width: var(--prompt-sidebar-width);
-    background-color: var(--background-primary);
-    border-right: 1px solid var(--border-color);
-    padding: var(--spacing-sm);
-    overflow-y: auto;
-}
-
-.prompt-manager-main {
-    flex: 1;
+/* 新しいヘッダースタイル */
+.prompt-manager-header {
     display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background-color: var(--background-primary);
-}
-
-.prompt-list-header {
+    align-items: center;
+    gap: var(--spacing-md);
     padding: var(--spacing-sm) var(--spacing-md);
     border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-wrap: wrap;
+    background-color: var(--background-secondary);
 }
 
+/* フィルターボタン */
+.prompt-filter-buttons {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.filter-button {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--background-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-sm);
+}
+
+.filter-button:hover {
+    background: var(--background-tertiary);
+    border-color: var(--border-color-hover);
+}
+
+.filter-button.active {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.filter-button i {
+    margin-right: var(--spacing-xs);
+}
+
+/* ソートセレクト */
+.prompt-sort-select select {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--background-primary);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+}
+
+.prompt-sort-select select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+/* 検索 */
 .prompt-search {
     flex: 1;
-    margin: 0 var(--spacing-md);
+    min-width: 150px;
 }
 
 .prompt-search input {
@@ -49,49 +86,30 @@
     padding: var(--prompt-search-padding);
     border-radius: var(--border-radius-sm);
     border: 1px solid var(--border-color);
-    background-color: var(--background-secondary);
+    background-color: var(--background-primary);
     color: var(--text-primary);
+    font-size: var(--font-size-sm);
 }
 
+.prompt-search input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+/* プロンプトリスト */
 .prompts-list {
     flex: 1;
     overflow-y: auto;
     padding: var(--spacing-sm);
 }
 
-.prompt-categories-list {
-    margin-bottom: var(--spacing-md);
+.no-prompts-message {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
 }
 
-/* プロンプトマネージャー特有のカテゴリースタイル */
-.prompt-categories-list .category-item {
-    padding: var(--spacing-sm) var(--spacing-sm);
-    cursor: pointer;
-    border-radius: var(--border-radius-sm);
-    margin-bottom: var(--spacing-xs);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: background-color var(--transition-fast);
-    background-color: var(--background-secondary);
-    color: var(--text-primary);
-}
-
-.prompt-categories-list .category-item:hover {
-    background-color: var(--background-tertiary);
-}
-
-.prompt-categories-list .category-item.active {
-    background-color: var(--background-quaternary);
-    color: var(--text-primary);
-}
-
-.category-actions {
-    margin-top: var(--spacing-sm);
-    display: flex;
-    justify-content: center;
-}
-
+/* プロンプト項目 */
 .prompt-item {
     padding: var(--spacing-md);
     border: 1px solid var(--border-color);
@@ -111,13 +129,35 @@
 .prompt-item-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: var(--spacing-sm);
+    gap: var(--spacing-sm);
 }
 
 .prompt-item-name {
     font-weight: bold;
     font-size: var(--prompt-item-name-size);
     color: var(--text-primary);
+    flex: 1;
+}
+
+/* 使用回数表示 */
+.prompt-item-stats {
+    display: flex;
+    align-items: center;
+}
+
+.prompt-use-count {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    margin-right: var(--spacing-sm);
+    white-space: nowrap;
+}
+
+/* アクションボタン */
+.prompt-item-actions {
+    display: flex;
+    align-items: center;
 }
 
 .prompt-item-actions button {
@@ -125,14 +165,28 @@
     border: none;
     cursor: pointer;
     opacity: var(--button-opacity-default);
-    transition: opacity var(--transition-fast);
-    padding: var(--spacing-xs) var(--spacing-xs);
+    transition: opacity var(--transition-fast), color var(--transition-fast);
+    padding: var(--spacing-xs);
     margin-left: var(--spacing-xs);
     color: var(--text-tertiary);
 }
 
 .prompt-item-actions button:hover {
     opacity: 1;
+}
+
+/* お気に入りボタン */
+.favorite-prompt-button {
+    color: var(--text-tertiary) !important;
+}
+
+.favorite-prompt-button.active {
+    color: gold !important;
+    opacity: 1 !important;
+}
+
+.favorite-prompt-button:hover {
+    color: gold !important;
 }
 
 .prompt-item-description {
@@ -155,49 +209,45 @@
     font-size: var(--font-size-xs);
 }
 
-/* Variable help text */
-.variable-help-text {
-    background-color: var(--background-secondary);
-    padding: var(--spacing-sm);
-    border-radius: var(--border-radius-md);
-    margin-top: var(--spacing-xs);
-    font-size: var(--font-size-sm);
-    border: 1px solid var(--border-color);
-}
-
-.variable-help-text code {
-    background-color: var(--background-tertiary);
-    padding: var(--spacing-xs) var(--spacing-xs);
-    border-radius: var(--border-radius-sm);
-    font-family: var(--font-family-code);
-    color: var(--text-primary);
-}
-
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
     .prompt-manager-container {
-        flex-direction: column;
         height: var(--prompt-manager-mobile-height);
     }
-    
-    .prompt-manager-sidebar {
-        width: 100%;
-        height: var(--prompt-mobile-sidebar-height);
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
-    }
-    
-    .prompt-list-header {
+
+    .prompt-manager-header {
         flex-direction: column;
         align-items: stretch;
+        gap: var(--spacing-sm);
     }
-    
+
+    .prompt-filter-buttons {
+        justify-content: center;
+    }
+
+    .prompt-sort-select {
+        width: 100%;
+    }
+
+    .prompt-sort-select select {
+        width: 100%;
+    }
+
     .prompt-search {
-        margin: var(--spacing-sm) 0;
+        width: 100%;
     }
-    
+
     .prompt-manager-modal {
         padding: var(--spacing-sm);
     }
-}
 
+    .prompt-item-header {
+        flex-wrap: wrap;
+    }
+
+    .prompt-item-stats {
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: var(--spacing-xs);
+    }
+}

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * プロンプト候補表示機能
  * ユーザー入力時にプロンプト候補を表示し、選択できるようにします
  */
@@ -42,16 +42,16 @@ class PromptSuggestions {
         const inputElement = UICache.getInstance.get('userInput');
         const suggestionsElement = document.getElementById('promptSuggestions');
         if (!inputElement || !suggestionsElement) return;
-        
+
         this.#inputElement = inputElement;
         this.#suggestionsElement = suggestionsElement;
-        
+
         // 入力イベント
         this.#inputElement.addEventListener('input', this.#handleInput.bind(this));
-        
+
         // キーボードイベント
         this.#inputElement.addEventListener('keydown', this.#handleKeyDown.bind(this));
-        
+
         // フォーカスを得たときに候補を表示
         this.#inputElement.addEventListener('focus', () => {
             if (!this.#inputElement.value.trim()) {
@@ -62,12 +62,12 @@ class PromptSuggestions {
                 this.#handleInput();
             }
         });
-        
+
         // フォーカスを失ったときに候補を非表示
         this.#inputElement.addEventListener('blur', () => {
             setTimeout(() => this.#hideSuggestions(), 100);
         });
-        
+
         // クリックイベント（イベント委任）
         this.#suggestionsElement.addEventListener('click', this.#handleSuggestionClick.bind(this));
     }
@@ -79,27 +79,27 @@ class PromptSuggestions {
     #handleInput() {
         const value = this.#inputElement.value.trim();
         const cursorPos = this.#inputElement.selectionStart;
-        
+
         // 空入力の場合は全候補を表示
         if (!value) {
             this.#showSuggestionsForQuery('');
             return;
         }
-        
+
         // カーソル位置より前のテキストを取得
         const textBeforeCursor = value.substring(0, cursorPos);
-        
+
         // スラッシュから始まる入力の処理（従来の機能）
         const matchSlash = textBeforeCursor.match(/\/([^/\s]*)$/);
         if (matchSlash) {
             this.#showSuggestionsForQuery(matchSlash[1]);
             return;
         }
-        
+
         // カーソル位置までの最後の単語を取得
         const lastWordMatch = textBeforeCursor.match(/(\S+)$/);
         const lastWord = lastWordMatch ? lastWordMatch[1] : '';
-        
+
         // 最後の単語が最小文字数以上なら候補表示
         if (lastWord.length >= PromptSuggestions.MIN_CHARS_FOR_SUGGESTION) {
             this.#showSuggestionsForQuery(lastWord);
@@ -116,30 +116,30 @@ class PromptSuggestions {
     #handleKeyDown(e) {
         // 候補が表示されていない場合は通常の動作
         if (!this.#suggestionsElement.classList.contains('show')) return;
-        
+
         switch(e.key) {
             case 'ArrowDown':
                 // 下キー: 次の候補を選択
                 e.preventDefault();
                 this.#selectNextSuggestion();
                 break;
-                
+
             case 'ArrowUp':
                 // 上キー: 前の候補を選択
                 e.preventDefault();
                 this.#selectPrevSuggestion();
                 break;
-                
+
             case 'Enter':
                 // Enterキーでは候補を適用しない（通常の改行動作を維持）
                 break;
-                
+
             case 'Escape':
                 // Escキー: 候補を閉じる
                 e.preventDefault();
                 this.#hideSuggestions();
                 break;
-                
+
             case 'Tab':
                 // Tabキー: 選択中の候補を適用
                 if (this.#selectedIndex >= 0) {
@@ -157,10 +157,10 @@ class PromptSuggestions {
     #handleSuggestionClick(e) {
         const item = /** @type {HTMLElement} */ (e.target).closest('.prompt-suggestion-item');
         if (!item) return;
-        
+
         const index = parseInt(item.dataset.index, 10);
         if (isNaN(index) || index < 0 || index >= this.#suggestions.length) return;
-        
+
         this.#applySuggestion(this.#suggestions[index]);
     }
 
@@ -172,36 +172,40 @@ class PromptSuggestions {
         // プロンプトライブラリから候補を検索
         let suggestions = this.#searchPrompts(query);
         this.#suggestions = suggestions.slice(0, PromptSuggestions.MAX_SUGGESTIONS);
-        
+
         if (this.#suggestions.length === 0) {
             this.#hideSuggestions();
             return;
         }
-        
+
         // 候補リストをクリア
         this.#suggestionsElement.innerHTML = '';
-        
+
         // 候補を表示
         this.#suggestions.forEach((suggestion, index) => {
             const item = document.createElement('div');
             item.className = 'prompt-suggestion-item';
             item.dataset.index = String(index);
-            
-            const categoryName = this.#getCategoryName(suggestion.category);
-            const categoryLabel = categoryName ? 
-                `<span class="prompt-category-label">${categoryName}</span>` : '';
-            
+
+            // お気に入りアイコン
+            const favoriteIcon = suggestion.isFavorite ?
+                '<i class="fas fa-star favorite-icon"></i>' : '';
+
+            // 使用回数バッジ（0回以上の場合のみ表示）
+            const useCountBadge = suggestion.useCount > 0 ?
+                `<span class="use-count-badge">${suggestion.useCount}</span>` : '';
+
             item.innerHTML = `
-                <div class="prompt-suggestion-name">${categoryLabel}${suggestion.name}</div>
+                <div class="prompt-suggestion-name">${favoriteIcon}${suggestion.name}${useCountBadge}</div>
                 <div class="prompt-suggestion-description">${suggestion.description || ''}</div>
             `;
-            
+
             this.#suggestionsElement.appendChild(item);
         });
-        
+
         // 候補を表示
         this.#suggestionsElement.classList.add('show');
-        
+
         // 最初の候補を選択
         this.#selectedIndex = -1;
         this.#selectNextSuggestion();
@@ -221,17 +225,17 @@ class PromptSuggestions {
      */
     #selectNextSuggestion() {
         if (this.#suggestions.length === 0) return;
-        
+
         // 全ての候補から選択クラスを削除
         const items = this.#suggestionsElement.querySelectorAll('.prompt-suggestion-item');
         items.forEach(item => item.classList.remove('selected'));
-        
+
         // 次の候補を選択
         this.#selectedIndex = (this.#selectedIndex + 1) % this.#suggestions.length;
-        
+
         // 選択された候補にクラスを追加
         items[this.#selectedIndex].classList.add('selected');
-        
+
         // スクロール位置を調整
         this.#scrollToSelectedSuggestion();
     }
@@ -241,17 +245,17 @@ class PromptSuggestions {
      */
     #selectPrevSuggestion() {
         if (this.#suggestions.length === 0) return;
-        
+
         // 全ての候補から選択クラスを削除
         const items = this.#suggestionsElement.querySelectorAll('.prompt-suggestion-item');
         items.forEach(item => item.classList.remove('selected'));
-        
+
         // 前の候補を選択
         this.#selectedIndex = (this.#selectedIndex - 1 + this.#suggestions.length) % this.#suggestions.length;
-        
+
         // 選択された候補にクラスを追加
         items[this.#selectedIndex].classList.add('selected');
-        
+
         // スクロール位置を調整
         this.#scrollToSelectedSuggestion();
     }
@@ -262,10 +266,10 @@ class PromptSuggestions {
     #scrollToSelectedSuggestion() {
         const selectedItem = this.#suggestionsElement.querySelector('.prompt-suggestion-item.selected');
         if (!selectedItem) return;
-        
+
         const containerRect = this.#suggestionsElement.getBoundingClientRect();
         const selectedRect = selectedItem.getBoundingClientRect();
-        
+
         if (selectedRect.top < containerRect.top) {
             // 選択項目が上に隠れている場合
             this.#suggestionsElement.scrollTop -= (containerRect.top - selectedRect.top);
@@ -281,44 +285,47 @@ class PromptSuggestions {
      */
     #applySuggestion(suggestion) {
         if (!suggestion) return;
-        
+
+        // 使用回数をインクリメント
+        PromptManager.getInstance.incrementUseCount(suggestion.id);
+
         const value = this.#inputElement.value;
         const cursorPos = this.#inputElement.selectionStart;
-        
+
         // カーソル位置より前のテキストを取得
         const textBeforeCursor = value.substring(0, cursorPos);
-        
+
         // スラッシュから始まる場合の処理（従来の挙動）
         const matchSlash = textBeforeCursor.match(/\/([^/\s]*)$/);
         if (matchSlash) {
             // スラッシュから始まる部分を置き換え
             const startPos = cursorPos - matchSlash[0].length;
             const newText = suggestion.content || suggestion.name;
-            
+
             // テキストエリアの内容を更新
-            this.#inputElement.value = 
-                value.substring(0, startPos) + 
-                newText + 
+            this.#inputElement.value =
+                value.substring(0, startPos) +
+                newText +
                 value.substring(cursorPos);
-            
+
             // カーソル位置を更新
             const newCursorPos = startPos + newText.length;
             this.#inputElement.setSelectionRange(newCursorPos, newCursorPos);
         } else {
             // 通常の入力の場合は、入力内容を候補内容で置き換え
             const lastWordMatch = textBeforeCursor.match(/(\S+)$/);
-            
+
             if (lastWordMatch) {
                 // 最後の単語を候補で置き換え
                 const startPos = cursorPos - lastWordMatch[0].length;
                 const newText = suggestion.content || suggestion.name;
-                
+
                 // テキストエリアの内容を更新
-                this.#inputElement.value = 
-                    value.substring(0, startPos) + 
-                    newText + 
+                this.#inputElement.value =
+                    value.substring(0, startPos) +
+                    newText +
                     value.substring(cursorPos);
-                
+
                 // カーソル位置を更新
                 const newCursorPos = startPos + newText.length;
                 this.#inputElement.setSelectionRange(newCursorPos, newCursorPos);
@@ -326,18 +333,18 @@ class PromptSuggestions {
                 // 単語区切りがない場合は、入力内容全体を置き換える
                 const newText = suggestion.content || suggestion.name;
                 this.#inputElement.value = newText + value.substring(cursorPos);
-                
+
                 // カーソル位置を更新
                 const newCursorPos = newText.length;
                 this.#inputElement.setSelectionRange(newCursorPos, newCursorPos);
             }
         }
-        
+
         // テキストエリアのサイズを自動調整
         if (UI.getInstance && UIUtils.getInstance.autoResizeTextarea) {
             UIUtils.getInstance.autoResizeTextarea(this.#inputElement);
         }
-        
+
         // 候補を非表示
         this.#hideSuggestions();
     }
@@ -348,15 +355,16 @@ class PromptSuggestions {
      * @returns {Array} 候補の配列
      */
     #searchPrompts(query) {
-        // PromptManagerからプロンプトを検索
-        const prompts = PromptManager.getInstance.loadPromptLibrary();
-        
+        // PromptManagerからソートされたプロンプトを取得
+        // お気に入り優先、次に使用回数順
+        let prompts = PromptManager.getInstance.getPromptsSorted('mostUsed');
+
         // クエリがない場合は全てのプロンプトを表示
         if (!query) return prompts.slice(0, PromptSuggestions.MAX_SUGGESTIONS);
-        
+
         // 検索文字列を小文字に変換（大文字小文字を区別しない検索のため）
         const lowerQuery = query.toLowerCase();
-        
+
         // 検索条件に一致するプロンプトを取得
         return prompts.filter(prompt => {
             return (
@@ -365,21 +373,5 @@ class PromptSuggestions {
                 prompt.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
             );
         });
-    }
-
-    /**
-     * カテゴリIDから表示名を取得します
-     * @param {string} categoryId - カテゴリID
-     * @returns {string} カテゴリ表示名
-     */
-    #getCategoryName(categoryId) {
-        if (!categoryId) return '';
-        
-        // カテゴリ情報を取得
-        const categories = PromptManager.getInstance.loadCategories();
-        
-        // カテゴリIDから名前を取得
-        const category = categories[categoryId];
-        return category ? category.name : categoryId;
     }
 }

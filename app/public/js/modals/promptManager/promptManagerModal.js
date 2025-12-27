@@ -1,9 +1,14 @@
-﻿/**
+/**
  * プロンプトマネージャーモーダルを管理するクラス
  * @class PromptManagerModal
  */
 class PromptManagerModal {
     static #instance = null;
+
+    // 現在のソート・フィルター状態
+    #currentSortBy = 'recent';
+    #currentFavoriteOnly = false;
+    #currentSearchText = '';
 
     /**
      * シングルトンインスタンスを取得します
@@ -23,7 +28,7 @@ class PromptManagerModal {
         if (PromptManagerModal.#instance) {
             throw new Error('PromptManagerModalクラスは直接インスタンス化できません。getInstance()を使用してください。');
         }
-        
+
         // イベントリスナーの参照を保持する変数
         this._promptEditListeners = {
             save: null,
@@ -41,15 +46,31 @@ class PromptManagerModal {
             console.error('モーダル要素が見つかりません: promptManagerModal');
             return;
         }
-        
+
         // モーダル表示
         modal.style.display = 'block';
-        
-        // カテゴリとプロンプト一覧を更新
-        this.#updatePromptCategories();
+
+        // 状態をリセット
+        this.#currentSortBy = 'recent';
+        this.#currentFavoriteOnly = false;
+        this.#currentSearchText = '';
+
+        // UIを初期状態に設定
+        const sortSelect = document.getElementById('promptSortSelect');
+        if (sortSelect) sortSelect.value = 'recent';
+
+        const showAllBtn = document.getElementById('showAllPrompts');
+        const showFavoritesBtn = document.getElementById('showFavorites');
+        if (showAllBtn) showAllBtn.classList.add('active');
+        if (showFavoritesBtn) showFavoritesBtn.classList.remove('active');
+
+        const searchInput = UICache.getInstance.get('promptSearchInput');
+        if (searchInput) searchInput.value = '';
+
+        // プロンプト一覧を更新
         this.#updatePromptsList();
     }
-    
+
     /**
      * プロンプトマネージャーモーダルを非表示にします
      */
@@ -80,7 +101,6 @@ class PromptManagerModal {
 
         // フォームに値を設定
         const nameInput = UICache.getInstance.get('promptNameInput');
-        const categorySelect = UICache.getInstance.get('promptCategorySelect');
         const tagsInput = UICache.getInstance.get('promptTagsInput');
         const descriptionInput = UICache.getInstance.get('promptDescriptionInput');
         const contentInput = UICache.getInstance.get('promptContentInput');
@@ -100,9 +120,6 @@ class PromptManagerModal {
             contentInput.value = '';
             delete modal.dataset.promptId;
         }
-
-        // カテゴリ選択肢を更新
-        this.#updateCategorySelect(categorySelect, prompt ? prompt.category : null);
 
         // モーダルを表示
         modal.style.display = 'block';
@@ -144,247 +161,201 @@ class PromptManagerModal {
     }
 
     /**
-     * カテゴリ追加ボタンのクリックイベントを処理する
+     * ソート変更を処理する
+     * @param {string} sortBy - ソート方法
      */
-    handleAddCategory() {
-        const categoryName = prompt('新しいカテゴリ名を入力してください:');
-        if (!categoryName || !categoryName.trim()) return;
-
-        try {
-            const success = PromptManager.getInstance.addCategory(categoryName.trim());
-            if (success) {
-                UI.getInstance.Core.Notification.show('カテゴリを追加しました', 'success');
-                this.#updatePromptCategories();
-            } else {
-                UI.getInstance.Core.Notification.show('カテゴリの追加に失敗しました', 'error');
-            }
-        } catch (error) {
-            console.error('カテゴリ追加中にエラーが発生しました:', error);
-            UI.getInstance.Core.Notification.show('エラー: ' + error.message, 'error');
-        }
+    handleSortChange(sortBy) {
+        this.#currentSortBy = sortBy;
+        this.#updatePromptsList();
     }
 
     /**
-     * プロンプトカテゴリ一覧を更新する
+     * フィルター変更を処理する（すべて/お気に入り）
+     * @param {boolean} favoriteOnly - お気に入りのみ表示するか
      */
-    #updatePromptCategories() {
-        console.log('カテゴリ一覧を更新します');
-        const categoriesList = UICache.getInstance.get('promptCategoriesList');
-        if (!categoriesList) {
-            console.error('カテゴリリスト要素が見つかりません: promptCategoriesList');
-            return;
-        }
-        
-        // カテゴリリストをクリア
-        categoriesList.innerHTML = '';
-        
-        // カテゴリを読み込む
-        const categories = PromptManager.getInstance.loadCategories();
-        
-        // カテゴリを並び替え
-        const sortedCategories = Object.entries(categories)
-            .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
-        
-        // カテゴリごとにリスト項目を作成
-        sortedCategories.forEach(([key, category]) => {
-            // カテゴリ項目
-            const categoryItem = document.createElement('div');
-            categoryItem.className = 'category-item';
-            if (key === 'all') {
-                categoryItem.classList.add('active');
-            }
-            categoryItem.dataset.category = key;
-            
-            // カテゴリ名とカウントを含むコンテナ
-            const nameContainer = document.createElement('div');
-            nameContainer.className = 'category-name-container';
-            nameContainer.innerHTML = `
-                <span>${category.name}</span>
-                <span class="category-count">0</span>
-            `;
-            
-            // アクションボタン
-            const actionsContainer = document.createElement('div');
-            actionsContainer.className = 'category-actions';
-            
-            if (key !== 'all' && key !== 'general') {
-                const editButton = document.createElement('button');
-                editButton.className = 'category-edit-button';
-                editButton.innerHTML = '<i class="fas fa-edit"></i>';
-                editButton.title = 'カテゴリを編集';
-                editButton.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.#editCategory(key, category.name);
-                });
-                
-                const deleteButton = document.createElement('button');
-                deleteButton.className = 'category-delete-button';
-                deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
-                deleteButton.title = 'カテゴリを削除';
-                deleteButton.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.#deleteCategory(key);
-                });
-                
-                actionsContainer.appendChild(editButton);
-                actionsContainer.appendChild(deleteButton);
-            }
-            
-            categoryItem.appendChild(nameContainer);
-            categoryItem.appendChild(actionsContainer);
-            
-            // クリックイベント（カテゴリの選択）
-            nameContainer.addEventListener('click', () => {
-                document.querySelectorAll('.category-item.active').forEach(item => {
-                    item.classList.remove('active');
-                });
-                
-                categoryItem.classList.add('active');
-                this.#updateCategoryCounts();
-                this.#updatePromptsList({ category: key });
-            });
-            
-            categoriesList.appendChild(categoryItem);
-        });
+    handleFilterChange(favoriteOnly) {
+        this.#currentFavoriteOnly = favoriteOnly;
 
-        // 初期表示時のカウントとプロンプト一覧を更新
-        this.#updateCategoryCounts();
-        this.#updatePromptsList({ category: 'all' });
+        // ボタンのアクティブ状態を更新
+        const showAllBtn = document.getElementById('showAllPrompts');
+        const showFavoritesBtn = document.getElementById('showFavorites');
+
+        if (favoriteOnly) {
+            showAllBtn?.classList.remove('active');
+            showFavoritesBtn?.classList.add('active');
+        } else {
+            showAllBtn?.classList.add('active');
+            showFavoritesBtn?.classList.remove('active');
+        }
+
+        this.#updatePromptsList();
+    }
+
+    /**
+     * 検索テキスト変更を処理する
+     * @param {string} searchText - 検索テキスト
+     */
+    handleSearchChange(searchText) {
+        this.#currentSearchText = searchText;
+        this.#updatePromptsList();
     }
 
     /**
      * プロンプト一覧を更新する
-     * @param {Object} filter - フィルタリング条件
      */
-    #updatePromptsList(filter = {}) {
+    #updatePromptsList() {
         const promptsList = UICache.getInstance.get('promptsList');
         if (!promptsList) {
             console.error('プロンプトリスト要素が見つかりません: promptsList');
             return;
         }
-        
+
         // プロンプトリストをクリア
         promptsList.innerHTML = '';
-        
-        // 検索条件でプロンプトを取得
-        const prompts = PromptManager.getInstance.searchPrompts(filter);
-        
+
+        // ソートされたプロンプトを取得
+        let prompts = PromptManager.getInstance.getPromptsSorted(this.#currentSortBy);
+
+        // お気に入りフィルター
+        if (this.#currentFavoriteOnly) {
+            prompts = prompts.filter(p => p.isFavorite);
+        }
+
+        // テキスト検索
+        if (this.#currentSearchText) {
+            const searchText = this.#currentSearchText.toLowerCase();
+            prompts = prompts.filter(prompt => {
+                const matchesName = prompt.name.toLowerCase().includes(searchText);
+                const matchesDescription = prompt.description?.toLowerCase().includes(searchText);
+                const matchesContent = prompt.content.toLowerCase().includes(searchText);
+                const matchesTags = prompt.tags?.some(tag => tag.toLowerCase().includes(searchText));
+                return matchesName || matchesDescription || matchesContent || matchesTags;
+            });
+        }
+
         if (prompts.length === 0) {
             promptsList.innerHTML = '<div class="no-prompts-message">プロンプトが見つかりません</div>';
             return;
         }
-        
-        // 日付でソート（新しい順）
-        prompts.sort((a, b) => b.updatedAt - a.updatedAt);
-        
+
         // プロンプトごとにリスト項目を作成
         prompts.forEach(prompt => {
-            const promptItem = document.createElement('div');
-            promptItem.className = 'prompt-item';
-            promptItem.dataset.promptId = prompt.id;
-            
-            promptItem.innerHTML = `
-                <div class="prompt-item-header">
-                    <span class="prompt-item-name">${prompt.name}</span>
-                    <div class="prompt-item-actions">
-                        <button class="edit-prompt-button" title="編集">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="use-prompt-button" title="プロンプトを使用">
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                        <button class="delete-prompt-button" title="削除">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="prompt-item-description">${prompt.description || ''}</div>
-                <div class="prompt-item-tags">
-                    ${prompt.tags.map(tag => `<span class="prompt-tag">${tag}</span>`).join('')}
-                </div>
-            `;
-            
-            // イベントリスナーの設定
-            this.#setupPromptItemEventListeners(promptItem, prompt);
-            
+            const promptItem = this.#createPromptItem(prompt);
             promptsList.appendChild(promptItem);
         });
+    }
+
+    /**
+     * プロンプト項目のDOM要素を作成する
+     * @param {Object} prompt - プロンプトデータ
+     * @returns {HTMLElement} プロンプト項目要素
+     */
+    #createPromptItem(prompt) {
+        const promptItem = document.createElement('div');
+        promptItem.className = 'prompt-item';
+        promptItem.dataset.promptId = prompt.id;
+
+        const favoriteClass = prompt.isFavorite ? 'active' : '';
+        const useCountText = prompt.useCount > 0 ? `使用: ${prompt.useCount}回` : '未使用';
+
+        promptItem.innerHTML = `
+            <div class="prompt-item-header">
+                <span class="prompt-item-name">${prompt.name}</span>
+                <div class="prompt-item-stats">
+                    <span class="prompt-use-count">${useCountText}</span>
+                </div>
+                <div class="prompt-item-actions">
+                    <button class="favorite-prompt-button ${favoriteClass}" title="お気に入り">
+                        <i class="fas fa-star"></i>
+                    </button>
+                    <button class="edit-prompt-button" title="編集">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="use-prompt-button" title="プロンプトを使用">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button class="delete-prompt-button" title="削除">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="prompt-item-description">${prompt.description || ''}</div>
+            <div class="prompt-item-tags">
+                ${prompt.tags.map(tag => `<span class="prompt-tag">${tag}</span>`).join('')}
+            </div>
+        `;
+
+        // イベントリスナーの設定
+        this.#setupPromptItemEventListeners(promptItem, prompt);
+
+        return promptItem;
     }
 
     /**
      * プロンプト項目のイベントリスナーを設定する
      */
     #setupPromptItemEventListeners(promptItem, prompt) {
+        // お気に入りボタン
+        promptItem.querySelector('.favorite-prompt-button').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#toggleFavorite(prompt.id);
+        });
+
         promptItem.querySelector('.edit-prompt-button').addEventListener('click', (e) => {
             e.stopPropagation();
             this.showPromptEditModal(prompt);
         });
-        
+
         promptItem.querySelector('.use-prompt-button').addEventListener('click', (e) => {
             e.stopPropagation();
             this.#usePrompt(prompt.id);
         });
-                
+
         promptItem.querySelector('.delete-prompt-button').addEventListener('click', (e) => {
             e.stopPropagation();
             this.#deletePrompt(prompt.id);
         });
-        
+
         promptItem.addEventListener('click', () => {
             this.showPromptEditModal(prompt);
         });
     }
-    
+
+    /**
+     * お気に入りをトグルする
+     * @param {string} promptId - プロンプトID
+     */
+    #toggleFavorite(promptId) {
+        const success = PromptManager.getInstance.toggleFavorite(promptId);
+        if (success) {
+            this.#updatePromptsList();
+        }
+    }
+
     /**
      * プロンプトを使用する
      */
     #usePrompt(promptId) {
         try {
-            const promptText = PromptManager.getInstance.buildPrompt(promptId);
-            
+            const promptContent = PromptManager.getInstance.getPromptContent(promptId);
+
+            if (!promptContent) {
+                UI.getInstance.Core.Notification.show('プロンプトが見つかりません', 'error');
+                return;
+            }
+
             const userInput = UICache.getInstance.get('userInput');
             if (userInput) {
-                userInput.value = promptText;
+                userInput.value = promptContent;
                 UIUtils.getInstance.autoResizeTextarea(userInput);
             }
-            
+
             this.hidePromptManagerModal();
             UI.getInstance.Core.Notification.show('プロンプトをセットしました', 'success');
         } catch (error) {
             console.error('プロンプト使用中にエラーが発生しました:', error);
             UI.getInstance.Core.Notification.show('プロンプトの使用に失敗しました', 'error');
         }
-    }
-    
-    /**
-     * カテゴリごとのプロンプト数を更新する
-     */
-    #updateCategoryCounts() {
-        const categories = document.querySelectorAll('.category-item');
-        if (!categories.length) return;
-        
-        const prompts = PromptManager.getInstance.loadPromptLibrary();
-        
-        // カテゴリごとのカウントを集計
-        const counts = {
-            'all': prompts.length
-        };
-        
-        prompts.forEach(prompt => {
-            if (!prompt.category) return;
-            counts[prompt.category] = (counts[prompt.category] || 0) + 1;
-        });
-        
-        // カテゴリ要素のカウンタを更新
-        categories.forEach(categoryEl => {
-            const categoryKey = categoryEl.dataset.category;
-            if (!categoryKey) return;
-            
-            const countEl = categoryEl.querySelector('.category-count');
-            if (countEl) {
-                countEl.textContent = counts[categoryKey] || 0;
-            }
-        });
     }
 
     /**
@@ -396,15 +367,7 @@ class PromptManagerModal {
                 const result = PromptManager.getInstance.deletePrompt(promptId);
                 if (result) {
                     UI.getInstance.Core.Notification.show('プロンプトを削除しました', 'success');
-                    
-                    const activeCategory = document.querySelector('.category-item.active');
-                    const filter = {};
-                    if (activeCategory) {
-                        filter.category = activeCategory.dataset.category;
-                    }
-                    
-                    this.#updatePromptsList(filter);
-                    this.#updateCategoryCounts();
+                    this.#updatePromptsList();
                 } else {
                     UI.getInstance.Core.Notification.show('プロンプトの削除に失敗しました', 'error');
                 }
@@ -416,114 +379,29 @@ class PromptManagerModal {
     }
 
     /**
-     * カテゴリを編集する
-     */
-    #editCategory(categoryKey, currentName) {
-        const newName = prompt('新しいカテゴリ名を入力してください:', currentName);
-        
-        if (newName && newName.trim() && newName !== currentName) {
-            try {
-                const success = PromptManager.getInstance.updateCategory(categoryKey, {
-                    name: newName.trim()
-                });
-                
-                if (success) {
-                    UI.getInstance.Core.Notification.show('カテゴリ名を更新しました', 'success');
-                    this.#updatePromptCategories();
-                } else {
-                    UI.getInstance.Core.Notification.show('カテゴリの更新に失敗しました', 'error');
-                }
-            } catch (error) {
-                console.error('カテゴリ更新中にエラーが発生しました:', error);
-                UI.getInstance.Core.Notification.show('エラー: ' + error.message, 'error');
-            }
-        }
-    }
-
-    /**
-     * カテゴリを削除する
-     */
-    #deleteCategory(categoryKey) {
-        this.confirm(
-            'このカテゴリを削除してもよろしいですか？\nこのカテゴリ内のプロンプトは「一般」カテゴリに移動されます。',
-            {
-                title: 'カテゴリの削除',
-                confirmText: '削除',
-                cancelText: 'キャンセル'
-            }
-        ).then(confirmed => {
-            if (confirmed) {
-                try {
-                    const success = PromptManager.getInstance.deleteCategory(categoryKey);
-                    
-                    if (success) {
-                        UI.getInstance.Core.Notification.show('カテゴリを削除しました', 'success');
-                        this.#updatePromptCategories();
-                    } else {
-                        UI.getInstance.Core.Notification.show('カテゴリの削除に失敗しました', 'error');
-                    }
-                } catch (error) {
-                    console.error('カテゴリ削除中にエラーが発生しました:', error);
-                    UI.getInstance.Core.Notification.show('エラー: ' + error.message, 'error');
-                }
-            }
-        });
-    }
-
-    /**
-     * カテゴリ選択肢を更新する
-     */
-    #updateCategorySelect(select, currentCategory) {
-        if (!select) return;
-
-        // 選択肢をクリア
-        select.innerHTML = '';
-
-        // カテゴリ一覧を取得
-        const categories = PromptManager.getInstance.loadCategories();
-        const sortedCategories = Object.entries(categories)
-            .filter(([key]) => key !== 'all')
-            .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
-
-        // カテゴリの選択肢を作成
-        sortedCategories.forEach(([key, category]) => {
-            const option = document.createElement('option');
-            option.value = key;
-            option.textContent = category.name;
-            if (key === currentCategory) {
-                option.selected = true;
-            }
-            select.appendChild(option);
-        });
-    }
-
-    /**
      * プロンプトを保存する
      */
     #savePromptEdit(modal) {
         const nameInput = UICache.getInstance.get('promptNameInput');
-        const categorySelect = UICache.getInstance.get('promptCategorySelect');
         const tagsInput = UICache.getInstance.get('promptTagsInput');
         const descriptionInput = UICache.getInstance.get('promptDescriptionInput');
         const contentInput = UICache.getInstance.get('promptContentInput');
 
         // 入力値を取得
         const name = nameInput.value.trim();
-        const category = categorySelect.value;
         const tags = tagsInput.value.split(',').map(tag => tag.trim()).filter(Boolean);
         const description = descriptionInput.value.trim();
         const content = contentInput.value.trim();
 
         // バリデーション
         if (!name || !content) {
-                UI.getInstance.Core.Notification.show('名前とプロンプト内容は必須です', 'error');
+            UI.getInstance.Core.Notification.show('名前とプロンプト内容は必須です', 'error');
             return;
         }
 
         try {
             const promptData = {
                 name,
-                category,
                 tags,
                 description,
                 content
@@ -543,12 +421,9 @@ class PromptManagerModal {
             if (success) {
                 UI.getInstance.Core.Notification.show(promptId ? 'プロンプトを更新しました' : 'プロンプトを作成しました', 'success');
                 this.hidePromptEditModal();
-                
+
                 // プロンプトリストを更新
-                const activeCategory = document.querySelector('.category-item.active');
-                const filter = activeCategory ? { category: activeCategory.dataset.category } : {};
-                this.#updatePromptsList(filter);
-                this.#updateCategoryCounts();
+                this.#updatePromptsList();
             } else {
                 UI.getInstance.Core.Notification.show('プロンプトの保存に失敗しました', 'error');
             }

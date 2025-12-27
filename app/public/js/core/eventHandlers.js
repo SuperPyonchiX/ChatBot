@@ -275,19 +275,43 @@ class EventHandlers {
             });
         }
 
-        // カテゴリ追加ボタンのイベントハンドラー
-        const addCategoryBtn = UICache.getInstance.get('addCategoryButton');
-        if (addCategoryBtn) {
-            addCategoryBtn.addEventListener('click', () => {
-                PromptManagerModal.getInstance.handleAddCategory();
-            });
-        }
-
         // 新規プロンプト追加ボタンのイベントハンドラー
         const addPromptButton = UICache.getInstance.get('addPromptButton');
         if (addPromptButton) {
             addPromptButton.addEventListener('click', () => {
                 PromptManagerModal.getInstance.showPromptEditModal(null);
+            });
+        }
+
+        // フィルターボタン（すべて）
+        const showAllBtn = document.getElementById('showAllPrompts');
+        if (showAllBtn) {
+            showAllBtn.addEventListener('click', () => {
+                PromptManagerModal.getInstance.handleFilterChange(false);
+            });
+        }
+
+        // フィルターボタン（お気に入り）
+        const showFavoritesBtn = document.getElementById('showFavorites');
+        if (showFavoritesBtn) {
+            showFavoritesBtn.addEventListener('click', () => {
+                PromptManagerModal.getInstance.handleFilterChange(true);
+            });
+        }
+
+        // ソート選択
+        const sortSelect = document.getElementById('promptSortSelect');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', (e) => {
+                PromptManagerModal.getInstance.handleSortChange(e.target.value);
+            });
+        }
+
+        // 検索入力
+        const searchInput = UICache.getInstance.get('promptSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                PromptManagerModal.getInstance.handleSearchChange(e.target.value);
             });
         }
     }

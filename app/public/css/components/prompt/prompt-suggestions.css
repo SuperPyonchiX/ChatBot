@@ -43,6 +43,9 @@
     font-weight: 600;
     margin-bottom: var(--suggestion-name-margin);
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
 }
 
 .prompt-suggestion-description {
@@ -53,12 +56,23 @@
     text-overflow: ellipsis;
 }
 
-.prompt-category-label {
-    display: inline-block;
+/* お気に入りアイコン */
+.prompt-suggestion-name .favorite-icon {
+    color: gold;
+    font-size: var(--font-size-sm);
+}
+
+/* 使用回数バッジ */
+.use-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 var(--spacing-xs);
+    margin-left: auto;
     font-size: var(--font-size-xs);
-    padding: var(--suggestion-label-padding);
-    border-radius: var(--border-radius-sm);
-    margin-right: var(--suggestion-label-margin);
-    background-color: var(--border-color-hover);
-    color: var(--text-primary);
+    background: var(--background-quaternary);
+    border-radius: 9px;
+    color: var(--text-secondary);
 }

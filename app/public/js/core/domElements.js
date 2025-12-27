@@ -56,11 +56,11 @@ window.Elements = (function() {
         'saveRenameChat', 'cancelRenameChat', 'renameChatModal', 'chatTitleInput',
         
         // プロンプトマネージャー関連
-        'promptManagerModal', 'closePromptManager', 'addCategoryButton',
+        'promptManagerModal', 'closePromptManager',
         'addPromptButton', 'promptSearchInput', 'promptEditModal',
         'savePromptEdit', 'cancelPromptEdit', 'promptNameInput',
-        'promptCategorySelect', 'promptTagsInput',
-        'promptDescriptionInput', 'promptContentInput'
+        'promptTagsInput', 'promptDescriptionInput', 'promptContentInput',
+        'showAllPrompts', 'showFavorites', 'promptSortSelect'
     ];
     
     return getElements(ids);
