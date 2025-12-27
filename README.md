@@ -14,7 +14,7 @@
 	- Claude: 全対応モデルでツール呼び出しにより対応
 - マークダウン表示＋コードハイライト＋Mermaid図プレビュー（SVG保存/全画面表示）
 - 添付ファイル（画像ほか）とプレビュー
-- コード実行（JavaScript / Python[Pyodide] / C++[JSCPP] / HTML）
+- コード実行（JavaScript / Python[Pyodide] / C++[サーバーサイドg++] / HTML）
 - チャット履歴の保存・管理、システムプロンプトのテンプレート化
 - モバイル対応レスポンシブUI、MonacoベースのエディタUI
 
@@ -24,6 +24,7 @@
 - Node.js: v18.0.0 以降
 - ブラウザ: 最新のChrome / Edge / Firefox / Brave のいずれか
 - インターネット接続（各種API利用、Pyodide/外部ライブラリのCDN読込に必要）
+- g++ (C++コード実行機能を使用する場合)
 
 ## クイックスタート
 
@@ -55,6 +56,38 @@
 - **ポート番号**: デフォルトは 50000 です
 - **依存パッケージ**: 初回起動時に自動インストールされます（Express, http-proxy-middleware, cors）
 - **プロキシサーバー**: Node.jsサーバーがAPIリクエストをプロキシし、CORS問題を解決します
+
+### g++ のインストール（C++コード実行機能を使用する場合）
+
+C++コードの実行機能を使用するには、g++コンパイラのインストールが必要です。
+
+1. **MSYS2のインストール**
+   ```powershell
+   winget install -e --id MSYS2.MSYS2
+   ```
+
+2. **g++のインストール**
+
+   MSYS2ターミナル（C:\msys64\msys2.exe）を開いて以下を実行：
+   ```bash
+   pacman -S mingw-w64-x86_64-gcc
+   ```
+
+3. **環境変数PATHに追加**
+
+   以下のパスをシステムの環境変数PATHに追加：
+   ```
+   C:\msys64\mingw64\bin
+   ```
+
+4. **インストール確認**
+
+   新しいコマンドプロンプトまたはPowerShellを開いて確認：
+   ```powershell
+   g++ --version
+   ```
+
+**注意**: g++がインストールされていない場合、C++コードは軽量版インタープリタ（JSCPP）で実行されます。JSCPPは一部のC++機能（STLなど）に制限があります。
 
 ## 停止方法
 
@@ -117,7 +150,7 @@ Web検索:
 - バックエンド: Node.js + Express（HTTPサーバー、リバースプロキシ）
 - マークダウン: Marked.js + Prism.js（構文ハイライト）
 - 図表: Mermaid（CDNロード, プレビュー/エクスポート対応）
-- コード実行: JSCPP（C++）/ Pyodide（Python）/ ブラウザJS / HTML
+- コード実行: g++（C++、サーバーサイド）/ Pyodide（Python）/ ブラウザJS / HTML
 - エディタ: Monaco Editor コントローラ
 - 通信: fetch + SSE（ストリーミング）
 - プロキシ: http-proxy-middleware
@@ -131,11 +164,13 @@ Web検索:
     ↓
 Node.js/Expressプロキシサーバー (port 50000)
     ├─ 静的ファイル配信 (/public)
-    └─ APIプロキシ
-        ├─ /openai/* → https://api.openai.com/*
-        ├─ /responses/* → https://api.openai.com/*
-        ├─ /anthropic/* → https://api.anthropic.com/*
-        └─ /gemini/* → https://generativelanguage.googleapis.com/*
+    ├─ APIプロキシ
+    │   ├─ /openai/* → https://api.openai.com/*
+    │   ├─ /responses/* → https://api.openai.com/*
+    │   ├─ /anthropic/* → https://api.anthropic.com/*
+    │   └─ /gemini/* → https://generativelanguage.googleapis.com/*
+    └─ C++コンパイル・実行 API
+        └─ /api/compile/cpp → ローカルg++でコンパイル・実行
 ```
 
 ### 主要な設計

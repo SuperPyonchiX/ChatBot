@@ -15,6 +15,10 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const cors = require('cors');
 const path = require('path');
+const { exec } = require('child_process');
+const fs = require('fs').promises;
+const os = require('os');
+const crypto = require('crypto');
 
 // ポート設定
 const PORT = process.env.PORT || 50000;
@@ -30,6 +34,11 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key', 'anthropic-version', 'anthropic-dangerous-direct-browser-access', 'x-goog-api-key'],
     credentials: false
 }));
+
+// ========================================
+// JSONボディのパース
+// ========================================
+app.use(express.json({ limit: '1mb' }));
 
 // ========================================
 // 静的ファイルの配信（アプリケーション本体）
@@ -128,6 +137,111 @@ app.use('/gemini', createProxyMiddleware({
         });
     }
 }));
+
+// ========================================
+// C++ コンパイル・実行 API
+// ========================================
+app.post('/api/compile/cpp', async (req, res) => {
+    const { code, input = '' } = req.body;
+
+    if (!code) {
+        return res.status(400).json({ error: 'コードが指定されていません' });
+    }
+
+    // コードサイズ制限 (100KB)
+    if (code.length > 100000) {
+        return res.status(400).json({ error: 'コードが大きすぎます（100KB以下にしてください）' });
+    }
+
+    // 一時ディレクトリを作成
+    const tempId = crypto.randomBytes(8).toString('hex');
+    const tempDir = path.join(os.tmpdir(), `cpp_${tempId}`);
+    const sourceFile = path.join(tempDir, 'main.cpp');
+    const outputFile = path.join(tempDir, process.platform === 'win32' ? 'main.exe' : 'main');
+
+    try {
+        await fs.mkdir(tempDir, { recursive: true });
+        await fs.writeFile(sourceFile, code, 'utf-8');
+
+        console.log(`[C++] コンパイル開始: ${tempDir}`);
+
+        // g++ でコンパイル
+        const compileCommand = process.platform === 'win32'
+            ? `g++ -std=c++17 -O2 -o "${outputFile}" "${sourceFile}" 2>&1`
+            : `g++ -std=c++17 -O2 -o "${outputFile}" "${sourceFile}" 2>&1`;
+
+        const compileResult = await new Promise((resolve) => {
+            exec(compileCommand, { timeout: 30000, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+                resolve({
+                    success: !error,
+                    stdout: stdout || '',
+                    stderr: stderr || '',
+                    error: error ? error.message : null
+                });
+            });
+        });
+
+        if (!compileResult.success) {
+            console.log(`[C++] コンパイルエラー`);
+            return res.json({
+                success: false,
+                phase: 'compile',
+                error: compileResult.stdout || compileResult.stderr || compileResult.error || 'コンパイルに失敗しました'
+            });
+        }
+
+        console.log(`[C++] コンパイル成功、実行開始`);
+
+        // プログラムを実行
+        const runCommand = process.platform === 'win32' ? `"${outputFile}"` : `"${outputFile}"`;
+
+        const runResult = await new Promise((resolve) => {
+            const child = exec(runCommand, {
+                timeout: 10000,
+                maxBuffer: 1024 * 1024,
+                cwd: tempDir
+            }, (error, stdout, stderr) => {
+                resolve({
+                    success: !error || error.killed === false,
+                    stdout: stdout || '',
+                    stderr: stderr || '',
+                    exitCode: error ? error.code : 0,
+                    killed: error ? error.killed : false
+                });
+            });
+
+            // 標準入力にデータを送信
+            if (input) {
+                child.stdin.write(input);
+            }
+            child.stdin.end();
+        });
+
+        console.log(`[C++] 実行完了`);
+
+        res.json({
+            success: true,
+            output: runResult.stdout,
+            stderr: runResult.stderr,
+            exitCode: runResult.exitCode || 0,
+            killed: runResult.killed
+        });
+
+    } catch (error) {
+        console.error(`[C++] エラー:`, error);
+        res.status(500).json({
+            success: false,
+            error: error.message || '実行中にエラーが発生しました'
+        });
+    } finally {
+        // クリーンアップ
+        try {
+            await fs.rm(tempDir, { recursive: true, force: true });
+        } catch (e) {
+            console.error(`[C++] クリーンアップエラー:`, e);
+        }
+    }
+});
 
 // ========================================
 // ルートアクセス時のリダイレクト
