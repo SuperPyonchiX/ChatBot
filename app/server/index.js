@@ -36,11 +36,6 @@ app.use(cors({
 }));
 
 // ========================================
-// JSONボディのパース
-// ========================================
-app.use(express.json({ limit: '1mb' }));
-
-// ========================================
 // 静的ファイルの配信（アプリケーション本体）
 // ========================================
 const publicPath = path.join(__dirname, '../public');
@@ -141,7 +136,7 @@ app.use('/gemini', createProxyMiddleware({
 // ========================================
 // C++ コンパイル・実行 API
 // ========================================
-app.post('/api/compile/cpp', async (req, res) => {
+app.post('/api/compile/cpp', express.json({ limit: '1mb' }), async (req, res) => {
     const { code, input = '' } = req.body;
 
     if (!code) {
