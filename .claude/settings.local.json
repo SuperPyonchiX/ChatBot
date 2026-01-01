@@ -24,7 +24,9 @@
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:docs.wasmer.io)",
       "WebFetch(domain:wasmer.io)",
-      "Bash(g++:*)"
+      "Bash(g++:*)",
+      "Bash(ls:*)",
+      "Skill(document-skills:skill-creator)"
     ]
   }
 }
