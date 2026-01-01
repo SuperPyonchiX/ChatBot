@@ -8,12 +8,11 @@
     height: 100%;
     background-color: var(--modal-overlay-bg);
     z-index: 1000;
-    justify-content: center;
-    align-items: center;
 }
 
 .modal.show {
-    display: flex;
+    display: grid;
+    place-items: center;
 }
 
 .modal-content {
@@ -24,6 +23,29 @@
     width: var(--modal-width);
     max-width: var(--modal-max-width-default);
     box-shadow: var(--modal-shadow);
+    border: 1px solid var(--border-color);
+    max-height: 90vh;
+    overflow: auto;
+}
+
+/* ドラッグ移動対応 */
+.modal-content.draggable {
+    position: absolute;
+}
+
+.modal-content.dragging {
+    opacity: 0.9;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* ドラッグハンドル（h2ヘッダー）*/
+.modal-content > h2 {
+    cursor: grab;
+    user-select: none;
+}
+
+.modal-content.dragging > h2 {
+    cursor: grabbing;
 }
 
 /* 確認ダイアログのスタイル */

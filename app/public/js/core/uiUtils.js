@@ -43,15 +43,27 @@
     toggleModal(modalId, show) {
         const modal = UICache.getInstance.get(modalId);
         if (!modal) return;
-        
+
+        const modalContent = modal.querySelector('.modal-content');
+
         if (show) {
             modal.classList.add('show');
             document.addEventListener('keydown', this.#escapeKeyHandler);
             document.body.style.overflow = 'hidden';
+
+            // ドラッグ機能を有効化
+            if (modalContent && typeof DragManager !== 'undefined') {
+                DragManager.getInstance.enableDrag(modalContent);
+            }
         } else {
             modal.classList.remove('show');
             document.removeEventListener('keydown', this.#escapeKeyHandler);
             document.body.style.overflow = '';
+
+            // モーダル位置をリセット（次回開いた時は中央）
+            if (modalContent && typeof DragManager !== 'undefined') {
+                DragManager.getInstance.resetPosition(modalContent);
+            }
         }
     }
     

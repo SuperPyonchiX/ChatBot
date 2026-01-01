@@ -100,25 +100,6 @@ class KnowledgeBaseModal {
     async showModal() {
         UIUtils.getInstance.toggleModal('knowledgeBaseModal', true);
         await this.#refreshUI();
-
-        // モデル未初期化なら初期化を促す
-        if (typeof EmbeddingAPI !== 'undefined' && !EmbeddingAPI.getInstance.isInitialized) {
-            this.#showModelInitPrompt();
-        }
-    }
-
-    /**
-     * モデル初期化を促すUIを表示
-     */
-    #showModelInitPrompt() {
-        const warningContainer = document.getElementById('kbApiWarning');
-        if (!warningContainer) return;
-
-        warningContainer.style.display = 'block';
-        warningContainer.innerHTML = `
-            <i class="fas fa-info-circle"></i>
-            <span>初回はモデルダウンロードが必要です（約20MB）。ドキュメント追加時に自動でダウンロードされます。</span>
-        `;
     }
 
     /**
@@ -241,24 +222,18 @@ class KnowledgeBaseModal {
         const warningContainer = document.getElementById('kbApiWarning');
         if (!warningContainer) return;
 
-        // ローカル埋め込みモデル使用のため、常に利用可能
-        // ただし、初期化状態によってメッセージを変更
+        // ローカル埋め込みモデル使用のため、基本的に警告は非表示
+        // 初期化中のみ「準備中」を表示、APIが無い場合のみエラー表示
         if (typeof EmbeddingAPI !== 'undefined') {
-            if (EmbeddingAPI.getInstance.isInitialized) {
-                warningContainer.style.display = 'none';
-            } else if (EmbeddingAPI.getInstance.isInitializing) {
+            if (EmbeddingAPI.getInstance.isInitializing) {
                 warningContainer.style.display = 'block';
                 warningContainer.innerHTML = `
                     <i class="fas fa-spinner fa-spin"></i>
                     <span>モデルを準備中...</span>
                 `;
             } else {
-                // 未初期化だが利用可能
-                warningContainer.style.display = 'block';
-                warningContainer.innerHTML = `
-                    <i class="fas fa-info-circle"></i>
-                    <span>ローカル埋め込みモデル使用（初回はダウンロードが必要）</span>
-                `;
+                // 初期化済み or 未初期化（ドキュメント追加時に自動初期化）
+                warningContainer.style.display = 'none';
             }
         } else {
             warningContainer.style.display = 'block';

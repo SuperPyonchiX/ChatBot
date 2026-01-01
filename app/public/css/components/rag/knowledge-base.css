@@ -5,18 +5,17 @@
 
 /* ===========================================
    モーダル全体のレイアウト
-   - 画面の70%を使用し、最大600pxの高さに制限
-   - 必ずビューポート内に収まるように設計
+   - 共通のリサイズ機能はmodals.cssで設定済み
+   - ここではナレッジベース固有のレイアウトを定義
    =========================================== */
 .knowledge-base-modal {
-    width: 90%;
-    max-width: 550px;
-    max-height: min(70vh, 580px);
+    max-width: 800px;
+    min-width: 350px;
+    min-height: 400px;
     padding: 1.25rem !important;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
 }
 
 /* ヘッダー */
@@ -507,8 +506,8 @@
    =========================================== */
 @media (max-width: 576px) {
     .knowledge-base-modal {
-        width: 95%;
-        max-height: min(80vh, 500px);
+        min-width: unset;
+        min-height: 300px;
         padding: 1rem !important;
     }
 
