@@ -203,7 +203,8 @@ window.CONFIG = {
             CONVERSATIONS: 'conversations',
             CURRENT_CONVERSATION_ID: 'currentConversationId',
             ATTACHMENTS_PREFIX: 'attachments_',
-            WEB_SEARCH_ENABLED: 'webSearchEnabled'
+            WEB_SEARCH_ENABLED: 'webSearchEnabled',
+            RAG_ENABLED: 'ragEnabled'
         },
 
         // デフォルト値
@@ -341,6 +342,51 @@ window.CONFIG = {
                     timezone: "America/New_York"
                 }
             }
+        }
+    },
+
+    /**
+     * RAG（Retrieval-Augmented Generation）関連の設定
+     */
+    RAG: {
+        // 埋め込み（Embedding）設定
+        EMBEDDING: {
+            // ローカル埋め込みモデル（Transformers.js使用）
+            MODEL_ID: 'Xenova/all-MiniLM-L6-v2',
+            // 埋め込み次元数
+            DIMENSIONS: 384,
+            // チャンクサイズ（文字数）
+            CHUNK_SIZE: 500,
+            // チャンク間のオーバーラップ（文字数）
+            CHUNK_OVERLAP: 50,
+            // 検索時に取得する上位チャンク数
+            TOP_K: 5,
+            // 類似度閾値（これ以上のスコアのみ使用）
+            SIMILARITY_THRESHOLD: 0.3
+        },
+
+        // IndexedDBストレージ設定
+        STORAGE: {
+            // データベース名
+            DB_NAME: 'ragKnowledgeBase',
+            // データベースバージョン（ローカル埋め込み移行でスキーマ変更）
+            DB_VERSION: 2,
+            // ドキュメントストア名
+            DOCUMENTS_STORE: 'documents',
+            // チャンクストア名
+            CHUNKS_STORE: 'chunks'
+        },
+
+        // プロンプト拡張設定
+        AUGMENTATION: {
+            // RAGコンテキストの最大文字数
+            MAX_CONTEXT_LENGTH: 4000,
+            // コンテキスト挿入位置（'system' | 'user'）
+            INSERTION_POINT: 'system',
+            // コンテキストのプレフィックス
+            CONTEXT_PREFIX: '\n\n---\n以下は関連するナレッジベースからの情報です：\n\n',
+            // コンテキストのサフィックス
+            CONTEXT_SUFFIX: '\n---\n\n上記の情報を参考に回答してください。'
         }
     }
 };

@@ -12,6 +12,9 @@
 - Web検索連携
 	- OpenAI Responses API: gpt-5-mini / gpt-5 で対応
 	- Claude: 全対応モデルでツール呼び出しにより対応
+- **RAG（知識ベース）**: ドキュメントをアップロードしてAIの回答に活用
+	- ローカル埋め込み（Transformers.js）で外部API不要
+	- 対応形式: PDF, Word, Excel, PowerPoint, テキスト
 - マークダウン表示＋コードハイライト＋Mermaid図プレビュー（SVG保存/全画面表示）
 - 添付ファイル（画像ほか）とプレビュー
 - コード実行（JavaScript / Python[Pyodide] / C++[サーバーサイドg++] / HTML）
@@ -151,6 +154,7 @@ Web検索:
 - マークダウン: Marked.js + Prism.js（構文ハイライト）
 - 図表: Mermaid（CDNロード, プレビュー/エクスポート対応）
 - コード実行: g++（C++、サーバーサイド）/ Pyodide（Python）/ ブラウザJS / HTML
+- RAG: Transformers.js（ローカル埋め込み）+ IndexedDB（ベクトルストア）
 - エディタ: Monaco Editor コントローラ
 - 通信: fetch + SSE（ストリーミング）
 - プロキシ: http-proxy-middleware
@@ -228,4 +232,4 @@ Node.js/Expressプロキシサーバー (port 50000)
 
 ---
 
-最終更新: 2025年12月
+最終更新: 2026年1月

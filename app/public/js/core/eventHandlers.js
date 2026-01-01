@@ -100,6 +100,15 @@ class EventHandlers {
                 PromptManagerModal.getInstance.showPromptManagerModal();
             });
         }
+
+        // ナレッジベース (RAG)
+        const openKnowledgeBaseBtn = document.getElementById('openKnowledgeBase');
+        if (openKnowledgeBaseBtn) {
+            openKnowledgeBaseBtn.addEventListener('click', () => {
+                window.Elements.settingsMenu.style.display = 'none';
+                KnowledgeBaseModal.getInstance.showModal();
+            });
+        }
     }
 
     /**
@@ -172,6 +181,7 @@ class EventHandlers {
         this.#setupApiKeyModal();
         this.#setupRenameChatModal();
         this.#setupPromptManagerModal();
+        this.#setupKnowledgeBaseModal();
     }
 
     /**
@@ -322,13 +332,23 @@ class EventHandlers {
     #toggleClaudeWebSearchSettings() {
         const toggle = window.Elements.claudeWebSearchToggle;
         const settings = window.Elements.claudeWebSearchSettings;
-        
+
         if (toggle && settings) {
             if (toggle.checked) {
                 settings.classList.remove('hidden');
             } else {
                 settings.classList.add('hidden');
             }
+        }
+    }
+
+    /**
+     * ナレッジベースモーダルのイベントをセットアップします
+     */
+    #setupKnowledgeBaseModal() {
+        // KnowledgeBaseModalのイベントリスナーを初期化
+        if (typeof KnowledgeBaseModal !== 'undefined') {
+            KnowledgeBaseModal.getInstance.initializeEventListeners();
         }
     }
 }

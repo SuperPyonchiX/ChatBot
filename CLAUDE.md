@@ -2,6 +2,13 @@
 
 マルチAIプロバイダ対応Webチャットボット（OpenAI, Claude, Gemini, Azure）
 
+## 主な機能
+
+- **マルチAI対応**: OpenAI, Claude, Gemini, Azure OpenAI
+- **RAG（知識ベース）**: Transformers.jsによるローカル埋め込み（外部API不要）
+- **コード実行**: JavaScript, Python, C++, HTML
+- **ファイル添付**: PDF, Office, 画像対応
+
 ## クイックスタート
 
 ```bash
@@ -16,6 +23,7 @@ app/
 ├── server/index.js       # Express + APIプロキシ
 └── public/
     ├── js/core/          # API通信、config、storage
+    │   └── rag/          # RAG（知識ベース）
     ├── js/components/    # UIコンポーネント
     ├── js/modals/        # モーダル
     └── css/              # スタイル
@@ -59,6 +67,16 @@ ES2022 `#` を使用
 | storage.js | ローカルストレージ（暗号化） |
 | config.js | 設定値・型定義 |
 | chatRenderer.js | メッセージ表示 |
+| rag/ragManager.js | RAG統合マネージャー |
+| rag/vectorStore.js | IndexedDBベクトルストア |
+| rag/embeddingApi.js | ローカル埋め込み（Transformers.js） |
+
+## RAG機能
+
+- **埋め込みモデル**: `Xenova/all-MiniLM-L6-v2`（384次元、約20MB）
+- **実行環境**: ブラウザ内WebAssembly/WebGPU
+- **ストレージ**: IndexedDB
+- **特徴**: 外部API不要、完全ローカル動作、オフライン対応
 
 ## 開発スキル
 

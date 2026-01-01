@@ -30,6 +30,7 @@
     <link rel="stylesheet" href="css/components/notifications/notifications.css">
     <link rel="stylesheet" href="css/components/chat/chat.css">
     <link rel="stylesheet" href="css/components/chat/markdown.css">
+    <link rel="stylesheet" href="css/components/rag/knowledge-base.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
     
@@ -73,6 +74,16 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js"></script>
+
+    <!-- Transformers.js (ローカル埋め込み用) -->
+    <script type="module">
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3';
+        // ローカルモデルは使用しない（CDNからダウンロード）
+        env.allowLocalModels = false;
+        // グローバルに公開
+        window.TransformersJS = { pipeline, env };
+        console.log('✅ Transformers.js loaded');
+    </script>
 </head>
 <body>
     <div class="app-container">
@@ -97,6 +108,7 @@
                     <div id="settingsMenu" class="settings-menu">
                         <button id="openSystemPromptSettings">システムプロンプト設定</button>
                         <button id="openPromptManager">ユーザープロンプト管理</button>
+                        <button id="openKnowledgeBase">ナレッジベース (RAG)</button>
                         <button id="openApiSettings">API設定</button>
                     </div>
                 </div>
@@ -407,6 +419,71 @@
         </div>
     </div>
 
+    <!-- RAGナレッジベースモーダル -->
+    <div id="knowledgeBaseModal" class="modal">
+        <div class="modal-content knowledge-base-modal">
+            <h2><i class="fas fa-book"></i> ナレッジベース</h2>
+
+            <!-- API警告 -->
+            <div id="kbApiWarning" class="kb-api-warning"></div>
+
+            <!-- RAGトグル -->
+            <div class="kb-toggle-section">
+                <label class="kb-toggle-label">
+                    <i class="fas fa-brain"></i>
+                    <span>RAGを有効にする</span>
+                </label>
+                <div class="kb-toggle-switch">
+                    <input type="checkbox" id="ragToggle">
+                    <span class="kb-toggle-slider"></span>
+                </div>
+            </div>
+
+            <!-- 統計情報 -->
+            <div id="kbStats" class="kb-stats-container">
+                <!-- 統計情報はJSで動的に生成 -->
+            </div>
+
+            <!-- アップロードエリア -->
+            <div class="kb-upload-section">
+                <div id="kbDropZone" class="kb-drop-zone">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>ファイルをドラッグ&ドロップ</p>
+                    <p class="kb-upload-hint">または</p>
+                    <button id="kbUploadBtn" class="kb-upload-btn">
+                        <i class="fas fa-folder-open"></i> ファイルを選択
+                    </button>
+                    <input type="file" id="kbFileInput" class="kb-file-input" multiple
+                           accept=".pdf,.txt,.md,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.csv,.json,.js,.html,.css,.py,.java,.cpp,.c">
+                </div>
+            </div>
+
+            <!-- 進捗表示 -->
+            <div id="kbProgress" class="kb-progress-container">
+                <div class="kb-progress-bar-wrapper">
+                    <div id="kbProgressBar" class="kb-progress-bar"></div>
+                </div>
+                <div id="kbProgressText" class="kb-progress-text">処理中...</div>
+            </div>
+
+            <!-- ドキュメント一覧 -->
+            <div class="kb-document-list-section">
+                <div class="kb-document-list-header">
+                    <h3>登録済みドキュメント</h3>
+                    <button id="kbClearAllBtn" class="kb-clear-all-btn">全て削除</button>
+                </div>
+                <div id="kbDocumentList" class="kb-document-list">
+                    <!-- ドキュメント一覧はJSで動的に生成 -->
+                </div>
+            </div>
+
+            <!-- フッター -->
+            <div class="kb-modal-footer">
+                <button id="closeKnowledgeBaseModal" class="kb-close-btn">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <!-- JSファイルを読み込む -->
     <!-- 実行環境関連のファイル -->
     <script src="js/lib/JSCPP.es5.min.js"></script>
@@ -445,6 +522,14 @@
     <script src="js/core/geminiApi.js"></script>
     <script src="js/core/claudeApi.js"></script>
     <script src="js/core/responsesApi.js"></script>
+
+    <!-- RAG関連のファイル -->
+    <script src="js/core/rag/vectorStore.js"></script>
+    <script src="js/core/rag/embeddingApi.js"></script>
+    <script src="js/core/rag/documentChunker.js"></script>
+    <script src="js/core/rag/similaritySearch.js"></script>
+    <script src="js/core/rag/ragManager.js"></script>
+
     <script src="js/utils/markdown.js"></script>
     <script src="js/core/userprompts/promptManager.js"></script>
     <script src="js/core/userprompts/promptSuggestions.js"></script>
@@ -464,6 +549,7 @@
     <script src="js/modals/renameChat/renameChatModal.js"></script>
     <script src="js/modals/systemPrompt/systemPromptModal.js"></script>
     <script src="js/modals/promptManager/promptManagerModal.js"></script>
+    <script src="js/modals/knowledgeBase/knowledgeBaseModal.js"></script>
     
     <!-- Monaco Editor コントローラー -->
     <script src="js/core/monaco/MonacoEditorController.js"></script>

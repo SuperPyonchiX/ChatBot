@@ -320,10 +320,20 @@ class ChatActions {
 
             // APIリクエストの処理
             const effectiveSystemPrompt = systemPrompt || window.CONFIG.SYSTEM_PROMPTS.DEFAULT_SYSTEM_PROMPT;
-            const messagesWithSystem = [
+            let messagesWithSystem = [
                 { role: 'system', content: effectiveSystemPrompt },
                 ...conversation.messages.filter(m => m.role !== 'system')
             ];
+
+            // RAGプロンプト拡張（augmentPrompt内部で有効/無効を判定）
+            if (typeof RAGManager !== 'undefined') {
+                try {
+                    messagesWithSystem = await RAGManager.getInstance.augmentPrompt(messagesWithSystem, userText);
+                } catch (ragError) {
+                    console.warn('RAGプロンプト拡張エラー:', ragError);
+                    // RAGエラーは無視して続行
+                }
+            }
 
             const botTimestamp = Date.now();
             // ストリーミング用のボットメッセージを表示

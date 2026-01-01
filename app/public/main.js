@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     /**
      * アプリケーションを初期化します
      * API設定の確認、会話履歴の読み込み、イベントリスナーの設定を行います
-     * 
+     *
      * @function _init
      */
     function _init() {
@@ -40,10 +40,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                 Sidebar.getInstance.createSidebarToggle();
             }
         }
-        
+
         // プロンプトマネージャーの初期化
         PromptManager.getInstance;
-        
+
+        // RAGマネージャーの初期化
+        if (typeof RAGManager !== 'undefined') {
+            RAGManager.getInstance.initialize().catch(err => {
+                console.warn('RAGManager初期化エラー:', err);
+            });
+        }
+
         _loadConversations();
         _setupEventListeners();
     }

@@ -25,6 +25,12 @@ ChatBot/
 │   │   │   │   ├── uiUtils.js    # UIユーティリティ
 │   │   │   │   ├── domElements.js # DOM要素参照
 │   │   │   │   ├── eventHandlers.js # イベントハンドラ
+│   │   │   │   ├── rag/            # RAG（知識ベース）
+│   │   │   │   │   ├── vectorStore.js      # IndexedDBラッパー
+│   │   │   │   │   ├── embeddingApi.js     # 埋め込みAPI
+│   │   │   │   │   ├── documentChunker.js  # ドキュメント分割
+│   │   │   │   │   ├── similaritySearch.js # 類似度検索
+│   │   │   │   │   └── ragManager.js       # 統合マネージャー
 │   │   │   │   ├── executors/    # コード実行モジュール
 │   │   │   │   │   ├── codeExecutor.js # 実行管理
 │   │   │   │   │   └── languages/      # 言語別実行エンジン
@@ -43,7 +49,8 @@ ChatBot/
 │   │   │   │   ├── apiSettings/  # API設定
 │   │   │   │   ├── systemPrompt/ # システムプロンプト
 │   │   │   │   ├── promptManager/ # プロンプト管理
-│   │   │   │   └── renameChat/   # チャット名変更
+│   │   │   │   ├── renameChat/   # チャット名変更
+│   │   │   │   └── knowledgeBase/ # ナレッジベース(RAG)
 │   │   │   ├── utils/            # ユーティリティ
 │   │   │   │   ├── cryptoHelper.js
 │   │   │   │   ├── fileHandler.js
@@ -76,6 +83,12 @@ storage.js (Storage)
 chatRenderer.js (ChatRenderer)
 ├── markdown.js (Markdown)
 └── chatUI.js (ChatUI)
+
+ragManager.js (RAGManager)
+├── vectorStore.js (VectorStore) → IndexedDB
+├── embeddingApi.js (EmbeddingApi)
+├── documentChunker.js (DocumentChunker)
+└── similaritySearch.js (SimilaritySearch)
 ```
 
 ## グローバルオブジェクト
@@ -97,3 +110,5 @@ chatRenderer.js (ChatRenderer)
 | appState.js | グローバル状態管理 |
 | ui.js | UI管理・レンダリング |
 | eventHandlers.js | イベントハンドリング |
+| rag/ragManager.js | RAG統合マネージャー |
+| rag/vectorStore.js | IndexedDBベクトルストア |
