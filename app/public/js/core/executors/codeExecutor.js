@@ -49,6 +49,9 @@ class CodeExecutor {
                 case 'javascript':
                 case 'js':
                     return await JavaScriptExecutor.getInstance.execute(code, outputCallback);
+                case 'typescript':
+                case 'ts':
+                    return await TypeScriptExecutor.getInstance.execute(code, outputCallback);
                 case 'html':
                     return await HTMLExecutor.getInstance.execute(code, outputCallback);
                 case 'python':

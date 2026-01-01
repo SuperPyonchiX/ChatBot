@@ -212,4 +212,111 @@
         cursor: pointer;
         box-shadow: var(--shadow-sm);
     }
+
+    /* サイドバーオーバーレイ背景 */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 99;
+    }
+
+    .sidebar-overlay.show {
+        display: block;
+    }
+}
+
+/* 超小画面対応 (480px以下) */
+@media (max-width: 480px) {
+    .chat-header h1 {
+        font-size: var(--font-size-md);
+    }
+
+    .chat-input-container {
+        padding: var(--spacing-sm);
+        gap: var(--spacing-xs);
+    }
+
+    .chat-messages {
+        padding: var(--spacing-xs);
+        gap: var(--spacing-sm);
+    }
+
+    .message {
+        max-width: 95%;
+        padding: var(--spacing-sm);
+    }
+
+    /* モーダル最適化 */
+    .modal-content {
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        margin: 0;
+    }
+
+    .modal-header {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .modal-body {
+        padding: var(--spacing-sm);
+    }
+
+    /* 設定メニュー最適化 */
+    .settings-menu {
+        min-width: 180px;
+        right: -8px;
+    }
+
+    .settings-menu button {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: var(--font-size-sm);
+    }
+}
+
+/* タッチデバイス向け最適化 */
+@media (hover: none) {
+    /* タップエリアの拡大 */
+    .sidebar-toggle,
+    .settings-button,
+    .send-button,
+    .attachment-button {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* ホバー効果の代わりにアクティブ状態を使用 */
+    .sidebar-toggle:active,
+    .settings-button:active {
+        background-color: var(--accent-hover-color);
+        transform: scale(0.95);
+    }
+
+    /* サイドバートグルを常に表示 */
+    .sidebar-toggle {
+        opacity: 1;
+    }
+
+    /* スクロールバーを細く */
+    .chat-messages::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    /* チャット履歴アイテムのタップエリア拡大 */
+    .chat-history-item {
+        padding: var(--spacing-md);
+        min-height: 44px;
+    }
+
+    /* ボタンのタップフィードバック */
+    button:active {
+        opacity: 0.8;
+    }
 }

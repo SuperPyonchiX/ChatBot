@@ -31,7 +31,8 @@
       "mcp__plugin_playwright_playwright__browser_click",
       "mcp__plugin_playwright_playwright__browser_take_screenshot",
       "mcp__plugin_playwright_playwright__browser_close",
-      "mcp__plugin_playwright_playwright__browser_resize"
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "Bash(del \"D:\\\\Users\\\\ksk01\\\\Documents\\\\develop\\\\vscode_develop\\\\HTML\\\\ChatBot\\\\app\\\\public\\\\js\\\\core\\\\themeManager.js\")"
     ]
   }
 }

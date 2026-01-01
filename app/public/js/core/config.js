@@ -68,6 +68,7 @@ window.CONFIG = {
      */
     EXECUTABLE_LANGUAGES: [
         'javascript', 'js',
+        'typescript', 'ts',
         'html',
         'python', 'py',
         'cpp', 'c++'
