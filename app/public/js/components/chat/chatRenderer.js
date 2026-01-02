@@ -146,6 +146,62 @@ class ChatRenderer {
     }
 
     /**
+     * 思考過程コンテナ付きでボットメッセージを追加する（復元用）
+     * ページ更新時の会話履歴復元で使用します
+     * @param {string} message - メッセージ内容
+     * @param {HTMLElement} chatMessages - メッセージを表示する要素
+     * @param {number|null} timestamp - メッセージのタイムスタンプ
+     * @returns {Promise<{messageDiv: HTMLElement, thinkingContainer: HTMLElement}>}
+     */
+    async addBotMessageWithThinking(message, chatMessages, timestamp = null) {
+        if (!chatMessages) return null;
+
+        const msgTimestamp = timestamp || Date.now();
+
+        // メッセージ要素を作成
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', 'bot', 'cyber-style');
+        messageDiv.dataset.timestamp = msgTimestamp.toString();
+        messageDiv.setAttribute('role', 'region');
+        messageDiv.setAttribute('aria-label', 'AIからの返答');
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+
+        // 思考過程コンテナを作成（初期状態では非表示）
+        const thinkingContainer = this.#createThinkingContainer();
+
+        // コピーボタンを作成
+        const copyButton = this.#createCopyButton(message || '');
+
+        // 回答本文コンテナを作成
+        const markdownContent = document.createElement('div');
+        markdownContent.className = 'markdown-content';
+
+        try {
+            const renderedMarkdown = await Markdown.getInstance.renderMarkdown(message || '');
+            markdownContent.innerHTML = renderedMarkdown;
+        } catch (e) {
+            console.error('ボットメッセージのMarkdown解析エラー:', e);
+            markdownContent.textContent = await this.#formatMessage(message || '');
+        }
+
+        contentDiv.appendChild(thinkingContainer);
+        contentDiv.appendChild(copyButton);
+        contentDiv.appendChild(markdownContent);
+        messageDiv.appendChild(contentDiv);
+
+        chatMessages.appendChild(messageDiv);
+        this.#applyCodeFormatting(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        return {
+            messageDiv: messageDiv,
+            thinkingContainer: thinkingContainer
+        };
+    }
+
+    /**
      * ストリーミング用のボットメッセージを追加する
      * チャットメッセージ領域に、AIの応答を表示するためのメッセージ要素を追加します
      * 思考過程コンテナと回答本文コンテナを分離して作成します

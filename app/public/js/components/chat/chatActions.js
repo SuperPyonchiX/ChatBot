@@ -362,6 +362,12 @@ class ChatActions {
             let fullResponseText = '';
             let isFirstChunk = true;
 
+            // 思考過程データを収集（ページ更新時の復元用）
+            let thinkingData = {
+                webSearchQueries: [],
+                ragSources: ragSources.length > 0 ? ragSources : []
+            };
+
             // ストリーミングAPI呼び出し
             await AIAPI.getInstance.callAIAPI(
                 messagesWithSystem,
@@ -371,6 +377,12 @@ class ChatActions {
                     stream: true,
                     enableWebSearch: isWebSearchEnabled && (window.CONFIG.MODELS.OPENAI_WEB_SEARCH_COMPATIBLE.includes(currentModel) || window.CONFIG.MODELS.CLAUDE.includes(currentModel)),
                     thinkingContainer: thinkingContainer, // Web検索用に渡す
+                    onWebSearchQuery: (query) => {
+                        // Web検索クエリを収集（復元用）
+                        if (query && !thinkingData.webSearchQueries.includes(query)) {
+                            thinkingData.webSearchQueries.push(query);
+                        }
+                    },
                     onChunk: (chunk) => {
                         fullResponseText += chunk;
                         // ストリーミング中のメッセージ更新
@@ -385,12 +397,22 @@ class ChatActions {
                 }
             );
 
-            // 応答をメッセージ履歴に追加
-            conversation.messages.push({
+            // 思考過程データがあるかどうかを判定
+            const hasThinkingData = thinkingData.webSearchQueries.length > 0 || thinkingData.ragSources.length > 0;
+
+            // 応答をメッセージ履歴に追加（思考過程データを含む）
+            const assistantMessage = {
                 role: 'assistant',
                 content: fullResponseText,
                 timestamp: botTimestamp
-            });
+            };
+
+            // 思考過程データがある場合のみ追加
+            if (hasThinkingData) {
+                assistantMessage.thinkingData = thinkingData;
+            }
+
+            conversation.messages.push(assistantMessage);
 
             return { titleUpdated, response: fullResponseText };
 

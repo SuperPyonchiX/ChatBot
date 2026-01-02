@@ -33,9 +33,10 @@ class ResponsesAPI {
      * @param {HTMLElement} options.thinkingContainer - 思考過程コンテナ（任意）
      * @param {Function} options.onChunk - ストリーミング時のチャンク受信コールバック関数
      * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
+     * @param {Function} options.onWebSearchQuery - Web検索クエリ取得時のコールバック関数（任意）
      * @returns {Promise<string>} APIからの応答テキスト
      */
-    async callResponsesAPI(messages, model, attachments = [], options = { stream: false, enableWebSearch: false, thinkingContainer: null, onChunk: null, onComplete: null }) {
+    async callResponsesAPI(messages, model, attachments = [], options = { stream: false, enableWebSearch: false, thinkingContainer: null, onChunk: null, onComplete: null, onWebSearchQuery: null }) {
         try {
             // API設定を確認
             this.#validateAPISettings();
@@ -69,7 +70,8 @@ class ResponsesAPI {
                     body,
                     options.onChunk,
                     options.onComplete,
-                    options.thinkingContainer
+                    options.thinkingContainer,
+                    options.onWebSearchQuery
                 );
             } else {
                 return await this.#executeResponsesRequest(endpoint, headers, body);
@@ -333,8 +335,9 @@ class ResponsesAPI {
      * @param {Function} onChunk - チャンク受信コールバック
      * @param {Function} onComplete - 完了コールバック
      * @param {HTMLElement|null} thinkingContainer - 思考過程コンテナ
+     * @param {Function|null} onWebSearchQuery - Web検索クエリ取得時のコールバック
      */
-    async #executeStreamResponsesRequest(endpoint, headers, body, onChunk, onComplete, thinkingContainer = null) {
+    async #executeStreamResponsesRequest(endpoint, headers, body, onChunk, onComplete, thinkingContainer = null, onWebSearchQuery = null) {
         const controller = new AbortController();
         let timeoutId;
         let fullText = '';
@@ -405,7 +408,7 @@ class ResponsesAPI {
                                 processedEvents.add(eventId);
                                 
                                 // Web検索ステータスのチェック
-                                const statusResult = this.#handleWebSearchStatus(jsonData, webSearchStatusMessage, thinkingContainer, webSearchAddedToThinking);
+                                const statusResult = this.#handleWebSearchStatus(jsonData, webSearchStatusMessage, thinkingContainer, webSearchAddedToThinking, onWebSearchQuery);
                                 if (statusResult.statusMessage !== undefined) {
                                     webSearchStatusMessage = statusResult.statusMessage;
                                 }
@@ -512,9 +515,10 @@ class ResponsesAPI {
      * @param {HTMLElement|null} currentStatusMessage - 現在のステータスメッセージ
      * @param {HTMLElement|null} thinkingContainer - 思考過程コンテナ
      * @param {boolean} alreadyAddedToThinking - 既に思考過程に追加済みかどうか
+     * @param {Function|null} onWebSearchQuery - Web検索クエリ取得時のコールバック
      * @returns {Object} {statusMessage: HTMLElement|null, shouldSkip: boolean, addedToThinking: boolean}
      */
-    #handleWebSearchStatus(jsonData, currentStatusMessage, thinkingContainer = null, alreadyAddedToThinking = false) {
+    #handleWebSearchStatus(jsonData, currentStatusMessage, thinkingContainer = null, alreadyAddedToThinking = false, onWebSearchQuery = null) {
         // console.log('🔍 jsonData抽出:', jsonData);
         const chatMessages = document.querySelector('#chatMessages');
 
@@ -661,6 +665,15 @@ class ResponsesAPI {
         // Web検索完了後の結果処理中メッセージ
         const completedSearchQuery = extractCompletedSearchQuery(jsonData);
         if (completedSearchQuery) {
+            // Web検索クエリ収集コールバックを呼び出し（ページ更新時の復元用）
+            if (onWebSearchQuery && typeof onWebSearchQuery === 'function') {
+                try {
+                    onWebSearchQuery(completedSearchQuery);
+                } catch (error) {
+                    console.warn('🔍 Web検索クエリコールバックエラー:', error);
+                }
+            }
+
             // thinkingContainerがある場合は思考過程に追加（まだ追加されていない場合）
             if (thinkingContainer && chatRenderer && !alreadyAddedToThinking) {
                 try {

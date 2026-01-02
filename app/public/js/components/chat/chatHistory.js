@@ -60,14 +60,46 @@ class ChatHistory {
                     this.#renderSimpleUserMessage(displayContent, chatMessages, message.timestamp);
                 }
             } else if (message.role === 'assistant') {
-                const content = typeof message.content === 'string' 
-                    ? message.content 
+                const content = typeof message.content === 'string'
+                    ? message.content
                     : this.#processContentArray(message.content);
-                
+
                 // ChatRenderer のインスタンスが存在するか確認してから使用
                 try {
                     if (typeof ChatRenderer !== 'undefined' && ChatRenderer.getInstance) {
-                        await ChatRenderer.getInstance.addBotMessage(content, chatMessages, message.timestamp, false);
+                        // 思考過程データがある場合は思考過程コンテナ付きで表示
+                        if (message.thinkingData && this.#hasThinkingData(message.thinkingData)) {
+                            const result = await ChatRenderer.getInstance.addBotMessageWithThinking(
+                                content,
+                                chatMessages,
+                                message.timestamp
+                            );
+
+                            if (result && result.thinkingContainer) {
+                                // RAG参照情報を復元
+                                if (message.thinkingData.ragSources?.length > 0) {
+                                    ChatRenderer.getInstance.addThinkingItem(
+                                        result.thinkingContainer,
+                                        'rag',
+                                        message.thinkingData.ragSources
+                                    );
+                                }
+
+                                // Web検索クエリを復元
+                                if (message.thinkingData.webSearchQueries?.length > 0) {
+                                    for (const query of message.thinkingData.webSearchQueries) {
+                                        ChatRenderer.getInstance.addThinkingItem(
+                                            result.thinkingContainer,
+                                            'web-search',
+                                            query
+                                        );
+                                    }
+                                }
+                            }
+                        } else {
+                            // 思考過程なしの従来の表示
+                            await ChatRenderer.getInstance.addBotMessage(content, chatMessages, message.timestamp, false);
+                        }
                     } else {
                         console.warn('ChatRenderer が見つからないため、シンプルなレンダリングを使用します');
                         this.#renderSimpleAssistantMessage(content, chatMessages, message.timestamp);
@@ -174,6 +206,19 @@ class ChatHistory {
         } catch (error) {
             console.error('アクティブチャットの更新中にエラーが発生しました:', error);
         }
+    }
+
+    /**
+     * 思考過程データが存在するか確認
+     * @param {Object} thinkingData - 思考過程データ
+     * @returns {boolean}
+     */
+    #hasThinkingData(thinkingData) {
+        if (!thinkingData) return false;
+        return (
+            (thinkingData.webSearchQueries && thinkingData.webSearchQueries.length > 0) ||
+            (thinkingData.ragSources && thinkingData.ragSources.length > 0)
+        );
     }
 
     /**

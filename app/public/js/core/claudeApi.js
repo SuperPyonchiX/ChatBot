@@ -34,6 +34,7 @@ class ClaudeAPI {
      * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
      * @param {boolean} options.enableWebSearch - Web検索機能を使用するかどうか
      * @param {HTMLElement} options.thinkingContainer - 思考過程コンテナ（任意）
+     * @param {Function} options.onWebSearchQuery - Web検索クエリ取得時のコールバック関数（任意）
      * @returns {Promise<string>} APIからの応答テキスト（ストリーミングの場合は空文字列）
      * @throws {Error} API設定やリクエストに問題があった場合
      */
@@ -56,7 +57,8 @@ class ClaudeAPI {
                     body,
                     options.onChunk,
                     options.onComplete,
-                    options.thinkingContainer
+                    options.thinkingContainer,
+                    options.onWebSearchQuery
                 );
             } else {
                 return await this.#executeClaudeRequest(headers, body);
@@ -299,9 +301,10 @@ class ClaudeAPI {
      * @param {Function} onChunk - チャンク受信時のコールバック
      * @param {Function} onComplete - 完了時のコールバック
      * @param {HTMLElement} thinkingContainer - 思考過程コンテナ（任意）
+     * @param {Function|null} onWebSearchQuery - Web検索クエリ取得時のコールバック（任意）
      * @returns {Promise<string>} 空文字列（ストリーミングのため）
      */
-    async #executeStreamClaudeRequest(headers, body, onChunk, onComplete, thinkingContainer = null) {
+    async #executeStreamClaudeRequest(headers, body, onChunk, onComplete, thinkingContainer = null, onWebSearchQuery = null) {
         try {
             // Ensure stream flag is present in payload
             const payloadStr = (function(){
@@ -423,6 +426,15 @@ class ClaudeAPI {
                                                 const queryData = JSON.parse(webSearchQuery);
                                                 if (queryData.query && queryData.query !== completedSearchQuery) {
                                                     completedSearchQuery = queryData.query;
+
+                                                    // Web検索クエリ収集コールバックを呼び出し（ページ更新時の復元用）
+                                                    if (onWebSearchQuery && typeof onWebSearchQuery === 'function') {
+                                                        try {
+                                                            onWebSearchQuery(completedSearchQuery);
+                                                        } catch (error) {
+                                                            console.warn('🔍 Web検索クエリコールバックエラー:', error);
+                                                        }
+                                                    }
 
                                                     // thinkingContainerがある場合は思考過程に追加（1回のみ）
                                                     if (thinkingContainer && !webSearchAddedToThinking) {
