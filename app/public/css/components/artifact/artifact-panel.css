@@ -265,6 +265,32 @@
     color: var(--cyber-primary);
 }
 
+/* 履歴アイテム内のタイトル */
+.artifact-history-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 履歴アイテムの削除ボタン */
+.artifact-history-delete {
+    margin-left: 6px;
+    padding: 0 2px;
+    color: var(--text-tertiary);
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--transition-fast), color var(--transition-fast);
+}
+
+.artifact-history-item:hover .artifact-history-delete {
+    opacity: 1;
+}
+
+.artifact-history-delete:hover {
+    color: var(--error-color);
+}
+
 /* 空の状態 */
 .artifact-empty-state {
     display: flex;

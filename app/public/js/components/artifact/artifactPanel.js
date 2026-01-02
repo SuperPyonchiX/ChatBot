@@ -171,6 +171,16 @@ class ArtifactPanel {
                     this.displayArtifact(artifact);
                 }
             });
+
+            ArtifactManager.getInstance.on('remove', () => {
+                this.#updateHistory();
+                const current = ArtifactManager.getInstance.getCurrentArtifact();
+                if (current) {
+                    this.displayArtifact(current);
+                } else {
+                    this.close();
+                }
+            });
         }
     }
 
@@ -297,7 +307,23 @@ class ArtifactPanel {
                 item.classList.add('active');
             }
 
-            item.textContent = artifact.title || artifact.type;
+            // タイトルテキスト
+            const titleSpan = document.createElement('span');
+            titleSpan.classList.add('artifact-history-title');
+            titleSpan.textContent = artifact.title || artifact.type;
+            item.appendChild(titleSpan);
+
+            // 削除ボタン
+            const deleteBtn = document.createElement('span');
+            deleteBtn.classList.add('artifact-history-delete');
+            deleteBtn.innerHTML = '×';
+            deleteBtn.title = '削除';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                ArtifactManager.getInstance.removeArtifact(artifact.id);
+            });
+            item.appendChild(deleteBtn);
+
             item.title = artifact.title;
 
             item.addEventListener('click', () => {
