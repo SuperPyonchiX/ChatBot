@@ -1,0 +1,314 @@
+/* アーティファクトパネル */
+
+/* パネルコンテナ */
+.artifact-panel {
+    width: 0;
+    height: 100%;
+    background-color: var(--artifact-panel-bg);
+    border-left: 1px solid var(--artifact-panel-border);
+    overflow: hidden;
+    transition: width var(--transition-normal) ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.artifact-panel.open {
+    width: var(--artifact-panel-width);
+    min-width: var(--artifact-panel-min-width);
+    max-width: var(--artifact-panel-max-width);
+}
+
+/* リサイズハンドル */
+.artifact-resize-handle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--artifact-resize-handle-width);
+    height: 100%;
+    cursor: ew-resize;
+    background-color: transparent;
+    transition: background-color var(--transition-fast);
+    z-index: 10;
+    display: none;
+}
+
+.artifact-panel.open .artifact-resize-handle {
+    display: block;
+}
+
+.artifact-resize-handle:hover,
+.artifact-resize-handle.dragging {
+    background-color: var(--artifact-resize-handle-hover);
+}
+
+/* パネルヘッダー */
+.artifact-panel-header {
+    height: var(--artifact-header-height);
+    min-height: var(--artifact-header-height);
+    padding: 0 var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    border-bottom: 1px solid var(--artifact-panel-border);
+    background: linear-gradient(180deg, var(--background-tertiary), transparent);
+}
+
+.artifact-title {
+    flex: 1;
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--cyber-primary);
+    text-shadow: var(--neon-glow-subtle);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* タブ */
+.artifact-tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.artifact-tab {
+    padding: var(--spacing-xs) var(--spacing-md);
+    border: none;
+    background-color: transparent;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.artifact-tab:hover {
+    background-color: var(--artifact-tab-hover-bg);
+    color: var(--text-primary);
+}
+
+.artifact-tab.active {
+    background-color: var(--artifact-tab-active-bg);
+    color: var(--cyber-primary);
+}
+
+/* アクションボタン */
+.artifact-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.artifact-action-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background-color: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.artifact-action-btn:hover {
+    background-color: var(--artifact-tab-hover-bg);
+    color: var(--cyber-primary);
+}
+
+.artifact-action-btn.close-btn:hover {
+    color: var(--error-color);
+}
+
+/* パネルコンテンツ */
+.artifact-panel-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.artifact-preview-container {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    padding: var(--spacing-md);
+}
+
+.artifact-code-container {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+
+.artifact-code-container.hidden,
+.artifact-preview-container.hidden {
+    display: none;
+}
+
+/* プレビュー用iframe */
+.artifact-iframe {
+    width: 100%;
+    min-height: 300px;
+    border: 1px solid var(--code-html-border);
+    border-radius: var(--border-radius-sm);
+    background-color: #fff;
+}
+
+/* SVGラッパー */
+.artifact-svg-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-md);
+    background-color: #fff;
+    border-radius: var(--border-radius-sm);
+}
+
+.artifact-svg-wrapper svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Markdownラッパー */
+.artifact-markdown-wrapper {
+    padding: var(--spacing-md);
+    background-color: var(--background-tertiary);
+    border-radius: var(--border-radius-sm);
+}
+
+/* Mermaidラッパー */
+.artifact-mermaid-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacing-md);
+    background-color: #fff;
+    border-radius: var(--border-radius-sm);
+    overflow: auto;
+}
+
+/* パネルフッター */
+.artifact-panel-footer {
+    height: var(--artifact-footer-height);
+    min-height: var(--artifact-footer-height);
+    padding: 0 var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    border-top: 1px solid var(--artifact-panel-border);
+    background: linear-gradient(0deg, var(--background-tertiary), transparent);
+}
+
+.artifact-type-badge {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--artifact-badge-bg);
+    color: var(--artifact-badge-text);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    border-radius: var(--border-radius-sm);
+    text-transform: uppercase;
+}
+
+/* 履歴ナビゲーション */
+.artifact-history {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex: 1;
+    overflow-x: auto;
+}
+
+.artifact-history-item {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    border-radius: var(--border-radius-sm);
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+}
+
+.artifact-history-item:hover {
+    border-color: var(--cyber-primary);
+    color: var(--text-primary);
+}
+
+.artifact-history-item.active {
+    background-color: var(--artifact-tab-active-bg);
+    border-color: var(--cyber-primary);
+    color: var(--cyber-primary);
+}
+
+/* 空の状態 */
+.artifact-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-tertiary);
+    text-align: center;
+    padding: var(--spacing-xl);
+}
+
+.artifact-empty-state i {
+    font-size: 48px;
+    margin-bottom: var(--spacing-md);
+    opacity: 0.5;
+}
+
+.artifact-empty-state p {
+    font-size: var(--font-size-sm);
+}
+
+/* コードブロック内のアーティファクトボタン */
+.artifact-open-button {
+    padding: 4px 8px;
+    background-color: var(--artifact-badge-bg);
+    border: none;
+    color: var(--cyber-primary);
+    cursor: pointer;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-xs);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all var(--transition-fast);
+}
+
+.artifact-open-button:hover {
+    background-color: rgba(0, 255, 255, 0.3);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 1024px) {
+    .artifact-panel.open {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        position: fixed;
+        top: 0;
+        right: 0;
+        z-index: 200;
+    }
+
+    .artifact-resize-handle {
+        display: none !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .artifact-tabs {
+        display: none;
+    }
+
+    .artifact-panel-header {
+        padding: 0 var(--spacing-sm);
+    }
+
+    .artifact-title {
+        font-size: var(--font-size-sm);
+    }
+}

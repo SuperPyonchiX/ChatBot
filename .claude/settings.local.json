@@ -32,7 +32,9 @@
       "mcp__plugin_playwright_playwright__browser_take_screenshot",
       "mcp__plugin_playwright_playwright__browser_close",
       "mcp__plugin_playwright_playwright__browser_resize",
-      "Bash(del \"D:\\\\Users\\\\ksk01\\\\Documents\\\\develop\\\\vscode_develop\\\\HTML\\\\ChatBot\\\\app\\\\public\\\\js\\\\core\\\\themeManager.js\")"
+      "Bash(del \"D:\\\\Users\\\\ksk01\\\\Documents\\\\develop\\\\vscode_develop\\\\HTML\\\\ChatBot\\\\app\\\\public\\\\js\\\\core\\\\themeManager.js\")",
+      "Bash(tree:*)",
+      "mcp__plugin_playwright_playwright__browser_evaluate"
     ]
   }
 }

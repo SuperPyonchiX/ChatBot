@@ -75,6 +75,18 @@ window.CONFIG = {
     ],
 
     /**
+     * アーティファクト機能の設定
+     */
+    ARTIFACT: {
+        // 対応するファイルタイプ
+        SUPPORTED_TYPES: ['html', 'svg', 'markdown', 'mermaid'],
+        // パネルのデフォルト幅
+        PANEL_DEFAULT_WIDTH: '50%',
+        // 自動プレビューを有効にするか
+        AUTO_PREVIEW: true
+    },
+
+    /**
      * APIリクエストの設定
      */
     AIAPI: {

@@ -31,6 +31,7 @@
     <link rel="stylesheet" href="css/components/chat/chat.css">
     <link rel="stylesheet" href="css/components/chat/markdown.css">
     <link rel="stylesheet" href="css/components/rag/knowledge-base.css">
+    <link rel="stylesheet" href="css/components/artifact/artifact-panel.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
     
@@ -147,6 +148,42 @@
                 <button id="sendButton" class="cyber-style">
                     <i class="fas fa-paper-plane"></i>
                 </button>
+            </div>
+        </div>
+
+        <!-- アーティファクトパネル -->
+        <div id="artifactPanel" class="artifact-panel">
+            <div class="artifact-resize-handle" id="artifactResizeHandle"></div>
+            <div class="artifact-panel-header">
+                <span class="artifact-title" id="artifactTitleText">アーティファクト</span>
+                <div class="artifact-tabs">
+                    <button id="artifactPreviewTab" class="artifact-tab active">プレビュー</button>
+                    <button id="artifactCodeTab" class="artifact-tab">コード</button>
+                </div>
+                <div class="artifact-actions">
+                    <button id="artifactEditBtn" class="artifact-action-btn" title="編集">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button id="artifactDownloadBtn" class="artifact-action-btn" title="ダウンロード">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button id="artifactCloseBtn" class="artifact-action-btn close-btn" title="閉じる">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="artifact-panel-content">
+                <div id="artifactPreview" class="artifact-preview-container">
+                    <div class="artifact-empty-state">
+                        <i class="fas fa-file-code"></i>
+                        <p>AIがコードを生成すると、ここにプレビューが表示されます</p>
+                    </div>
+                </div>
+                <div id="artifactCode" class="artifact-code-container hidden"></div>
+            </div>
+            <div class="artifact-panel-footer">
+                <div class="artifact-type-badge" id="artifactTypeBadge">-</div>
+                <div class="artifact-history" id="artifactHistory"></div>
             </div>
         </div>
     </div>
@@ -537,6 +574,12 @@
     <script src="js/core/userprompts/promptManager.js"></script>
     <script src="js/core/userprompts/promptSuggestions.js"></script>
     
+    <!-- アーティファクト関連のファイル -->
+    <script src="js/components/artifact/artifactDetector.js"></script>
+    <script src="js/components/artifact/artifactManager.js"></script>
+    <script src="js/components/artifact/artifactRenderer.js"></script>
+    <script src="js/components/artifact/artifactPanel.js"></script>
+
     <!-- コンポーネント関連のファイル -->
     <script src="js/components/chat/chatUI.js"></script>
     <script src="js/components/chat/chatRenderer.js"></script>

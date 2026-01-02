@@ -84,6 +84,20 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: flex var(--transition-normal) ease;
+}
+
+/* アーティファクトパネル表示時のレイアウト調整 */
+.app-container.with-artifact-panel .chat-container {
+    flex: 0 0 50%;
+    min-width: 400px;
+}
+
+@media (max-width: 1024px) {
+    .app-container.with-artifact-panel .chat-container {
+        flex: 1;
+        min-width: 100%;
+    }
 }
 
 /* チャットヘッダー */

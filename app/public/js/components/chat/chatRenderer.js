@@ -482,9 +482,53 @@ class ChatRenderer {
 
             this.#addCodeBlockCopyButtons(messageDiv);
 
+            // アーティファクト検出と表示
+            this.#detectAndDisplayArtifacts(fullText);
+
         } catch (e) {
             console.error('ストリーミング完了時のMarkdown解析エラー:', e);
             container.textContent = fullText;
+        }
+    }
+
+    /**
+     * アーティファクトを検出して表示する
+     * @param {string} fullText - 完全なレスポンステキスト
+     */
+    #detectAndDisplayArtifacts(fullText) {
+        try {
+            // アーティファクト検出が有効かチェック
+            const artifactConfig = window.CONFIG?.ARTIFACT || {};
+            if (artifactConfig.AUTO_PREVIEW === false) {
+                return;
+            }
+
+            // ArtifactDetectorが利用可能かチェック
+            if (typeof ArtifactDetector === 'undefined') {
+                return;
+            }
+
+            // アーティファクトを検出
+            const artifacts = ArtifactDetector.getInstance.detectArtifacts(fullText);
+
+            if (artifacts.length === 0) {
+                return;
+            }
+
+            // ArtifactManagerが利用可能かチェック
+            if (typeof ArtifactManager === 'undefined') {
+                return;
+            }
+
+            // アーティファクトを登録（最初のアーティファクトのみパネルに表示）
+            artifacts.forEach((artifact, index) => {
+                ArtifactManager.getInstance.registerArtifact(artifact);
+            });
+
+            console.log(`[ChatRenderer] Detected ${artifacts.length} artifact(s)`);
+
+        } catch (error) {
+            console.error('[ChatRenderer] アーティファクト検出エラー:', error);
         }
     }
 
@@ -697,6 +741,12 @@ class ChatRenderer {
                 if (this.#isExecutableLanguage(language)) {
                     const executeButton = this.#createExecuteButton(index, /** @type {HTMLElement} */(codeBlock), language);
                     toolbar.appendChild(executeButton);
+                }
+
+                // アーティファクト対応言語の場合はアーティファクトボタンを追加
+                if (this.#isArtifactLanguage(language)) {
+                    const artifactButton = this.#createArtifactButton(index, /** @type {HTMLElement} */(codeBlock), language);
+                    toolbar.appendChild(artifactButton);
                 }
 
                 wrapper.appendChild(toolbar);
@@ -1050,6 +1100,110 @@ class ChatRenderer {
                 button.innerHTML = '<i class="fas fa-copy"></i>';
             }
         }, 1500);
+    }
+
+    /**
+     * 言語がアーティファクト対応かどうかを判定します
+     * @param {string} language - 判定する言語
+     * @returns {boolean} アーティファクト対応の場合はtrue
+     */
+    #isArtifactLanguage(language) {
+        if (!language) return false;
+        const artifactLanguages = ['html', 'svg', 'markdown', 'md', 'mermaid'];
+        return artifactLanguages.includes(language.toLowerCase());
+    }
+
+    /**
+     * アーティファクトボタンを作成します
+     * @param {number} index - コードブロックのインデックス
+     * @param {HTMLElement} codeBlock - 対象のコードブロック要素
+     * @param {string} language - コードの言語
+     * @returns {HTMLElement} 作成されたアーティファクトボタン要素
+     */
+    #createArtifactButton(index, codeBlock, language) {
+        if (!codeBlock || !language) return document.createElement('button');
+
+        const artifactButton = document.createElement('button');
+        artifactButton.classList.add('artifact-open-button');
+        artifactButton.innerHTML = '<i class="fas fa-external-link-alt"></i>';
+        artifactButton.title = 'アーティファクトとして開く';
+        artifactButton.setAttribute('data-code-index', String(index));
+        artifactButton.setAttribute('data-language', language);
+        artifactButton.setAttribute('aria-label', 'アーティファクトとして開く');
+
+        // アーティファクトボタンのクリックイベント
+        artifactButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#handleArtifactButtonClick(codeBlock, language);
+        });
+
+        return artifactButton;
+    }
+
+    /**
+     * アーティファクトボタンのクリックイベントを処理します
+     * @param {HTMLElement} codeBlock - 対象のコードブロック
+     * @param {string} language - コードの言語
+     */
+    #handleArtifactButtonClick(codeBlock, language) {
+        if (!codeBlock || !language) return;
+
+        try {
+            // ArtifactDetectorとArtifactManagerが利用可能かチェック
+            if (typeof ArtifactDetector === 'undefined' || typeof ArtifactManager === 'undefined') {
+                console.warn('アーティファクト機能が利用できません');
+                return;
+            }
+
+            const code = codeBlock.textContent || '';
+            if (!code.trim()) {
+                console.warn('コードが空です');
+                return;
+            }
+
+            // タイプを正規化
+            const typeMap = {
+                'html': 'html',
+                'svg': 'svg',
+                'markdown': 'markdown',
+                'md': 'markdown',
+                'mermaid': 'mermaid'
+            };
+            const type = typeMap[language.toLowerCase()] || 'html';
+
+            // アーティファクトを作成
+            const artifact = {
+                id: `artifact-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                type: type,
+                title: this.#getArtifactTitle(type),
+                content: code.trim(),
+                language: language,
+                timestamp: Date.now()
+            };
+
+            // アーティファクトを登録（パネルが自動で開く）
+            ArtifactManager.getInstance.registerArtifact(artifact);
+
+            console.log(`[ChatRenderer] Created artifact from code block: ${artifact.id}`);
+
+        } catch (error) {
+            console.error('[ChatRenderer] アーティファクト作成エラー:', error);
+        }
+    }
+
+    /**
+     * アーティファクトのタイトルを取得
+     * @param {string} type - アーティファクトタイプ
+     * @returns {string} タイトル
+     */
+    #getArtifactTitle(type) {
+        const titles = {
+            'html': 'HTMLドキュメント',
+            'svg': 'SVG画像',
+            'markdown': 'Markdownドキュメント',
+            'mermaid': 'Mermaid図'
+        };
+        return titles[type] || 'アーティファクト';
     }
 
     /**
