@@ -164,6 +164,14 @@ class ChatActions {
      * @returns {void}
      */
     createNewConversation() {
+        // アーティファクトをクリアしてパネルを閉じる
+        if (typeof ArtifactManager !== 'undefined') {
+            ArtifactManager.getInstance.clearAll();
+        }
+        if (typeof ArtifactPanel !== 'undefined') {
+            ArtifactPanel.getInstance.close();
+        }
+
         /** @type {Conversation} */
         const newConversation = {
             id: Date.now().toString(),
@@ -477,7 +485,15 @@ class ChatActions {
      */
     #switchConversation(conversationId) {
         if (!conversationId) return;
-        
+
+        // アーティファクトをクリアしてパネルを閉じる
+        if (typeof ArtifactManager !== 'undefined') {
+            ArtifactManager.getInstance.clearAll();
+        }
+        if (typeof ArtifactPanel !== 'undefined') {
+            ArtifactPanel.getInstance.close();
+        }
+
         window.AppState.currentConversationId = conversationId;
         // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.saveCurrentConversationId(window.AppState.currentConversationId);
