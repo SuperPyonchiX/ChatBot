@@ -198,27 +198,102 @@ class RAGManager {
     }
 
     /**
+     * クエリに関連するコンテキストと参照資料情報を検索
+     * @param {string} query - 検索クエリ
+     * @returns {Promise<{context: string, sources: Array<{docName: string, similarity: number}>}>}
+     */
+    async searchWithDetails(query) {
+        await this.#ensureInitialized();
+
+        if (!query || query.trim().length === 0) {
+            return { context: '', sources: [] };
+        }
+
+        try {
+            // クエリの埋め込みを取得
+            const queryEmbedding = await EmbeddingAPI.getInstance.getEmbedding(query);
+
+            // 類似チャンクを検索
+            let results = await SimilaritySearch.getInstance.findSimilar(queryEmbedding);
+
+            // 重複を除去
+            results = SimilaritySearch.getInstance.deduplicateResults(results);
+
+            // コンテキスト文字列を生成
+            const context = SimilaritySearch.getInstance.formatResultsAsContext(results);
+
+            // 参照資料情報を抽出（重複するドキュメント名はまとめる）
+            const sourceMap = new Map();
+            for (const result of results) {
+                const docName = this.#extractDocName(result.chunk.text);
+                const similarity = Math.round(result.similarity * 100);
+
+                // 同じドキュメントがある場合は最高の類似度を保持
+                if (!sourceMap.has(docName) || sourceMap.get(docName) < similarity) {
+                    sourceMap.set(docName, similarity);
+                }
+            }
+
+            const sources = Array.from(sourceMap.entries()).map(([docName, similarity]) => ({
+                docName,
+                similarity
+            })).sort((a, b) => b.similarity - a.similarity);
+
+            const stats = SimilaritySearch.getInstance.getSearchStats(results);
+            console.log(`🔍 RAG search with details: found ${stats.count} relevant chunks from ${sources.length} documents`);
+
+            return { context, sources };
+        } catch (error) {
+            console.error('❌ RAG search error:', error);
+            return { context: '', sources: [] };
+        }
+    }
+
+    /**
+     * チャンクテキストからドキュメント名を抽出
+     * @param {string} chunkText - チャンクテキスト
+     * @returns {string} ドキュメント名
+     */
+    #extractDocName(chunkText) {
+        if (!chunkText) return '不明なドキュメント';
+
+        // [ドキュメント: filename.pdf] の形式から抽出
+        const match = chunkText.match(/^\[ドキュメント:\s*(.+?)\]/);
+        if (match && match[1]) {
+            return match[1].trim();
+        }
+
+        return '不明なドキュメント';
+    }
+
+    /**
      * メッセージ配列にRAGコンテキストを拡張
      * @param {Array<{role: string, content: string}>} messages - メッセージ配列
      * @param {string} [userQuery] - ユーザークエリ（指定しない場合は最後のユーザーメッセージを使用）
-     * @returns {Promise<Array<{role: string, content: string}>>}
+     * @param {Object} [options] - オプション
+     * @param {boolean} [options.returnSources=false] - 参照資料情報も返すかどうか
+     * @returns {Promise<Array<{role: string, content: string}>|{messages: Array, sources: Array}>}
      */
-    async augmentPrompt(messages, userQuery) {
+    async augmentPrompt(messages, userQuery, options = {}) {
+        const { returnSources = false } = options;
+
         // 先に初期化を確認（#enabledの値がストレージから復元される）
         await this.#ensureInitialized();
 
         console.log('📚 RAG augmentPrompt called, enabled:', this.#enabled);
 
+        const emptyResult = returnSources ? { messages, sources: [] } : messages;
+
         if (!this.#enabled) {
             console.log('📚 RAG is disabled, skipping augmentation');
-            return messages;
+            return emptyResult;
         }
 
         // ナレッジベースが空の場合はそのまま返す
         const docCount = await VectorStore.getInstance.getDocumentCount();
         console.log('📚 RAG document count:', docCount);
         if (docCount === 0) {
-            return messages;
+            return emptyResult;
         }
 
         // クエリを決定
@@ -235,16 +310,24 @@ class RAGManager {
         }
 
         if (!query) {
-            return messages;
+            return emptyResult;
         }
 
-        // 関連コンテキストを検索
+        // 関連コンテキストを検索（returnSourcesの場合は詳細情報付き）
         console.log('📚 RAG searching for query:', query.substring(0, 50) + '...');
-        const context = await this.search(query);
+
+        let context, sources = [];
+        if (returnSources) {
+            const result = await this.searchWithDetails(query);
+            context = result.context;
+            sources = result.sources;
+        } else {
+            context = await this.search(query);
+        }
 
         if (!context) {
             console.log('📚 RAG no context found for query');
-            return messages;
+            return emptyResult;
         }
         console.log('📚 RAG context found, length:', context.length);
 
@@ -273,6 +356,10 @@ class RAGManager {
         }
 
         console.log('📚 Prompt augmented with RAG context');
+
+        if (returnSources) {
+            return { messages: augmentedMessages, sources };
+        }
         return augmentedMessages;
     }
 

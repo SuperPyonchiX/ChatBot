@@ -589,3 +589,205 @@
         display: none !important;
     }
 }
+
+/* ===== 思考過程コンテナ ===== */
+
+/* 思考過程コンテナ */
+.thinking-process {
+    margin-bottom: 12px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(59, 130, 246, 0.1));
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* 思考過程ヘッダー */
+.thinking-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.9em;
+    color: var(--text-secondary, #6b7280);
+    transition: background-color 0.2s ease;
+}
+
+.thinking-header:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.thinking-header:focus {
+    outline: 2px solid rgba(59, 130, 246, 0.5);
+    outline-offset: -2px;
+}
+
+/* 折りたたみアイコン */
+.thinking-toggle {
+    font-size: 0.75em;
+    transition: transform 0.2s ease;
+    color: var(--text-tertiary, #9ca3af);
+}
+
+.thinking-process[data-collapsed="false"] .thinking-toggle {
+    transform: rotate(90deg);
+}
+
+/* 思考過程タイトル */
+.thinking-title {
+    font-weight: 500;
+    color: var(--text-secondary, #6b7280);
+}
+
+/* 思考過程コンテンツ */
+.thinking-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.thinking-process[data-collapsed="false"] .thinking-content {
+    max-height: 500px;
+    padding: 0 14px 12px;
+}
+
+/* 思考アイテム */
+.thinking-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 0;
+    font-size: 0.875em;
+    color: var(--text-secondary, #6b7280);
+    border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.thinking-item:last-child {
+    border-bottom: none;
+}
+
+.thinking-item-icon {
+    flex-shrink: 0;
+    font-size: 1em;
+}
+
+.thinking-item-text {
+    flex: 1;
+}
+
+.thinking-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+/* RAG参照資料リスト */
+.rag-sources-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.rag-source-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(59, 130, 246, 0.08);
+    border-radius: 6px;
+    font-size: 0.9em;
+}
+
+.rag-source-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-primary, #374151);
+}
+
+.rag-source-similarity {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    background: rgba(59, 130, 246, 0.2);
+    border-radius: 10px;
+    font-size: 0.85em;
+    font-weight: 500;
+    color: #3b82f6;
+}
+
+/* タイピングドット（思考過程内でも使用可能に） */
+.thinking-item .typing-dots {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    height: 1em;
+    vertical-align: middle;
+}
+
+.thinking-item .typing-dots span {
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    margin: 0 2px;
+    background-color: currentColor;
+    border-radius: 50%;
+    opacity: 0.4;
+    animation: typingWave 1.4s infinite ease-in-out both;
+}
+
+/* サイバースタイルの思考過程 */
+.cyber-style .thinking-process {
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.03), rgba(0, 255, 255, 0.08));
+    border-color: rgba(0, 255, 255, 0.2);
+}
+
+.cyber-style .thinking-header:hover {
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.cyber-style .rag-source-item {
+    background: rgba(0, 255, 255, 0.08);
+}
+
+.cyber-style .rag-source-similarity {
+    background: rgba(0, 255, 255, 0.2);
+    color: var(--cyber-primary, #00ffff);
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+    .thinking-process {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.15));
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .rag-source-item {
+        background: rgba(59, 130, 246, 0.15);
+    }
+
+    .rag-source-name {
+        color: var(--text-primary, #e5e7eb);
+    }
+}
+
+/* reduced-motion対応 */
+@media (prefers-reduced-motion: reduce) {
+    .thinking-content {
+        transition: none !important;
+    }
+
+    .thinking-toggle {
+        transition: none !important;
+    }
+
+    .thinking-item .typing-dots span {
+        animation: none !important;
+        opacity: 0.6 !important;
+    }
+}

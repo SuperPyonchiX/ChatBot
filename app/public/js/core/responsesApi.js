@@ -30,49 +30,51 @@ class ResponsesAPI {
      * @param {Object} options - 追加オプション
      * @param {boolean} options.stream - ストリーミングを使用するかどうか
      * @param {boolean} options.enableWebSearch - Web検索を有効にするかどうか
+     * @param {HTMLElement} options.thinkingContainer - 思考過程コンテナ（任意）
      * @param {Function} options.onChunk - ストリーミング時のチャンク受信コールバック関数
      * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
      * @returns {Promise<string>} APIからの応答テキスト
      */
-    async callResponsesAPI(messages, model, attachments = [], options = { stream: false, enableWebSearch: false, onChunk: null, onComplete: null }) {
+    async callResponsesAPI(messages, model, attachments = [], options = { stream: false, enableWebSearch: false, thinkingContainer: null, onChunk: null, onComplete: null }) {
         try {
             // API設定を確認
             this.#validateAPISettings();
-            
+
             // GPT-4o/GPT-5シリーズをサポート
             if (!model.startsWith('gpt-4o') && !model.startsWith('gpt-5')) {
                 throw new Error(`Responses APIはGPT-4o/GPT-5シリーズのみサポートしています: ${model}`);
             }
-            
+
             // 添付ファイルがある場合はメッセージを処理
             const processedInput = this.#processInputForResponses(messages, attachments);
-            
+
             // APIリクエストの準備
             const { endpoint, headers, body } = this.#prepareResponsesRequest(
-                processedInput, 
-                model, 
+                processedInput,
+                model,
                 options.enableWebSearch,
                 options.stream
             );
-            
+
             console.log(`Responses APIリクエスト送信 (${model}):`, endpoint);
             console.log('🔍 Web検索有効:', options.enableWebSearch);
             console.log('📡 ストリーミング有効:', options.stream);
             // console.log('📦 リクエストボディ:', body);
-            
+
             // APIリクエストを実行
             if (options.stream) {
                 return await this.#executeStreamResponsesRequest(
-                    endpoint, 
-                    headers, 
-                    body, 
-                    options.onChunk, 
-                    options.onComplete
+                    endpoint,
+                    headers,
+                    body,
+                    options.onChunk,
+                    options.onComplete,
+                    options.thinkingContainer
                 );
             } else {
                 return await this.#executeResponsesRequest(endpoint, headers, body);
             }
-            
+
         } catch (error) {
             console.error('Responses API呼び出しエラー:', error);
             throw error;
@@ -81,6 +83,8 @@ class ResponsesAPI {
 
     /**
      * API設定を検証
+     * Responses APIはOpenAI/Azure OpenAI専用（GPT-5/GPT-4oモデル）
+     * apiTypeに関係なく、有効なAPIキーがあるかを確認
      */
     #validateAPISettings() {
         // AppStateで初期化されたキャッシュを使用（存在しない場合はフォールバック）
@@ -91,22 +95,17 @@ class ResponsesAPI {
             // @ts-ignore
             window.apiSettings = Storage.getInstance.loadApiSettings();
         }
-        
+
+        // Azure OpenAIが完全に設定されている場合はAzureを使用
         // @ts-ignore
-        const apiType = window.apiSettings.apiType || 'openai';
-        
-        if (apiType === 'openai') {
-            // @ts-ignore
-            if (!window.apiSettings.openaiApiKey) {
-                throw new Error('OpenAI APIキーが設定されていません');
-            }
-        } else if (apiType === 'azure') {
-            // @ts-ignore
-            if (!window.apiSettings.azureApiKey) {
-                throw new Error('Azure OpenAI APIキーが設定されていません。設定画面で設定してください。');
-            }
-        } else {
-            throw new Error(`Responses APIは現在OpenAIとAzure OpenAIのみサポートしています。現在のapiType: ${apiType}`);
+        if (window.apiSettings.azureApiKey && window.apiSettings.azureEndpoint) {
+            return; // Azure設定OK
+        }
+
+        // OpenAI APIキーを確認
+        // @ts-ignore
+        if (!window.apiSettings.openaiApiKey) {
+            throw new Error('OpenAI APIキーが設定されていません。設定画面からAPIキーを設定してください。');
         }
     }
 
@@ -203,7 +202,7 @@ class ResponsesAPI {
      */
     #prepareResponsesRequest(processedData, model, enableWebSearch, stream = false) {
         let endpoint, headers = {}, body = {};
-        
+
         // AppStateで初期化されたキャッシュを使用（存在しない場合はフォールバック）
         // @ts-ignore - apiSettingsはAppStateで初期化されるグローバルプロパティ
         if (!window.apiSettings) {
@@ -211,41 +210,33 @@ class ResponsesAPI {
             // @ts-ignore - Storageはカスタムクラス（型定義あり）
             window.apiSettings = Storage.getInstance.loadApiSettings();
         }
-        
-        // @ts-ignore
-        const apiType = window.apiSettings.apiType || 'openai';
-        
-        if (apiType === 'openai') {
-            // OpenAI API
-            endpoint = window.CONFIG.AIAPI.ENDPOINTS.RESPONSES;
-            // @ts-ignore
-            headers = {
-                // @ts-ignore
-                'Authorization': `Bearer ${window.apiSettings.openaiApiKey}`,
-                'Content-Type': 'application/json'
-            };
-        } else if (apiType === 'azure') {
+
+        // Responses APIはOpenAI/Azure OpenAI専用
+        // apiTypeに関係なく、利用可能なAPI設定を使用
+
+        // @ts-ignore - Azure OpenAIが完全に設定されている場合はAzureを優先
+        const useAzure = window.apiSettings.azureApiKey &&
+                         window.apiSettings.azureEndpoints &&
+                         window.apiSettings.azureEndpoints[model];
+
+        if (useAzure) {
             // Azure OpenAI API - 新しいv1 API形式を使用
             // @ts-ignore
             const azureEndpoint = window.apiSettings.azureEndpoints[model];
-            if (azureEndpoint) {
-                // 既存のChat CompletionsエンドポイントをResponses APIに変換
-                // https://xxx.openai.azure.com/openai/deployments/xxx/chat/completions?api-version=xxx
-                // → https://xxx.openai.azure.com/openai/v1/responses?api-version=preview
-                const baseUrl = azureEndpoint.split('/openai/')[0];
-                endpoint = `${baseUrl}/openai/v1/responses?api-version=preview`;
-                
-                // エンドポイントURLからデプロイメント名を抽出
-                const deploymentMatch = azureEndpoint.match(/\/deployments\/([^\/]+)\//);
+            // 既存のChat CompletionsエンドポイントをResponses APIに変換
+            // https://xxx.openai.azure.com/openai/deployments/xxx/chat/completions?api-version=xxx
+            // → https://xxx.openai.azure.com/openai/v1/responses?api-version=preview
+            const baseUrl = azureEndpoint.split('/openai/')[0];
+            endpoint = `${baseUrl}/openai/v1/responses?api-version=preview`;
 
-                if (deploymentMatch) {
-                    // デプロイメント名が見つかった場合は、それをモデル名として使用
-                    model = deploymentMatch[1];
-                }
-            } else {
-                throw new Error(`Azure OpenAI: モデル ${model} のエンドポイントが設定されていません`);
+            // エンドポイントURLからデプロイメント名を抽出
+            const deploymentMatch = azureEndpoint.match(/\/deployments\/([^\/]+)\//);
+
+            if (deploymentMatch) {
+                // デプロイメント名が見つかった場合は、それをモデル名として使用
+                model = deploymentMatch[1];
             }
-            
+
             // @ts-ignore
             headers = {
                 // @ts-ignore
@@ -253,8 +244,14 @@ class ResponsesAPI {
                 'Content-Type': 'application/json'
             };
         } else {
-            // apiTypeが'openai'でも'azure'でもない場合はエラー
-            throw new Error(`Responses APIは現在OpenAIとAzure OpenAIのみサポートしています。現在のapiType: ${apiType}`);
+            // OpenAI API（デフォルト）
+            endpoint = window.CONFIG.AIAPI.ENDPOINTS.RESPONSES;
+            // @ts-ignore
+            headers = {
+                // @ts-ignore
+                'Authorization': `Bearer ${window.apiSettings.openaiApiKey}`,
+                'Content-Type': 'application/json'
+            };
         }
         
         // Responses API形式でボディを構築
@@ -330,14 +327,21 @@ class ResponsesAPI {
 
     /**
      * ストリーミングでResponses APIリクエストを実行
+     * @param {string} endpoint - APIエンドポイント
+     * @param {Object} headers - リクエストヘッダー
+     * @param {Object} body - リクエストボディ
+     * @param {Function} onChunk - チャンク受信コールバック
+     * @param {Function} onComplete - 完了コールバック
+     * @param {HTMLElement|null} thinkingContainer - 思考過程コンテナ
      */
-    async #executeStreamResponsesRequest(endpoint, headers, body, onChunk, onComplete) {
+    async #executeStreamResponsesRequest(endpoint, headers, body, onChunk, onComplete, thinkingContainer = null) {
         const controller = new AbortController();
         let timeoutId;
         let fullText = '';
         let chunkCount = 0;
         let processedEvents = new Set(); // 重複イベント防止
         let webSearchStatusMessage = null; // Web検索ステータス管理
+        let webSearchAddedToThinking = false; // 思考過程への追加フラグ
 
         const resetTimeout = () => {
             if (timeoutId) clearTimeout(timeoutId);
@@ -401,9 +405,12 @@ class ResponsesAPI {
                                 processedEvents.add(eventId);
                                 
                                 // Web検索ステータスのチェック
-                                const statusResult = this.#handleWebSearchStatus(jsonData, webSearchStatusMessage);
+                                const statusResult = this.#handleWebSearchStatus(jsonData, webSearchStatusMessage, thinkingContainer, webSearchAddedToThinking);
                                 if (statusResult.statusMessage !== undefined) {
                                     webSearchStatusMessage = statusResult.statusMessage;
+                                }
+                                if (statusResult.addedToThinking) {
+                                    webSearchAddedToThinking = true;
                                 }
                                 if (statusResult.shouldSkip) {
                                     continue;
@@ -503,16 +510,18 @@ class ResponsesAPI {
      * Web検索ステータスを処理する
      * @param {Object} jsonData - ストリーミングデータ
      * @param {HTMLElement|null} currentStatusMessage - 現在のステータスメッセージ
-     * @returns {Object} {statusMessage: HTMLElement|null, shouldSkip: boolean}
+     * @param {HTMLElement|null} thinkingContainer - 思考過程コンテナ
+     * @param {boolean} alreadyAddedToThinking - 既に思考過程に追加済みかどうか
+     * @returns {Object} {statusMessage: HTMLElement|null, shouldSkip: boolean, addedToThinking: boolean}
      */
-    #handleWebSearchStatus(jsonData, currentStatusMessage) {
+    #handleWebSearchStatus(jsonData, currentStatusMessage, thinkingContainer = null, alreadyAddedToThinking = false) {
         // console.log('🔍 jsonData抽出:', jsonData);
         const chatMessages = document.querySelector('#chatMessages');
 
         if (!chatMessages) {
-            return { statusMessage: currentStatusMessage, shouldSkip: false };
+            return { statusMessage: currentStatusMessage, shouldSkip: false, addedToThinking: false };
         }
-        
+
         // ChatRendererの存在チェック（複数のパターンに対応）
         let chatRenderer = null;
         try {
@@ -561,109 +570,152 @@ class ResponsesAPI {
         const isWebSearchStarting = jsonData.type === 'response.web_search_call.in_progress' ||
                                    jsonData.type === 'response.web_search_call.searching' ||
                                    (jsonData.output && jsonData.output.some(item => item.type === 'web_search_call'));
-                                   
+
         if (isWebSearchStarting) {
             // 検索クエリを取得
             const searchQuery = extractSearchQuery(jsonData);
-            const searchMessage = searchQuery ? 
-                `🔍 Web検索を実行中: "${searchQuery}"` : 
+
+            // システムメッセージを「Web検索を実行中」に更新
+            const searchMessage = searchQuery ?
+                `🔍 Web検索を実行中: "${searchQuery}"` :
                 '🔍 Web検索を実行中';
-            
-            // 既存のThinkingメッセージを探して更新
+
+            // 既存のThinkingメッセージを探して更新（thinkingContainerの有無に関わらず）
             const existingThinkingMessage = /** @type {HTMLElement|null} */ (chatMessages.querySelector('.message.bot:last-child'));
-            if (existingThinkingMessage) {
+            if (existingThinkingMessage && chatRenderer) {
                 try {
                     chatRenderer.updateSystemMessage(
-                        existingThinkingMessage, 
+                        existingThinkingMessage,
                         searchMessage,
-                        { 
-                            status: 'searching', 
-                            animate: true, 
-                            showDots: true 
+                        {
+                            status: 'searching',
+                            animate: true,
+                            showDots: true
                         }
                     );
-                    return { statusMessage: existingThinkingMessage, shouldSkip: true };
                 } catch (error) {
                     console.error('🔍 Thinkingメッセージ更新エラー:', error);
                 }
             }
-            
-            if (!currentStatusMessage) {
+
+            // 思考過程コンテナがある場合
+            // Web検索開始時はクエリがまだ取得できないので、思考過程への追加はcompletedSearchQueryで行う
+            if (thinkingContainer) {
+                // addedToThinkingはfalseのまま返す（クエリ確定時に追加するため）
+                return { statusMessage: existingThinkingMessage, shouldSkip: true, addedToThinking: false };
+            }
+
+            // 思考過程コンテナがない場合の処理
+            if (existingThinkingMessage) {
+                return { statusMessage: existingThinkingMessage, shouldSkip: true, addedToThinking: false };
+            }
+
+            if (!currentStatusMessage && !thinkingContainer) {
                 try {
                     const statusResult = chatRenderer.addSystemMessage(
-                        /** @type {HTMLElement} */ (chatMessages), 
+                        /** @type {HTMLElement} */ (chatMessages),
                         searchMessage,
-                        { 
-                            status: 'searching', 
-                            animation: 'gradient', 
-                            showDots: true 
+                        {
+                            status: 'searching',
+                            animation: 'gradient',
+                            showDots: true
                         }
                     );
-                    return { statusMessage: statusResult.messageDiv, shouldSkip: true };
+                    return { statusMessage: statusResult.messageDiv, shouldSkip: true, addedToThinking: false };
                 } catch (error) {
                     console.error('🔍 システムメッセージ作成エラー:', error);
                 }
-            } else {
+            } else if (!thinkingContainer) {
                 try {
                     chatRenderer.updateSystemMessage(
-                        currentStatusMessage, 
+                        currentStatusMessage,
                         searchMessage,
-                        { 
-                            status: 'searching', 
-                            animate: true, 
-                            showDots: true 
+                        {
+                            status: 'searching',
+                            animate: true,
+                            showDots: true
                         }
                     );
                 } catch (error) {
                     console.error('🔍 システムメッセージ更新エラー:', error);
                 }
-                return { statusMessage: currentStatusMessage, shouldSkip: true };
+                return { statusMessage: currentStatusMessage, shouldSkip: true, addedToThinking: false };
             }
+
+            // thinkingContainerがある場合はシステムメッセージは作成しない
+            return { statusMessage: currentStatusMessage, shouldSkip: true, addedToThinking: alreadyAddedToThinking };
         }
         
         // Web検索完了の検出
         if (jsonData.type === 'response.web_search_call.completed') {
+            // thinkingContainerがある場合はシステムメッセージをスキップ
+            if (thinkingContainer) {
+                return { statusMessage: currentStatusMessage, shouldSkip: true, addedToThinking: alreadyAddedToThinking };
+            }
             if (currentStatusMessage) {
                 // 直後にWeb検索完了後の結果処理中メッセージに移行するためここでは何もしない
-                return { statusMessage: currentStatusMessage, shouldSkip: true };
+                return { statusMessage: currentStatusMessage, shouldSkip: true, addedToThinking: false };
             }
         }
 
         // Web検索完了後の結果処理中メッセージ
         const completedSearchQuery = extractCompletedSearchQuery(jsonData);
         if (completedSearchQuery) {
-            if (currentStatusMessage) {
+            // thinkingContainerがある場合は思考過程に追加（まだ追加されていない場合）
+            if (thinkingContainer && chatRenderer && !alreadyAddedToThinking) {
+                try {
+                    chatRenderer.addThinkingItem(thinkingContainer, 'web-search', completedSearchQuery);
+                    console.log('🔍 Web検索を思考過程に追加（確定クエリ）:', completedSearchQuery);
+                } catch (error) {
+                    console.error('🔍 思考過程への追加エラー:', error);
+                }
+            }
+
+            // システムメッセージを「検索結果を分析中」に更新（thinkingContainerの有無に関わらず）
+            const existingMessage = currentStatusMessage || /** @type {HTMLElement|null} */ (chatMessages.querySelector('.message.bot:last-child'));
+            if (existingMessage && chatRenderer) {
                 try {
                     const processingMessage = `🔍 検索結果を分析中: "${completedSearchQuery}"`;
                     chatRenderer.updateSystemMessage(
-                        currentStatusMessage, 
+                        existingMessage,
                         processingMessage,
-                        { 
-                            status: 'processing', 
-                            animate: true, 
-                            showDots: true 
+                        {
+                            status: 'processing',
+                            animate: true,
+                            showDots: true
                         }
                     );
-                    return { statusMessage: currentStatusMessage, shouldSkip: true };
+
+                    // 少し遅延して「Thinking...」に戻す
+                    setTimeout(() => {
+                        try {
+                            chatRenderer.updateSystemMessage(
+                                existingMessage,
+                                'Thinking',
+                                {
+                                    status: 'thinking',
+                                    animate: true,
+                                    showDots: true
+                                }
+                            );
+                        } catch (e) {
+                            console.warn('Thinkingへの復帰エラー:', e);
+                        }
+                    }, 1500);
                 } catch (error) {
                     console.error('🔍 検索結果処理メッセージ更新エラー:', error);
-                    // 代替として直接DOM更新を試行
-                    try {
-                        const messageContent = /** @type {HTMLElement|null} */ (currentStatusMessage.querySelector('.markdown-content'));
-                        if (messageContent) {
-                            const processingMessage = `🔍 検索結果を分析中: "${completedSearchQuery}"`;
-                            messageContent.innerHTML = `<p>${processingMessage}<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></p>`;
-                        }
-                        return { statusMessage: currentStatusMessage, shouldSkip: true };
-                    } catch (domError) {
-                        console.error('🔍 DOM操作更新エラー:', domError);
-                    }
                 }
-                return { statusMessage: currentStatusMessage, shouldSkip: true };
             }
+
+            if (thinkingContainer) {
+                return { statusMessage: existingMessage, shouldSkip: true, addedToThinking: true };
+            }
+
+            // thinkingContainerがない場合
+            return { statusMessage: existingMessage, shouldSkip: true, addedToThinking: false };
         }
-        
-        return { statusMessage: currentStatusMessage, shouldSkip: false };
+
+        return { statusMessage: currentStatusMessage, shouldSkip: false, addedToThinking: alreadyAddedToThinking };
     }
 
     /**

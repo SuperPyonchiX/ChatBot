@@ -33,6 +33,7 @@ class ClaudeAPI {
      * @param {Function} options.onChunk - ストリーミング時のチャンク受信コールバック関数
      * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
      * @param {boolean} options.enableWebSearch - Web検索機能を使用するかどうか
+     * @param {HTMLElement} options.thinkingContainer - 思考過程コンテナ（任意）
      * @returns {Promise<string>} APIからの応答テキスト（ストリーミングの場合は空文字列）
      * @throws {Error} API設定やリクエストに問題があった場合
      */
@@ -51,10 +52,11 @@ class ClaudeAPI {
             // APIリクエストを実行
             if (options.stream) {
                 return await this.#executeStreamClaudeRequest(
-                    headers, 
-                    body, 
-                    options.onChunk, 
-                    options.onComplete
+                    headers,
+                    body,
+                    options.onChunk,
+                    options.onComplete,
+                    options.thinkingContainer
                 );
             } else {
                 return await this.#executeClaudeRequest(headers, body);
@@ -296,9 +298,10 @@ class ClaudeAPI {
      * @param {Object} body - リクエストボディ
      * @param {Function} onChunk - チャンク受信時のコールバック
      * @param {Function} onComplete - 完了時のコールバック
+     * @param {HTMLElement} thinkingContainer - 思考過程コンテナ（任意）
      * @returns {Promise<string>} 空文字列（ストリーミングのため）
      */
-    async #executeStreamClaudeRequest(headers, body, onChunk, onComplete) {
+    async #executeStreamClaudeRequest(headers, body, onChunk, onComplete, thinkingContainer = null) {
         try {
             // Ensure stream flag is present in payload
             const payloadStr = (function(){
@@ -347,6 +350,7 @@ class ClaudeAPI {
             let webSearchQuery = '';
             let completedSearchQuery = '';
             let webSearchMessageUpdated = false;
+            let webSearchAddedToThinking = false;
             const chatMessages = document.querySelector('#chatMessages');
             const existingThinkingMessage = chatMessages?.querySelector('.message.bot:last-child');
 
@@ -380,18 +384,19 @@ class ClaudeAPI {
                             else if (parsed.type === 'content_block_start') {
                                 
                                 // Web検索ツール使用開始の検出
-                                if (parsed.content_block?.type === 'server_tool_use' && 
+                                if (parsed.content_block?.type === 'server_tool_use' &&
                                     parsed.content_block?.name === 'web_search') {
                                     webSearchInProgress = true;
                                     webSearchQuery = '';
                                     completedSearchQuery = '';
                                     webSearchMessageUpdated = false;
-                                    
-                                    // 既存のThinkingメッセージを更新
-                                    if (existingThinkingMessage) {
+
+                                    // thinkingContainerがある場合は思考過程には追加せず、クエリ確定後に追加
+                                    // thinkingContainerがない場合は既存のThinkingメッセージを更新
+                                    if (!thinkingContainer && existingThinkingMessage) {
                                         ChatRenderer.getInstance.updateSystemMessage(
                                             existingThinkingMessage,
-                                            '🔍 Web検索を実行しています...', 
+                                            '🔍 Web検索を実行しています...',
                                             { status: 'searching', showDots: true }
                                         );
                                     }
@@ -412,13 +417,23 @@ class ClaudeAPI {
                                         // Web検索クエリの抽出
                                         if (webSearchInProgress && parsed.delta.partial_json) {
                                             webSearchQuery += parsed.delta.partial_json;
-                                            
+
                                             // 完全なJSONが形成されたかチェック
                                             try {
                                                 const queryData = JSON.parse(webSearchQuery);
                                                 if (queryData.query && queryData.query !== completedSearchQuery) {
                                                     completedSearchQuery = queryData.query;
-                                                    if (existingThinkingMessage) {
+
+                                                    // thinkingContainerがある場合は思考過程に追加（1回のみ）
+                                                    if (thinkingContainer && !webSearchAddedToThinking) {
+                                                        ChatRenderer.getInstance.addThinkingItem(
+                                                            thinkingContainer,
+                                                            'web-search',
+                                                            completedSearchQuery
+                                                        );
+                                                        webSearchAddedToThinking = true;
+                                                    } else if (!thinkingContainer && existingThinkingMessage) {
+                                                        // thinkingContainerがない場合は既存のシステムメッセージを更新
                                                         ChatRenderer.getInstance.updateSystemMessage(
                                                             existingThinkingMessage,
                                                             `🔍 "${completedSearchQuery}" を検索中...`,
@@ -443,9 +458,10 @@ class ClaudeAPI {
                             }
                             // content_block_stop イベント
                             else if (parsed.type === 'content_block_stop') {
-                                
+
                                 // Web検索ツールの結果開始を検出
-                                if (webSearchInProgress && completedSearchQuery && !webSearchMessageUpdated) {
+                                // thinkingContainerがある場合は思考過程に追加済みなのでスキップ
+                                if (!thinkingContainer && webSearchInProgress && completedSearchQuery && !webSearchMessageUpdated) {
                                     // 次のブロックがweb_search_tool_resultの場合の準備
                                     setTimeout(() => {
                                         if (webSearchInProgress && completedSearchQuery && !webSearchMessageUpdated) {
@@ -493,9 +509,9 @@ class ClaudeAPI {
                             }
                             // error イベント
                             else if (parsed.type === 'error') {
-                                
-                                // エラー時も通常のThinkingに戻す
-                                if (webSearchInProgress) {
+
+                                // エラー時も通常のThinkingに戻す（thinkingContainerがない場合のみ）
+                                if (!thinkingContainer && webSearchInProgress) {
                                     const chatMessages = document.getElementById('chatMessages');
                                     const existingThinkingMessage = chatMessages?.querySelector('.message.bot:last-child');
                                     if (existingThinkingMessage) {
@@ -505,9 +521,9 @@ class ClaudeAPI {
                                             { status: 'thinking', showDots: true }
                                         );
                                     }
-                                    webSearchInProgress = false;
                                 }
-                                
+                                webSearchInProgress = false;
+
                                 throw new Error(`Claude Streaming Error: ${parsed.error.message}`);
                             }
                             // 未知のイベントタイプ

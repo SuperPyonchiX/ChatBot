@@ -148,35 +148,206 @@ class ChatRenderer {
     /**
      * ストリーミング用のボットメッセージを追加する
      * チャットメッセージ領域に、AIの応答を表示するためのメッセージ要素を追加します
+     * 思考過程コンテナと回答本文コンテナを分離して作成します
      * @param {HTMLElement} chatMessages - メッセージを表示する要素
      * @param {number|null} timestamp - メッセージのタイムスタンプ
-     * @returns {{messageDiv: HTMLElement, contentContainer: HTMLElement}} メッセージ要素とコンテンツコンテナ
+     * @returns {{messageDiv: HTMLElement, contentContainer: HTMLElement, thinkingContainer: HTMLElement}} メッセージ要素とコンテンツコンテナ
      */
     addStreamingBotMessage(chatMessages, timestamp = null) {
         if (!chatMessages) return null;
 
-        const { messageDiv, contentContainer } = this.addSystemMessage(
-            chatMessages,
-            'Thinking',
-            {
-                status: 'thinking',
-                animation: 'fade',
-                showDots: true
-            }
-        );
+        const msgTimestamp = timestamp || Date.now();
 
-        // システムメッセージのクラスを変更してボットメッセージに
-        if (messageDiv) {
-            messageDiv.classList.remove('system-message');
-            if (timestamp) {
-                messageDiv.setAttribute('data-timestamp', timestamp.toString());
-            }
-        }
+        // メッセージ要素を作成
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', 'bot', 'cyber-style');
+        messageDiv.dataset.timestamp = msgTimestamp.toString();
+        messageDiv.setAttribute('role', 'region');
+        messageDiv.setAttribute('aria-label', 'AIからの返答');
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+
+        // 思考過程コンテナを作成（初期状態では非表示）
+        const thinkingContainer = this.#createThinkingContainer();
+
+        // 回答本文コンテナを作成
+        const markdownContent = document.createElement('div');
+        markdownContent.className = 'markdown-content';
+
+        // 初期状態: Thinking表示
+        markdownContent.innerHTML = this.#formatSystemMessage('Thinking', true);
+
+        contentDiv.appendChild(thinkingContainer);
+        contentDiv.appendChild(markdownContent);
+        messageDiv.appendChild(contentDiv);
+
+        chatMessages.appendChild(messageDiv);
+        this.#smoothScrollToBottom(chatMessages);
 
         return {
             messageDiv: messageDiv,
-            contentContainer: contentContainer
+            contentContainer: markdownContent,
+            thinkingContainer: thinkingContainer
         };
+    }
+
+    /**
+     * 思考過程コンテナを作成する
+     * @returns {HTMLElement} 思考過程コンテナ要素
+     */
+    #createThinkingContainer() {
+        const container = document.createElement('div');
+        container.className = 'thinking-process';
+        container.dataset.collapsed = 'true'; // 初期状態は折りたたみ
+        container.style.display = 'none'; // 思考アイテムがない場合は非表示
+
+        // ヘッダー部分
+        const header = document.createElement('div');
+        header.className = 'thinking-header';
+        header.setAttribute('role', 'button');
+        header.setAttribute('aria-expanded', 'false');
+        header.setAttribute('tabindex', '0');
+
+        const toggleIcon = document.createElement('span');
+        toggleIcon.className = 'thinking-toggle';
+        toggleIcon.textContent = '▶';
+
+        const title = document.createElement('span');
+        title.className = 'thinking-title';
+        title.textContent = '思考過程';
+
+        header.appendChild(toggleIcon);
+        header.appendChild(title);
+
+        // コンテンツ部分
+        const content = document.createElement('div');
+        content.className = 'thinking-content';
+
+        container.appendChild(header);
+        container.appendChild(content);
+
+        // 折りたたみ切り替えイベント
+        header.addEventListener('click', () => this.#toggleThinkingCollapse(container));
+        header.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.#toggleThinkingCollapse(container);
+            }
+        });
+
+        return container;
+    }
+
+    /**
+     * 思考過程の折りたたみを切り替える
+     * @param {HTMLElement} container - 思考過程コンテナ
+     */
+    #toggleThinkingCollapse(container) {
+        if (!container) return;
+
+        const isCollapsed = container.dataset.collapsed === 'true';
+        container.dataset.collapsed = isCollapsed ? 'false' : 'true';
+
+        const header = container.querySelector('.thinking-header');
+        if (header) {
+            header.setAttribute('aria-expanded', isCollapsed ? 'true' : 'false');
+        }
+
+        const toggle = container.querySelector('.thinking-toggle');
+        if (toggle) {
+            toggle.textContent = isCollapsed ? '▼' : '▶';
+        }
+    }
+
+    /**
+     * 思考過程にアイテムを追加する
+     * @param {HTMLElement} thinkingContainer - 思考過程コンテナ
+     * @param {string} type - アイテムの種類 ('rag', 'web-search', 'thinking')
+     * @param {any} content - アイテムの内容
+     */
+    addThinkingItem(thinkingContainer, type, content) {
+        if (!thinkingContainer) return;
+
+        const thinkingContent = thinkingContainer.querySelector('.thinking-content');
+        if (!thinkingContent) return;
+
+        // コンテナを表示
+        thinkingContainer.style.display = 'block';
+
+        const item = document.createElement('div');
+        item.className = 'thinking-item';
+        item.dataset.type = type;
+
+        switch (type) {
+            case 'rag':
+                item.innerHTML = this.#formatRAGThinkingItem(content);
+                break;
+            case 'web-search':
+                item.innerHTML = this.#formatWebSearchThinkingItem(content);
+                break;
+            case 'thinking':
+            default:
+                item.innerHTML = this.#formatGenericThinkingItem(content);
+                break;
+        }
+
+        thinkingContent.appendChild(item);
+    }
+
+    /**
+     * RAG参照のフォーマット
+     * @param {Array<{docName: string, similarity: number}>} sources - 参照資料
+     * @returns {string} フォーマットされたHTML
+     */
+    #formatRAGThinkingItem(sources) {
+        if (!sources || sources.length === 0) {
+            return '<span class="thinking-item-icon">📚</span><span class="thinking-item-text">ナレッジベースを参照中...</span>';
+        }
+
+        const sourceList = sources.map(s =>
+            `<div class="rag-source-item">
+                <span class="rag-source-name">${this.#escapeHtml(s.docName)}</span>
+                <span class="rag-source-similarity">${s.similarity}%</span>
+            </div>`
+        ).join('');
+
+        return `<span class="thinking-item-icon">📚</span>
+            <div class="thinking-item-content">
+                <span class="thinking-item-text">ナレッジベース参照:</span>
+                <div class="rag-sources-list">${sourceList}</div>
+            </div>`;
+    }
+
+    /**
+     * Web検索のフォーマット
+     * @param {string} query - 検索クエリ
+     * @returns {string} フォーマットされたHTML
+     */
+    #formatWebSearchThinkingItem(query) {
+        const queryText = query ? `"${this.#escapeHtml(query)}"` : '';
+        return `<span class="thinking-item-icon">🔍</span><span class="thinking-item-text">Web検索を実行: ${queryText}</span>`;
+    }
+
+    /**
+     * 汎用思考アイテムのフォーマット
+     * @param {string} message - メッセージ
+     * @returns {string} フォーマットされたHTML
+     */
+    #formatGenericThinkingItem(message) {
+        return `<span class="thinking-item-icon">💭</span><span class="thinking-item-text">${this.#escapeHtml(message || '')}</span>`;
+    }
+
+    /**
+     * HTMLエスケープ
+     * @param {string} text - エスケープするテキスト
+     * @returns {string} エスケープされたテキスト
+     */
+    #escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     /**
@@ -215,8 +386,9 @@ class ChatRenderer {
     /**
      * ストリーミングが完了したらボットメッセージを完成させる
      * マークダウンレンダリングを適用し、コピーボタンを追加して最終的な表示を整えます
+     * 思考過程コンテナは保持されます
      * @param {HTMLElement} messageDiv - メッセージの親要素
-     * @param {HTMLElement} container - 内容を表示するコンテナ要素
+     * @param {HTMLElement} container - 内容を表示するコンテナ要素（.markdown-content）
      * @param {string} fullText - 完全なレスポンステキスト
      * @returns {Promise<void>}
      */
@@ -224,18 +396,24 @@ class ChatRenderer {
         if (!messageDiv || !container) return;
 
         try {
+            // 回答本文のみを更新（思考過程コンテナは保持される）
             const renderedHTML = await Markdown.getInstance.renderMarkdown(fullText);
             container.innerHTML = renderedHTML;
 
             const contentDiv = messageDiv.querySelector('.message-content');
             if (contentDiv) {
+                // 既存のコピーボタンを削除
                 const existingButton = contentDiv.querySelector('.copy-button');
                 if (existingButton) {
                     contentDiv.removeChild(existingButton);
                 }
 
+                // コピーボタンを追加（思考過程コンテナの前に挿入）
                 const copyButton = this.#createCopyButton(fullText);
-                if (contentDiv.firstChild) {
+                const thinkingContainer = contentDiv.querySelector('.thinking-process');
+                if (thinkingContainer) {
+                    contentDiv.insertBefore(copyButton, thinkingContainer);
+                } else if (contentDiv.firstChild) {
                     contentDiv.insertBefore(copyButton, contentDiv.firstChild);
                 } else {
                     contentDiv.appendChild(copyButton);
