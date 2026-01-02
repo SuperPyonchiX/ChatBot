@@ -1109,7 +1109,11 @@ class ChatRenderer {
      */
     #isArtifactLanguage(language) {
         if (!language) return false;
-        const artifactLanguages = ['html', 'svg', 'markdown', 'md', 'mermaid'];
+        const artifactLanguages = [
+            'html', 'svg', 'markdown', 'md', 'mermaid',
+            'javascript', 'js', 'typescript', 'ts',
+            'python', 'py', 'cpp', 'c++'
+        ];
         return artifactLanguages.includes(language.toLowerCase());
     }
 
@@ -1167,9 +1171,17 @@ class ChatRenderer {
                 'svg': 'svg',
                 'markdown': 'markdown',
                 'md': 'markdown',
-                'mermaid': 'mermaid'
+                'mermaid': 'mermaid',
+                'javascript': 'javascript',
+                'js': 'javascript',
+                'typescript': 'typescript',
+                'ts': 'typescript',
+                'python': 'python',
+                'py': 'python',
+                'cpp': 'cpp',
+                'c++': 'cpp'
             };
-            const type = typeMap[language.toLowerCase()] || 'html';
+            const type = typeMap[language.toLowerCase()] || language.toLowerCase();
 
             // アーティファクトを作成
             const artifact = {
@@ -1201,7 +1213,11 @@ class ChatRenderer {
             'html': 'HTMLドキュメント',
             'svg': 'SVG画像',
             'markdown': 'Markdownドキュメント',
-            'mermaid': 'Mermaid図'
+            'mermaid': 'Mermaid図',
+            'javascript': 'JavaScriptコード',
+            'typescript': 'TypeScriptコード',
+            'python': 'Pythonコード',
+            'cpp': 'C++コード'
         };
         return titles[type] || 'アーティファクト';
     }

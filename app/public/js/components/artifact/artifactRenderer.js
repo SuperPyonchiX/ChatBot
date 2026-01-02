@@ -51,6 +51,12 @@ class ArtifactRenderer {
                 case 'mermaid':
                     await this.#renderMermaid(artifact.content, container);
                     break;
+                case 'javascript':
+                case 'typescript':
+                case 'python':
+                case 'cpp':
+                    this.#renderCodePreview(artifact, container);
+                    break;
                 default:
                     console.warn(`[ArtifactRenderer] Unknown type: ${artifact.type}`);
                     this.#renderPlainText(artifact.content, container);
@@ -300,6 +306,74 @@ class ArtifactRenderer {
         pre.style.borderRadius = 'var(--border-radius-sm)';
         pre.textContent = content;
         container.appendChild(pre);
+    }
+
+    /**
+     * コードプレビューをレンダリング（JavaScript, TypeScript, Python, C++用）
+     * @param {Object} artifact - アーティファクト
+     * @param {HTMLElement} container - コンテナ
+     */
+    #renderCodePreview(artifact, container) {
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('artifact-code-preview');
+        wrapper.style.display = 'flex';
+        wrapper.style.flexDirection = 'column';
+        wrapper.style.height = '100%';
+        wrapper.style.gap = 'var(--spacing-md)';
+
+        // 説明メッセージ
+        const infoDiv = document.createElement('div');
+        infoDiv.style.padding = 'var(--spacing-md)';
+        infoDiv.style.backgroundColor = 'var(--background-tertiary)';
+        infoDiv.style.borderRadius = 'var(--border-radius-sm)';
+        infoDiv.style.display = 'flex';
+        infoDiv.style.alignItems = 'center';
+        infoDiv.style.gap = 'var(--spacing-sm)';
+        infoDiv.style.color = 'var(--text-secondary)';
+        infoDiv.style.fontSize = 'var(--font-size-sm)';
+        infoDiv.innerHTML = `
+            <i class="fas fa-play-circle" style="color: var(--accent-success);"></i>
+            <span>上部の <strong>実行ボタン</strong> を押してコードを実行できます</span>
+        `;
+        wrapper.appendChild(infoDiv);
+
+        // コードブロック
+        const pre = document.createElement('pre');
+        pre.style.flex = '1';
+        pre.style.margin = '0';
+        pre.style.padding = 'var(--spacing-md)';
+        pre.style.backgroundColor = 'var(--code-bg)';
+        pre.style.borderRadius = 'var(--border-radius-sm)';
+        pre.style.overflow = 'auto';
+
+        const code = document.createElement('code');
+        const prismLang = this.#getPrismLanguage(artifact.type);
+        code.classList.add(`language-${prismLang}`);
+        code.textContent = artifact.content;
+
+        pre.appendChild(code);
+        wrapper.appendChild(pre);
+        container.appendChild(wrapper);
+
+        // Prismによるシンタックスハイライト
+        if (typeof Prism !== 'undefined') {
+            Prism.highlightElement(code);
+        }
+    }
+
+    /**
+     * Prism用の言語名を取得
+     * @param {string} type - アーティファクトタイプ
+     * @returns {string} Prism言語名
+     */
+    #getPrismLanguage(type) {
+        const langMap = {
+            'javascript': 'javascript',
+            'typescript': 'typescript',
+            'python': 'python',
+            'cpp': 'cpp'
+        };
+        return langMap[type] || type;
     }
 
     /**

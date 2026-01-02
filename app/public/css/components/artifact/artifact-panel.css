@@ -121,6 +121,30 @@
     color: var(--error-color);
 }
 
+/* 実行ボタン */
+.artifact-action-btn#artifactRunBtn {
+    color: #00ff88;
+}
+
+.artifact-action-btn#artifactRunBtn:hover {
+    background-color: rgba(0, 255, 136, 0.2);
+    color: #00ff88;
+}
+
+.artifact-action-btn.running {
+    color: #ffaa00 !important;
+    pointer-events: none;
+}
+
+.artifact-action-btn.running i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 /* パネルコンテンツ */
 .artifact-panel-content {
     flex: 1;

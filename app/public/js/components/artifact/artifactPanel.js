@@ -19,6 +19,7 @@ class ArtifactPanel {
     #currentTab = 'preview'; // 'preview' | 'code'
     #currentArtifact = null;
     #isResizing = false;
+    #isExecuting = false;
 
     constructor() {
         if (ArtifactPanel.#instance) {
@@ -81,10 +82,14 @@ class ArtifactPanel {
         }
 
         // アクションボタン
+        const runBtn = document.getElementById('artifactRunBtn');
         const editBtn = document.getElementById('artifactEditBtn');
         const downloadBtn = document.getElementById('artifactDownloadBtn');
         const closeBtn = document.getElementById('artifactCloseBtn');
 
+        if (runBtn) {
+            runBtn.addEventListener('click', () => this.#handleRun());
+        }
         if (editBtn) {
             editBtn.addEventListener('click', () => this.#handleEdit());
         }
@@ -381,6 +386,91 @@ class ArtifactPanel {
         if (typeof ArtifactManager !== 'undefined') {
             ArtifactManager.getInstance.downloadArtifact(this.#currentArtifact.id);
         }
+    }
+
+    /**
+     * 実行ハンドラ
+     */
+    async #handleRun() {
+        if (!this.#currentArtifact || this.#isExecuting) return;
+
+        const language = this.#getExecutableLanguage(this.#currentArtifact.type);
+        if (!language) {
+            console.warn('[ArtifactPanel] 実行不可能なタイプ:', this.#currentArtifact.type);
+            return;
+        }
+
+        this.#isExecuting = true;
+        this.#updateRunButtonState(true);
+        this.switchTab('preview');
+
+        try {
+            // プレビューコンテナをクリアして実行結果用の構造を作成
+            this.#prepareExecutionContainer();
+
+            // CodeExecutorで実行
+            if (typeof CodeExecutor !== 'undefined') {
+                await CodeExecutor.getInstance.executeCode(
+                    this.#currentArtifact.content,
+                    language,
+                    this.#previewContainer.querySelector('.code-execution-result')
+                );
+            }
+        } catch (error) {
+            console.error('[ArtifactPanel] 実行エラー:', error);
+        } finally {
+            this.#isExecuting = false;
+            this.#updateRunButtonState(false);
+        }
+
+        console.log('[ArtifactPanel] Executed artifact:', this.#currentArtifact.id);
+    }
+
+    /**
+     * 実行結果用のコンテナを準備
+     */
+    #prepareExecutionContainer() {
+        if (!this.#previewContainer) return;
+
+        this.#previewContainer.innerHTML = `
+            <div class="code-execution-result">
+                <div class="execution-status">実行準備中...</div>
+                <div class="html-result-container"></div>
+                <pre class="realtime-output"></pre>
+            </div>
+        `;
+    }
+
+    /**
+     * 実行ボタンの状態を更新
+     * @param {boolean} isRunning - 実行中かどうか
+     */
+    #updateRunButtonState(isRunning) {
+        const runBtn = document.getElementById('artifactRunBtn');
+        if (runBtn) {
+            runBtn.classList.toggle('running', isRunning);
+            runBtn.disabled = isRunning;
+        }
+    }
+
+    /**
+     * 実行可能な言語を取得
+     * @param {string} type - アーティファクトタイプ
+     * @returns {string|null} 言語（実行不可の場合はnull）
+     */
+    #getExecutableLanguage(type) {
+        const map = {
+            'html': 'html',
+            'javascript': 'javascript',
+            'js': 'javascript',
+            'typescript': 'typescript',
+            'ts': 'typescript',
+            'python': 'python',
+            'py': 'python',
+            'cpp': 'cpp',
+            'c++': 'cpp'
+        };
+        return map[type] || null;
     }
 
     /**

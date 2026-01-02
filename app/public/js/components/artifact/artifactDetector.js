@@ -8,11 +8,11 @@ class ArtifactDetector {
     // アーティファクトタグのパターン
     #artifactTagPattern = /<artifact\s+([^>]*)>([\s\S]*?)<\/artifact>/gi;
 
-    // コードブロックのパターン（プレビュー可能な言語のみ）
-    #codeBlockPattern = /```(html|svg|mermaid|markdown|md)([\s\S]*?)```/gi;
+    // コードブロックのパターン（実行/プレビュー可能な言語）
+    #codeBlockPattern = /```(html|svg|mermaid|markdown|md|javascript|js|typescript|ts|python|py|cpp|c\+\+)([\s\S]*?)```/gi;
 
     // サポートする言語タイプ
-    #supportedTypes = ['html', 'svg', 'markdown', 'md', 'mermaid'];
+    #supportedTypes = ['html', 'svg', 'markdown', 'md', 'mermaid', 'javascript', 'js', 'typescript', 'ts', 'python', 'py', 'cpp', 'c++'];
 
     constructor() {
         if (ArtifactDetector.#instance) {
@@ -189,7 +189,15 @@ class ArtifactDetector {
             'svg': 'svg',
             'markdown': 'markdown',
             'md': 'markdown',
-            'mermaid': 'mermaid'
+            'mermaid': 'mermaid',
+            'javascript': 'javascript',
+            'js': 'javascript',
+            'typescript': 'typescript',
+            'ts': 'typescript',
+            'python': 'python',
+            'py': 'python',
+            'cpp': 'cpp',
+            'c++': 'cpp'
         };
 
         return typeMap[type.toLowerCase()] || null;
@@ -213,7 +221,11 @@ class ArtifactDetector {
             'html': 'HTMLドキュメント',
             'svg': 'SVG画像',
             'markdown': 'Markdownドキュメント',
-            'mermaid': 'Mermaid図'
+            'mermaid': 'Mermaid図',
+            'javascript': 'JavaScriptコード',
+            'typescript': 'TypeScriptコード',
+            'python': 'Pythonコード',
+            'cpp': 'C++コード'
         };
 
         return titles[type] || 'アーティファクト';
@@ -233,6 +245,6 @@ class ArtifactDetector {
      * @returns {Array<string>} サポートされているタイプの配列
      */
     getSupportedTypes() {
-        return ['html', 'svg', 'markdown', 'mermaid'];
+        return ['html', 'svg', 'markdown', 'mermaid', 'javascript', 'typescript', 'python', 'cpp'];
     }
 }
