@@ -1444,16 +1444,22 @@ class KnowledgeBaseModal {
 
             // 子ノードコンテナの表示切り替え
             const nodeElement = toggleElement.closest('.page-tree-node');
-            const childrenContainer = nodeElement?.querySelector('.page-tree-children');
+            const childrenContainer = nodeElement?.querySelector(':scope > .page-tree-children');
 
             if (childrenContainer) {
-                if (isExpanded && node.childrenLoaded) {
+                // toggleExpand後の最新ノード状態を取得
+                const updatedNode = tree.getNode(pageId);
+
+                if (isExpanded && updatedNode?.childrenLoaded) {
                     // 親ノードのレベルをHTML属性から取得
                     const parentLevel = parseInt(nodeElement.getAttribute('data-level') || '0', 10);
 
                     // 子ノードをレンダリング
+                    const childIds = updatedNode.childIds || [];
+                    console.log(`🔍 展開: ${pageId}, 子ノード数: ${childIds.length}`, childIds);
+
                     const children = [];
-                    for (const childId of tree.getNode(pageId).childIds) {
+                    for (const childId of childIds) {
                         const childTree = this.#buildTreeNode(childId, parentLevel + 1);
                         if (childTree) children.push(childTree);
                     }
