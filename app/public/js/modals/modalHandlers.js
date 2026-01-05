@@ -84,6 +84,15 @@ class ModalHandlers {
                         window.AppState.apiSettings.azureEndpoints[model] = element.value.trim();
                     }
                 });
+
+                // Azure埋め込みエンドポイントを保存（RAG用）
+                const embeddingEndpoint = document.getElementById('azureEndpointEmbedding');
+                if (embeddingEndpoint && embeddingEndpoint.value !== undefined) {
+                    Storage.getInstance.setItem(
+                        window.CONFIG.STORAGE.KEYS.AZURE_EMBEDDING_ENDPOINT,
+                        embeddingEndpoint.value.trim()
+                    );
+                }
             } else {
                 window.AppState.apiSettings.apiType = 'openai';
                 
@@ -107,6 +116,12 @@ class ModalHandlers {
         // ローカルストレージに保存
         // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.saveApiSettings(window.AppState.apiSettings);
+
+        // 埋め込みAPIのモードを再検出（APIキー変更に対応）
+        if (typeof EmbeddingAPI !== 'undefined') {
+            EmbeddingAPI.getInstance.refreshMode();
+        }
+
         UI.getInstance.Core.Notification.show('API設定を保存しました', 'success');
         ApiSettingsModal.getInstance.hideApiKeyModal();
     }

@@ -217,7 +217,11 @@ window.CONFIG = {
             CURRENT_CONVERSATION_ID: 'currentConversationId',
             ATTACHMENTS_PREFIX: 'attachments_',
             WEB_SEARCH_ENABLED: 'webSearchEnabled',
-            RAG_ENABLED: 'ragEnabled'
+            RAG_ENABLED: 'ragEnabled',
+            // 埋め込みAPI設定
+            AZURE_EMBEDDING_ENDPOINT: 'azureEmbeddingEndpoint',
+            EMBEDDING_MODE: 'embeddingMode',
+            EMBEDDING_DIMENSIONS: 'embeddingDimensions'
         },
 
         // デフォルト値
@@ -366,10 +370,12 @@ window.CONFIG = {
     RAG: {
         // 埋め込み（Embedding）設定
         EMBEDDING: {
-            // ローカル埋め込みモデル（Transformers.js使用）
-            MODEL_ID: 'Xenova/all-MiniLM-L6-v2',
-            // 埋め込み次元数
-            DIMENSIONS: 384,
+            // ローカル埋め込みモデル（Transformers.js使用、フォールバック用）
+            LOCAL_MODEL_ID: 'Xenova/all-MiniLM-L6-v2',
+            LOCAL_DIMENSIONS: 384,
+            // OpenAI/Azure OpenAI 埋め込みモデル
+            OPENAI_MODEL: 'text-embedding-3-large',
+            OPENAI_DIMENSIONS: 3072,
             // チャンクサイズ（文字数）
             CHUNK_SIZE: 500,
             // チャンク間のオーバーラップ（文字数）

@@ -103,6 +103,15 @@ class ApiSettingsModal {
                     elements.azureEndpointO1Mini.value = apiSettings.azureEndpoints['o1-mini'] || '';
                     elements.azureEndpointO1.value = apiSettings.azureEndpoints['o1'] || '';
                 }
+
+                // Azure埋め込みエンドポイント設定を適用（RAG用）
+                const embeddingEndpoint = document.getElementById('azureEndpointEmbedding');
+                if (embeddingEndpoint) {
+                    embeddingEndpoint.value = Storage.getInstance.getItem(
+                        window.CONFIG.STORAGE.KEYS.AZURE_EMBEDDING_ENDPOINT,
+                        ''
+                    );
+                }
             } else {
                 elements.openaiRadio.checked = true;
                 UIUtils.getInstance.toggleVisibility(elements.openaiSettings, true);

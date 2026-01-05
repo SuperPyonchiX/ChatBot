@@ -52,10 +52,14 @@ class VectorStore {
                 reject(event.target.error);
             };
 
-            request.onsuccess = (event) => {
+            request.onsuccess = async (event) => {
                 this.#db = event.target.result;
                 this.#initialized = true;
                 console.log('✅ VectorStore initialized');
+
+                // 次元数の不整合をチェック
+                await this.#checkDimensionMismatch();
+
                 resolve();
             };
 
@@ -415,6 +419,49 @@ class VectorStore {
     async #ensureInitialized() {
         if (!this.#initialized) {
             await this.initialize();
+        }
+    }
+
+    /**
+     * 保存された次元数と現在の次元数を比較し、不整合があればデータをクリア
+     * @returns {Promise<void>}
+     */
+    async #checkDimensionMismatch() {
+        try {
+            // EmbeddingAPIが利用可能か確認
+            if (typeof EmbeddingAPI === 'undefined') {
+                return;
+            }
+
+            const savedDimensionsStr = Storage.getInstance.getItem(
+                window.CONFIG.STORAGE.KEYS.EMBEDDING_DIMENSIONS,
+                ''
+            );
+
+            // 保存された次元数がない場合（初回起動）
+            if (!savedDimensionsStr) {
+                const currentDimensions = EmbeddingAPI.getInstance.getDimensions();
+                Storage.getInstance.setItem(
+                    window.CONFIG.STORAGE.KEYS.EMBEDDING_DIMENSIONS,
+                    currentDimensions.toString()
+                );
+                return;
+            }
+
+            const savedDimensions = parseInt(savedDimensionsStr, 10);
+            const currentDimensions = EmbeddingAPI.getInstance.getDimensions();
+
+            // 次元数が変わった場合はデータをクリア
+            if (savedDimensions !== currentDimensions) {
+                console.log(`⚠️ 埋め込み次元数が変更されました（${savedDimensions} → ${currentDimensions}）。ナレッジベースをクリアします。`);
+                await this.clearAll();
+                Storage.getInstance.setItem(
+                    window.CONFIG.STORAGE.KEYS.EMBEDDING_DIMENSIONS,
+                    currentDimensions.toString()
+                );
+            }
+        } catch (error) {
+            console.error('❌ 次元数チェックエラー:', error);
         }
     }
 

@@ -216,27 +216,38 @@ class KnowledgeBaseModal {
     }
 
     /**
-     * 埋め込みAPI利用可能性をチェック
+     * 埋め込みAPI利用可能性をチェックし、現在のモードを表示
      */
     async #checkEmbeddingAvailability() {
         const warningContainer = document.getElementById('kbApiWarning');
         if (!warningContainer) return;
 
-        // ローカル埋め込みモデル使用のため、基本的に警告は非表示
-        // 初期化中のみ「準備中」を表示、APIが無い場合のみエラー表示
         if (typeof EmbeddingAPI !== 'undefined') {
             if (EmbeddingAPI.getInstance.isInitializing) {
                 warningContainer.style.display = 'block';
+                warningContainer.className = 'kb-api-info';
                 warningContainer.innerHTML = `
                     <i class="fas fa-spinner fa-spin"></i>
                     <span>モデルを準備中...</span>
                 `;
             } else {
-                // 初期化済み or 未初期化（ドキュメント追加時に自動初期化）
-                warningContainer.style.display = 'none';
+                // 現在の埋め込みモードを表示
+                const mode = EmbeddingAPI.getInstance.getMode();
+                const modeName = EmbeddingAPI.getInstance.getModeDisplayName();
+                const dimensions = EmbeddingAPI.getInstance.getDimensions();
+                const modeIcon = mode === 'local' ? 'fa-microchip' : 'fa-cloud';
+                const modeClass = mode === 'local' ? 'kb-mode-local' : 'kb-mode-api';
+
+                warningContainer.style.display = 'block';
+                warningContainer.className = `kb-api-info ${modeClass}`;
+                warningContainer.innerHTML = `
+                    <i class="fas ${modeIcon}"></i>
+                    <span>埋め込み: ${modeName} (${dimensions}次元)</span>
+                `;
             }
         } else {
             warningContainer.style.display = 'block';
+            warningContainer.className = 'kb-api-warning';
             warningContainer.innerHTML = `
                 <i class="fas fa-exclamation-circle"></i>
                 <span>埋め込みAPIが利用できません</span>
