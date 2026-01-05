@@ -494,11 +494,17 @@
                     <i class="fas fa-cloud-upload-alt"></i>
                     <p>ファイルをドラッグ&ドロップ</p>
                     <p class="kb-upload-hint">または</p>
-                    <button id="kbUploadBtn" class="kb-upload-btn">
-                        <i class="fas fa-folder-open"></i> ファイルを選択
-                    </button>
+                    <div class="kb-upload-buttons">
+                        <button id="kbUploadBtn" class="kb-upload-btn">
+                            <i class="fas fa-file"></i> ファイルを選択
+                        </button>
+                        <button id="kbUploadFolderBtn" class="kb-upload-btn kb-upload-folder-btn">
+                            <i class="fas fa-folder"></i> フォルダを選択
+                        </button>
+                    </div>
                     <input type="file" id="kbFileInput" class="kb-file-input" multiple
                            accept=".pdf,.txt,.md,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.csv,.json,.js,.html,.css,.py,.java,.cpp,.c">
+                    <input type="file" id="kbFolderInput" class="kb-file-input" webkitdirectory>
                 </div>
             </div>
 

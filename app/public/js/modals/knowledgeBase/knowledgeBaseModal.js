@@ -12,6 +12,14 @@ class KnowledgeBaseModal {
     /** @type {boolean} モデル初期化中フラグ */
     #isModelInitializing = false;
 
+    /** @type {Set<string>} サポートされるファイル拡張子 */
+    static #SUPPORTED_EXTENSIONS = new Set([
+        '.pdf', '.txt', '.md',
+        '.docx', '.doc', '.xlsx', '.xls', '.pptx', '.ppt',
+        '.csv', '.json', '.js', '.html', '.css',
+        '.py', '.java', '.cpp', '.c'
+    ]);
+
     /**
      * シングルトンインスタンスを取得
      * @returns {KnowledgeBaseModal}
@@ -55,6 +63,15 @@ class KnowledgeBaseModal {
         if (uploadBtn && fileInput) {
             uploadBtn.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', (e) => this.#handleFileUpload(e));
+        }
+
+        // フォルダアップロード
+        const uploadFolderBtn = document.getElementById('kbUploadFolderBtn');
+        const folderInput = document.getElementById('kbFolderInput');
+
+        if (uploadFolderBtn && folderInput) {
+            uploadFolderBtn.addEventListener('click', () => folderInput.click());
+            folderInput.addEventListener('change', (e) => this.#handleFolderUpload(e));
         }
 
         // ドラッグ&ドロップ
@@ -269,6 +286,60 @@ class KnowledgeBaseModal {
         const files = Array.from(event.target.files);
         event.target.value = ''; // リセット
         await this.#processFiles(files);
+    }
+
+    /**
+     * フォルダアップロードハンドラ
+     * @param {Event} event
+     */
+    async #handleFolderUpload(event) {
+        const allFiles = Array.from(event.target.files);
+        event.target.value = ''; // リセット
+
+        const supportedFiles = this.#filterSupportedFiles(allFiles);
+
+        if (supportedFiles.length === 0) {
+            alert('サポートされているファイル形式が見つかりませんでした。');
+            return;
+        }
+
+        // 大量ファイル時の確認
+        if (supportedFiles.length > 20) {
+            const proceed = confirm(
+                `${supportedFiles.length}件のファイルを処理します。続行しますか？`
+            );
+            if (!proceed) return;
+        }
+
+        await this.#processFiles(supportedFiles);
+    }
+
+    /**
+     * サポートされている形式のファイルのみフィルタリング
+     * @param {File[]} files
+     * @returns {File[]}
+     */
+    #filterSupportedFiles(files) {
+        return files.filter(file => {
+            // 隠しファイル・フォルダを除外
+            const pathParts = file.webkitRelativePath.split('/');
+            if (pathParts.some(part => part.startsWith('.'))) {
+                return false;
+            }
+            const ext = this.#getFileExtension(file.name);
+            return KnowledgeBaseModal.#SUPPORTED_EXTENSIONS.has(ext);
+        });
+    }
+
+    /**
+     * ファイル名から拡張子を取得
+     * @param {string} fileName
+     * @returns {string}
+     */
+    #getFileExtension(fileName) {
+        const lastDot = fileName.lastIndexOf('.');
+        if (lastDot === -1) return '';
+        return fileName.substring(lastDot).toLowerCase();
     }
 
     /**

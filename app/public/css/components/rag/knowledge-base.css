@@ -259,6 +259,26 @@
     display: none;
 }
 
+/* アップロードボタン群のラッパー */
+.kb-upload-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* フォルダ選択ボタン（アウトラインスタイル） */
+.kb-upload-folder-btn {
+    background-color: transparent;
+    color: var(--accent-color, #00d4aa);
+    border: 1px solid var(--accent-color, #00d4aa);
+}
+
+.kb-upload-folder-btn:hover {
+    background-color: var(--accent-color, #00d4aa);
+    color: #0d1117;
+}
+
 /* ===========================================
    進捗表示
    =========================================== */
