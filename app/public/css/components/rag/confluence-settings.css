@@ -543,7 +543,7 @@
 
 /* ページツリーコンテナ */
 .confluence-page-tree {
-    max-height: 300px;
+    max-height: 200px;
     overflow-y: auto;
     border: 1px solid var(--border-color, #30363d);
     border-radius: 0.375rem;
