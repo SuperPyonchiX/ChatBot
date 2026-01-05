@@ -417,9 +417,9 @@ window.CONFIG = {
         // Confluence Data Center連携設定
         CONFLUENCE: {
             // ページ取得時の1回あたりの件数
-            PAGE_FETCH_LIMIT: 25,
+            PAGE_FETCH_LIMIT: 100,
             // スペースあたりの最大ページ数
-            MAX_PAGES_PER_SPACE: 5000,
+            MAX_PAGES_PER_SPACE: 50000,
             // 1ページあたりの最大コンテンツ長（文字数）
             MAX_CONTENT_LENGTH: 100000,
             // リクエストタイムアウト（ミリ秒）
