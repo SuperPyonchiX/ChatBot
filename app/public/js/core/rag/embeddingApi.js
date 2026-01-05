@@ -126,14 +126,32 @@ class EmbeddingAPI {
 
     /**
      * モードを再検出（API設定変更後に呼び出す）
+     * APIキー変更時に自動でモードを切り替える
      */
     refreshMode() {
         const oldMode = this.#mode;
+        const oldDimensions = this.#dimensions;
+
+        // 保存されたモード設定をクリア（APIキー変更に追従）
+        Storage.getInstance.removeItem(window.CONFIG.STORAGE.KEYS.EMBEDDING_MODE);
+
         this.#determineMode();
 
         if (oldMode !== this.#mode) {
             this.#initialized = false;
             this.#extractor = null;
+
+            // 次元数が変わった場合はナレッジベースをクリア
+            if (oldDimensions !== this.#dimensions && typeof VectorStore !== 'undefined') {
+                console.log(`⚠️ 埋め込み次元数が変更されました（${oldDimensions} → ${this.#dimensions}）。ナレッジベースをクリアします。`);
+                VectorStore.getInstance.clearAll();
+                Storage.getInstance.setItem(
+                    window.CONFIG.STORAGE.KEYS.EMBEDDING_DIMENSIONS,
+                    this.#dimensions.toString()
+                );
+            }
+
+            console.log(`📊 埋め込みモードを切り替えました: ${oldMode} → ${this.#mode}`);
         }
     }
 
