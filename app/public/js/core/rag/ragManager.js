@@ -165,10 +165,11 @@ class RAGManager {
     /**
      * Confluenceスペースからドキュメントを追加（差分更新対応）
      * @param {string} spaceKey - スペースキー
+     * @param {string} [spaceName] - スペース名（省略時はspaceKeyを使用）
      * @param {function} [onProgress] - 進捗コールバック (progressInfo)
      * @returns {Promise<{pageCount: number, chunkCount: number, newCount: number, updateCount: number, skipCount: number}>}
      */
-    async addConfluenceSpace(spaceKey, onProgress) {
+    async addConfluenceSpace(spaceKey, spaceName, onProgress) {
         await this.#ensureInitialized();
 
         // ConfluenceDataSourceが利用可能か確認
@@ -343,7 +344,7 @@ class RAGManager {
                     // 埋め込み生成
                     const embeddings = await EmbeddingAPI.getInstance.getEmbeddings(chunksWithMetadata);
 
-                    // 保存（lastModifiedを含める）
+                    // 保存（スペース情報を含める）
                     await VectorStore.getInstance.addDocument({
                         id: docId,
                         name: page.title,
@@ -352,7 +353,9 @@ class RAGManager {
                         chunkCount: chunks.length,
                         source: 'confluence',
                         sourceUrl: page.url,
-                        lastModified: page.lastModified
+                        lastModified: page.lastModified,
+                        spaceKey: spaceKey,
+                        spaceName: spaceName || spaceKey
                     });
 
                     const chunkRecords = chunksWithMetadata.map((text, index) => ({

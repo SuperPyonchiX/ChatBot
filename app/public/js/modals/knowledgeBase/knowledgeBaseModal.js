@@ -229,7 +229,7 @@ class KnowledgeBaseModal {
     }
 
     /**
-     * ドキュメント一覧を描画
+     * ドキュメント一覧を描画（グループ化表示）
      */
     async #renderDocumentList() {
         const listContainer = document.getElementById('kbDocumentList');
@@ -249,44 +249,30 @@ class KnowledgeBaseModal {
                 return;
             }
 
-            listContainer.innerHTML = documents.map(doc => {
-                const isConfluence = doc.source === 'confluence';
-                const sourceClass = isConfluence ? 'confluence' : 'file';
-                const sourceLabel = isConfluence ? 'Confluence' : 'ファイル';
-                const linkHtml = isConfluence && doc.sourceUrl
-                    ? `<a href="${doc.sourceUrl}" target="_blank" rel="noopener noreferrer" class="kb-doc-link" title="Confluenceで開く"><i class="fas fa-external-link-alt"></i></a>`
-                    : '';
+            // ファイルとConfluenceを分離
+            const fileDocuments = documents.filter(d => d.source !== 'confluence');
+            const confluenceDocuments = documents.filter(d => d.source === 'confluence');
 
-                return `
-                    <div class="kb-document-item" data-doc-id="${doc.id}">
-                        <div class="kb-doc-icon">
-                            <i class="${this.#getFileIcon(doc.type, doc.source)}"></i>
-                        </div>
-                        <div class="kb-doc-info">
-                            <div class="kb-doc-name" title="${doc.name}">
-                                ${doc.name}
-                                <span class="kb-doc-source ${sourceClass}">${sourceLabel}</span>
-                                ${linkHtml}
-                            </div>
-                            <div class="kb-doc-meta">
-                                ${doc.chunkCount} チャンク • ${RAGManager.getInstance.formatFileSize(doc.size)} • ${this.#formatDate(doc.createdAt)}
-                            </div>
-                        </div>
-                        <button class="kb-doc-delete" title="削除" data-doc-id="${doc.id}">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                `;
-            }).join('');
+            // Confluenceドキュメントをスペースごとにグループ化
+            const spaceGroups = this.#groupBySpace(confluenceDocuments);
 
-            // 削除ボタンのイベントリスナー
-            listContainer.querySelectorAll('.kb-doc-delete').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const docId = btn.dataset.docId;
-                    this.#handleDeleteDocument(docId);
-                });
-            });
+            let html = '';
+
+            // ファイルセクション
+            if (fileDocuments.length > 0) {
+                html += this.#renderFileSection(fileDocuments);
+            }
+
+            // Confluenceスペースセクション
+            for (const [spaceKey, group] of spaceGroups) {
+                html += this.#renderSpaceSection(spaceKey, group);
+            }
+
+            listContainer.innerHTML = html;
+
+            // イベントリスナーを設定
+            this.#attachGroupEventListeners(listContainer);
+
         } catch (error) {
             console.error('Failed to render document list:', error);
             listContainer.innerHTML = `
@@ -295,6 +281,196 @@ class KnowledgeBaseModal {
                     <p>ドキュメント一覧の取得に失敗しました</p>
                 </div>
             `;
+        }
+    }
+
+    /**
+     * Confluenceドキュメントをスペースごとにグループ化
+     * @param {Array} documents - Confluenceドキュメント配列
+     * @returns {Map} スペースキー -> グループ情報
+     */
+    #groupBySpace(documents) {
+        const groups = new Map();
+
+        for (const doc of documents) {
+            const key = doc.spaceKey || this.#extractSpaceKey(doc.sourceUrl) || 'unknown';
+
+            if (!groups.has(key)) {
+                groups.set(key, {
+                    spaceKey: key,
+                    spaceName: doc.spaceName || key,
+                    documents: []
+                });
+            }
+            groups.get(key).documents.push(doc);
+        }
+
+        return groups;
+    }
+
+    /**
+     * sourceUrlからスペースキーを抽出
+     * @param {string} sourceUrl - ソースURL
+     * @returns {string|null}
+     */
+    #extractSpaceKey(sourceUrl) {
+        if (!sourceUrl) return null;
+        const urlSpaceMatch = sourceUrl.match(/\/spaces\/([^\/]+)\//);
+        const querySpaceMatch = sourceUrl.match(/[?&]spaceKey=([^&]+)/);
+        return urlSpaceMatch ? urlSpaceMatch[1] : (querySpaceMatch ? querySpaceMatch[1] : null);
+    }
+
+    /**
+     * ファイルセクションのHTMLを生成
+     * @param {Array} documents - ファイルドキュメント配列
+     * @returns {string}
+     */
+    #renderFileSection(documents) {
+        const docsHtml = documents.map(doc => this.#renderDocumentItem(doc)).join('');
+
+        return `
+            <div class="kb-group" data-group-type="file">
+                <div class="kb-group-header">
+                    <i class="fas fa-chevron-down kb-group-toggle"></i>
+                    <i class="fas fa-folder kb-group-icon file"></i>
+                    <span class="kb-group-title">ファイル</span>
+                    <span class="kb-group-count">${documents.length}</span>
+                </div>
+                <div class="kb-group-content">
+                    ${docsHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * ConfluenceスペースセクションのHTMLを生成
+     * @param {string} spaceKey - スペースキー
+     * @param {Object} group - グループ情報
+     * @returns {string}
+     */
+    #renderSpaceSection(spaceKey, group) {
+        const docsHtml = group.documents.map(doc => this.#renderDocumentItem(doc, true)).join('');
+        const displayName = group.spaceName !== spaceKey
+            ? `${group.spaceName} (${spaceKey})`
+            : spaceKey;
+
+        return `
+            <div class="kb-group" data-group-type="confluence" data-space-key="${spaceKey}">
+                <div class="kb-group-header">
+                    <i class="fas fa-chevron-down kb-group-toggle"></i>
+                    <i class="fas fa-atlas kb-group-icon confluence"></i>
+                    <span class="kb-group-title">${displayName}</span>
+                    <span class="kb-group-count">${group.documents.length}</span>
+                    <button class="kb-group-delete" title="このスペースの全ページを削除" data-space-key="${spaceKey}">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+                <div class="kb-group-content">
+                    ${docsHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * 個別ドキュメントアイテムのHTMLを生成
+     * @param {Object} doc - ドキュメント
+     * @param {boolean} [isConfluence=false] - Confluenceドキュメントかどうか
+     * @returns {string}
+     */
+    #renderDocumentItem(doc, isConfluence = false) {
+        const linkHtml = isConfluence && doc.sourceUrl
+            ? `<a href="${doc.sourceUrl}" target="_blank" rel="noopener noreferrer" class="kb-doc-link" title="Confluenceで開く"><i class="fas fa-external-link-alt"></i></a>`
+            : '';
+
+        return `
+            <div class="kb-document-item" data-doc-id="${doc.id}">
+                <div class="kb-doc-icon">
+                    <i class="${this.#getFileIcon(doc.type, doc.source)}"></i>
+                </div>
+                <div class="kb-doc-info">
+                    <div class="kb-doc-name" title="${doc.name}">
+                        ${doc.name}
+                        ${linkHtml}
+                    </div>
+                    <div class="kb-doc-meta">
+                        ${doc.chunkCount} チャンク • ${RAGManager.getInstance.formatFileSize(doc.size)} • ${this.#formatDate(doc.createdAt)}
+                    </div>
+                </div>
+                <button class="kb-doc-delete" title="削除" data-doc-id="${doc.id}">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        `;
+    }
+
+    /**
+     * グループ関連のイベントリスナーを設定
+     * @param {HTMLElement} container - コンテナ要素
+     */
+    #attachGroupEventListeners(container) {
+        // グループヘッダーのクリック（折りたたみ/展開）
+        container.querySelectorAll('.kb-group-header').forEach(header => {
+            header.addEventListener('click', (e) => {
+                // 削除ボタンのクリックは除外
+                if (e.target.closest('.kb-group-delete')) return;
+
+                header.classList.toggle('collapsed');
+                const content = header.nextElementSibling;
+                if (content) {
+                    content.classList.toggle('collapsed');
+                }
+            });
+        });
+
+        // スペース削除ボタン
+        container.querySelectorAll('.kb-group-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const spaceKey = btn.dataset.spaceKey;
+                await this.#handleDeleteSpace(spaceKey);
+            });
+        });
+
+        // 個別ドキュメント削除ボタン
+        container.querySelectorAll('.kb-doc-delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const docId = btn.dataset.docId;
+                this.#handleDeleteDocument(docId);
+            });
+        });
+    }
+
+    /**
+     * スペース内の全ドキュメントを削除
+     * @param {string} spaceKey - スペースキー
+     */
+    async #handleDeleteSpace(spaceKey) {
+        const documents = await RAGManager.getInstance.getDocuments();
+        const spaceDocs = documents.filter(doc => {
+            if (doc.spaceKey) return doc.spaceKey === spaceKey;
+            return this.#extractSpaceKey(doc.sourceUrl) === spaceKey;
+        });
+
+        if (spaceDocs.length === 0) {
+            alert('削除するドキュメントがありません');
+            return;
+        }
+
+        if (!confirm(`このスペースの ${spaceDocs.length} ページをすべて削除しますか？`)) {
+            return;
+        }
+
+        try {
+            for (const doc of spaceDocs) {
+                await RAGManager.getInstance.removeDocument(doc.id);
+            }
+            await this.#refreshUI();
+        } catch (error) {
+            console.error('Failed to delete space documents:', error);
+            alert('スペースドキュメントの削除に失敗しました');
         }
     }
 
@@ -880,7 +1056,11 @@ class KnowledgeBaseModal {
             return;
         }
 
-        const spaceName = spaceSelect.options[spaceSelect.selectedIndex].text;
+        // ドロップダウンのテキストからスペース名を抽出（"SpaceName (KEY)" 形式から名前部分を取得）
+        const optionText = spaceSelect.options[spaceSelect.selectedIndex].text;
+        const spaceNameMatch = optionText.match(/^(.+?)\s*\([^)]+\)$/);
+        const spaceName = spaceNameMatch ? spaceNameMatch[1].trim() : optionText;
+
         if (!confirm(`スペース「${spaceName}」をインポートします。\n\n新規・更新されたページのみ処理されます。続行しますか？`)) {
             return;
         }
@@ -893,7 +1073,7 @@ class KnowledgeBaseModal {
         if (progressContainer) progressContainer.style.display = 'block';
 
         try {
-            const result = await RAGManager.getInstance.addConfluenceSpace(spaceKey,
+            const result = await RAGManager.getInstance.addConfluenceSpace(spaceKey, spaceName,
                 (progress) => {
                     // 進捗表示を更新
                     this.#updateConfluenceProgress(progress, progressBar, progressText);

@@ -104,6 +104,8 @@ class VectorStore {
      * @param {'file'|'confluence'} [document.source='file'] - データソース種別
      * @param {string} [document.sourceUrl] - ソースURL（Confluenceの場合はページURL）
      * @param {string} [document.lastModified] - ソースの最終更新日時（ISO 8601形式）
+     * @param {string} [document.spaceKey] - Confluenceスペースキー
+     * @param {string} [document.spaceName] - Confluenceスペース名
      * @returns {Promise<void>}
      */
     async addDocument(document) {
@@ -114,6 +116,8 @@ class VectorStore {
             source: document.source || 'file',
             sourceUrl: document.sourceUrl || null,
             lastModified: document.lastModified || null,
+            spaceKey: document.spaceKey || null,
+            spaceName: document.spaceName || null,
             createdAt: Date.now()
         };
 
@@ -334,7 +338,11 @@ class VectorStore {
                 // スペースキーが指定されている場合はフィルタ
                 if (spaceKey) {
                     documents = documents.filter(doc => {
-                        // sourceUrlからスペースキーを抽出（/spaces/KEY/ または ?spaceKey=KEY）
+                        // まずspaceKeyフィールドを確認
+                        if (doc.spaceKey) {
+                            return doc.spaceKey === spaceKey;
+                        }
+                        // フォールバック: sourceUrlからスペースキーを抽出
                         if (!doc.sourceUrl) return false;
                         const urlSpaceMatch = doc.sourceUrl.match(/\/spaces\/([^\/]+)\//);
                         const querySpaceMatch = doc.sourceUrl.match(/[?&]spaceKey=([^&]+)/);
