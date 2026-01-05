@@ -67,19 +67,20 @@ class ModalHandlers {
                 }
                 
                 // モデルごとのエンドポイントを設定
-                const endpoints = {
-                    'gpt-4o-mini': window.Elements.azureEndpointGpt4oMini,
-                    'gpt-4o': window.Elements.azureEndpointGpt4o,
-                    'gpt-5-mini': window.Elements.azureEndpointGpt5Mini,
-                    'gpt-5': window.Elements.azureEndpointGpt5,
-                    'o1-mini': window.Elements.azureEndpointO1Mini,
-                    'o1': window.Elements.azureEndpointO1
+                const endpointIds = {
+                    'gpt-4o-mini': 'azureEndpointGpt4oMini',
+                    'gpt-4o': 'azureEndpointGpt4o',
+                    'gpt-5-mini': 'azureEndpointGpt5Mini',
+                    'gpt-5': 'azureEndpointGpt5',
+                    'o1-mini': 'azureEndpointO1Mini',
+                    'o1': 'azureEndpointO1'
                 };
-                
-                // 各エンドポイントを保存
-                Object.entries(endpoints).forEach(([model, element]) => {
-                    if (element) {
-                        window.AppState.apiSettings.azureEndpoints = window.AppState.apiSettings.azureEndpoints || {};
+
+                // 各エンドポイントを保存（window.ElementsまたはUICacheから取得）
+                window.AppState.apiSettings.azureEndpoints = {};
+                Object.entries(endpointIds).forEach(([model, elementId]) => {
+                    const element = window.Elements[elementId] || UICache.getInstance.get(elementId);
+                    if (element && element.value !== undefined) {
                         window.AppState.apiSettings.azureEndpoints[model] = element.value.trim();
                     }
                 });
