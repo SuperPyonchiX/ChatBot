@@ -865,7 +865,7 @@ class KnowledgeBaseModal {
     }
 
     /**
-     * Confluenceスペースをインポート
+     * Confluenceスペースをインポート（差分更新対応）
      */
     async #importConfluenceSpace() {
         const spaceSelect = document.getElementById('confluenceSpaceSelect');
@@ -881,7 +881,7 @@ class KnowledgeBaseModal {
         }
 
         const spaceName = spaceSelect.options[spaceSelect.selectedIndex].text;
-        if (!confirm(`スペース「${spaceName}」からすべてのページをインポートします。\n\n処理には時間がかかる場合があります。続行しますか？`)) {
+        if (!confirm(`スペース「${spaceName}」をインポートします。\n\n新規・更新されたページのみ処理されます。続行しますか？`)) {
             return;
         }
 
@@ -894,21 +894,19 @@ class KnowledgeBaseModal {
 
         try {
             const result = await RAGManager.getInstance.addConfluenceSpace(spaceKey,
-                (stage, current, total, message) => {
-                    if (progressBar && total > 0) {
-                        const progress = (current / total) * 100;
-                        progressBar.style.width = `${progress}%`;
-                    }
-                    if (progressText) {
-                        progressText.textContent = message;
-                    }
+                (progress) => {
+                    // 進捗表示を更新
+                    this.#updateConfluenceProgress(progress, progressBar, progressText);
                 }
             );
 
             // 結果メッセージ
             let resultMessage = `インポート完了\n\n`;
-            resultMessage += `- ${result.pageCount} ページ\n`;
-            resultMessage += `- ${result.chunkCount} チャンク`;
+            resultMessage += `📊 処理結果:\n`;
+            resultMessage += `  - 新規: ${result.newCount} ページ\n`;
+            resultMessage += `  - 更新: ${result.updateCount} ページ\n`;
+            resultMessage += `  - スキップ: ${result.skipCount} ページ\n`;
+            resultMessage += `  - 合計チャンク: ${result.chunkCount}`;
 
             if (result.failedPages && result.failedPages.length > 0) {
                 resultMessage += `\n\n⚠️ ${result.failedPages.length} ページが失敗しました`;
@@ -924,6 +922,109 @@ class KnowledgeBaseModal {
             if (progressContainer) progressContainer.style.display = 'none';
             if (progressBar) progressBar.style.width = '0%';
             this.#isProcessing = false;
+        }
+    }
+
+    /**
+     * Confluence進捗表示を更新
+     * @param {Object} progress - 進捗情報
+     * @param {HTMLElement} progressBar - プログレスバー要素
+     * @param {HTMLElement} progressText - プログレステキスト要素
+     */
+    #updateConfluenceProgress(progress, progressBar, progressText) {
+        if (!progressText) return;
+
+        const { stage, current, total, newCount, updateCount, skipCount, pageTitle, action, message } = progress;
+
+        switch (stage) {
+            case 'fetching':
+                progressText.innerHTML = `
+                    <div class="confluence-loading">
+                        <div class="spinner"></div>
+                        <span>${message || 'ページを取得中...'}</span>
+                    </div>
+                `;
+                if (progressBar) progressBar.style.width = '0%';
+                break;
+
+            case 'analyzing':
+                progressText.innerHTML = `
+                    <div class="confluence-loading">
+                        <div class="spinner"></div>
+                        <span>${message || '既存ドキュメントを分析中...'}</span>
+                    </div>
+                `;
+                break;
+
+            case 'analyzed':
+                progressText.innerHTML = `
+                    <div style="margin-bottom: 0.5rem;">${message || '分析完了'}</div>
+                    <div class="confluence-progress-stats">
+                        <span class="confluence-progress-stat new">
+                            <i class="fas fa-plus-circle"></i> 新規: ${newCount || 0}
+                        </span>
+                        <span class="confluence-progress-stat update">
+                            <i class="fas fa-sync-alt"></i> 更新: ${updateCount || 0}
+                        </span>
+                        <span class="confluence-progress-stat skip">
+                            <i class="fas fa-forward"></i> スキップ: ${skipCount || 0}
+                        </span>
+                    </div>
+                `;
+                break;
+
+            case 'embedding':
+                if (progressBar && total > 0) {
+                    const percent = (current / total) * 100;
+                    progressBar.style.width = `${percent}%`;
+                }
+
+                const actionClass = action === 'new' ? 'new' : 'update';
+                const actionLabel = action === 'new' ? '新規' : '更新';
+
+                progressText.innerHTML = `
+                    <div class="confluence-progress-stats">
+                        <span class="confluence-progress-stat new">
+                            <i class="fas fa-plus-circle"></i> 新規: ${newCount || 0}
+                        </span>
+                        <span class="confluence-progress-stat update">
+                            <i class="fas fa-sync-alt"></i> 更新: ${updateCount || 0}
+                        </span>
+                        <span class="confluence-progress-stat skip">
+                            <i class="fas fa-forward"></i> スキップ: ${skipCount || 0}
+                        </span>
+                    </div>
+                    <div class="confluence-progress-current">
+                        <span class="action-badge ${actionClass}">${actionLabel}</span>
+                        <span class="page-title" title="${pageTitle || ''}">${pageTitle || ''}</span>
+                        <span class="page-count">${current || 0} / ${total || 0}</span>
+                    </div>
+                `;
+                break;
+
+            case 'complete':
+                if (progressBar) progressBar.style.width = '100%';
+                progressText.innerHTML = `
+                    <div class="confluence-progress-stats">
+                        <span class="confluence-progress-stat new">
+                            <i class="fas fa-plus-circle"></i> 新規: ${newCount || 0}
+                        </span>
+                        <span class="confluence-progress-stat update">
+                            <i class="fas fa-sync-alt"></i> 更新: ${updateCount || 0}
+                        </span>
+                        <span class="confluence-progress-stat skip">
+                            <i class="fas fa-forward"></i> スキップ: ${skipCount || 0}
+                        </span>
+                    </div>
+                    <div class="confluence-progress-detail">
+                        <i class="fas fa-check-circle" style="color: #4CAF50;"></i>
+                        ${message || '完了'}
+                    </div>
+                `;
+                break;
+
+            default:
+                progressText.textContent = message || '';
         }
     }
 }

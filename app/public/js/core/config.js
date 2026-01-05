@@ -387,7 +387,7 @@ window.CONFIG = {
             // 検索時に取得する上位チャンク数
             TOP_K: 5,
             // 類似度閾値（これ以上のスコアのみ使用）
-            SIMILARITY_THRESHOLD: 0.5
+            SIMILARITY_THRESHOLD: 0.3
         },
 
         // IndexedDBストレージ設定

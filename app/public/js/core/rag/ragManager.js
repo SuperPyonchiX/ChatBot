@@ -163,10 +163,10 @@ class RAGManager {
     }
 
     /**
-     * Confluenceスペースからドキュメントを追加
+     * Confluenceスペースからドキュメントを追加（差分更新対応）
      * @param {string} spaceKey - スペースキー
-     * @param {function} [onProgress] - 進捗コールバック (stage, current, total, message)
-     * @returns {Promise<{pageCount: number, chunkCount: number}>}
+     * @param {function} [onProgress] - 進捗コールバック (progressInfo)
+     * @returns {Promise<{pageCount: number, chunkCount: number, newCount: number, updateCount: number, skipCount: number}>}
      */
     async addConfluenceSpace(spaceKey, onProgress) {
         await this.#ensureInitialized();
@@ -182,15 +182,24 @@ class RAGManager {
         }
 
         let totalChunks = 0;
-        let processedPages = 0;
         const failedPages = [];
 
         try {
             // ページ取得フェーズ
-            if (onProgress) onProgress('fetching', 0, 0, 'ページ一覧を取得中...');
+            if (onProgress) onProgress({
+                stage: 'fetching',
+                current: 0,
+                total: 0,
+                message: 'ページ一覧を取得中...'
+            });
 
             const pages = await confluence.getSpacePages(spaceKey, (current, total) => {
-                if (onProgress) onProgress('fetching', current, total, `ページを取得中: ${current}/${total}`);
+                if (onProgress) onProgress({
+                    stage: 'fetching',
+                    current,
+                    total,
+                    message: `ページを取得中: ${current}/${total}`
+                });
             });
 
             if (pages.length === 0) {
@@ -199,29 +208,130 @@ class RAGManager {
 
             console.log(`📄 Confluenceスペース ${spaceKey}: ${pages.length}ページを取得`);
 
-            // 各ページを処理
+            // 既存のConfluenceドキュメントを取得してマップを作成
+            if (onProgress) onProgress({
+                stage: 'analyzing',
+                current: 0,
+                total: pages.length,
+                message: '既存ドキュメントを分析中...'
+            });
+
+            const existingDocs = await VectorStore.getInstance.getConfluenceDocuments();
+            const existingMap = new Map();
+            for (const doc of existingDocs) {
+                if (doc.sourceUrl) {
+                    existingMap.set(doc.sourceUrl, {
+                        id: doc.id,
+                        lastModified: doc.lastModified
+                    });
+                }
+            }
+
+            // 各ページを分類（新規 / 更新 / スキップ）
+            const toProcess = [];  // { page, action: 'new' | 'update', existingDocId? }
+            const skipped = [];    // 未変更ページ
+
             for (const page of pages) {
+                // 空のページはスキップ
+                if (!page.content || page.content.trim().length === 0) {
+                    console.log(`⏭️ Skipping empty page: ${page.title}`);
+                    skipped.push({ page, reason: 'empty' });
+                    continue;
+                }
+
+                const existing = existingMap.get(page.url);
+                if (!existing) {
+                    // 新規ページ
+                    toProcess.push({ page, action: 'new' });
+                } else if (page.lastModified && existing.lastModified) {
+                    // 更新日時を比較
+                    const pageModified = new Date(page.lastModified).getTime();
+                    const existingModified = new Date(existing.lastModified).getTime();
+                    if (pageModified > existingModified) {
+                        // Confluenceページが更新されている
+                        toProcess.push({ page, action: 'update', existingDocId: existing.id });
+                    } else {
+                        // 未変更
+                        skipped.push({ page, reason: 'unchanged' });
+                    }
+                } else {
+                    // lastModifiedがない場合は新規として処理
+                    toProcess.push({ page, action: 'new' });
+                }
+            }
+
+            const newCount = toProcess.filter(p => p.action === 'new').length;
+            const updateCount = toProcess.filter(p => p.action === 'update').length;
+            const skipCount = skipped.length;
+
+            console.log(`📊 分析結果: 新規=${newCount}, 更新=${updateCount}, スキップ=${skipCount}`);
+
+            // 分析結果を通知
+            if (onProgress) onProgress({
+                stage: 'analyzed',
+                total: pages.length,
+                newCount,
+                updateCount,
+                skipCount,
+                message: `分析完了: ${pages.length}ページ`
+            });
+
+            // 処理するページがない場合
+            if (toProcess.length === 0) {
+                if (onProgress) onProgress({
+                    stage: 'complete',
+                    current: 0,
+                    total: 0,
+                    newCount: 0,
+                    updateCount: 0,
+                    skipCount,
+                    message: '更新が必要なページはありません'
+                });
+
+                return {
+                    pageCount: 0,
+                    chunkCount: 0,
+                    newCount: 0,
+                    updateCount: 0,
+                    skipCount,
+                    failedPages: []
+                };
+            }
+
+            // 新規/更新ページのみを処理
+            let processedCount = 0;
+            let successNewCount = 0;
+            let successUpdateCount = 0;
+
+            for (const { page, action, existingDocId } of toProcess) {
                 const docId = this.#generateId();
 
                 try {
-                    // 空のページはスキップ
-                    if (!page.content || page.content.trim().length === 0) {
-                        console.log(`⏭️ Skipping empty page: ${page.title}`);
-                        processedPages++;
-                        continue;
+                    // 更新の場合は既存ドキュメントを削除
+                    if (action === 'update' && existingDocId) {
+                        await VectorStore.getInstance.deleteDocument(existingDocId);
+                        console.log(`🔄 Deleted old document for update: ${page.title}`);
                     }
+
+                    // 進捗通知
+                    if (onProgress) onProgress({
+                        stage: 'embedding',
+                        current: processedCount + 1,
+                        total: toProcess.length,
+                        pageTitle: page.title,
+                        action,
+                        newCount,
+                        updateCount,
+                        skipCount,
+                        message: `${action === 'new' ? '新規' : '更新'}: ${page.title}`
+                    });
 
                     // チャンキング
-                    if (onProgress) {
-                        onProgress('processing', processedPages, pages.length,
-                            `処理中: ${page.title}`);
-                    }
-
                     const chunks = DocumentChunker.getInstance.chunkText(page.content);
 
                     if (chunks.length === 0) {
                         console.log(`⏭️ Skipping page with no chunks: ${page.title}`);
-                        processedPages++;
+                        processedCount++;
                         continue;
                     }
 
@@ -231,14 +341,9 @@ class RAGManager {
                     );
 
                     // 埋め込み生成
-                    if (onProgress) {
-                        onProgress('embedding', processedPages, pages.length,
-                            `埋め込み生成中: ${page.title}`);
-                    }
-
                     const embeddings = await EmbeddingAPI.getInstance.getEmbeddings(chunksWithMetadata);
 
-                    // 保存
+                    // 保存（lastModifiedを含める）
                     await VectorStore.getInstance.addDocument({
                         id: docId,
                         name: page.title,
@@ -246,7 +351,8 @@ class RAGManager {
                         size: page.content.length,
                         chunkCount: chunks.length,
                         source: 'confluence',
-                        sourceUrl: page.url
+                        sourceUrl: page.url,
+                        lastModified: page.lastModified
                     });
 
                     const chunkRecords = chunksWithMetadata.map((text, index) => ({
@@ -260,31 +366,48 @@ class RAGManager {
                     await VectorStore.getInstance.addChunks(chunkRecords);
 
                     totalChunks += chunks.length;
-                    processedPages++;
+                    processedCount++;
 
-                    console.log(`✅ Page added: ${page.title} (${chunks.length} chunks)`);
+                    if (action === 'new') {
+                        successNewCount++;
+                    } else {
+                        successUpdateCount++;
+                    }
+
+                    console.log(`✅ Page ${action === 'new' ? 'added' : 'updated'}: ${page.title} (${chunks.length} chunks)`);
 
                 } catch (pageError) {
                     console.error(`❌ Failed to process page: ${page.title}`, pageError);
                     failedPages.push({ title: page.title, error: pageError.message });
-                    processedPages++;
-                    // 個別ページのエラーは続行
+                    processedCount++;
                 }
             }
 
-            if (onProgress) onProgress('complete', pages.length, pages.length, '完了');
+            // 完了通知
+            if (onProgress) onProgress({
+                stage: 'complete',
+                current: toProcess.length,
+                total: toProcess.length,
+                newCount: successNewCount,
+                updateCount: successUpdateCount,
+                skipCount,
+                message: '完了'
+            });
 
             // 結果ログ
             if (failedPages.length > 0) {
-                console.warn(`⚠️ Confluenceスペース追加完了（一部失敗）: ${processedPages - failedPages.length}/${pages.length}ページ成功, ${totalChunks}チャンク`);
+                console.warn(`⚠️ Confluenceスペース追加完了（一部失敗）: 新規=${successNewCount}, 更新=${successUpdateCount}, スキップ=${skipCount}, 失敗=${failedPages.length}`);
             } else {
-                console.log(`✅ Confluenceスペース追加完了: ${processedPages}ページ, ${totalChunks}チャンク`);
+                console.log(`✅ Confluenceスペース追加完了: 新規=${successNewCount}, 更新=${successUpdateCount}, スキップ=${skipCount}, ${totalChunks}チャンク`);
             }
 
             return {
-                pageCount: processedPages - failedPages.length,
+                pageCount: successNewCount + successUpdateCount,
                 chunkCount: totalChunks,
-                failedPages: failedPages
+                newCount: successNewCount,
+                updateCount: successUpdateCount,
+                skipCount,
+                failedPages
             };
 
         } catch (error) {
