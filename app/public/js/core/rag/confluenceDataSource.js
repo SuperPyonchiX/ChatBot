@@ -303,30 +303,33 @@ class ConfluenceDataSource {
         let hasMore = true;
 
         while (hasMore) {
-            // depth=root でルートレベルのページのみ取得
-            // children.page を expand して子ページの有無を確認
-            const url = `/rest/api/content?spaceKey=${encodeURIComponent(spaceKey)}&type=page&depth=root&expand=children.page&start=${start}&limit=${limit}`;
+            // ancestors を expand してルートページを識別
+            const url = `/rest/api/content?spaceKey=${encodeURIComponent(spaceKey)}&type=page&expand=ancestors,children.page&start=${start}&limit=${limit}`;
             const response = await this.#fetchFromProxy(url);
 
             if (!response.ok) {
-                throw new Error(`ルートページの取得に失敗しました: HTTP ${response.status}`);
+                throw new Error(`ページの取得に失敗しました: HTTP ${response.status}`);
             }
 
             const data = await response.json();
 
             for (const page of (data.results || [])) {
-                pages.push({
-                    id: page.id,
-                    title: page.title,
-                    hasChildren: (page.children?.page?.size || 0) > 0
-                });
+                // ancestorsが1つ（スペースホームページのみ）の場合がルートページ
+                const ancestorCount = page.ancestors?.length || 0;
+                if (ancestorCount <= 1) {
+                    pages.push({
+                        id: page.id,
+                        title: page.title,
+                        hasChildren: (page.children?.page?.size || 0) > 0
+                    });
+                }
             }
 
             hasMore = data._links?.next !== undefined;
             start += limit;
 
             // 無限ループ防止
-            if (pages.length >= 1000) {
+            if (start >= 5000) {
                 break;
             }
         }

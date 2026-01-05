@@ -319,13 +319,77 @@ class ConfluencePageTree {
             return [];
         }
 
-        // 選択されたページのみコンテンツを取得
-        const pages = await ConfluenceDataSource.getInstance.getPagesContent(
-            selectedIds,
-            onProgress
-        );
+        const allPages = [];
+        const processedIds = new Set();
+        let current = 0;
 
-        return pages;
+        // 未展開ページ（子孫を全取得）と展開済みページ（個別取得）を分類
+        const unexpandedWithChildren = [];  // 子孫全取得が必要
+        const expandedOrNoChildren = [];    // 個別取得
+
+        for (const pageId of selectedIds) {
+            const node = this.#nodes.get(pageId);
+            if (!node) continue;
+
+            // 親の選択に含まれている場合はスキップ（重複防止）
+            if (node.parentId && this.#selectedIds.has(node.parentId)) {
+                const parentNode = this.#nodes.get(node.parentId);
+                if (parentNode && !parentNode.childrenLoaded) {
+                    // 親が未展開で選択されている→親の子孫取得で処理される
+                    continue;
+                }
+            }
+
+            if (node.hasChildren && !node.childrenLoaded) {
+                unexpandedWithChildren.push(pageId);
+            } else {
+                expandedOrNoChildren.push(pageId);
+            }
+        }
+
+        // 1. 未展開ページは子孫全取得
+        for (const pageId of unexpandedWithChildren) {
+            if (processedIds.has(pageId)) continue;
+
+            const descendantPages = await ConfluenceDataSource.getInstance.getPageWithDescendants(
+                pageId,
+                (cur, total, title) => {
+                    if (onProgress) {
+                        onProgress(current + cur, null, title);
+                    }
+                }
+            );
+
+            for (const page of descendantPages) {
+                if (!processedIds.has(page.id)) {
+                    allPages.push(page);
+                    processedIds.add(page.id);
+                }
+            }
+            current += descendantPages.length;
+        }
+
+        // 2. 展開済み/子なしページは個別取得
+        const idsToFetch = expandedOrNoChildren.filter(id => !processedIds.has(id));
+        if (idsToFetch.length > 0) {
+            const pages = await ConfluenceDataSource.getInstance.getPagesContent(
+                idsToFetch,
+                (cur, total, title) => {
+                    if (onProgress) {
+                        onProgress(current + cur, null, title);
+                    }
+                }
+            );
+
+            for (const page of pages) {
+                if (!processedIds.has(page.id)) {
+                    allPages.push(page);
+                    processedIds.add(page.id);
+                }
+            }
+        }
+
+        return allPages;
     }
 
     /**
