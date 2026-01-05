@@ -127,34 +127,22 @@ class Storage {
      * @returns {ApiSettings} API設定オブジェクト
      */
     loadApiSettings() {
-        console.log('[DEBUG] loadApiSettings called');
-
         const azureEndpoints = {};
 
         // AzureエンドポイントはOpenAIモデルのみに適用
-        console.log('[DEBUG] Loading Azure endpoints...');
-        console.log('[DEBUG] MODELS.OPENAI:', window.CONFIG.MODELS.OPENAI);
         window.CONFIG.MODELS.OPENAI.forEach(model => {
             if (!model) return;
 
             const endpointKey = window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX + model;
-            const rawValue = localStorage.getItem(endpointKey);
-            console.log(`[DEBUG]   Raw localStorage ${endpointKey}:`, rawValue ? `"${rawValue.substring(0, 30)}..."` : '(null or empty)');
-
             azureEndpoints[model] = this.getItem(endpointKey, '');
-            console.log(`[DEBUG]   After getItem ${model}:`, azureEndpoints[model] ? `"${azureEndpoints[model].substring(0, 30)}..."` : '(empty)');
         });
-
-        const apiType = this.getItem(window.CONFIG.STORAGE.KEYS.API_TYPE, window.CONFIG.STORAGE.DEFAULT_API_TYPE);
-        console.log('[DEBUG] Loaded apiType:', apiType);
-        console.log('[DEBUG] Loaded azureEndpoints:', azureEndpoints);
 
         return {
             openaiApiKey: this.getItem(window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY, ''),
             azureApiKey: this.getItem(window.CONFIG.STORAGE.KEYS.AZURE_API_KEY, ''),
             geminiApiKey: this.getItem(window.CONFIG.STORAGE.KEYS.GEMINI_API_KEY, ''),
             claudeApiKey: this.getItem(window.CONFIG.STORAGE.KEYS.CLAUDE_API_KEY, ''),
-            apiType: apiType,
+            apiType: this.getItem(window.CONFIG.STORAGE.KEYS.API_TYPE, window.CONFIG.STORAGE.DEFAULT_API_TYPE),
             // @ts-ignore - azureEndpointsは動的に構築されるオブジェクト
             azureEndpoints,
             claudeWebSearchSettings: this.getClaudeWebSearchSettings()
@@ -170,41 +158,28 @@ class Storage {
     saveApiSettings(apiSettings) {
         if (!apiSettings) return;
 
-        console.log('[DEBUG] saveApiSettings called with:', {
-            apiType: apiSettings.apiType,
-            azureEndpoints: apiSettings.azureEndpoints
-        });
-
         this.setItem(window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY, apiSettings.openaiApiKey || '');
         this.setItem(window.CONFIG.STORAGE.KEYS.AZURE_API_KEY, apiSettings.azureApiKey || '');
         this.setItem(window.CONFIG.STORAGE.KEYS.GEMINI_API_KEY, apiSettings.geminiApiKey || '');
         this.setItem(window.CONFIG.STORAGE.KEYS.CLAUDE_API_KEY, apiSettings.claudeApiKey || '');
         this.setItem(window.CONFIG.STORAGE.KEYS.API_TYPE, apiSettings.apiType || window.CONFIG.STORAGE.DEFAULT_API_TYPE);
-        
+
         // Claude Web検索設定の保存
         // @ts-ignore - claudeWebSearchSettingsは拡張プロパティ
         if (apiSettings.claudeWebSearchSettings) {
             // @ts-ignore
             this.saveClaudeWebSearchSettings(apiSettings.claudeWebSearchSettings);
         }
-        
+
         if (apiSettings.azureEndpoints) {
             // AzureエンドポイントはOpenAIモデルのみに適用
-            console.log('[DEBUG] Saving Azure endpoints...');
             window.CONFIG.MODELS.OPENAI.forEach(model => {
                 if (!model) return;
 
                 const endpointKey = window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX + model;
                 const endpoint = apiSettings.azureEndpoints[model] || '';
-                console.log(`[DEBUG]   Saving ${endpointKey}:`, endpoint ? `"${endpoint.substring(0, 30)}..."` : '(empty)');
                 this.setItem(endpointKey, endpoint);
-
-                // 保存後にLocalStorageを確認
-                const savedValue = localStorage.getItem(endpointKey);
-                console.log(`[DEBUG]   After save, localStorage has:`, savedValue ? `"${savedValue.substring(0, 30)}..."` : '(empty)');
             });
-        } else {
-            console.log('[DEBUG] No azureEndpoints to save');
         }
     }
 

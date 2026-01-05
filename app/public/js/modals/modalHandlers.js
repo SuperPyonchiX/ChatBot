@@ -60,7 +60,6 @@ class ModalHandlers {
             // OpenAI系を選択 - OpenAI または Azure OpenAI を判定
             if (window.Elements.azureRadio.checked) {
                 window.AppState.apiSettings.apiType = 'azure';
-                console.log('[DEBUG] modalHandlers - Azure selected');
 
                 // Azure OpenAI APIキーとエンドポイントを更新
                 if (window.Elements.azureApiKeyInput) {
@@ -78,22 +77,13 @@ class ModalHandlers {
                 };
 
                 // 各エンドポイントを保存（window.ElementsまたはUICacheから取得）
-                console.log('[DEBUG] modalHandlers - Getting Azure endpoints from DOM...');
                 window.AppState.apiSettings.azureEndpoints = {};
                 Object.entries(endpointIds).forEach(([model, elementId]) => {
-                    const elementFromElements = window.Elements[elementId];
-                    const elementFromUICache = UICache.getInstance.get(elementId);
-                    const element = elementFromElements || elementFromUICache;
-                    console.log(`[DEBUG]   ${model} (${elementId}): window.Elements=${!!elementFromElements}, UICache=${!!elementFromUICache}`);
+                    const element = window.Elements[elementId] || UICache.getInstance.get(elementId);
                     if (element && element.value !== undefined) {
-                        const value = element.value.trim();
-                        console.log(`[DEBUG]     Value: ${value ? '"' + value.substring(0, 30) + '..."' : '(empty)'}`);
-                        window.AppState.apiSettings.azureEndpoints[model] = value;
-                    } else {
-                        console.log(`[DEBUG]     Element not found or no value property`);
+                        window.AppState.apiSettings.azureEndpoints[model] = element.value.trim();
                     }
                 });
-                console.log('[DEBUG] modalHandlers - Final azureEndpoints:', window.AppState.apiSettings.azureEndpoints);
             } else {
                 window.AppState.apiSettings.apiType = 'openai';
                 
