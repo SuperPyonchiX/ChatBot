@@ -610,14 +610,14 @@
     background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* 階層インデント */
-.page-tree-node[data-level="0"] .page-tree-node-content { padding-left: 0.5rem; }
-.page-tree-node[data-level="1"] .page-tree-node-content { padding-left: 1.5rem; }
-.page-tree-node[data-level="2"] .page-tree-node-content { padding-left: 2.5rem; }
-.page-tree-node[data-level="3"] .page-tree-node-content { padding-left: 3.5rem; }
-.page-tree-node[data-level="4"] .page-tree-node-content { padding-left: 4.5rem; }
-.page-tree-node[data-level="5"] .page-tree-node-content { padding-left: 5.5rem; }
-.page-tree-node[data-level="6"] .page-tree-node-content { padding-left: 6.5rem; }
+/* 階層インデント（直接子セレクタで正確にマッチ） */
+.page-tree-node[data-level="0"] > .page-tree-node-content { padding-left: 0.5rem; }
+.page-tree-node[data-level="1"] > .page-tree-node-content { padding-left: 1.5rem; }
+.page-tree-node[data-level="2"] > .page-tree-node-content { padding-left: 2.5rem; }
+.page-tree-node[data-level="3"] > .page-tree-node-content { padding-left: 3.5rem; }
+.page-tree-node[data-level="4"] > .page-tree-node-content { padding-left: 4.5rem; }
+.page-tree-node[data-level="5"] > .page-tree-node-content { padding-left: 5.5rem; }
+.page-tree-node[data-level="6"] > .page-tree-node-content { padding-left: 6.5rem; }
 
 /* 展開/折りたたみトグル */
 .page-tree-toggle {
