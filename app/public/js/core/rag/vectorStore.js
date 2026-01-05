@@ -106,6 +106,7 @@ class VectorStore {
      * @param {string} [document.lastModified] - ソースの最終更新日時（ISO 8601形式）
      * @param {string} [document.spaceKey] - Confluenceスペースキー
      * @param {string} [document.spaceName] - Confluenceスペース名
+     * @param {string} [document.confluencePageId] - ConfluenceページID（差分更新の識別に使用）
      * @returns {Promise<void>}
      */
     async addDocument(document) {
@@ -118,6 +119,7 @@ class VectorStore {
             lastModified: document.lastModified || null,
             spaceKey: document.spaceKey || null,
             spaceName: document.spaceName || null,
+            confluencePageId: document.confluencePageId || null,
             createdAt: Date.now()
         };
 

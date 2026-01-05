@@ -220,8 +220,10 @@ class RAGManager {
             const existingDocs = await VectorStore.getInstance.getConfluenceDocuments();
             const existingMap = new Map();
             for (const doc of existingDocs) {
-                if (doc.sourceUrl) {
-                    existingMap.set(doc.sourceUrl, {
+                // confluencePageIdを優先、なければsourceUrlから抽出
+                const pageId = doc.confluencePageId || this.#extractPageIdFromUrl(doc.sourceUrl);
+                if (pageId) {
+                    existingMap.set(pageId, {
                         id: doc.id,
                         lastModified: doc.lastModified
                     });
@@ -240,12 +242,13 @@ class RAGManager {
                     continue;
                 }
 
-                const existing = existingMap.get(page.url);
+                // pageId（page.id）で既存ドキュメントを検索
+                const existing = existingMap.get(page.id);
                 if (!existing) {
                     // 新規ページ
                     toProcess.push({ page, action: 'new' });
                 } else if (page.lastModified && existing.lastModified) {
-                    // 更新日時を比較
+                    // 両方にlastModifiedがある場合のみ日時比較
                     const pageModified = new Date(page.lastModified).getTime();
                     const existingModified = new Date(existing.lastModified).getTime();
                     if (pageModified > existingModified) {
@@ -256,8 +259,8 @@ class RAGManager {
                         skipped.push({ page, reason: 'unchanged' });
                     }
                 } else {
-                    // lastModifiedがない場合は新規として処理
-                    toProcess.push({ page, action: 'new' });
+                    // lastModifiedがない場合は既存として扱いスキップ
+                    skipped.push({ page, reason: 'no_lastmodified' });
                 }
             }
 
@@ -344,7 +347,7 @@ class RAGManager {
                     // 埋め込み生成
                     const embeddings = await EmbeddingAPI.getInstance.getEmbeddings(chunksWithMetadata);
 
-                    // 保存（スペース情報を含める）
+                    // 保存（スペース情報とpageIdを含める）
                     await VectorStore.getInstance.addDocument({
                         id: docId,
                         name: page.title,
@@ -355,7 +358,8 @@ class RAGManager {
                         sourceUrl: page.url,
                         lastModified: page.lastModified,
                         spaceKey: spaceKey,
-                        spaceName: spaceName || spaceKey
+                        spaceName: spaceName || spaceKey,
+                        confluencePageId: page.id
                     });
 
                     const chunkRecords = chunksWithMetadata.map((text, index) => ({
@@ -690,6 +694,17 @@ class RAGManager {
      */
     #generateId() {
         return `doc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    }
+
+    /**
+     * sourceUrlからConfluence pageIdを抽出
+     * @param {string} sourceUrl - ConfluenceページURL
+     * @returns {string|null} pageId、抽出できない場合はnull
+     */
+    #extractPageIdFromUrl(sourceUrl) {
+        if (!sourceUrl) return null;
+        const match = sourceUrl.match(/pageId=(\d+)/);
+        return match ? match[1] : null;
     }
 
     /**
