@@ -430,6 +430,14 @@
     color: #9E9E9E;
 }
 
+.confluence-progress-stat.empty {
+    color: #757575;
+}
+
+.confluence-progress-stat.empty i {
+    color: #757575;
+}
+
 .confluence-progress-detail {
     font-size: 0.75rem;
     color: var(--text-secondary, #8b949e);

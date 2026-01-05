@@ -230,15 +230,16 @@ class RAGManager {
                 }
             }
 
-            // 各ページを分類（新規 / 更新 / スキップ）
+            // 各ページを分類（新規 / 更新 / 未変更 / 空）
             const toProcess = [];  // { page, action: 'new' | 'update', existingDocId? }
-            const skipped = [];    // 未変更ページ
+            const skipped = [];    // 未変更ページ（差分更新でスキップ）
+            const emptyPages = []; // 空ページ（コンテンツなし）
 
             for (const page of pages) {
-                // 空のページはスキップ
+                // 空のページは別カウント
                 if (!page.content || page.content.trim().length === 0) {
-                    console.log(`⏭️ Skipping empty page: ${page.title}`);
-                    skipped.push({ page, reason: 'empty' });
+                    console.log(`📄 Empty page: ${page.title}`);
+                    emptyPages.push(page);
                     continue;
                 }
 
@@ -267,8 +268,9 @@ class RAGManager {
             const newCount = toProcess.filter(p => p.action === 'new').length;
             const updateCount = toProcess.filter(p => p.action === 'update').length;
             const skipCount = skipped.length;
+            const emptyCount = emptyPages.length;
 
-            console.log(`📊 分析結果: 新規=${newCount}, 更新=${updateCount}, スキップ=${skipCount}`);
+            console.log(`📊 分析結果: 新規=${newCount}, 更新=${updateCount}, 未変更=${skipCount}, 空=${emptyCount}`);
 
             // 分析結果を通知
             if (onProgress) onProgress({
@@ -277,6 +279,7 @@ class RAGManager {
                 newCount,
                 updateCount,
                 skipCount,
+                emptyCount,
                 message: `分析完了: ${pages.length}ページ`
             });
 
@@ -289,6 +292,7 @@ class RAGManager {
                     newCount: 0,
                     updateCount: 0,
                     skipCount,
+                    emptyCount,
                     message: '更新が必要なページはありません'
                 });
 
@@ -298,6 +302,7 @@ class RAGManager {
                     newCount: 0,
                     updateCount: 0,
                     skipCount,
+                    emptyCount,
                     failedPages: []
                 };
             }
@@ -398,14 +403,15 @@ class RAGManager {
                 newCount: successNewCount,
                 updateCount: successUpdateCount,
                 skipCount,
+                emptyCount,
                 message: '完了'
             });
 
             // 結果ログ
             if (failedPages.length > 0) {
-                console.warn(`⚠️ Confluenceスペース追加完了（一部失敗）: 新規=${successNewCount}, 更新=${successUpdateCount}, スキップ=${skipCount}, 失敗=${failedPages.length}`);
+                console.warn(`⚠️ Confluenceスペース追加完了（一部失敗）: 新規=${successNewCount}, 更新=${successUpdateCount}, 未変更=${skipCount}, 空=${emptyCount}, 失敗=${failedPages.length}`);
             } else {
-                console.log(`✅ Confluenceスペース追加完了: 新規=${successNewCount}, 更新=${successUpdateCount}, スキップ=${skipCount}, ${totalChunks}チャンク`);
+                console.log(`✅ Confluenceスペース追加完了: 新規=${successNewCount}, 更新=${successUpdateCount}, 未変更=${skipCount}, 空=${emptyCount}, ${totalChunks}チャンク`);
             }
 
             return {
@@ -414,6 +420,7 @@ class RAGManager {
                 newCount: successNewCount,
                 updateCount: successUpdateCount,
                 skipCount,
+                emptyCount,
                 failedPages
             };
 

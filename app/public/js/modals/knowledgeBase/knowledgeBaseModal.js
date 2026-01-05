@@ -1114,7 +1114,7 @@ class KnowledgeBaseModal {
     #updateConfluenceProgress(progress, progressBar, progressText) {
         if (!progressText) return;
 
-        const { stage, current, total, newCount, updateCount, skipCount, pageTitle, action, message } = progress;
+        const { stage, current, total, newCount, updateCount, skipCount, emptyCount, pageTitle, action, message } = progress;
 
         switch (stage) {
             case 'fetching':
@@ -1147,7 +1147,10 @@ class KnowledgeBaseModal {
                             <i class="fas fa-sync-alt"></i> 更新: ${updateCount || 0}
                         </span>
                         <span class="confluence-progress-stat skip">
-                            <i class="fas fa-forward"></i> スキップ: ${skipCount || 0}
+                            <i class="fas fa-forward"></i> 未変更: ${skipCount || 0}
+                        </span>
+                        <span class="confluence-progress-stat empty">
+                            <i class="fas fa-file"></i> 空: ${emptyCount || 0}
                         </span>
                     </div>
                 `;
@@ -1171,7 +1174,10 @@ class KnowledgeBaseModal {
                             <i class="fas fa-sync-alt"></i> 更新: ${updateCount || 0}
                         </span>
                         <span class="confluence-progress-stat skip">
-                            <i class="fas fa-forward"></i> スキップ: ${skipCount || 0}
+                            <i class="fas fa-forward"></i> 未変更: ${skipCount || 0}
+                        </span>
+                        <span class="confluence-progress-stat empty">
+                            <i class="fas fa-file"></i> 空: ${emptyCount || 0}
                         </span>
                     </div>
                     <div class="confluence-progress-current">
@@ -1193,7 +1199,10 @@ class KnowledgeBaseModal {
                             <i class="fas fa-sync-alt"></i> 更新: ${updateCount || 0}
                         </span>
                         <span class="confluence-progress-stat skip">
-                            <i class="fas fa-forward"></i> スキップ: ${skipCount || 0}
+                            <i class="fas fa-forward"></i> 未変更: ${skipCount || 0}
+                        </span>
+                        <span class="confluence-progress-stat empty">
+                            <i class="fas fa-file"></i> 空: ${emptyCount || 0}
                         </span>
                     </div>
                     <div class="confluence-progress-detail">
