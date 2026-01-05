@@ -297,39 +297,51 @@ class ConfluenceDataSource {
      * @returns {Promise<Array<{id: string, title: string, hasChildren: boolean}>>}
      */
     async getRootPages(spaceKey) {
+        // 1. スペースのホームページIDを取得
+        const spaceUrl = `/rest/api/space/${encodeURIComponent(spaceKey)}?expand=homepage`;
+        const spaceResponse = await this.#fetchFromProxy(spaceUrl);
+
+        if (!spaceResponse.ok) {
+            throw new Error(`スペース情報の取得に失敗しました: HTTP ${spaceResponse.status}`);
+        }
+
+        const spaceData = await spaceResponse.json();
+        const homepageId = spaceData.homepage?.id;
+
+        if (!homepageId) {
+            console.log(`📁 ${spaceKey}: ホームページが見つかりません`);
+            return [];
+        }
+
+        // 2. ホームページの子ページ（＝ルートページ）を取得
         const pages = [];
         let start = 0;
         const limit = 100;
         let hasMore = true;
 
         while (hasMore) {
-            // ancestors を expand してルートページを識別
-            const url = `/rest/api/content?spaceKey=${encodeURIComponent(spaceKey)}&type=page&depth=root&expand=ancestors,children.page&start=${start}&limit=${limit}`;
+            const url = `/rest/api/content/${homepageId}/child/page?expand=children.page&start=${start}&limit=${limit}`;
             const response = await this.#fetchFromProxy(url);
 
             if (!response.ok) {
-                throw new Error(`ページの取得に失敗しました: HTTP ${response.status}`);
+                throw new Error(`ルートページの取得に失敗しました: HTTP ${response.status}`);
             }
 
             const data = await response.json();
 
             for (const page of (data.results || [])) {
-                // ancestorsが1つ（スペースホームページのみ）の場合がルートページ
-                const ancestorCount = page.ancestors?.length || 0;
-                if (ancestorCount <= 1) {
-                    pages.push({
-                        id: page.id,
-                        title: page.title,
-                        hasChildren: (page.children?.page?.size || 0) > 0
-                    });
-                }
+                pages.push({
+                    id: page.id,
+                    title: page.title,
+                    hasChildren: (page.children?.page?.size || 0) > 0
+                });
             }
 
             hasMore = data._links?.next !== undefined;
             start += limit;
 
-            // 無限ループ防止
-            if (start >= 5000) {
+            // 安全のため上限設定
+            if (start >= 500) {
                 break;
             }
         }
