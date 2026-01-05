@@ -400,46 +400,50 @@ class KnowledgeBaseModal {
             const file = files[i];
 
             try {
-                // 進捗表示
+                // ファイル名の表示用短縮
+                const displayName = file.name.length > 25
+                    ? file.name.substring(0, 22) + '...'
+                    : file.name;
+
+                // 初期進捗表示
                 if (progressText) {
-                    progressText.textContent = `${file.name} を処理中... (${i + 1}/${files.length})`;
+                    progressText.innerHTML = `${displayName} を処理中<br><small>全体: ${i + 1} / ${files.length} ファイル</small>`;
                 }
 
                 await RAGManager.getInstance.addDocument(file, (stage, current, total) => {
-                    if (progressBar) {
-                        let progress = 0;
-                        switch (stage) {
-                            case 'chunking':
-                                progress = 10;
-                                break;
-                            case 'embedding':
-                                progress = 10 + (current / total) * 80;
-                                break;
-                            case 'saving':
-                                progress = 90;
-                                break;
-                            case 'complete':
-                                progress = 100;
-                                break;
-                        }
-                        progressBar.style.width = `${progress}%`;
+                    // 各ファイル内の進捗（0-1）
+                    let fileProgress = 0;
+                    switch (stage) {
+                        case 'chunking':
+                            fileProgress = 0.1;
+                            break;
+                        case 'embedding':
+                            fileProgress = 0.1 + (current / total) * 0.8;
+                            break;
+                        case 'saving':
+                            fileProgress = 0.9;
+                            break;
+                        case 'complete':
+                            fileProgress = 1;
+                            break;
                     }
 
+                    // 全体進捗 = (完了ファイル数 + 現在ファイル進捗) / 全ファイル数
+                    if (progressBar) {
+                        const overallProgress = ((i + fileProgress) / files.length) * 100;
+                        progressBar.style.width = `${overallProgress}%`;
+                    }
+
+                    // ステージ名をテキストに反映
                     if (progressText) {
-                        switch (stage) {
-                            case 'chunking':
-                                progressText.textContent = `${file.name}: テキスト抽出中...`;
-                                break;
-                            case 'embedding':
-                                progressText.textContent = `${file.name}: 埋め込み生成中... (${current}/${total})`;
-                                break;
-                            case 'saving':
-                                progressText.textContent = `${file.name}: 保存中...`;
-                                break;
-                            case 'complete':
-                                progressText.textContent = `${file.name}: 完了`;
-                                break;
-                        }
+                        const stageNames = {
+                            'chunking': 'テキスト抽出中',
+                            'embedding': '埋め込み生成中',
+                            'saving': '保存中',
+                            'complete': '完了'
+                        };
+                        const stageName = stageNames[stage] || '処理中';
+                        progressText.innerHTML = `${displayName}（${stageName}）<br><small>全体: ${i + 1} / ${files.length} ファイル</small>`;
                     }
                 });
 
