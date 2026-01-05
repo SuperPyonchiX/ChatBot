@@ -292,6 +292,204 @@ class ConfluenceDataSource {
     }
 
     /**
+     * スペースのルートページ一覧を取得
+     * @param {string} spaceKey - スペースキー
+     * @returns {Promise<Array<{id: string, title: string, hasChildren: boolean}>>}
+     */
+    async getRootPages(spaceKey) {
+        const pages = [];
+        let start = 0;
+        const limit = 100;
+        let hasMore = true;
+
+        while (hasMore) {
+            // depth=root でルートレベルのページのみ取得
+            // children.page を expand して子ページの有無を確認
+            const url = `/rest/api/content?spaceKey=${encodeURIComponent(spaceKey)}&type=page&depth=root&expand=children.page&start=${start}&limit=${limit}`;
+            const response = await this.#fetchFromProxy(url);
+
+            if (!response.ok) {
+                throw new Error(`ルートページの取得に失敗しました: HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            for (const page of (data.results || [])) {
+                pages.push({
+                    id: page.id,
+                    title: page.title,
+                    hasChildren: (page.children?.page?.size || 0) > 0
+                });
+            }
+
+            hasMore = data._links?.next !== undefined;
+            start += limit;
+
+            // 無限ループ防止
+            if (pages.length >= 1000) {
+                break;
+            }
+        }
+
+        console.log(`📁 ${spaceKey}: ${pages.length}個のルートページを取得`);
+        return pages;
+    }
+
+    /**
+     * 指定ページの子ページ一覧を取得
+     * @param {string} pageId - 親ページID
+     * @returns {Promise<Array<{id: string, title: string, hasChildren: boolean}>>}
+     */
+    async getChildPages(pageId) {
+        const pages = [];
+        let start = 0;
+        const limit = 100;
+        let hasMore = true;
+
+        while (hasMore) {
+            // 子ページを取得し、さらにその子の有無を確認
+            const url = `/rest/api/content/${pageId}/child/page?expand=children.page&start=${start}&limit=${limit}`;
+            const response = await this.#fetchFromProxy(url);
+
+            if (!response.ok) {
+                throw new Error(`子ページの取得に失敗しました: HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            for (const page of (data.results || [])) {
+                pages.push({
+                    id: page.id,
+                    title: page.title,
+                    hasChildren: (page.children?.page?.size || 0) > 0
+                });
+            }
+
+            hasMore = data._links?.next !== undefined;
+            start += limit;
+
+            // 無限ループ防止
+            if (pages.length >= 500) {
+                break;
+            }
+        }
+
+        return pages;
+    }
+
+    /**
+     * 指定ページとその全子孫ページを取得（コンテンツ含む）
+     * @param {string} pageId - 起点ページID
+     * @param {function} [onProgress] - 進捗コールバック (current, total, pageTitle)
+     * @returns {Promise<Array<{id: string, title: string, content: string, url: string, lastModified: string}>>}
+     */
+    async getPageWithDescendants(pageId, onProgress) {
+        const config = window.CONFIG.RAG.CONFLUENCE;
+        const pages = [];
+        const pageQueue = [pageId];
+        const processedIds = new Set();
+
+        while (pageQueue.length > 0 && pages.length < config.MAX_PAGES_PER_SPACE) {
+            const currentId = pageQueue.shift();
+
+            // 重複チェック
+            if (processedIds.has(currentId)) {
+                continue;
+            }
+            processedIds.add(currentId);
+
+            // ページ詳細を取得
+            const pageUrl = `/rest/api/content/${currentId}?expand=body.storage,version,children.page`;
+            const response = await this.#fetchFromProxy(pageUrl);
+
+            if (!response.ok) {
+                console.warn(`ページ ${currentId} の取得に失敗: HTTP ${response.status}`);
+                continue;
+            }
+
+            const page = await response.json();
+
+            // コンテンツを抽出
+            const htmlContent = page.body?.storage?.value || '';
+            const textContent = this.#extractTextFromHtml(htmlContent);
+            const truncatedContent = textContent.length > config.MAX_CONTENT_LENGTH
+                ? textContent.substring(0, config.MAX_CONTENT_LENGTH)
+                : textContent;
+
+            pages.push({
+                id: page.id,
+                title: page.title,
+                content: truncatedContent,
+                url: `${this.#baseUrl}/pages/viewpage.action?pageId=${page.id}`,
+                lastModified: page.version?.when || null
+            });
+
+            if (onProgress) {
+                onProgress(pages.length, null, page.title);
+            }
+
+            // 子ページをキューに追加
+            if (page.children?.page?.size > 0) {
+                const childPages = await this.getChildPages(currentId);
+                for (const child of childPages) {
+                    if (!processedIds.has(child.id)) {
+                        pageQueue.push(child.id);
+                    }
+                }
+            }
+        }
+
+        console.log(`📄 ページID ${pageId} から ${pages.length} ページを取得`);
+        return pages;
+    }
+
+    /**
+     * 複数のページIDからコンテンツを取得
+     * @param {string[]} pageIds - ページIDの配列
+     * @param {function} [onProgress] - 進捗コールバック (current, total, pageTitle)
+     * @returns {Promise<Array<{id: string, title: string, content: string, url: string, lastModified: string}>>}
+     */
+    async getPagesContent(pageIds, onProgress) {
+        const config = window.CONFIG.RAG.CONFLUENCE;
+        const pages = [];
+        const total = pageIds.length;
+
+        for (let i = 0; i < pageIds.length; i++) {
+            const pageId = pageIds[i];
+            const pageUrl = `/rest/api/content/${pageId}?expand=body.storage,version`;
+            const response = await this.#fetchFromProxy(pageUrl);
+
+            if (!response.ok) {
+                console.warn(`ページ ${pageId} の取得に失敗: HTTP ${response.status}`);
+                continue;
+            }
+
+            const page = await response.json();
+
+            // コンテンツを抽出
+            const htmlContent = page.body?.storage?.value || '';
+            const textContent = this.#extractTextFromHtml(htmlContent);
+            const truncatedContent = textContent.length > config.MAX_CONTENT_LENGTH
+                ? textContent.substring(0, config.MAX_CONTENT_LENGTH)
+                : textContent;
+
+            pages.push({
+                id: page.id,
+                title: page.title,
+                content: truncatedContent,
+                url: `${this.#baseUrl}/pages/viewpage.action?pageId=${page.id}`,
+                lastModified: page.version?.when || null
+            });
+
+            if (onProgress) {
+                onProgress(i + 1, total, page.title);
+            }
+        }
+
+        return pages;
+    }
+
+    /**
      * 設定が完了しているかチェック
      * @returns {boolean}
      */

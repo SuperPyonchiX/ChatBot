@@ -581,14 +581,41 @@
                         <span id="confluenceStatusText">接続済み</span>
                     </div>
                     <div class="form-group">
-                        <label for="confluenceSpaceSelect">インポートするスペース:</label>
+                        <label for="confluenceSpaceSelect">スペースを選択:</label>
                         <select id="confluenceSpaceSelect">
                             <option value="">スペースを選択</option>
                         </select>
                     </div>
+
+                    <!-- ページツリーセクション -->
+                    <div id="confluencePageTreeSection" class="confluence-page-tree-section hidden">
+                        <div class="confluence-page-tree-header">
+                            <span class="confluence-page-tree-title">
+                                <i class="fas fa-sitemap"></i> ページ階層
+                            </span>
+                            <div class="confluence-page-tree-actions">
+                                <button id="selectAllPages" class="tree-action-btn" title="全選択">
+                                    <i class="fas fa-check-double"></i>
+                                </button>
+                                <button id="deselectAllPages" class="tree-action-btn" title="全解除">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <button id="collapseAllPages" class="tree-action-btn" title="全折りたたみ">
+                                    <i class="fas fa-compress-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="confluencePageTree" class="confluence-page-tree">
+                            <!-- ツリーノードはJSで動的に生成 -->
+                        </div>
+                        <div class="confluence-page-tree-footer">
+                            <span id="selectedPageCount">0 ページ選択中</span>
+                        </div>
+                    </div>
+
                     <div class="confluence-space-buttons">
-                        <button id="importConfluenceSpace" class="primary-button">
-                            <i class="fas fa-download"></i> スペースをインポート
+                        <button id="importConfluencePages" class="primary-button">
+                            <i class="fas fa-download"></i> 選択したページをインポート
                         </button>
                         <button id="editConfluenceSettings" class="secondary-button">
                             <i class="fas fa-cog"></i> 設定を変更
@@ -671,6 +698,7 @@
     <script src="js/core/rag/documentChunker.js"></script>
     <script src="js/core/rag/similaritySearch.js"></script>
     <script src="js/core/rag/confluenceDataSource.js"></script>
+    <script src="js/core/rag/confluencePageTree.js"></script>
     <script src="js/core/rag/ragManager.js"></script>
 
     <script src="js/utils/markdown.js"></script>

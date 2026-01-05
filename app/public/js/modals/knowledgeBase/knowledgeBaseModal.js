@@ -151,16 +151,44 @@ class KnowledgeBaseModal {
             saveBtn.addEventListener('click', () => this.#saveConfluenceSettings());
         }
 
-        // スペースインポート
-        const importBtn = document.getElementById('importConfluenceSpace');
-        if (importBtn) {
-            importBtn.addEventListener('click', () => this.#importConfluenceSpace());
+        // 選択ページインポート
+        const importPagesBtn = document.getElementById('importConfluencePages');
+        if (importPagesBtn) {
+            importPagesBtn.addEventListener('click', () => this.#importSelectedPages());
         }
 
         // 設定変更ボタン
         const editBtn = document.getElementById('editConfluenceSettings');
         if (editBtn) {
             editBtn.addEventListener('click', () => this.#showConfluenceSettingsForm());
+        }
+
+        // ========================================
+        // ページツリー関連イベントリスナー
+        // ========================================
+
+        // 全選択ボタン
+        const selectAllBtn = document.getElementById('selectAllPages');
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', () => this.#handleSelectAll());
+        }
+
+        // 全解除ボタン
+        const deselectAllBtn = document.getElementById('deselectAllPages');
+        if (deselectAllBtn) {
+            deselectAllBtn.addEventListener('click', () => this.#handleDeselectAll());
+        }
+
+        // 全折りたたみボタン
+        const collapseAllBtn = document.getElementById('collapseAllPages');
+        if (collapseAllBtn) {
+            collapseAllBtn.addEventListener('click', () => this.#handleCollapseAll());
+        }
+
+        // スペース選択変更時にページツリーを初期化
+        const spaceSelect = document.getElementById('confluenceSpaceSelect');
+        if (spaceSelect) {
+            spaceSelect.addEventListener('change', (e) => this.#handleSpaceChange(e));
         }
     }
 
@@ -1214,6 +1242,490 @@ class KnowledgeBaseModal {
 
             default:
                 progressText.textContent = message || '';
+        }
+    }
+
+    // ========================================
+    // ページツリー関連メソッド
+    // ========================================
+
+    /**
+     * スペース選択変更ハンドラ
+     * @param {Event} e
+     */
+    async #handleSpaceChange(e) {
+        const spaceKey = e.target.value;
+        const pageTreeSection = document.getElementById('confluencePageTreeSection');
+
+        if (!spaceKey) {
+            // スペース未選択時はツリーを非表示
+            if (pageTreeSection) pageTreeSection.classList.add('hidden');
+            ConfluencePageTree.getInstance.reset();
+            this.#updateSelectedCount();
+            return;
+        }
+
+        // スペース名を取得
+        const optionText = e.target.options[e.target.selectedIndex].text;
+        const spaceNameMatch = optionText.match(/^(.+?)\s*\([^)]+\)$/);
+        const spaceName = spaceNameMatch ? spaceNameMatch[1].trim() : optionText;
+
+        // ページツリーを初期化
+        await this.#initializePageTree(spaceKey, spaceName);
+    }
+
+    /**
+     * ページツリーを初期化
+     * @param {string} spaceKey
+     * @param {string} spaceName
+     */
+    async #initializePageTree(spaceKey, spaceName) {
+        const pageTreeSection = document.getElementById('confluencePageTreeSection');
+        const pageTreeContainer = document.getElementById('confluencePageTree');
+
+        if (!pageTreeSection || !pageTreeContainer) return;
+
+        // ローディング表示
+        pageTreeSection.classList.remove('hidden');
+        pageTreeContainer.innerHTML = `
+            <div class="confluence-page-tree-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>ページ階層を読み込み中...</span>
+            </div>
+        `;
+
+        try {
+            await ConfluencePageTree.getInstance.initializeSpace(spaceKey, spaceName);
+            this.#renderPageTree();
+            this.#updateSelectedCount();
+        } catch (error) {
+            console.error('Failed to initialize page tree:', error);
+            pageTreeContainer.innerHTML = `
+                <div class="confluence-page-tree-empty">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>ページ階層の読み込みに失敗しました</span>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * ページツリーをレンダリング
+     */
+    #renderPageTree() {
+        const container = document.getElementById('confluencePageTree');
+        if (!container) return;
+
+        const tree = ConfluencePageTree.getInstance.getTree();
+
+        if (tree.length === 0) {
+            container.innerHTML = `
+                <div class="confluence-page-tree-empty">
+                    <i class="fas fa-folder-open"></i>
+                    <span>ルートページがありません</span>
+                </div>
+            `;
+            return;
+        }
+
+        const html = tree.map(node => this.#renderTreeNode(node)).join('');
+        container.innerHTML = html;
+
+        // イベントリスナーを設定
+        this.#attachPageTreeEventListeners(container);
+    }
+
+    /**
+     * ツリーノードをレンダリング
+     * @param {Object} node - ツリーノード
+     * @returns {string} HTML文字列
+     */
+    #renderTreeNode(node) {
+        const toggleClass = node.hasChildren
+            ? (node.isExpanded ? 'page-tree-toggle expanded' : 'page-tree-toggle')
+            : 'page-tree-toggle no-children';
+
+        const checkboxChecked = node.isSelected ? 'checked' : '';
+        const indeterminate = node.selectionState === 'partial' ? 'indeterminate' : '';
+        const contentClass = node.isSelected ? 'page-tree-node-content selected' : 'page-tree-node-content';
+
+        const childrenClass = node.isExpanded ? 'page-tree-children' : 'page-tree-children collapsed';
+
+        let childrenHtml = '';
+        if (node.children && node.children.length > 0) {
+            childrenHtml = node.children.map(child => this.#renderTreeNode(child)).join('');
+        }
+
+        return `
+            <div class="page-tree-node" data-page-id="${node.id}" data-level="${node.level}">
+                <div class="${contentClass}">
+                    <span class="${toggleClass}" data-page-id="${node.id}">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>
+                    <input type="checkbox" class="page-tree-checkbox ${indeterminate}"
+                           data-page-id="${node.id}" ${checkboxChecked}>
+                    <i class="fas fa-file-alt page-tree-icon"></i>
+                    <span class="page-tree-title" title="${node.title}">${node.title}</span>
+                </div>
+                <div class="${childrenClass}">
+                    ${childrenHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * ページツリーのイベントリスナーを設定
+     * @param {HTMLElement} container
+     */
+    #attachPageTreeEventListeners(container) {
+        // トグルボタンクリック
+        container.querySelectorAll('.page-tree-toggle:not(.no-children)').forEach(toggle => {
+            toggle.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const pageId = toggle.dataset.pageId;
+                await this.#handleToggleNode(pageId, toggle);
+            });
+        });
+
+        // チェックボックス変更
+        container.querySelectorAll('.page-tree-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const pageId = checkbox.dataset.pageId;
+                this.#handleCheckboxChange(pageId, e.target.checked);
+            });
+
+            // indeterminate状態を適用
+            if (checkbox.classList.contains('indeterminate')) {
+                checkbox.indeterminate = true;
+            }
+        });
+
+        // ノードコンテンツクリック（チェックボックストグル）
+        container.querySelectorAll('.page-tree-node-content').forEach(content => {
+            content.addEventListener('click', (e) => {
+                // トグルとチェックボックス自体のクリックは除外
+                if (e.target.closest('.page-tree-toggle') || e.target.closest('.page-tree-checkbox')) {
+                    return;
+                }
+                const checkbox = content.querySelector('.page-tree-checkbox');
+                if (checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+    }
+
+    /**
+     * ノード展開/折りたたみハンドラ
+     * @param {string} pageId
+     * @param {HTMLElement} toggleElement
+     */
+    async #handleToggleNode(pageId, toggleElement) {
+        const tree = ConfluencePageTree.getInstance;
+        const node = tree.getNode(pageId);
+
+        if (!node) return;
+
+        // ローディング表示
+        if (node.hasChildren && !node.childrenLoaded) {
+            toggleElement.classList.add('loading');
+            toggleElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
+
+        try {
+            const isExpanded = await tree.toggleExpand(pageId);
+
+            // トグルアイコン更新
+            toggleElement.classList.remove('loading');
+            toggleElement.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            toggleElement.classList.toggle('expanded', isExpanded);
+
+            // 子ノードコンテナの表示切り替え
+            const nodeElement = toggleElement.closest('.page-tree-node');
+            const childrenContainer = nodeElement?.querySelector('.page-tree-children');
+
+            if (childrenContainer) {
+                if (isExpanded && node.childrenLoaded) {
+                    // 子ノードをレンダリング
+                    const children = [];
+                    for (const childId of tree.getNode(pageId).childIds) {
+                        const childTree = this.#buildTreeNode(childId, node.level !== undefined ? (node.level + 1) : 1);
+                        if (childTree) children.push(childTree);
+                    }
+
+                    if (children.length > 0) {
+                        childrenContainer.innerHTML = children.map(child => this.#renderTreeNode(child)).join('');
+                        this.#attachPageTreeEventListeners(childrenContainer);
+                    }
+                }
+                childrenContainer.classList.toggle('collapsed', !isExpanded);
+            }
+        } catch (error) {
+            console.error('Failed to toggle node:', error);
+            toggleElement.classList.remove('loading');
+            toggleElement.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        }
+    }
+
+    /**
+     * ツリーノードオブジェクトを構築（レンダリング用）
+     * @param {string} nodeId
+     * @param {number} level
+     * @returns {Object|null}
+     */
+    #buildTreeNode(nodeId, level) {
+        const tree = ConfluencePageTree.getInstance;
+        const node = tree.getNode(nodeId);
+        if (!node) return null;
+
+        return {
+            id: node.id,
+            title: node.title,
+            hasChildren: node.hasChildren,
+            childrenLoaded: node.childrenLoaded,
+            isExpanded: tree.isExpanded(node.id),
+            isSelected: tree.isSelected(node.id),
+            selectionState: tree.getSelectionState(node.id),
+            level: level,
+            children: []
+        };
+    }
+
+    /**
+     * チェックボックス変更ハンドラ
+     * @param {string} pageId
+     * @param {boolean} checked
+     */
+    #handleCheckboxChange(pageId, checked) {
+        ConfluencePageTree.getInstance.setSelected(pageId, checked, true);
+
+        // UI更新（選択状態を反映）
+        this.#updateNodeSelectionUI(pageId, checked);
+        this.#updateSelectedCount();
+    }
+
+    /**
+     * ノードの選択状態UIを更新
+     * @param {string} pageId
+     * @param {boolean} selected
+     */
+    #updateNodeSelectionUI(pageId, selected) {
+        const container = document.getElementById('confluencePageTree');
+        if (!container) return;
+
+        // 選択されたノードと子孫の表示を更新
+        const updateNode = (id, sel) => {
+            const nodeEl = container.querySelector(`.page-tree-node[data-page-id="${id}"]`);
+            if (nodeEl) {
+                const content = nodeEl.querySelector('.page-tree-node-content');
+                const checkbox = nodeEl.querySelector('.page-tree-checkbox');
+
+                if (content) {
+                    content.classList.toggle('selected', sel);
+                }
+                if (checkbox) {
+                    checkbox.checked = sel;
+                    checkbox.indeterminate = false;
+                }
+            }
+
+            // 子ノードも更新
+            const node = ConfluencePageTree.getInstance.getNode(id);
+            if (node && node.childrenLoaded) {
+                for (const childId of node.childIds) {
+                    updateNode(childId, sel);
+                }
+            }
+        };
+
+        updateNode(pageId, selected);
+
+        // 親ノードのindeterminate状態を更新
+        this.#updateParentIndeterminateState(pageId);
+    }
+
+    /**
+     * 親ノードのindeterminate状態を更新
+     * @param {string} pageId
+     */
+    #updateParentIndeterminateState(pageId) {
+        const container = document.getElementById('confluencePageTree');
+        if (!container) return;
+
+        const tree = ConfluencePageTree.getInstance;
+        let node = tree.getNode(pageId);
+
+        while (node && node.parentId) {
+            const parentNode = tree.getNode(node.parentId);
+            if (!parentNode) break;
+
+            const state = tree.getSelectionState(node.parentId);
+            const parentEl = container.querySelector(`.page-tree-node[data-page-id="${node.parentId}"]`);
+
+            if (parentEl) {
+                const checkbox = parentEl.querySelector('.page-tree-checkbox');
+                if (checkbox) {
+                    checkbox.checked = state === 'all';
+                    checkbox.indeterminate = state === 'partial';
+                }
+
+                const content = parentEl.querySelector('.page-tree-node-content');
+                if (content) {
+                    content.classList.toggle('selected', state === 'all');
+                }
+            }
+
+            node = parentNode;
+        }
+    }
+
+    /**
+     * 選択数を更新
+     */
+    #updateSelectedCount() {
+        const countEl = document.getElementById('selectedPageCount');
+        if (countEl) {
+            const count = ConfluencePageTree.getInstance.getSelectedCount();
+            countEl.textContent = `${count} ページ選択中`;
+        }
+    }
+
+    /**
+     * 全選択ハンドラ
+     */
+    #handleSelectAll() {
+        ConfluencePageTree.getInstance.selectAll();
+        this.#renderPageTree();
+        this.#updateSelectedCount();
+    }
+
+    /**
+     * 全解除ハンドラ
+     */
+    #handleDeselectAll() {
+        ConfluencePageTree.getInstance.deselectAll();
+        this.#renderPageTree();
+        this.#updateSelectedCount();
+    }
+
+    /**
+     * 全折りたたみハンドラ
+     */
+    #handleCollapseAll() {
+        const tree = ConfluencePageTree.getInstance;
+        const allTree = tree.getTree();
+
+        // 全ノードを折りたたみ
+        const collapseRecursive = (nodes) => {
+            for (const node of nodes) {
+                if (node.isExpanded) {
+                    tree.collapsePage(node.id);
+                }
+                if (node.children) {
+                    collapseRecursive(node.children);
+                }
+            }
+        };
+
+        collapseRecursive(allTree);
+        this.#renderPageTree();
+    }
+
+    /**
+     * 選択されたページをインポート
+     */
+    async #importSelectedPages() {
+        const selectedIds = ConfluencePageTree.getInstance.getSelectedPageIds();
+
+        if (selectedIds.length === 0) {
+            alert('インポートするページを選択してください');
+            return;
+        }
+
+        if (this.#isProcessing) {
+            return;
+        }
+
+        const spaceKey = ConfluencePageTree.getInstance.getCurrentSpaceKey();
+        const spaceName = ConfluencePageTree.getInstance.getCurrentSpaceName();
+
+        if (!confirm(`${selectedIds.length} ページをインポートします。続行しますか？`)) {
+            return;
+        }
+
+        this.#isProcessing = true;
+        const progressContainer = document.getElementById('kbProgress');
+        const progressBar = document.getElementById('kbProgressBar');
+        const progressText = document.getElementById('kbProgressText');
+
+        if (progressContainer) progressContainer.style.display = 'block';
+
+        try {
+            // ページコンテンツを取得
+            if (progressText) {
+                progressText.innerHTML = `
+                    <div class="confluence-loading">
+                        <div class="spinner"></div>
+                        <span>ページコンテンツを取得中...</span>
+                    </div>
+                `;
+            }
+
+            const pages = await ConfluencePageTree.getInstance.getSelectedPagesWithContent(
+                (current, total, pageTitle) => {
+                    if (progressBar && total) {
+                        progressBar.style.width = `${(current / total) * 30}%`;
+                    }
+                    if (progressText) {
+                        progressText.innerHTML = `
+                            <div class="confluence-loading">
+                                <div class="spinner"></div>
+                                <span>取得中: ${pageTitle} (${current}/${total})</span>
+                            </div>
+                        `;
+                    }
+                }
+            );
+
+            if (pages.length === 0) {
+                alert('取得できるページがありませんでした');
+                return;
+            }
+
+            // RAGManagerでインポート
+            const result = await RAGManager.getInstance.addConfluencePages(
+                pages,
+                spaceKey,
+                spaceName,
+                (progress) => {
+                    this.#updateConfluenceProgress(progress, progressBar, progressText);
+                }
+            );
+
+            // 結果メッセージ
+            let resultMessage = `インポート完了\n\n`;
+            resultMessage += `📊 処理結果:\n`;
+            resultMessage += `  - 新規: ${result.newCount} ページ\n`;
+            resultMessage += `  - 更新: ${result.updateCount} ページ\n`;
+            resultMessage += `  - スキップ: ${result.skipCount} ページ\n`;
+            resultMessage += `  - 合計チャンク: ${result.chunkCount}`;
+
+            if (result.failedPages && result.failedPages.length > 0) {
+                resultMessage += `\n\n⚠️ ${result.failedPages.length} ページが失敗しました`;
+            }
+
+            alert(resultMessage);
+            await this.#refreshUI();
+
+        } catch (error) {
+            console.error('Import error:', error);
+            alert('インポートに失敗しました: ' + error.message);
+        } finally {
+            if (progressContainer) progressContainer.style.display = 'none';
+            if (progressBar) progressBar.style.width = '0%';
+            this.#isProcessing = false;
         }
     }
 }

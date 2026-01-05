@@ -431,6 +431,235 @@ class RAGManager {
     }
 
     /**
+     * 選択されたConfluenceページをインポート（差分更新対応）
+     * @param {Array<{id: string, title: string, content: string, url: string, lastModified: string}>} pages - インポートするページ配列
+     * @param {string} spaceKey - スペースキー
+     * @param {string} [spaceName] - スペース名
+     * @param {function} [onProgress] - 進捗コールバック
+     * @returns {Promise<Object>} インポート結果
+     */
+    async addConfluencePages(pages, spaceKey, spaceName, onProgress) {
+        await this.#ensureInitialized();
+
+        if (!pages || pages.length === 0) {
+            throw new Error('インポートするページがありません');
+        }
+
+        let totalChunks = 0;
+        const failedPages = [];
+
+        try {
+            // 既存のConfluenceドキュメントを取得してマップを作成
+            if (onProgress) onProgress({
+                stage: 'analyzing',
+                current: 0,
+                total: pages.length,
+                message: '既存ドキュメントを分析中...'
+            });
+
+            const existingDocs = await VectorStore.getInstance.getConfluenceDocuments();
+            const existingMap = new Map();
+            for (const doc of existingDocs) {
+                const pageId = doc.confluencePageId || this.#extractPageIdFromUrl(doc.sourceUrl);
+                if (pageId) {
+                    existingMap.set(pageId, {
+                        id: doc.id,
+                        lastModified: doc.lastModified
+                    });
+                }
+            }
+
+            // 各ページを分類（新規 / 更新 / 未変更 / 空）
+            const toProcess = [];
+            const skipped = [];
+            const emptyPages = [];
+
+            for (const page of pages) {
+                // 空のページは別カウント
+                if (!page.content || page.content.trim().length === 0) {
+                    console.log(`📄 Empty page: ${page.title}`);
+                    emptyPages.push(page);
+                    continue;
+                }
+
+                const existing = existingMap.get(page.id);
+                if (!existing) {
+                    toProcess.push({ page, action: 'new' });
+                } else if (page.lastModified && existing.lastModified) {
+                    const pageModified = new Date(page.lastModified).getTime();
+                    const existingModified = new Date(existing.lastModified).getTime();
+                    if (pageModified > existingModified) {
+                        toProcess.push({ page, action: 'update', existingDocId: existing.id });
+                    } else {
+                        skipped.push({ page, reason: 'unchanged' });
+                    }
+                } else {
+                    skipped.push({ page, reason: 'no_lastmodified' });
+                }
+            }
+
+            const newCount = toProcess.filter(p => p.action === 'new').length;
+            const updateCount = toProcess.filter(p => p.action === 'update').length;
+            const skipCount = skipped.length;
+            const emptyCount = emptyPages.length;
+
+            console.log(`📊 分析結果: 新規=${newCount}, 更新=${updateCount}, 未変更=${skipCount}, 空=${emptyCount}`);
+
+            // 分析結果を通知
+            if (onProgress) onProgress({
+                stage: 'analyzed',
+                total: pages.length,
+                newCount,
+                updateCount,
+                skipCount,
+                emptyCount,
+                message: `分析完了: ${pages.length}ページ`
+            });
+
+            // 処理するページがない場合
+            if (toProcess.length === 0) {
+                if (onProgress) onProgress({
+                    stage: 'complete',
+                    current: 0,
+                    total: 0,
+                    newCount: 0,
+                    updateCount: 0,
+                    skipCount,
+                    emptyCount,
+                    message: '更新が必要なページはありません'
+                });
+
+                return {
+                    pageCount: 0,
+                    chunkCount: 0,
+                    newCount: 0,
+                    updateCount: 0,
+                    skipCount,
+                    emptyCount,
+                    failedPages: []
+                };
+            }
+
+            // 新規/更新ページのみを処理
+            let processedCount = 0;
+            let successNewCount = 0;
+            let successUpdateCount = 0;
+
+            for (const { page, action, existingDocId } of toProcess) {
+                const docId = this.#generateId();
+
+                try {
+                    // 更新の場合は既存ドキュメントを削除
+                    if (action === 'update' && existingDocId) {
+                        await VectorStore.getInstance.deleteDocument(existingDocId);
+                        console.log(`🔄 Deleted old document for update: ${page.title}`);
+                    }
+
+                    // 進捗通知
+                    if (onProgress) onProgress({
+                        stage: 'embedding',
+                        current: processedCount + 1,
+                        total: toProcess.length,
+                        pageTitle: page.title,
+                        action,
+                        newCount,
+                        updateCount,
+                        skipCount,
+                        emptyCount,
+                        message: `${action === 'new' ? '新規' : '更新'}: ${page.title}`
+                    });
+
+                    // チャンキング
+                    const chunks = DocumentChunker.getInstance.chunkText(page.content);
+
+                    if (chunks.length === 0) {
+                        console.log(`⏭️ Skipping page with no chunks: ${page.title}`);
+                        processedCount++;
+                        continue;
+                    }
+
+                    // メタデータ付きテキスト
+                    const chunksWithMetadata = chunks.map(text =>
+                        `[Confluence: ${page.title}]\n${text}`
+                    );
+
+                    // 埋め込み生成
+                    const embeddings = await EmbeddingAPI.getInstance.getEmbeddings(chunksWithMetadata);
+
+                    // 保存（スペース情報とpageIdを含める）
+                    await VectorStore.getInstance.addDocument({
+                        id: docId,
+                        name: page.title,
+                        type: 'confluence/page',
+                        size: page.content.length,
+                        chunkCount: chunks.length,
+                        source: 'confluence',
+                        sourceUrl: page.url,
+                        lastModified: page.lastModified,
+                        spaceKey: spaceKey,
+                        spaceName: spaceName || spaceKey,
+                        confluencePageId: page.id
+                    });
+
+                    const chunkRecords = chunksWithMetadata.map((text, index) => ({
+                        id: `${docId}_${index}`,
+                        docId: docId,
+                        text: text,
+                        embedding: embeddings[index],
+                        position: index
+                    }));
+
+                    await VectorStore.getInstance.addChunks(chunkRecords);
+
+                    totalChunks += chunks.length;
+                    processedCount++;
+
+                    if (action === 'new') {
+                        successNewCount++;
+                    } else {
+                        successUpdateCount++;
+                    }
+
+                    console.log(`✅ Page ${action === 'new' ? 'added' : 'updated'}: ${page.title} (${chunks.length} chunks)`);
+
+                } catch (pageError) {
+                    console.error(`❌ Failed to process page: ${page.title}`, pageError);
+                    failedPages.push({ title: page.title, error: pageError.message });
+                    processedCount++;
+                }
+            }
+
+            // 完了通知
+            if (onProgress) onProgress({
+                stage: 'complete',
+                current: toProcess.length,
+                total: toProcess.length,
+                newCount: successNewCount,
+                updateCount: successUpdateCount,
+                skipCount,
+                emptyCount,
+                message: '完了'
+            });
+
+            console.log(`✅ Confluenceページ追加完了: 新規=${successNewCount}, 更新=${successUpdateCount}, 未変更=${skipCount}, 空=${emptyCount}, ${totalChunks}チャンク`);
+
+            return {
+                pageCount: successNewCount + successUpdateCount,
+                chunkCount: totalChunks,
+                newCount: successNewCount,
+                updateCount: successUpdateCount,
+                skipCount,
+                emptyCount,
+                failedPages
+            };
+
+        } catch (error) {
+            console.error('❌ Confluence pages processing error:', error);
+            throw error;
+        }
+    }
+
+    /**
      * クエリに関連するコンテキストを検索
      * @param {string} query - 検索クエリ
      * @returns {Promise<string>} 関連コンテキスト
