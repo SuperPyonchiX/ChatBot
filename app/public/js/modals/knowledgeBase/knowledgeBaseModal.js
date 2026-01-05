@@ -1448,10 +1448,13 @@ class KnowledgeBaseModal {
 
             if (childrenContainer) {
                 if (isExpanded && node.childrenLoaded) {
+                    // 親ノードのレベルをHTML属性から取得
+                    const parentLevel = parseInt(nodeElement.getAttribute('data-level') || '0', 10);
+
                     // 子ノードをレンダリング
                     const children = [];
                     for (const childId of tree.getNode(pageId).childIds) {
-                        const childTree = this.#buildTreeNode(childId, node.level !== undefined ? (node.level + 1) : 1);
+                        const childTree = this.#buildTreeNode(childId, parentLevel + 1);
                         if (childTree) children.push(childTree);
                     }
 
