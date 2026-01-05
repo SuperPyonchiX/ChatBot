@@ -31,6 +31,7 @@
     <link rel="stylesheet" href="css/components/chat/chat.css">
     <link rel="stylesheet" href="css/components/chat/markdown.css">
     <link rel="stylesheet" href="css/components/rag/knowledge-base.css">
+    <link rel="stylesheet" href="css/components/rag/confluence-settings.css">
     <link rel="stylesheet" href="css/components/artifact/artifact-panel.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -488,23 +489,111 @@
                 <!-- 統計情報はJSで動的に生成 -->
             </div>
 
-            <!-- アップロードエリア -->
-            <div class="kb-upload-section">
-                <div id="kbDropZone" class="kb-drop-zone">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>ファイルをドラッグ&ドロップ</p>
-                    <p class="kb-upload-hint">または</p>
-                    <div class="kb-upload-buttons">
-                        <button id="kbUploadBtn" class="kb-upload-btn">
-                            <i class="fas fa-file"></i> ファイルを選択
+            <!-- データソースタブ -->
+            <div class="kb-datasource-tabs">
+                <button id="kbFileTab" class="kb-tab active">
+                    <i class="fas fa-file"></i> ファイル
+                </button>
+                <button id="kbConfluenceTab" class="kb-tab">
+                    <i class="fas fa-atlas"></i> Confluence
+                </button>
+            </div>
+
+            <!-- ファイルアップロードセクション -->
+            <div id="kbFileSection" class="kb-section">
+                <div class="kb-upload-section">
+                    <div id="kbDropZone" class="kb-drop-zone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>ファイルをドラッグ&ドロップ</p>
+                        <p class="kb-upload-hint">または</p>
+                        <div class="kb-upload-buttons">
+                            <button id="kbUploadBtn" class="kb-upload-btn">
+                                <i class="fas fa-file"></i> ファイルを選択
+                            </button>
+                            <button id="kbUploadFolderBtn" class="kb-upload-btn kb-upload-folder-btn">
+                                <i class="fas fa-folder"></i> フォルダを選択
+                            </button>
+                        </div>
+                        <input type="file" id="kbFileInput" class="kb-file-input" multiple
+                               accept=".pdf,.txt,.md,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.csv,.json,.js,.html,.css,.py,.java,.cpp,.c">
+                        <input type="file" id="kbFolderInput" class="kb-file-input" webkitdirectory>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confluenceセクション -->
+            <div id="kbConfluenceSection" class="kb-section hidden">
+                <!-- Confluence設定フォーム -->
+                <div id="confluenceSettingsForm" class="confluence-settings-form">
+                    <div class="form-group">
+                        <label for="confluenceBaseUrl">Confluence URL:</label>
+                        <input type="text" id="confluenceBaseUrl" placeholder="https://confluence.example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>認証方式:</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" id="authBasic" name="confluenceAuthType" value="basic" checked>
+                                Basic認証
+                            </label>
+                            <label>
+                                <input type="radio" id="authPat" name="confluenceAuthType" value="pat">
+                                Personal Access Token
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Basic認証フィールド -->
+                    <div id="basicAuthFields" class="auth-fields">
+                        <div class="form-group">
+                            <label for="confluenceUsername">ユーザー名:</label>
+                            <input type="text" id="confluenceUsername" placeholder="username">
+                        </div>
+                        <div class="form-group">
+                            <label for="confluencePassword">パスワード:</label>
+                            <input type="password" id="confluencePassword" placeholder="password">
+                        </div>
+                    </div>
+
+                    <!-- PAT認証フィールド -->
+                    <div id="patAuthFields" class="auth-fields hidden">
+                        <div class="form-group">
+                            <label for="confluenceToken">Personal Access Token:</label>
+                            <input type="password" id="confluenceToken" placeholder="your-access-token">
+                        </div>
+                    </div>
+
+                    <div class="confluence-settings-buttons">
+                        <button id="testConfluenceConnection" class="secondary-button">
+                            <i class="fas fa-plug"></i> 接続テスト
                         </button>
-                        <button id="kbUploadFolderBtn" class="kb-upload-btn kb-upload-folder-btn">
-                            <i class="fas fa-folder"></i> フォルダを選択
+                        <button id="saveConfluenceSettings" class="primary-button">
+                            <i class="fas fa-save"></i> 設定を保存
                         </button>
                     </div>
-                    <input type="file" id="kbFileInput" class="kb-file-input" multiple
-                           accept=".pdf,.txt,.md,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.csv,.json,.js,.html,.css,.py,.java,.cpp,.c">
-                    <input type="file" id="kbFolderInput" class="kb-file-input" webkitdirectory>
+                </div>
+
+                <!-- スペース選択セクション（設定完了後に表示） -->
+                <div id="confluenceSpaceSection" class="confluence-space-section hidden">
+                    <div class="confluence-connection-status connected" id="confluenceConnectionStatus">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="confluenceStatusText">接続済み</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="confluenceSpaceSelect">インポートするスペース:</label>
+                        <select id="confluenceSpaceSelect">
+                            <option value="">スペースを選択</option>
+                        </select>
+                    </div>
+                    <div class="confluence-space-buttons">
+                        <button id="importConfluenceSpace" class="primary-button">
+                            <i class="fas fa-download"></i> スペースをインポート
+                        </button>
+                        <button id="editConfluenceSettings" class="secondary-button">
+                            <i class="fas fa-cog"></i> 設定を変更
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -581,6 +670,7 @@
     <script src="js/core/rag/embeddingApi.js"></script>
     <script src="js/core/rag/documentChunker.js"></script>
     <script src="js/core/rag/similaritySearch.js"></script>
+    <script src="js/core/rag/confluenceDataSource.js"></script>
     <script src="js/core/rag/ragManager.js"></script>
 
     <script src="js/utils/markdown.js"></script>

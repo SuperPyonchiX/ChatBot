@@ -12,6 +12,9 @@ class KnowledgeBaseModal {
     /** @type {boolean} モデル初期化中フラグ */
     #isModelInitializing = false;
 
+    /** @type {'file' | 'confluence'} 現在のデータソースタイプ */
+    #currentDataSource = 'file';
+
     /** @type {Set<string>} サポートされるファイル拡張子 */
     static #SUPPORTED_EXTENSIONS = new Set([
         '.pdf', '.txt', '.md',
@@ -109,6 +112,56 @@ class KnowledgeBaseModal {
                 }
             });
         }
+
+        // ========================================
+        // Confluence関連イベントリスナー
+        // ========================================
+
+        // データソースタブ
+        const fileTab = document.getElementById('kbFileTab');
+        const confluenceTab = document.getElementById('kbConfluenceTab');
+
+        if (fileTab) {
+            fileTab.addEventListener('click', () => this.#switchDataSource('file'));
+        }
+        if (confluenceTab) {
+            confluenceTab.addEventListener('click', () => this.#switchDataSource('confluence'));
+        }
+
+        // 認証方式切り替え
+        const authBasic = document.getElementById('authBasic');
+        const authPat = document.getElementById('authPat');
+
+        if (authBasic) {
+            authBasic.addEventListener('change', () => this.#toggleAuthFields());
+        }
+        if (authPat) {
+            authPat.addEventListener('change', () => this.#toggleAuthFields());
+        }
+
+        // Confluence接続テスト
+        const testBtn = document.getElementById('testConfluenceConnection');
+        if (testBtn) {
+            testBtn.addEventListener('click', () => this.#testConfluenceConnection());
+        }
+
+        // Confluence設定保存
+        const saveBtn = document.getElementById('saveConfluenceSettings');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.#saveConfluenceSettings());
+        }
+
+        // スペースインポート
+        const importBtn = document.getElementById('importConfluenceSpace');
+        if (importBtn) {
+            importBtn.addEventListener('click', () => this.#importConfluenceSpace());
+        }
+
+        // 設定変更ボタン
+        const editBtn = document.getElementById('editConfluenceSettings');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => this.#showConfluenceSettingsForm());
+        }
     }
 
     /**
@@ -196,22 +249,35 @@ class KnowledgeBaseModal {
                 return;
             }
 
-            listContainer.innerHTML = documents.map(doc => `
-                <div class="kb-document-item" data-doc-id="${doc.id}">
-                    <div class="kb-doc-icon">
-                        <i class="${this.#getFileIcon(doc.type)}"></i>
-                    </div>
-                    <div class="kb-doc-info">
-                        <div class="kb-doc-name" title="${doc.name}">${doc.name}</div>
-                        <div class="kb-doc-meta">
-                            ${doc.chunkCount} チャンク • ${RAGManager.getInstance.formatFileSize(doc.size)} • ${this.#formatDate(doc.createdAt)}
+            listContainer.innerHTML = documents.map(doc => {
+                const isConfluence = doc.source === 'confluence';
+                const sourceClass = isConfluence ? 'confluence' : 'file';
+                const sourceLabel = isConfluence ? 'Confluence' : 'ファイル';
+                const linkHtml = isConfluence && doc.sourceUrl
+                    ? `<a href="${doc.sourceUrl}" target="_blank" rel="noopener noreferrer" class="kb-doc-link" title="Confluenceで開く"><i class="fas fa-external-link-alt"></i></a>`
+                    : '';
+
+                return `
+                    <div class="kb-document-item" data-doc-id="${doc.id}">
+                        <div class="kb-doc-icon">
+                            <i class="${this.#getFileIcon(doc.type, doc.source)}"></i>
                         </div>
+                        <div class="kb-doc-info">
+                            <div class="kb-doc-name" title="${doc.name}">
+                                ${doc.name}
+                                <span class="kb-doc-source ${sourceClass}">${sourceLabel}</span>
+                                ${linkHtml}
+                            </div>
+                            <div class="kb-doc-meta">
+                                ${doc.chunkCount} チャンク • ${RAGManager.getInstance.formatFileSize(doc.size)} • ${this.#formatDate(doc.createdAt)}
+                            </div>
+                        </div>
+                        <button class="kb-doc-delete" title="削除" data-doc-id="${doc.id}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
-                    <button class="kb-doc-delete" title="削除" data-doc-id="${doc.id}">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             // 削除ボタンのイベントリスナー
             listContainer.querySelectorAll('.kb-doc-delete').forEach(btn => {
@@ -501,8 +567,15 @@ class KnowledgeBaseModal {
 
     /**
      * ファイルタイプに応じたアイコンクラスを取得
+     * @param {string} mimeType - MIMEタイプ
+     * @param {string} [source] - データソース ('file' | 'confluence')
      */
-    #getFileIcon(mimeType) {
+    #getFileIcon(mimeType, source) {
+        // Confluenceソースの場合は専用アイコン
+        if (source === 'confluence') {
+            return 'fas fa-atlas';
+        }
+
         if (!mimeType) return 'fas fa-file';
 
         if (mimeType.includes('pdf')) return 'fas fa-file-pdf';
@@ -547,6 +620,311 @@ class KnowledgeBaseModal {
             month: 'short',
             day: 'numeric'
         });
+    }
+
+    // ========================================
+    // Confluence関連メソッド
+    // ========================================
+
+    /**
+     * データソースを切り替え
+     * @param {'file' | 'confluence'} source
+     */
+    #switchDataSource(source) {
+        if (this.#isProcessing) return;
+
+        this.#currentDataSource = source;
+
+        // タブのアクティブ状態を切り替え
+        const fileTab = document.getElementById('kbFileTab');
+        const confluenceTab = document.getElementById('kbConfluenceTab');
+
+        if (fileTab) fileTab.classList.toggle('active', source === 'file');
+        if (confluenceTab) confluenceTab.classList.toggle('active', source === 'confluence');
+
+        // コンテンツエリアの表示切り替え
+        const fileSection = document.getElementById('kbFileSection');
+        const confluenceSection = document.getElementById('kbConfluenceSection');
+
+        if (fileSection) fileSection.classList.toggle('hidden', source !== 'file');
+        if (confluenceSection) confluenceSection.classList.toggle('hidden', source !== 'confluence');
+
+        // Confluenceタブ選択時は設定状態をチェック
+        if (source === 'confluence') {
+            this.#refreshConfluenceUI();
+        }
+    }
+
+    /**
+     * Confluence UI状態を更新
+     */
+    async #refreshConfluenceUI() {
+        // ConfluenceDataSourceが利用可能か確認
+        if (typeof ConfluenceDataSource === 'undefined') {
+            console.warn('ConfluenceDataSource is not available');
+            return;
+        }
+
+        const confluence = ConfluenceDataSource.getInstance;
+        const isConfigured = confluence.isConfigured();
+
+        const settingsForm = document.getElementById('confluenceSettingsForm');
+        const spaceSection = document.getElementById('confluenceSpaceSection');
+
+        // 設定済みの場合はスペース選択を表示
+        if (settingsForm) settingsForm.classList.toggle('hidden', isConfigured);
+        if (spaceSection) spaceSection.classList.toggle('hidden', !isConfigured);
+
+        if (isConfigured) {
+            // 接続状態表示を更新
+            const statusText = document.getElementById('confluenceStatusText');
+            if (statusText) {
+                const baseUrl = confluence.getBaseUrl();
+                statusText.textContent = `接続済み: ${baseUrl}`;
+            }
+
+            // スペース一覧を読み込み
+            await this.#loadSpaces();
+        }
+    }
+
+    /**
+     * 認証フィールドの表示を切り替え
+     */
+    #toggleAuthFields() {
+        const authType = document.querySelector('input[name="confluenceAuthType"]:checked')?.value;
+        const basicFields = document.getElementById('basicAuthFields');
+        const patFields = document.getElementById('patAuthFields');
+
+        if (basicFields) basicFields.classList.toggle('hidden', authType !== 'basic');
+        if (patFields) patFields.classList.toggle('hidden', authType !== 'pat');
+    }
+
+    /**
+     * スペース一覧を読み込み
+     */
+    async #loadSpaces() {
+        const spaceSelect = document.getElementById('confluenceSpaceSelect');
+        if (!spaceSelect) return;
+
+        try {
+            spaceSelect.innerHTML = '<option value="">読み込み中...</option>';
+            spaceSelect.disabled = true;
+
+            const spaces = await ConfluenceDataSource.getInstance.getSpaces();
+
+            if (spaces.length === 0) {
+                spaceSelect.innerHTML = '<option value="">スペースがありません</option>';
+            } else {
+                spaceSelect.innerHTML = '<option value="">スペースを選択</option>' +
+                    spaces.map(s => `<option value="${s.key}">${s.name} (${s.key})</option>`).join('');
+            }
+            spaceSelect.disabled = false;
+
+        } catch (error) {
+            console.error('Failed to load spaces:', error);
+            spaceSelect.innerHTML = '<option value="">取得に失敗しました</option>';
+            spaceSelect.disabled = false;
+        }
+    }
+
+    /**
+     * Confluence接続テスト
+     */
+    async #testConfluenceConnection() {
+        const btn = document.getElementById('testConfluenceConnection');
+        if (!btn) return;
+
+        // 入力値を一時的に保存してテスト
+        const baseUrl = document.getElementById('confluenceBaseUrl')?.value?.trim();
+        const authType = document.querySelector('input[name="confluenceAuthType"]:checked')?.value;
+        const username = document.getElementById('confluenceUsername')?.value;
+        const password = document.getElementById('confluencePassword')?.value;
+        const token = document.getElementById('confluenceToken')?.value;
+
+        if (!baseUrl) {
+            alert('Confluence URLを入力してください');
+            return;
+        }
+
+        if (authType === 'basic' && (!username || !password)) {
+            alert('ユーザー名とパスワードを入力してください');
+            return;
+        }
+
+        if (authType === 'pat' && !token) {
+            alert('Personal Access Tokenを入力してください');
+            return;
+        }
+
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> テスト中...';
+
+        try {
+            // 一時的に設定を保存してテスト
+            ConfluenceDataSource.getInstance.saveSettings({
+                baseUrl,
+                authType,
+                username,
+                password,
+                token
+            });
+
+            const result = await ConfluenceDataSource.getInstance.testConnection();
+
+            if (result.success) {
+                alert(result.message);
+            } else {
+                alert('接続失敗: ' + result.message);
+                // 失敗時は設定をクリア
+                ConfluenceDataSource.getInstance.clearSettings();
+            }
+        } catch (error) {
+            alert('接続エラー: ' + error.message);
+            ConfluenceDataSource.getInstance.clearSettings();
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+
+    /**
+     * Confluence設定を保存
+     */
+    async #saveConfluenceSettings() {
+        const baseUrl = document.getElementById('confluenceBaseUrl')?.value?.trim();
+        const authType = document.querySelector('input[name="confluenceAuthType"]:checked')?.value;
+        const username = document.getElementById('confluenceUsername')?.value;
+        const password = document.getElementById('confluencePassword')?.value;
+        const token = document.getElementById('confluenceToken')?.value;
+
+        if (!baseUrl) {
+            alert('Confluence URLを入力してください');
+            return;
+        }
+
+        if (authType === 'basic' && (!username || !password)) {
+            alert('ユーザー名とパスワードを入力してください');
+            return;
+        }
+
+        if (authType === 'pat' && !token) {
+            alert('Personal Access Tokenを入力してください');
+            return;
+        }
+
+        try {
+            ConfluenceDataSource.getInstance.saveSettings({
+                baseUrl,
+                authType,
+                username,
+                password,
+                token
+            });
+
+            // 接続テスト
+            const result = await ConfluenceDataSource.getInstance.testConnection();
+
+            if (result.success) {
+                alert('設定を保存しました。' + result.message);
+                await this.#refreshConfluenceUI();
+            } else {
+                alert('接続に失敗しました: ' + result.message);
+                ConfluenceDataSource.getInstance.clearSettings();
+            }
+        } catch (error) {
+            alert('設定の保存に失敗しました: ' + error.message);
+        }
+    }
+
+    /**
+     * Confluence設定フォームを表示
+     */
+    #showConfluenceSettingsForm() {
+        const settingsForm = document.getElementById('confluenceSettingsForm');
+        const spaceSection = document.getElementById('confluenceSpaceSection');
+
+        if (settingsForm) settingsForm.classList.remove('hidden');
+        if (spaceSection) spaceSection.classList.add('hidden');
+
+        // 現在の設定値をフォームに反映
+        const confluence = ConfluenceDataSource.getInstance;
+        const baseUrlInput = document.getElementById('confluenceBaseUrl');
+        if (baseUrlInput) {
+            baseUrlInput.value = confluence.getBaseUrl();
+        }
+
+        // 認証タイプを反映
+        const authType = confluence.getAuthType();
+        if (authType === 'basic') {
+            document.getElementById('authBasic')?.click();
+        } else {
+            document.getElementById('authPat')?.click();
+        }
+    }
+
+    /**
+     * Confluenceスペースをインポート
+     */
+    async #importConfluenceSpace() {
+        const spaceSelect = document.getElementById('confluenceSpaceSelect');
+        const spaceKey = spaceSelect?.value;
+
+        if (!spaceKey) {
+            alert('スペースを選択してください');
+            return;
+        }
+
+        if (this.#isProcessing) {
+            return;
+        }
+
+        const spaceName = spaceSelect.options[spaceSelect.selectedIndex].text;
+        if (!confirm(`スペース「${spaceName}」からすべてのページをインポートします。\n\n処理には時間がかかる場合があります。続行しますか？`)) {
+            return;
+        }
+
+        this.#isProcessing = true;
+        const progressContainer = document.getElementById('kbProgress');
+        const progressBar = document.getElementById('kbProgressBar');
+        const progressText = document.getElementById('kbProgressText');
+
+        if (progressContainer) progressContainer.style.display = 'block';
+
+        try {
+            const result = await RAGManager.getInstance.addConfluenceSpace(spaceKey,
+                (stage, current, total, message) => {
+                    if (progressBar && total > 0) {
+                        const progress = (current / total) * 100;
+                        progressBar.style.width = `${progress}%`;
+                    }
+                    if (progressText) {
+                        progressText.textContent = message;
+                    }
+                }
+            );
+
+            // 結果メッセージ
+            let resultMessage = `インポート完了\n\n`;
+            resultMessage += `- ${result.pageCount} ページ\n`;
+            resultMessage += `- ${result.chunkCount} チャンク`;
+
+            if (result.failedPages && result.failedPages.length > 0) {
+                resultMessage += `\n\n⚠️ ${result.failedPages.length} ページが失敗しました`;
+            }
+
+            alert(resultMessage);
+            await this.#refreshUI();
+
+        } catch (error) {
+            console.error('Confluence import error:', error);
+            alert('インポートに失敗しました: ' + error.message);
+        } finally {
+            if (progressContainer) progressContainer.style.display = 'none';
+            if (progressBar) progressBar.style.width = '0%';
+            this.#isProcessing = false;
+        }
     }
 }
 

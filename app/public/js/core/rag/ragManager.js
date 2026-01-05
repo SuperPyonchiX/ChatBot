@@ -163,6 +163,137 @@ class RAGManager {
     }
 
     /**
+     * Confluenceスペースからドキュメントを追加
+     * @param {string} spaceKey - スペースキー
+     * @param {function} [onProgress] - 進捗コールバック (stage, current, total, message)
+     * @returns {Promise<{pageCount: number, chunkCount: number}>}
+     */
+    async addConfluenceSpace(spaceKey, onProgress) {
+        await this.#ensureInitialized();
+
+        // ConfluenceDataSourceが利用可能か確認
+        if (typeof ConfluenceDataSource === 'undefined') {
+            throw new Error('ConfluenceDataSource が利用できません');
+        }
+
+        const confluence = ConfluenceDataSource.getInstance;
+        if (!confluence.isConfigured()) {
+            throw new Error('Confluence接続設定が完了していません');
+        }
+
+        let totalChunks = 0;
+        let processedPages = 0;
+        const failedPages = [];
+
+        try {
+            // ページ取得フェーズ
+            if (onProgress) onProgress('fetching', 0, 0, 'ページ一覧を取得中...');
+
+            const pages = await confluence.getSpacePages(spaceKey, (current, total) => {
+                if (onProgress) onProgress('fetching', current, total, `ページを取得中: ${current}/${total}`);
+            });
+
+            if (pages.length === 0) {
+                throw new Error('スペース内にページが見つかりません');
+            }
+
+            console.log(`📄 Confluenceスペース ${spaceKey}: ${pages.length}ページを取得`);
+
+            // 各ページを処理
+            for (const page of pages) {
+                const docId = this.#generateId();
+
+                try {
+                    // 空のページはスキップ
+                    if (!page.content || page.content.trim().length === 0) {
+                        console.log(`⏭️ Skipping empty page: ${page.title}`);
+                        processedPages++;
+                        continue;
+                    }
+
+                    // チャンキング
+                    if (onProgress) {
+                        onProgress('processing', processedPages, pages.length,
+                            `処理中: ${page.title}`);
+                    }
+
+                    const chunks = DocumentChunker.getInstance.chunkText(page.content);
+
+                    if (chunks.length === 0) {
+                        console.log(`⏭️ Skipping page with no chunks: ${page.title}`);
+                        processedPages++;
+                        continue;
+                    }
+
+                    // メタデータ付きテキスト
+                    const chunksWithMetadata = chunks.map(text =>
+                        `[Confluence: ${page.title}]\n${text}`
+                    );
+
+                    // 埋め込み生成
+                    if (onProgress) {
+                        onProgress('embedding', processedPages, pages.length,
+                            `埋め込み生成中: ${page.title}`);
+                    }
+
+                    const embeddings = await EmbeddingAPI.getInstance.getEmbeddings(chunksWithMetadata);
+
+                    // 保存
+                    await VectorStore.getInstance.addDocument({
+                        id: docId,
+                        name: page.title,
+                        type: 'confluence/page',
+                        size: page.content.length,
+                        chunkCount: chunks.length,
+                        source: 'confluence',
+                        sourceUrl: page.url
+                    });
+
+                    const chunkRecords = chunksWithMetadata.map((text, index) => ({
+                        id: `${docId}_${index}`,
+                        docId: docId,
+                        text: text,
+                        embedding: embeddings[index],
+                        position: index
+                    }));
+
+                    await VectorStore.getInstance.addChunks(chunkRecords);
+
+                    totalChunks += chunks.length;
+                    processedPages++;
+
+                    console.log(`✅ Page added: ${page.title} (${chunks.length} chunks)`);
+
+                } catch (pageError) {
+                    console.error(`❌ Failed to process page: ${page.title}`, pageError);
+                    failedPages.push({ title: page.title, error: pageError.message });
+                    processedPages++;
+                    // 個別ページのエラーは続行
+                }
+            }
+
+            if (onProgress) onProgress('complete', pages.length, pages.length, '完了');
+
+            // 結果ログ
+            if (failedPages.length > 0) {
+                console.warn(`⚠️ Confluenceスペース追加完了（一部失敗）: ${processedPages - failedPages.length}/${pages.length}ページ成功, ${totalChunks}チャンク`);
+            } else {
+                console.log(`✅ Confluenceスペース追加完了: ${processedPages}ページ, ${totalChunks}チャンク`);
+            }
+
+            return {
+                pageCount: processedPages - failedPages.length,
+                chunkCount: totalChunks,
+                failedPages: failedPages
+            };
+
+        } catch (error) {
+            console.error('❌ Confluence space processing error:', error);
+            throw error;
+        }
+    }
+
+    /**
      * クエリに関連するコンテキストを検索
      * @param {string} query - 検索クエリ
      * @returns {Promise<string>} 関連コンテキスト
@@ -258,9 +389,15 @@ class RAGManager {
         if (!chunkText) return '不明なドキュメント';
 
         // [ドキュメント: filename.pdf] の形式から抽出
-        const match = chunkText.match(/^\[ドキュメント:\s*(.+?)\]/);
-        if (match && match[1]) {
-            return match[1].trim();
+        const fileMatch = chunkText.match(/^\[ドキュメント:\s*(.+?)\]/);
+        if (fileMatch && fileMatch[1]) {
+            return fileMatch[1].trim();
+        }
+
+        // [Confluence: page title] の形式から抽出
+        const confluenceMatch = chunkText.match(/^\[Confluence:\s*(.+?)\]/);
+        if (confluenceMatch && confluenceMatch[1]) {
+            return `📄 ${confluenceMatch[1].trim()}`;
         }
 
         return '不明なドキュメント';

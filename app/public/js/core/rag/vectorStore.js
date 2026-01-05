@@ -101,6 +101,8 @@ class VectorStore {
      * @param {string} document.type - ファイルタイプ
      * @param {number} document.size - ファイルサイズ
      * @param {number} document.chunkCount - チャンク数
+     * @param {'file'|'confluence'} [document.source='file'] - データソース種別
+     * @param {string} [document.sourceUrl] - ソースURL（Confluenceの場合はページURL）
      * @returns {Promise<void>}
      */
     async addDocument(document) {
@@ -108,6 +110,8 @@ class VectorStore {
 
         const doc = {
             ...document,
+            source: document.source || 'file',
+            sourceUrl: document.sourceUrl || null,
             createdAt: Date.now()
         };
 

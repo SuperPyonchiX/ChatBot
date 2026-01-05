@@ -282,6 +282,59 @@ app.post('/azure-openai-embeddings', express.json({ limit: '10mb' }), async (req
 });
 
 // ========================================
+// Confluence Data Center API プロキシ
+// ========================================
+app.post('/confluence-proxy', express.json({ limit: '10mb' }), async (req, res) => {
+    const { targetUrl, authorization } = req.body;
+
+    if (!targetUrl || !authorization) {
+        return res.status(400).json({
+            error: { message: 'targetUrlとauthorizationは必須です' }
+        });
+    }
+
+    console.log(`[Confluence] GET ${targetUrl}`);
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+
+        const response = await fetch(targetUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': authorization,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+
+        const data = await response.json();
+        res.status(response.status).json(data);
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            console.error('[Confluence] タイムアウト');
+            res.status(504).json({
+                error: {
+                    message: 'Confluence APIへのリクエストがタイムアウトしました',
+                    details: 'Request timeout after 30 seconds'
+                }
+            });
+        } else {
+            console.error('[Confluence] プロキシエラー:', error.message);
+            res.status(500).json({
+                error: {
+                    message: 'Confluence APIへの接続に失敗しました',
+                    details: error.message
+                }
+            });
+        }
+    }
+});
+
+// ========================================
 // C++ コンパイル・実行 API
 // ========================================
 app.post('/api/compile/cpp', express.json({ limit: '1mb' }), async (req, res) => {
@@ -413,6 +466,7 @@ app.listen(PORT, () => {
     console.log(`   - Azure OpenAI:      http://localhost:${PORT}/azure-openai`);
     console.log(`   - OpenAI Embeddings: http://localhost:${PORT}/openai-embeddings`);
     console.log(`   - Azure Embeddings:  http://localhost:${PORT}/azure-openai-embeddings`);
+    console.log(`   - Confluence:        http://localhost:${PORT}/confluence-proxy`);
     console.log('');
     console.log(`Open http://localhost:${PORT} in your browser`);
     console.log('');

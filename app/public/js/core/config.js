@@ -221,7 +221,11 @@ window.CONFIG = {
             // 埋め込みAPI設定
             AZURE_EMBEDDING_ENDPOINT: 'azureEmbeddingEndpoint',
             EMBEDDING_MODE: 'embeddingMode',
-            EMBEDDING_DIMENSIONS: 'embeddingDimensions'
+            EMBEDDING_DIMENSIONS: 'embeddingDimensions',
+            // Confluence Data Center設定
+            CONFLUENCE_BASE_URL: 'confluenceBaseUrl',
+            CONFLUENCE_AUTH_TYPE: 'confluenceAuthType',
+            CONFLUENCE_AUTH_DATA: 'confluenceAuthData'
         },
 
         // デフォルト値
@@ -383,7 +387,7 @@ window.CONFIG = {
             // 検索時に取得する上位チャンク数
             TOP_K: 5,
             // 類似度閾値（これ以上のスコアのみ使用）
-            SIMILARITY_THRESHOLD: 0.3
+            SIMILARITY_THRESHOLD: 0.5
         },
 
         // IndexedDBストレージ設定
@@ -408,6 +412,18 @@ window.CONFIG = {
             CONTEXT_PREFIX: '\n\n---\n以下は関連するナレッジベースからの情報です：\n\n',
             // コンテキストのサフィックス
             CONTEXT_SUFFIX: '\n---\n\n上記の情報を参考に回答してください。'
+        },
+
+        // Confluence Data Center連携設定
+        CONFLUENCE: {
+            // ページ取得時の1回あたりの件数
+            PAGE_FETCH_LIMIT: 25,
+            // スペースあたりの最大ページ数
+            MAX_PAGES_PER_SPACE: 500,
+            // 1ページあたりの最大コンテンツ長（文字数）
+            MAX_CONTENT_LENGTH: 100000,
+            // リクエストタイムアウト（ミリ秒）
+            REQUEST_TIMEOUT: 30000
         }
     }
 };
