@@ -301,7 +301,7 @@ class ConfluencePageTree {
     }
 
     /**
-     * 選択されたページのコンテンツを取得
+     * 選択されたページのコンテンツを取得（子孫ページも含む）
      * @param {function} [onProgress] - 進捗コールバック (current, total, pageTitle)
      * @returns {Promise<Array<{id: string, title: string, content: string, url: string, lastModified: string}>>}
      */
@@ -312,10 +312,58 @@ class ConfluencePageTree {
             return [];
         }
 
-        // ページコンテンツを取得
-        const pages = await ConfluenceDataSource.getInstance.getPagesContent(selectedIds, onProgress);
+        const allPages = [];
+        const processedIds = new Set();
+        let current = 0;
 
-        return pages;
+        for (const pageId of selectedIds) {
+            // 既に処理済み（他の選択ページの子孫として）ならスキップ
+            if (processedIds.has(pageId)) {
+                continue;
+            }
+
+            const node = this.#nodes.get(pageId);
+
+            if (node && node.hasChildren) {
+                // 子ページがある場合は全子孫を取得
+                const descendantPages = await ConfluenceDataSource.getInstance.getPageWithDescendants(
+                    pageId,
+                    (cur, total, title) => {
+                        if (onProgress) {
+                            onProgress(current + cur, null, title);
+                        }
+                    }
+                );
+
+                for (const page of descendantPages) {
+                    if (!processedIds.has(page.id)) {
+                        allPages.push(page);
+                        processedIds.add(page.id);
+                    }
+                }
+                current += descendantPages.length;
+            } else {
+                // 子ページがない場合は単一ページのみ取得
+                const pages = await ConfluenceDataSource.getInstance.getPagesContent(
+                    [pageId],
+                    (cur, total, title) => {
+                        if (onProgress) {
+                            onProgress(current + 1, null, title);
+                        }
+                    }
+                );
+
+                for (const page of pages) {
+                    if (!processedIds.has(page.id)) {
+                        allPages.push(page);
+                        processedIds.add(page.id);
+                    }
+                }
+                current++;
+            }
+        }
+
+        return allPages;
     }
 
     /**
