@@ -419,7 +419,7 @@ window.CONFIG = {
             // ページ取得時の1回あたりの件数
             PAGE_FETCH_LIMIT: 25,
             // スペースあたりの最大ページ数
-            MAX_PAGES_PER_SPACE: 500,
+            MAX_PAGES_PER_SPACE: 5000,
             // 1ページあたりの最大コンテンツ長（文字数）
             MAX_CONTENT_LENGTH: 100000,
             // リクエストタイムアウト（ミリ秒）
