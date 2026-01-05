@@ -1654,7 +1654,8 @@ class KnowledgeBaseModal {
         const spaceKey = ConfluencePageTree.getInstance.getCurrentSpaceKey();
         const spaceName = ConfluencePageTree.getInstance.getCurrentSpaceName();
 
-        if (!confirm(`${selectedIds.length} ページをインポートします。続行しますか？`)) {
+        const estimate = ConfluencePageTree.getInstance.getImportEstimate();
+        if (!confirm(estimate.message)) {
             return;
         }
 

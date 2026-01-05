@@ -247,6 +247,44 @@ class ConfluencePageTree {
     }
 
     /**
+     * インポートされるページ数の見積もりを取得
+     * 未展開ページは「+子孫」として表示するための情報を返す
+     * @returns {{count: number, hasUnexpandedWithChildren: boolean, message: string}}
+     */
+    getImportEstimate() {
+        const selectedIds = this.getSelectedPageIds();
+        let directCount = 0;
+        let hasUnexpandedWithChildren = false;
+
+        for (const pageId of selectedIds) {
+            const node = this.#nodes.get(pageId);
+            if (!node) continue;
+
+            // 親が未展開で選択されている場合はスキップ
+            if (node.parentId && this.#selectedIds.has(node.parentId)) {
+                const parentNode = this.#nodes.get(node.parentId);
+                if (parentNode && !parentNode.childrenLoaded) {
+                    continue;
+                }
+            }
+
+            directCount++;
+            if (node.hasChildren && !node.childrenLoaded) {
+                hasUnexpandedWithChildren = true;
+            }
+        }
+
+        let message;
+        if (hasUnexpandedWithChildren) {
+            message = `${directCount} ページ（＋子孫ページ）をインポートします。続行しますか？`;
+        } else {
+            message = `${directCount} ページをインポートします。続行しますか？`;
+        }
+
+        return { count: directCount, hasUnexpandedWithChildren, message };
+    }
+
+    /**
      * 全ページを選択
      */
     selectAll() {
