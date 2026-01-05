@@ -304,7 +304,7 @@ class ConfluenceDataSource {
 
         while (hasMore) {
             // ancestors を expand してルートページを識別
-            const url = `/rest/api/content?spaceKey=${encodeURIComponent(spaceKey)}&type=page&expand=ancestors,children.page&start=${start}&limit=${limit}`;
+            const url = `/rest/api/content?spaceKey=${encodeURIComponent(spaceKey)}&type=page&depth=root&expand=ancestors,children.page&start=${start}&limit=${limit}`;
             const response = await this.#fetchFromProxy(url);
 
             if (!response.ok) {
