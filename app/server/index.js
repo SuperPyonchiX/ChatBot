@@ -134,6 +134,72 @@ app.use('/gemini', createProxyMiddleware({
 }));
 
 // ========================================
+// Azure OpenAI API プロキシ（動的エンドポイント）
+// ========================================
+app.post('/azure-openai', express.json({ limit: '10mb' }), async (req, res) => {
+    const { targetUrl, apiKey, body } = req.body;
+
+    if (!targetUrl || !apiKey) {
+        return res.status(400).json({
+            error: { message: 'targetUrlとapiKeyは必須です' }
+        });
+    }
+
+    console.log(`[Azure OpenAI] POST ${targetUrl}`);
+
+    try {
+        const response = await fetch(targetUrl, {
+            method: 'POST',
+            headers: {
+                'api-key': apiKey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        // ストリーミングレスポンスの場合
+        const contentType = response.headers.get('content-type');
+        if (body.stream && contentType && contentType.includes('text/event-stream')) {
+            res.setHeader('Content-Type', 'text/event-stream');
+            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('Connection', 'keep-alive');
+
+            // Node.js 18+ の ReadableStream を使用
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            const pump = async () => {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        res.end();
+                        break;
+                    }
+                    res.write(decoder.decode(value, { stream: true }));
+                }
+            };
+
+            pump().catch(err => {
+                console.error('[Azure OpenAI] ストリーミングエラー:', err.message);
+                res.end();
+            });
+        } else {
+            // 通常のJSONレスポンス
+            const data = await response.json();
+            res.status(response.status).json(data);
+        }
+    } catch (error) {
+        console.error('[Azure OpenAI] プロキシエラー:', error.message);
+        res.status(500).json({
+            error: {
+                message: 'Azure OpenAI APIへの接続に失敗しました',
+                details: error.message
+            }
+        });
+    }
+});
+
+// ========================================
 // C++ コンパイル・実行 API
 // ========================================
 app.post('/api/compile/cpp', express.json({ limit: '1mb' }), async (req, res) => {
@@ -258,10 +324,11 @@ app.listen(PORT, () => {
     console.log(`Public Path: ${publicPath}`);
     console.log('');
     console.log('Proxy Endpoints:');
-    console.log(`   - OpenAI:    http://localhost:${PORT}/openai/*`);
-    console.log(`   - Responses: http://localhost:${PORT}/responses/*`);
-    console.log(`   - Claude:    http://localhost:${PORT}/anthropic/*`);
-    console.log(`   - Gemini:    http://localhost:${PORT}/gemini/*`);
+    console.log(`   - OpenAI:       http://localhost:${PORT}/openai/*`);
+    console.log(`   - Responses:    http://localhost:${PORT}/responses/*`);
+    console.log(`   - Claude:       http://localhost:${PORT}/anthropic/*`);
+    console.log(`   - Gemini:       http://localhost:${PORT}/gemini/*`);
+    console.log(`   - Azure OpenAI: http://localhost:${PORT}/azure-openai`);
     console.log('');
     console.log(`Open http://localhost:${PORT} in your browser`);
     console.log('');
