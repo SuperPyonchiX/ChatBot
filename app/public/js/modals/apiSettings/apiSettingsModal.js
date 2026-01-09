@@ -52,6 +52,8 @@ class ApiSettingsModal {
             azureEndpointGpt4o: UICache.getInstance.get('azureEndpointGpt4o'),
             azureEndpointGpt5Mini: UICache.getInstance.get('azureEndpointGpt5Mini'),
             azureEndpointGpt5: UICache.getInstance.get('azureEndpointGpt5'),
+            azureEndpointGpt52Mini: UICache.getInstance.get('azureEndpointGpt52Mini'),
+            azureEndpointGpt52: UICache.getInstance.get('azureEndpointGpt52'),
             azureEndpointO1Mini: UICache.getInstance.get('azureEndpointO1Mini'),
             azureEndpointO1: UICache.getInstance.get('azureEndpointO1')
         };
@@ -100,6 +102,8 @@ class ApiSettingsModal {
                     elements.azureEndpointGpt4o.value = apiSettings.azureEndpoints['gpt-4o'] || '';
                     elements.azureEndpointGpt5Mini.value = apiSettings.azureEndpoints['gpt-5-mini'] || '';
                     elements.azureEndpointGpt5.value = apiSettings.azureEndpoints['gpt-5'] || '';
+                    elements.azureEndpointGpt52Mini.value = apiSettings.azureEndpoints['gpt-5.2-mini'] || '';
+                    elements.azureEndpointGpt52.value = apiSettings.azureEndpoints['gpt-5.2'] || '';
                     elements.azureEndpointO1Mini.value = apiSettings.azureEndpoints['o1-mini'] || '';
                     elements.azureEndpointO1.value = apiSettings.azureEndpoints['o1'] || '';
                 }
