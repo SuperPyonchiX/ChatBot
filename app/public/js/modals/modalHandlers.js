@@ -72,7 +72,6 @@ class ModalHandlers {
                     'gpt-4o': 'azureEndpointGpt4o',
                     'gpt-5-mini': 'azureEndpointGpt5Mini',
                     'gpt-5': 'azureEndpointGpt5',
-                    'gpt-5.2-mini': 'azureEndpointGpt52Mini',
                     'gpt-5.2': 'azureEndpointGpt52',
                     'o1-mini': 'azureEndpointO1Mini',
                     'o1': 'azureEndpointO1'

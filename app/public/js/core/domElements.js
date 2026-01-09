@@ -49,8 +49,7 @@ window.Elements = (function() {
         'openaiSystemRadio', 'geminiSystemRadio', 'claudeSystemRadio', 'openaiRadio', 'azureRadio',
         'apiKeyInput', 'azureApiKeyInput', 'geminiApiKeyInput', 'claudeApiKeyInput', 'azureEndpointGpt4oMini', 
         'azureEndpointGpt4o', 'azureEndpointGpt5Mini', 'azureEndpointGpt5',
-        'azureEndpointGpt52Mini', 'azureEndpointGpt52',
-        'azureEndpointO1Mini', 'azureEndpointO1', 
+        'azureEndpointGpt52', 'azureEndpointO1Mini', 'azureEndpointO1', 
         'openaiSystemSettings', 'geminiSystemSettings', 'claudeSystemSettings', 'openaiSettings', 'azureSettings',
         
         // チャット名前変更関連

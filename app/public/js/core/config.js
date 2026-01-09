@@ -269,7 +269,7 @@ window.CONFIG = {
      */
     MODELS: {
         // サポートされているモデル
-        OPENAI: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5', 'gpt-5.2-mini', 'gpt-5.2', 'o1-mini', 'o1'],
+        OPENAI: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5', 'gpt-5.2', 'o1-mini', 'o1'],
         GEMINI: ['gemini-3-pro-preview', 'gemini-2.5-pro', 'gemini-2.5-flash'],
         CLAUDE: [
             'claude-opus-4-5',
@@ -278,7 +278,7 @@ window.CONFIG = {
         ],
         
         // OpenAI Responses APIでのWeb検索をサポートするモデル
-        OPENAI_WEB_SEARCH_COMPATIBLE: ['gpt-5-mini', 'gpt-5', 'gpt-5.2-mini', 'gpt-5.2'],
+        OPENAI_WEB_SEARCH_COMPATIBLE: ['gpt-5-mini', 'gpt-5', 'gpt-5.2'],
         
         // モデルの表示名マッピング
         DISPLAY_NAMES: {
@@ -287,7 +287,6 @@ window.CONFIG = {
             'gpt-4o': 'GPT-4o',
             'gpt-5-mini': 'GPT-5 Mini',
             'gpt-5': 'GPT-5',
-            'gpt-5.2-mini': 'GPT-5.2 Mini',
             'gpt-5.2': 'GPT-5.2',
             'o1-mini': 'o1 Mini',
             'o1': 'o1',
