@@ -52,9 +52,7 @@ class ApiSettingsModal {
             azureEndpointGpt4o: UICache.getInstance.get('azureEndpointGpt4o'),
             azureEndpointGpt5Mini: UICache.getInstance.get('azureEndpointGpt5Mini'),
             azureEndpointGpt5: UICache.getInstance.get('azureEndpointGpt5'),
-            azureEndpointGpt52: UICache.getInstance.get('azureEndpointGpt52'),
-            azureEndpointO1Mini: UICache.getInstance.get('azureEndpointO1Mini'),
-            azureEndpointO1: UICache.getInstance.get('azureEndpointO1')
+            azureEndpointGpt52: UICache.getInstance.get('azureEndpointGpt52')
         };
         
         // すべてのAPIキーを設定（保持）
@@ -102,8 +100,6 @@ class ApiSettingsModal {
                     elements.azureEndpointGpt5Mini.value = apiSettings.azureEndpoints['gpt-5-mini'] || '';
                     elements.azureEndpointGpt5.value = apiSettings.azureEndpoints['gpt-5'] || '';
                     elements.azureEndpointGpt52.value = apiSettings.azureEndpoints['gpt-5.2'] || '';
-                    elements.azureEndpointO1Mini.value = apiSettings.azureEndpoints['o1-mini'] || '';
-                    elements.azureEndpointO1.value = apiSettings.azureEndpoints['o1'] || '';
                 }
 
                 // Azure埋め込みエンドポイント設定を適用（RAG用）
