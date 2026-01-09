@@ -72,8 +72,7 @@ class ModalHandlers {
                     'gpt-4o': 'azureEndpointGpt4o',
                     'gpt-5-mini': 'azureEndpointGpt5Mini',
                     'gpt-5': 'azureEndpointGpt5',
-                    'o1-mini': 'azureEndpointO1Mini',
-                    'o1': 'azureEndpointO1'
+                    'gpt-5.2': 'azureEndpointGpt52'
                 };
 
                 // 各エンドポイントを保存（window.ElementsまたはUICacheから取得）
