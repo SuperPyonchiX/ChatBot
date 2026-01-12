@@ -51,6 +51,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
         }
 
+        // ツールマネージャーの初期化
+        if (typeof ToolManager !== 'undefined') {
+            ToolManager.getInstance.initialize().catch(err => {
+                console.warn('ToolManager初期化エラー:', err);
+            });
+        }
+
         _loadConversations();
         _setupEventListeners();
     }

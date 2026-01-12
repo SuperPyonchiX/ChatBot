@@ -36,7 +36,7 @@ class ResponsesAPI {
      * @param {Function} options.onWebSearchQuery - Web検索クエリ取得時のコールバック関数（任意）
      * @returns {Promise<string>} APIからの応答テキスト
      */
-    async callResponsesAPI(messages, model, attachments = [], options = { stream: false, enableWebSearch: false, thinkingContainer: null, onChunk: null, onComplete: null, onWebSearchQuery: null }) {
+    async callResponsesAPI(messages, model, attachments = [], options = { stream: false, enableWebSearch: false, enableTools: false, tools: [], thinkingContainer: null, onChunk: null, onComplete: null, onWebSearchQuery: null, onToolCall: null }) {
         try {
             // API設定を確認
             this.#validateAPISettings();
@@ -54,7 +54,9 @@ class ResponsesAPI {
                 processedInput,
                 model,
                 options.enableWebSearch,
-                options.stream
+                options.stream,
+                options.enableTools,
+                options.tools
             );
 
             console.log(`Responses APIリクエスト送信 (${model}):`, endpoint);
@@ -71,7 +73,8 @@ class ResponsesAPI {
                     options.onChunk,
                     options.onComplete,
                     options.thinkingContainer,
-                    options.onWebSearchQuery
+                    options.onWebSearchQuery,
+                    options.onToolCall
                 );
             } else {
                 return await this.#executeResponsesRequest(endpoint, headers, body);
@@ -202,7 +205,7 @@ class ResponsesAPI {
     /**
      * Responses APIリクエストを準備
      */
-    #prepareResponsesRequest(processedData, model, enableWebSearch, stream = false) {
+    #prepareResponsesRequest(processedData, model, enableWebSearch, stream = false, enableTools = false, tools = []) {
         let endpoint, headers = {}, body = {};
 
         // AppStateで初期化されたキャッシュを使用（存在しない場合はフォールバック）
@@ -276,15 +279,40 @@ class ResponsesAPI {
             body.stream = true;
         }
         
+        // ツールを追加
+        const allTools = [];
+
         // Web検索ツールを追加
         if (enableWebSearch) {
-            body.tools = [
-                {
-                    type: "web_search"
-                }
-            ];
+            allTools.push({
+                type: "web_search"
+            });
         }
-        
+
+        // カスタムツール（PowerPoint、Excel、Canvas等）を追加
+        // Responses APIはfunction形式のツールをサポート
+        if (enableTools && tools && tools.length > 0) {
+            console.log('🔧 Responses API: カスタムツールを追加中', tools.length, '個');
+            for (const tool of tools) {
+                // OpenAI Chat Completions形式からResponses API形式に変換
+                if (tool.type === 'function' && tool.function) {
+                    const responsesTool = {
+                        type: 'function',
+                        name: tool.function.name,
+                        description: tool.function.description,
+                        parameters: tool.function.parameters
+                    };
+                    allTools.push(responsesTool);
+                    console.log('🔧 ツール追加:', responsesTool.name);
+                }
+            }
+        }
+
+        if (allTools.length > 0) {
+            body.tools = allTools;
+            console.log('🔧 Responses API: 最終ツール定義', JSON.stringify(allTools, null, 2));
+        }
+
         return { endpoint, headers, body };
     }
 
@@ -336,8 +364,9 @@ class ResponsesAPI {
      * @param {Function} onComplete - 完了コールバック
      * @param {HTMLElement|null} thinkingContainer - 思考過程コンテナ
      * @param {Function|null} onWebSearchQuery - Web検索クエリ取得時のコールバック
+     * @param {Function|null} onToolCall - ツール呼び出し検出時のコールバック
      */
-    async #executeStreamResponsesRequest(endpoint, headers, body, onChunk, onComplete, thinkingContainer = null, onWebSearchQuery = null) {
+    async #executeStreamResponsesRequest(endpoint, headers, body, onChunk, onComplete, thinkingContainer = null, onWebSearchQuery = null, onToolCall = null) {
         const controller = new AbortController();
         let timeoutId;
         let fullText = '';
@@ -418,7 +447,20 @@ class ResponsesAPI {
                                 if (statusResult.shouldSkip) {
                                     continue;
                                 }
-                                
+
+                                // ツール呼び出しの検出（PowerPoint、Excel、Canvas等）
+                                if (onToolCall && typeof ToolExecutor !== 'undefined') {
+                                    const toolCallResult = ToolExecutor.getInstance.detectToolCall(jsonData, 'openai-responses');
+                                    if (toolCallResult) {
+                                        console.log('🔧 Responses APIツール呼び出し検出:', toolCallResult);
+                                        onToolCall(toolCallResult);
+                                        // ツール呼び出しイベントはテキスト抽出をスキップ
+                                        if (toolCallResult.type === 'complete') {
+                                            continue;
+                                        }
+                                    }
+                                }
+
                                 const extractedText = this.#extractStreamingText(jsonData);
                                 
                                 if (extractedText) {

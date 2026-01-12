@@ -342,6 +342,15 @@ class ChatRenderer {
             case 'web-search':
                 item.innerHTML = this.#formatWebSearchThinkingItem(content);
                 break;
+            case 'tool':
+                item.innerHTML = this.#formatToolThinkingItem(content, 'running');
+                break;
+            case 'tool-complete':
+                item.innerHTML = this.#formatToolThinkingItem(content, 'complete');
+                break;
+            case 'tool-error':
+                item.innerHTML = this.#formatToolThinkingItem(content, 'error');
+                break;
             case 'thinking':
             default:
                 item.innerHTML = this.#formatGenericThinkingItem(content);
@@ -392,6 +401,23 @@ class ChatRenderer {
      */
     #formatGenericThinkingItem(message) {
         return `<span class="thinking-item-icon">💭</span><span class="thinking-item-text">${this.#escapeHtml(message || '')}</span>`;
+    }
+
+    /**
+     * ツール実行アイテムのフォーマット
+     * @param {string} content - メッセージ内容
+     * @param {string} status - ステータス ('running', 'complete', 'error')
+     * @returns {string} フォーマットされたHTML
+     */
+    #formatToolThinkingItem(content, status) {
+        const icons = {
+            'running': '🔧',
+            'complete': '✅',
+            'error': '❌'
+        };
+        const icon = icons[status] || '🔧';
+        const statusClass = status === 'error' ? 'tool-error' : (status === 'complete' ? 'tool-complete' : 'tool-running');
+        return `<span class="thinking-item-icon ${statusClass}">${icon}</span><span class="thinking-item-text">${this.#escapeHtml(content || '')}</span>`;
     }
 
     /**
@@ -452,9 +478,18 @@ class ChatRenderer {
         if (!messageDiv || !container) return;
 
         try {
+            // ツール結果要素を退避（innerHTML上書き前に保存）
+            const toolResults = container.querySelectorAll('.tool-download-card, .tool-image-preview, .tool-analysis-result');
+            const savedToolResults = Array.from(toolResults);
+
             // 回答本文のみを更新（思考過程コンテナは保持される）
             const renderedHTML = await Markdown.getInstance.renderMarkdown(fullText);
             container.innerHTML = renderedHTML;
+
+            // ツール結果要素を再追加
+            if (savedToolResults.length > 0) {
+                savedToolResults.forEach(el => container.appendChild(el));
+            }
 
             const contentDiv = messageDiv.querySelector('.message-content');
             if (contentDiv) {

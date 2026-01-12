@@ -1,0 +1,400 @@
+/**
+ * tools.css
+ * ツール機能関連のスタイル
+ */
+
+/* ツール進捗表示 */
+.tool-progress-container {
+    margin-top: 10px;
+    padding: 8px;
+    background: var(--bg-secondary, #f5f5f5);
+    border-radius: 8px;
+}
+
+.tool-progress-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    color: var(--text-secondary, #666);
+}
+
+.tool-progress-item i {
+    font-size: 14px;
+}
+
+.tool-progress-item.start i,
+.tool-progress-item.progress i {
+    color: var(--primary-color, #4a90d9);
+}
+
+.tool-progress-item.complete i {
+    color: var(--success-color, #28a745);
+}
+
+.tool-progress-item.error i {
+    color: var(--error-color, #dc3545);
+}
+
+/* thinking-container内のツール進捗 */
+.thinking-item.tool-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 4px 0;
+}
+
+.thinking-item.tool-progress.running {
+    background: rgba(74, 144, 217, 0.1);
+    color: var(--primary-color, #4a90d9);
+}
+
+.thinking-item.tool-progress.complete {
+    background: rgba(40, 167, 69, 0.1);
+    color: var(--success-color, #28a745);
+}
+
+.thinking-item.tool-progress.error {
+    background: rgba(220, 53, 69, 0.1);
+    color: var(--error-color, #dc3545);
+}
+
+.thinking-item.tool-progress .tool-name {
+    font-weight: 500;
+}
+
+.thinking-item.tool-progress .tool-status {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-left: auto;
+}
+
+/* ダウンロードカード */
+.tool-download-card {
+    margin: 12px 0;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 10px;
+    background: var(--bg-primary, #fff);
+    overflow: hidden;
+    max-width: 400px;
+}
+
+.download-card-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+}
+
+.tool-download-card .file-icon {
+    font-size: 32px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.tool-download-card .file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.tool-download-card .file-name {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-primary, #333);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tool-download-card .file-meta {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-secondary, #666);
+}
+
+.tool-download-card .download-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--primary-color, #4a90d9);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.2s, transform 0.1s;
+    flex-shrink: 0;
+}
+
+.tool-download-card .download-btn:hover {
+    background: var(--primary-color-dark, #3a7bc8);
+}
+
+.tool-download-card .download-btn:active {
+    transform: scale(0.98);
+}
+
+/* ダウンロードリスト */
+.tool-download-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 画像プレビュー */
+.tool-image-preview {
+    margin: 12px 0;
+    max-width: 500px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-secondary, #f5f5f5);
+    border: 1px solid var(--border-color, #e0e0e0);
+}
+
+.image-preview-container {
+    position: relative;
+    cursor: pointer;
+}
+
+.image-preview-container .preview-image {
+    display: block;
+    width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    background: #fff;
+}
+
+.image-preview-container .image-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    gap: 6px;
+    padding: 10px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.image-preview-container:hover .image-overlay {
+    opacity: 1;
+}
+
+.image-preview-container .preview-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.image-preview-container .preview-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.tool-image-preview .image-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text-secondary, #666);
+    background: var(--bg-primary, #fff);
+}
+
+.tool-image-preview .image-name {
+    font-weight: 500;
+    color: var(--text-primary, #333);
+}
+
+/* フルスクリーンオーバーレイ */
+.image-fullscreen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.fullscreen-container {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.fullscreen-image {
+    max-width: 100%;
+    max-height: calc(90vh - 60px);
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.fullscreen-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.fullscreen-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.fullscreen-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* エラーメッセージ */
+.tool-error-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    margin: 10px 0;
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: 8px;
+    color: var(--error-color, #dc3545);
+    font-size: 14px;
+}
+
+.tool-error-message i {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* コードプレビュー */
+.tool-code-preview {
+    margin: 12px 0;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 600px;
+}
+
+.code-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg-secondary, #f5f5f5);
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.code-preview-header .code-filename {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary, #666);
+}
+
+.code-preview-header .copy-btn {
+    padding: 4px 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #666);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.code-preview-header .copy-btn:hover {
+    background: var(--bg-tertiary, #e0e0e0);
+}
+
+.tool-code-preview .code-content {
+    margin: 0;
+    padding: 12px 16px;
+    background: var(--bg-primary, #fff);
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+    .tool-download-card {
+        background: var(--bg-primary, #2d2d2d);
+        border-color: var(--border-color, #404040);
+    }
+
+    .tool-download-card .file-name {
+        color: var(--text-primary, #e0e0e0);
+    }
+
+    .tool-image-preview {
+        background: var(--bg-secondary, #1e1e1e);
+        border-color: var(--border-color, #404040);
+    }
+
+    .tool-image-preview .image-info {
+        background: var(--bg-primary, #2d2d2d);
+    }
+
+    .tool-code-preview {
+        border-color: var(--border-color, #404040);
+    }
+
+    .code-preview-header {
+        background: var(--bg-secondary, #1e1e1e);
+        border-color: var(--border-color, #404040);
+    }
+
+    .tool-code-preview .code-content {
+        background: var(--bg-primary, #2d2d2d);
+    }
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 600px) {
+    .tool-download-card {
+        max-width: 100%;
+    }
+
+    .download-card-content {
+        flex-wrap: wrap;
+    }
+
+    .tool-download-card .download-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .tool-image-preview {
+        max-width: 100%;
+    }
+
+    .fullscreen-controls {
+        flex-direction: column;
+    }
+}

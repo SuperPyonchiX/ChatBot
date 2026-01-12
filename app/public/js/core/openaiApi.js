@@ -31,6 +31,9 @@ class OpenAIAPI {
      * @param {boolean} options.stream - ストリーミングを使用するかどうか
      * @param {Function} options.onChunk - ストリーミング時のチャンク受信コールバック関数
      * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
+     * @param {boolean} options.enableTools - ツール機能を使用するかどうか
+     * @param {Array} options.tools - ツール定義（OpenAI形式）
+     * @param {Function} options.onToolCall - ツール呼び出し検出時のコールバック関数（任意）
      * @returns {Promise<string>} APIからの応答テキスト
      */
     async callOpenAIAPI(messages, model, attachments = [], options = { stream: false, onChunk: null, onComplete: null }) {
@@ -42,7 +45,7 @@ class OpenAIAPI {
             const processedMessages = this.#processMessagesWithAttachments(messages, attachments);
 
             // APIリクエストを準備
-            const { endpoint, headers, body } = this.#prepareOpenAIRequest(processedMessages, model, options.stream);
+            const { endpoint, headers, body } = this.#prepareOpenAIRequest(processedMessages, model, options.stream, options);
 
             console.log(`OpenAI APIリクエスト送信 (${model}):`, endpoint);
             console.log('📡 ストリーミング有効:', options.stream);
@@ -50,11 +53,12 @@ class OpenAIAPI {
             // APIリクエストを実行
             if (options.stream) {
                 return await this.#executeStreamOpenAIRequest(
-                    endpoint, 
-                    headers, 
-                    body, 
-                    options.onChunk, 
-                    options.onComplete
+                    endpoint,
+                    headers,
+                    body,
+                    options.onChunk,
+                    options.onComplete,
+                    options.onToolCall
                 );
             } else {
                 return await this.#executeOpenAIRequest(endpoint, headers, body);
@@ -132,7 +136,7 @@ class OpenAIAPI {
     /**
      * OpenAI APIリクエストを準備
      */
-    #prepareOpenAIRequest(messages, model, stream = false) {
+    #prepareOpenAIRequest(messages, model, stream = false, options = {}) {
         let endpoint, headers = {}, body = {};
 
         // APIボディの共通パラメータを構築
@@ -148,6 +152,12 @@ class OpenAIAPI {
             frequency_penalty: undefined,
             presence_penalty: undefined
         };
+
+        // ツール機能を追加
+        if (options.enableTools && options.tools && options.tools.length > 0) {
+            apiBody.tools = options.tools;
+            apiBody.tool_choice = 'auto';
+        }
 
         // GPT-5系モデルの場合は特別な処理が必要
         const isGPT5Model = model.startsWith('gpt-5');
@@ -247,11 +257,15 @@ class OpenAIAPI {
     /**
      * ストリーミングでOpenAI APIリクエストを実行
      */
-    async #executeStreamOpenAIRequest(endpoint, headers, body, onChunk, onComplete) {
+    async #executeStreamOpenAIRequest(endpoint, headers, body, onChunk, onComplete, onToolCall = null) {
         const controller = new AbortController();
         let timeoutId;
         let fullText = '';
         let chunkCount = 0;
+
+        // ツール呼び出し用の変数
+        let currentToolCalls = new Map();
+        let toolArgumentBuffers = new Map();
 
         const resetTimeout = () => {
             if (timeoutId) clearTimeout(timeoutId);
@@ -295,12 +309,84 @@ class OpenAIAPI {
                     
                     for (const line of lines) {
                         if (!line || line === 'data: [DONE]') continue;
-                        
+
                         if (line.startsWith('data: ')) {
                             try {
                                 const jsonData = JSON.parse(line.substring(6));
+
+                                // ツール呼び出しの検出
+                                if (jsonData.choices && jsonData.choices[0]?.delta?.tool_calls) {
+                                    for (const toolCallDelta of jsonData.choices[0].delta.tool_calls) {
+                                        const index = toolCallDelta.index || 0;
+
+                                        // 新しいツール呼び出しの開始
+                                        if (toolCallDelta.id) {
+                                            const toolCall = {
+                                                id: toolCallDelta.id,
+                                                name: toolCallDelta.function?.name || '',
+                                                arguments: {},
+                                                status: 'started',
+                                                provider: 'openai'
+                                            };
+                                            currentToolCalls.set(index, toolCall);
+                                            toolArgumentBuffers.set(index, '');
+
+                                            if (onToolCall && typeof onToolCall === 'function') {
+                                                try {
+                                                    onToolCall({ type: 'start', toolCall });
+                                                } catch (error) {
+                                                    console.warn('ツール呼び出しコールバックエラー:', error);
+                                                }
+                                            }
+                                        }
+
+                                        // 引数のデルタを蓄積
+                                        if (toolCallDelta.function?.arguments) {
+                                            const buffer = toolArgumentBuffers.get(index) || '';
+                                            toolArgumentBuffers.set(index, buffer + toolCallDelta.function.arguments);
+
+                                            if (onToolCall && typeof onToolCall === 'function') {
+                                                try {
+                                                    onToolCall({
+                                                        type: 'delta',
+                                                        toolCallId: currentToolCalls.get(index)?.id,
+                                                        partialJson: toolCallDelta.function.arguments
+                                                    });
+                                                } catch (error) {
+                                                    console.warn('ツールデルタコールバックエラー:', error);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // finish_reason が tool_calls の場合、ツール呼び出し完了
+                                if (jsonData.choices && jsonData.choices[0]?.finish_reason === 'tool_calls') {
+                                    for (const [index, toolCall] of currentToolCalls.entries()) {
+                                        const argBuffer = toolArgumentBuffers.get(index) || '';
+                                        try {
+                                            toolCall.arguments = argBuffer ? JSON.parse(argBuffer) : {};
+                                        } catch (e) {
+                                            console.warn('ツール引数のJSONパースに失敗:', e);
+                                            toolCall.arguments = {};
+                                        }
+                                        toolCall.status = 'complete';
+
+                                        if (onToolCall && typeof onToolCall === 'function') {
+                                            try {
+                                                onToolCall({ type: 'complete', toolCall });
+                                            } catch (error) {
+                                                console.warn('ツール完了コールバックエラー:', error);
+                                            }
+                                        }
+                                    }
+                                    currentToolCalls.clear();
+                                    toolArgumentBuffers.clear();
+                                }
+
+                                // テキストの抽出
                                 const extractedText = this.#extractStreamingText(jsonData);
-                                
+
                                 if (extractedText) {
                                     onChunk(extractedText);
                                     fullText += extractedText;

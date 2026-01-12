@@ -33,6 +33,9 @@ class ClaudeAPI {
      * @param {Function} options.onChunk - ストリーミング時のチャンク受信コールバック関数
      * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
      * @param {boolean} options.enableWebSearch - Web検索機能を使用するかどうか
+     * @param {boolean} options.enableTools - ツール機能を使用するかどうか
+     * @param {Array} options.tools - カスタムツール定義（Claude形式）
+     * @param {Function} options.onToolCall - ツール呼び出し検出時のコールバック関数（任意）
      * @param {HTMLElement} options.thinkingContainer - 思考過程コンテナ（任意）
      * @param {Function} options.onWebSearchQuery - Web検索クエリ取得時のコールバック関数（任意）
      * @returns {Promise<string>} APIからの応答テキスト（ストリーミングの場合は空文字列）
@@ -58,7 +61,8 @@ class ClaudeAPI {
                     options.onChunk,
                     options.onComplete,
                     options.thinkingContainer,
-                    options.onWebSearchQuery
+                    options.onWebSearchQuery,
+                    options.onToolCall
                 );
             } else {
                 return await this.#executeClaudeRequest(headers, body);
@@ -124,9 +128,21 @@ class ClaudeAPI {
             temperature: window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature
         };
         
+        // ツールを追加
+        let tools = [];
+
+        // カスタムツール（エージェント機能）を追加
+        if (options.enableTools && options.tools && options.tools.length > 0) {
+            tools = [...tools, ...options.tools];
+        }
+
         // Web検索ツールを追加
         if (options.enableWebSearch && this.#isWebSearchSupported(model)) {
-            body.tools = this.#createWebSearchTool();
+            tools = [...tools, ...this.#createWebSearchTool()];
+        }
+
+        if (tools.length > 0) {
+            body.tools = tools;
         }
         
         // ストリーミングが有効な場合のみstreamパラメーターを追加（公式仕様準拠）
@@ -304,7 +320,7 @@ class ClaudeAPI {
      * @param {Function|null} onWebSearchQuery - Web検索クエリ取得時のコールバック（任意）
      * @returns {Promise<string>} 空文字列（ストリーミングのため）
      */
-    async #executeStreamClaudeRequest(headers, body, onChunk, onComplete, thinkingContainer = null, onWebSearchQuery = null) {
+    async #executeStreamClaudeRequest(headers, body, onChunk, onComplete, thinkingContainer = null, onWebSearchQuery = null, onToolCall = null) {
         try {
             // Ensure stream flag is present in payload
             const payloadStr = (function(){
@@ -354,6 +370,10 @@ class ClaudeAPI {
             let completedSearchQuery = '';
             let webSearchMessageUpdated = false;
             let webSearchAddedToThinking = false;
+
+            // カスタムツール用の変数
+            let currentToolCall = null;
+            let toolInputBuffer = '';
             const chatMessages = document.querySelector('#chatMessages');
             const existingThinkingMessage = chatMessages?.querySelector('.message.bot:last-child');
 
@@ -385,7 +405,7 @@ class ClaudeAPI {
                             }
                             // content_block_start イベント
                             else if (parsed.type === 'content_block_start') {
-                                
+
                                 // Web検索ツール使用開始の検出
                                 if (parsed.content_block?.type === 'server_tool_use' &&
                                     parsed.content_block?.name === 'web_search') {
@@ -402,6 +422,28 @@ class ClaudeAPI {
                                             '🔍 Web検索を実行しています...',
                                             { status: 'searching', showDots: true }
                                         );
+                                    }
+                                }
+
+                                // カスタムツール使用開始の検出（tool_use タイプ）
+                                if (parsed.content_block?.type === 'tool_use' &&
+                                    parsed.content_block?.name !== 'web_search') {
+                                    currentToolCall = {
+                                        id: parsed.content_block.id,
+                                        name: parsed.content_block.name,
+                                        arguments: {},
+                                        status: 'started',
+                                        provider: 'claude'
+                                    };
+                                    toolInputBuffer = '';
+
+                                    // ツール呼び出し開始コールバック
+                                    if (onToolCall && typeof onToolCall === 'function') {
+                                        try {
+                                            onToolCall({ type: 'start', toolCall: currentToolCall });
+                                        } catch (error) {
+                                            console.warn('ツール呼び出しコールバックエラー:', error);
+                                        }
                                     }
                                 }
                             }
@@ -457,6 +499,24 @@ class ClaudeAPI {
                                                 // JSONが未完成の場合は無視
                                             }
                                         }
+
+                                        // カスタムツールの入力JSONを蓄積
+                                        if (currentToolCall && parsed.delta.partial_json) {
+                                            toolInputBuffer += parsed.delta.partial_json;
+
+                                            // デルタコールバック
+                                            if (onToolCall && typeof onToolCall === 'function') {
+                                                try {
+                                                    onToolCall({
+                                                        type: 'delta',
+                                                        toolCallId: currentToolCall.id,
+                                                        partialJson: parsed.delta.partial_json
+                                                    });
+                                                } catch (error) {
+                                                    console.warn('ツールデルタコールバックエラー:', error);
+                                                }
+                                            }
+                                        }
                                     }
                                     // 思考デルタ（Extended Thinking）
                                     else if (parsed.delta.type === 'thinking_delta') {
@@ -487,6 +547,30 @@ class ClaudeAPI {
                                             }
                                         }
                                     }, 100);
+                                }
+
+                                // カスタムツール呼び出し完了の検出
+                                if (currentToolCall) {
+                                    try {
+                                        currentToolCall.arguments = toolInputBuffer ? JSON.parse(toolInputBuffer) : {};
+                                    } catch (e) {
+                                        console.warn('ツール引数のJSONパースに失敗:', e);
+                                        currentToolCall.arguments = {};
+                                    }
+                                    currentToolCall.status = 'complete';
+
+                                    // ツール呼び出し完了コールバック
+                                    if (onToolCall && typeof onToolCall === 'function') {
+                                        try {
+                                            onToolCall({ type: 'complete', toolCall: currentToolCall });
+                                        } catch (error) {
+                                            console.warn('ツール完了コールバックエラー:', error);
+                                        }
+                                    }
+
+                                    // リセット
+                                    currentToolCall = null;
+                                    toolInputBuffer = '';
                                 }
                             }
                             // message_delta イベント

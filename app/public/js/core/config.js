@@ -356,6 +356,41 @@ window.CONFIG = {
     },
 
     /**
+     * ツール（エージェント）機能の設定
+     */
+    TOOLS: {
+        // 有効なツール
+        ENABLED: ['generate_powerpoint', 'process_excel', 'render_canvas'],
+
+        // ツール対応モデル
+        COMPATIBLE_MODELS: {
+            CLAUDE: ['claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'],
+            OPENAI: ['gpt-4o', 'gpt-4o-mini', 'gpt-5', 'gpt-5-mini', 'o1', 'o1-mini'],
+            GEMINI: ['gemini-3-pro-preview', 'gemini-2.5-pro', 'gemini-2.5-flash']
+        },
+
+        // PowerPoint設定
+        POWERPOINT: {
+            MAX_SLIDES: 50,
+            DEFAULT_THEME: 'default',
+            THEMES: ['default', 'dark', 'corporate', 'minimal']
+        },
+
+        // Excel設定
+        EXCEL: {
+            MAX_ROWS: 10000,
+            MAX_COLUMNS: 100
+        },
+
+        // Canvas設定
+        CANVAS: {
+            MAX_WIDTH: 4096,
+            MAX_HEIGHT: 4096,
+            DEFAULT_FORMAT: 'png'
+        }
+    },
+
+    /**
      * Web検索関連の設定
      */
     WEB_SEARCH: {
