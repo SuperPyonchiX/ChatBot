@@ -134,6 +134,207 @@ app.use('/gemini', createProxyMiddleware({
 }));
 
 // ========================================
+// Azure OpenAI API プロキシ（動的エンドポイント）
+// ========================================
+app.post('/azure-openai', express.json({ limit: '10mb' }), async (req, res) => {
+    const { targetUrl, apiKey, body } = req.body;
+
+    if (!targetUrl || !apiKey) {
+        return res.status(400).json({
+            error: { message: 'targetUrlとapiKeyは必須です' }
+        });
+    }
+
+    console.log(`[Azure OpenAI] POST ${targetUrl}`);
+
+    try {
+        const response = await fetch(targetUrl, {
+            method: 'POST',
+            headers: {
+                'api-key': apiKey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        // ストリーミングレスポンスの場合
+        const contentType = response.headers.get('content-type');
+        if (body.stream && contentType && contentType.includes('text/event-stream')) {
+            res.setHeader('Content-Type', 'text/event-stream');
+            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('Connection', 'keep-alive');
+
+            // Node.js 18+ の ReadableStream を使用
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            const pump = async () => {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        res.end();
+                        break;
+                    }
+                    res.write(decoder.decode(value, { stream: true }));
+                }
+            };
+
+            pump().catch(err => {
+                console.error('[Azure OpenAI] ストリーミングエラー:', err.message);
+                res.end();
+            });
+        } else {
+            // 通常のJSONレスポンス
+            const data = await response.json();
+            res.status(response.status).json(data);
+        }
+    } catch (error) {
+        console.error('[Azure OpenAI] プロキシエラー:', error.message);
+        res.status(500).json({
+            error: {
+                message: 'Azure OpenAI APIへの接続に失敗しました',
+                details: error.message
+            }
+        });
+    }
+});
+
+// ========================================
+// OpenAI Embeddings API プロキシ
+// ========================================
+app.post('/openai-embeddings', express.json({ limit: '10mb' }), async (req, res) => {
+    const { input, model, dimensions } = req.body;
+    const apiKey = req.headers['authorization']?.replace('Bearer ', '');
+
+    if (!apiKey || !input) {
+        return res.status(400).json({
+            error: { message: 'APIキーと入力テキストは必須です' }
+        });
+    }
+
+    console.log(`[OpenAI Embeddings] POST - texts: ${Array.isArray(input) ? input.length : 1}`);
+
+    try {
+        const response = await fetch('https://api.openai.com/v1/embeddings', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: model || 'text-embedding-3-large',
+                input: input,
+                dimensions: dimensions || 3072
+            })
+        });
+
+        const data = await response.json();
+        res.status(response.status).json(data);
+    } catch (error) {
+        console.error('[OpenAI Embeddings] プロキシエラー:', error.message);
+        res.status(500).json({
+            error: {
+                message: 'OpenAI Embeddings APIへの接続に失敗しました',
+                details: error.message
+            }
+        });
+    }
+});
+
+// ========================================
+// Azure OpenAI Embeddings API プロキシ
+// ========================================
+app.post('/azure-openai-embeddings', express.json({ limit: '10mb' }), async (req, res) => {
+    const { targetUrl, apiKey, input, dimensions } = req.body;
+
+    if (!targetUrl || !apiKey || !input) {
+        return res.status(400).json({
+            error: { message: 'targetUrl, apiKey, inputは必須です' }
+        });
+    }
+
+    console.log(`[Azure Embeddings] POST ${targetUrl} - texts: ${Array.isArray(input) ? input.length : 1}`);
+
+    try {
+        const response = await fetch(targetUrl, {
+            method: 'POST',
+            headers: {
+                'api-key': apiKey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                input: input,
+                dimensions: dimensions || 3072
+            })
+        });
+
+        const data = await response.json();
+        res.status(response.status).json(data);
+    } catch (error) {
+        console.error('[Azure Embeddings] プロキシエラー:', error.message);
+        res.status(500).json({
+            error: {
+                message: 'Azure OpenAI Embeddings APIへの接続に失敗しました',
+                details: error.message
+            }
+        });
+    }
+});
+
+// ========================================
+// Confluence Data Center API プロキシ
+// ========================================
+app.post('/confluence-proxy', express.json({ limit: '10mb' }), async (req, res) => {
+    const { targetUrl, authorization } = req.body;
+
+    if (!targetUrl || !authorization) {
+        return res.status(400).json({
+            error: { message: 'targetUrlとauthorizationは必須です' }
+        });
+    }
+
+    console.log(`[Confluence] GET ${targetUrl}`);
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+
+        const response = await fetch(targetUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': authorization,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+
+        const data = await response.json();
+        res.status(response.status).json(data);
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            console.error('[Confluence] タイムアウト');
+            res.status(504).json({
+                error: {
+                    message: 'Confluence APIへのリクエストがタイムアウトしました',
+                    details: 'Request timeout after 30 seconds'
+                }
+            });
+        } else {
+            console.error('[Confluence] プロキシエラー:', error.message);
+            res.status(500).json({
+                error: {
+                    message: 'Confluence APIへの接続に失敗しました',
+                    details: error.message
+                }
+            });
+        }
+    }
+});
+
+// ========================================
 // C++ コンパイル・実行 API
 // ========================================
 app.post('/api/compile/cpp', express.json({ limit: '1mb' }), async (req, res) => {
@@ -258,10 +459,14 @@ app.listen(PORT, () => {
     console.log(`Public Path: ${publicPath}`);
     console.log('');
     console.log('Proxy Endpoints:');
-    console.log(`   - OpenAI:    http://localhost:${PORT}/openai/*`);
-    console.log(`   - Responses: http://localhost:${PORT}/responses/*`);
-    console.log(`   - Claude:    http://localhost:${PORT}/anthropic/*`);
-    console.log(`   - Gemini:    http://localhost:${PORT}/gemini/*`);
+    console.log(`   - OpenAI:            http://localhost:${PORT}/openai/*`);
+    console.log(`   - Responses:         http://localhost:${PORT}/responses/*`);
+    console.log(`   - Claude:            http://localhost:${PORT}/anthropic/*`);
+    console.log(`   - Gemini:            http://localhost:${PORT}/gemini/*`);
+    console.log(`   - Azure OpenAI:      http://localhost:${PORT}/azure-openai`);
+    console.log(`   - OpenAI Embeddings: http://localhost:${PORT}/openai-embeddings`);
+    console.log(`   - Azure Embeddings:  http://localhost:${PORT}/azure-openai-embeddings`);
+    console.log(`   - Confluence:        http://localhost:${PORT}/confluence-proxy`);
     console.log('');
     console.log(`Open http://localhost:${PORT} in your browser`);
     console.log('');

@@ -128,22 +128,23 @@ class Storage {
      */
     loadApiSettings() {
         const azureEndpoints = {};
-        
+
         // AzureエンドポイントはOpenAIモデルのみに適用
         window.CONFIG.MODELS.OPENAI.forEach(model => {
             if (!model) return;
-            
+
             const endpointKey = window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX + model;
             azureEndpoints[model] = this.getItem(endpointKey, '');
         });
-        
+
         return {
             openaiApiKey: this.getItem(window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY, ''),
             azureApiKey: this.getItem(window.CONFIG.STORAGE.KEYS.AZURE_API_KEY, ''),
             geminiApiKey: this.getItem(window.CONFIG.STORAGE.KEYS.GEMINI_API_KEY, ''),
             claudeApiKey: this.getItem(window.CONFIG.STORAGE.KEYS.CLAUDE_API_KEY, ''),
             apiType: this.getItem(window.CONFIG.STORAGE.KEYS.API_TYPE, window.CONFIG.STORAGE.DEFAULT_API_TYPE),
-            // @ts-ignore - azureEndpointsは動的に構築されるオブジェクト`r`n            azureEndpoints,
+            // @ts-ignore - azureEndpointsは動的に構築されるオブジェクト
+            azureEndpoints,
             claudeWebSearchSettings: this.getClaudeWebSearchSettings()
         };
     }
@@ -156,25 +157,25 @@ class Storage {
      */
     saveApiSettings(apiSettings) {
         if (!apiSettings) return;
-        
+
         this.setItem(window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY, apiSettings.openaiApiKey || '');
         this.setItem(window.CONFIG.STORAGE.KEYS.AZURE_API_KEY, apiSettings.azureApiKey || '');
         this.setItem(window.CONFIG.STORAGE.KEYS.GEMINI_API_KEY, apiSettings.geminiApiKey || '');
         this.setItem(window.CONFIG.STORAGE.KEYS.CLAUDE_API_KEY, apiSettings.claudeApiKey || '');
         this.setItem(window.CONFIG.STORAGE.KEYS.API_TYPE, apiSettings.apiType || window.CONFIG.STORAGE.DEFAULT_API_TYPE);
-        
+
         // Claude Web検索設定の保存
         // @ts-ignore - claudeWebSearchSettingsは拡張プロパティ
         if (apiSettings.claudeWebSearchSettings) {
             // @ts-ignore
             this.saveClaudeWebSearchSettings(apiSettings.claudeWebSearchSettings);
         }
-        
+
         if (apiSettings.azureEndpoints) {
             // AzureエンドポイントはOpenAIモデルのみに適用
             window.CONFIG.MODELS.OPENAI.forEach(model => {
                 if (!model) return;
-                
+
                 const endpointKey = window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX + model;
                 const endpoint = apiSettings.azureEndpoints[model] || '';
                 this.setItem(endpointKey, endpoint);

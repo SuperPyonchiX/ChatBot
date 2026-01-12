@@ -52,10 +52,14 @@ class VectorStore {
                 reject(event.target.error);
             };
 
-            request.onsuccess = (event) => {
+            request.onsuccess = async (event) => {
                 this.#db = event.target.result;
                 this.#initialized = true;
                 console.log('✅ VectorStore initialized');
+
+                // 次元数の不整合をチェック
+                await this.#checkDimensionMismatch();
+
                 resolve();
             };
 
@@ -97,6 +101,12 @@ class VectorStore {
      * @param {string} document.type - ファイルタイプ
      * @param {number} document.size - ファイルサイズ
      * @param {number} document.chunkCount - チャンク数
+     * @param {'file'|'confluence'} [document.source='file'] - データソース種別
+     * @param {string} [document.sourceUrl] - ソースURL（Confluenceの場合はページURL）
+     * @param {string} [document.lastModified] - ソースの最終更新日時（ISO 8601形式）
+     * @param {string} [document.spaceKey] - Confluenceスペースキー
+     * @param {string} [document.spaceName] - Confluenceスペース名
+     * @param {string} [document.confluencePageId] - ConfluenceページID（差分更新の識別に使用）
      * @returns {Promise<void>}
      */
     async addDocument(document) {
@@ -104,6 +114,12 @@ class VectorStore {
 
         const doc = {
             ...document,
+            source: document.source || 'file',
+            sourceUrl: document.sourceUrl || null,
+            lastModified: document.lastModified || null,
+            spaceKey: document.spaceKey || null,
+            spaceName: document.spaceName || null,
+            confluencePageId: document.confluencePageId || null,
             createdAt: Date.now()
         };
 
@@ -268,6 +284,87 @@ class VectorStore {
     }
 
     /**
+     * sourceUrlでドキュメントを検索
+     * @param {string} sourceUrl - 検索するソースURL
+     * @returns {Promise<Object|null>} 見つかった場合はドキュメント、なければnull
+     */
+    async findBySourceUrl(sourceUrl) {
+        await this.#ensureInitialized();
+
+        return new Promise((resolve, reject) => {
+            const transaction = this.#db.transaction(
+                [window.CONFIG.RAG.STORAGE.DOCUMENTS_STORE],
+                'readonly'
+            );
+            const store = transaction.objectStore(window.CONFIG.RAG.STORAGE.DOCUMENTS_STORE);
+            const request = store.openCursor();
+
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    if (cursor.value.sourceUrl === sourceUrl) {
+                        resolve(cursor.value);
+                        return;
+                    }
+                    cursor.continue();
+                } else {
+                    resolve(null);
+                }
+            };
+
+            request.onerror = (event) => {
+                reject(event.target.error);
+            };
+        });
+    }
+
+    /**
+     * Confluenceソースのドキュメント一覧を取得
+     * @param {string} [spaceKey] - オプション、特定スペースのドキュメントのみ取得
+     * @returns {Promise<Array<Object>>}
+     */
+    async getConfluenceDocuments(spaceKey = null) {
+        await this.#ensureInitialized();
+
+        return new Promise((resolve, reject) => {
+            const transaction = this.#db.transaction(
+                [window.CONFIG.RAG.STORAGE.DOCUMENTS_STORE],
+                'readonly'
+            );
+            const store = transaction.objectStore(window.CONFIG.RAG.STORAGE.DOCUMENTS_STORE);
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                let documents = request.result.filter(doc => doc.source === 'confluence');
+
+                // スペースキーが指定されている場合はフィルタ
+                if (spaceKey) {
+                    documents = documents.filter(doc => {
+                        // まずspaceKeyフィールドを確認
+                        if (doc.spaceKey) {
+                            return doc.spaceKey === spaceKey;
+                        }
+                        // フォールバック: sourceUrlからスペースキーを抽出
+                        if (!doc.sourceUrl) return false;
+                        const urlSpaceMatch = doc.sourceUrl.match(/\/spaces\/([^\/]+)\//);
+                        const querySpaceMatch = doc.sourceUrl.match(/[?&]spaceKey=([^&]+)/);
+                        const docSpaceKey = urlSpaceMatch ? urlSpaceMatch[1] : (querySpaceMatch ? querySpaceMatch[1] : null);
+                        return docSpaceKey === spaceKey;
+                    });
+                }
+
+                // 作成日時の降順でソート
+                documents.sort((a, b) => b.createdAt - a.createdAt);
+                resolve(documents);
+            };
+
+            request.onerror = (event) => {
+                reject(event.target.error);
+            };
+        });
+    }
+
+    /**
      * 特定ドキュメントのチャンクを取得
      * @param {string} docId - ドキュメントID
      * @returns {Promise<Array<Object>>}
@@ -415,6 +512,49 @@ class VectorStore {
     async #ensureInitialized() {
         if (!this.#initialized) {
             await this.initialize();
+        }
+    }
+
+    /**
+     * 保存された次元数と現在の次元数を比較し、不整合があればデータをクリア
+     * @returns {Promise<void>}
+     */
+    async #checkDimensionMismatch() {
+        try {
+            // EmbeddingAPIが利用可能か確認
+            if (typeof EmbeddingAPI === 'undefined') {
+                return;
+            }
+
+            const savedDimensionsStr = Storage.getInstance.getItem(
+                window.CONFIG.STORAGE.KEYS.EMBEDDING_DIMENSIONS,
+                ''
+            );
+
+            // 保存された次元数がない場合（初回起動）
+            if (!savedDimensionsStr) {
+                const currentDimensions = EmbeddingAPI.getInstance.getDimensions();
+                Storage.getInstance.setItem(
+                    window.CONFIG.STORAGE.KEYS.EMBEDDING_DIMENSIONS,
+                    currentDimensions.toString()
+                );
+                return;
+            }
+
+            const savedDimensions = parseInt(savedDimensionsStr, 10);
+            const currentDimensions = EmbeddingAPI.getInstance.getDimensions();
+
+            // 次元数が変わった場合はデータをクリア
+            if (savedDimensions !== currentDimensions) {
+                console.log(`⚠️ 埋め込み次元数が変更されました（${savedDimensions} → ${currentDimensions}）。ナレッジベースをクリアします。`);
+                await this.clearAll();
+                Storage.getInstance.setItem(
+                    window.CONFIG.STORAGE.KEYS.EMBEDDING_DIMENSIONS,
+                    currentDimensions.toString()
+                );
+            }
+        } catch (error) {
+            console.error('❌ 次元数チェックエラー:', error);
         }
     }
 

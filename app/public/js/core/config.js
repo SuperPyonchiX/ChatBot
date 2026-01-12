@@ -217,7 +217,15 @@ window.CONFIG = {
             CURRENT_CONVERSATION_ID: 'currentConversationId',
             ATTACHMENTS_PREFIX: 'attachments_',
             WEB_SEARCH_ENABLED: 'webSearchEnabled',
-            RAG_ENABLED: 'ragEnabled'
+            RAG_ENABLED: 'ragEnabled',
+            // 埋め込みAPI設定
+            AZURE_EMBEDDING_ENDPOINT: 'azureEmbeddingEndpoint',
+            EMBEDDING_MODE: 'embeddingMode',
+            EMBEDDING_DIMENSIONS: 'embeddingDimensions',
+            // Confluence Data Center設定
+            CONFLUENCE_BASE_URL: 'confluenceBaseUrl',
+            CONFLUENCE_AUTH_TYPE: 'confluenceAuthType',
+            CONFLUENCE_AUTH_DATA: 'confluenceAuthData'
         },
 
         // デフォルト値
@@ -289,7 +297,7 @@ window.CONFIG = {
      */
     MODELS: {
         // サポートされているモデル
-        OPENAI: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5'],
+        OPENAI: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5', 'o1-mini', 'o1'],
         GEMINI: ['gemini-3-pro-preview', 'gemini-2.5-pro', 'gemini-2.5-flash'],
         CLAUDE: [
             'claude-opus-4-5',
@@ -307,7 +315,9 @@ window.CONFIG = {
             'gpt-4o': 'GPT-4o',
             'gpt-5-mini': 'GPT-5 Mini',
             'gpt-5': 'GPT-5',
-            
+            'o1-mini': 'o1 Mini',
+            'o1': 'o1',
+
             // Gemini
             'gemini-3-pro-preview': 'Gemini 3 Pro Preview',
             'gemini-2.5-pro': 'Gemini 2.5 Pro',
@@ -388,10 +398,12 @@ window.CONFIG = {
     RAG: {
         // 埋め込み（Embedding）設定
         EMBEDDING: {
-            // ローカル埋め込みモデル（Transformers.js使用）
-            MODEL_ID: 'Xenova/all-MiniLM-L6-v2',
-            // 埋め込み次元数
-            DIMENSIONS: 384,
+            // ローカル埋め込みモデル（Transformers.js使用、フォールバック用）
+            LOCAL_MODEL_ID: 'Xenova/all-MiniLM-L6-v2',
+            LOCAL_DIMENSIONS: 384,
+            // OpenAI/Azure OpenAI 埋め込みモデル
+            OPENAI_MODEL: 'text-embedding-3-large',
+            OPENAI_DIMENSIONS: 3072,
             // チャンクサイズ（文字数）
             CHUNK_SIZE: 500,
             // チャンク間のオーバーラップ（文字数）
@@ -424,6 +436,18 @@ window.CONFIG = {
             CONTEXT_PREFIX: '\n\n---\n以下は関連するナレッジベースからの情報です：\n\n',
             // コンテキストのサフィックス
             CONTEXT_SUFFIX: '\n---\n\n上記の情報を参考に回答してください。'
+        },
+
+        // Confluence Data Center連携設定
+        CONFLUENCE: {
+            // ページ取得時の1回あたりの件数
+            PAGE_FETCH_LIMIT: 100,
+            // スペースあたりの最大ページ数
+            MAX_PAGES_PER_SPACE: 50000,
+            // 1ページあたりの最大コンテンツ長（文字数）
+            MAX_CONTENT_LENGTH: 100000,
+            // リクエストタイムアウト（ミリ秒）
+            REQUEST_TIMEOUT: 30000
         }
     }
 };

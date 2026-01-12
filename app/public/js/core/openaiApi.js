@@ -135,36 +135,8 @@ class OpenAIAPI {
     #prepareOpenAIRequest(messages, model, stream = false) {
         let endpoint, headers = {}, body = {};
 
-        // @ts-ignore
-        if (window.apiSettings.apiType === 'azure') {
-            // Azure OpenAI API
-            // @ts-ignore
-            const azureEndpoint = window.apiSettings.azureEndpoints[model];
-            if (azureEndpoint) {
-                endpoint = azureEndpoint;
-            } else {
-                throw new Error(`Azure OpenAI: モデル ${model} のエンドポイントが設定されていません`);
-            }
-
-            // @ts-ignore
-            headers = {
-                // @ts-ignore
-                'api-key': window.apiSettings.azureApiKey,
-                'Content-Type': 'application/json'
-            };
-        } else {
-            // OpenAI API
-            endpoint = window.CONFIG.AIAPI.ENDPOINTS.OPENAI;
-            // @ts-ignore
-            headers = {
-                // @ts-ignore
-                'Authorization': `Bearer ${window.apiSettings.openaiApiKey}`,
-                'Content-Type': 'application/json'
-            };
-        }
-
-        // リクエストボディを構築
-        body = {
+        // APIボディの共通パラメータを構築
+        const apiBody = {
             model: model,
             messages: messages,
             stream: stream,
@@ -181,21 +153,55 @@ class OpenAIAPI {
         const isGPT5Model = model.startsWith('gpt-5');
         if (isGPT5Model) {
             // GPT-5系モデルはmax_completion_tokensを使用
-            body.max_completion_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
+            apiBody.max_completion_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
             // temperatureはデフォルト値(1)のみサポートされているため、
             // デフォルト値以外の場合は省略する（デフォルト値が使用される）
             if (window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature === 1) {
-                body.temperature = 1;
+                apiBody.temperature = 1;
             }
             // GPT-5系モデルでは他のパラメータ（top_p, frequency_penalty, presence_penalty）も
             // 制限がある可能性があるため省略
         } else {
             // GPT-4系などの従来モデル
-            body.max_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
-            body.temperature = window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature;
-            body.top_p = window.CONFIG.AIAPI.DEFAULT_PARAMS.top_p;
-            body.frequency_penalty = window.CONFIG.AIAPI.DEFAULT_PARAMS.frequency_penalty;
-            body.presence_penalty = window.CONFIG.AIAPI.DEFAULT_PARAMS.presence_penalty;
+            apiBody.max_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
+            apiBody.temperature = window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature;
+            apiBody.top_p = window.CONFIG.AIAPI.DEFAULT_PARAMS.top_p;
+            apiBody.frequency_penalty = window.CONFIG.AIAPI.DEFAULT_PARAMS.frequency_penalty;
+            apiBody.presence_penalty = window.CONFIG.AIAPI.DEFAULT_PARAMS.presence_penalty;
+        }
+
+        // @ts-ignore
+        if (window.apiSettings.apiType === 'azure') {
+            // Azure OpenAI API - プロキシ経由
+            // @ts-ignore
+            const azureEndpoint = window.apiSettings.azureEndpoints[model];
+            if (!azureEndpoint) {
+                throw new Error(`Azure OpenAI: モデル ${model} のエンドポイントが設定されていません`);
+            }
+
+            // プロキシエンドポイントを使用
+            endpoint = '/azure-openai';
+            headers = {
+                'Content-Type': 'application/json'
+            };
+
+            // プロキシ用のボディ構造
+            body = {
+                targetUrl: azureEndpoint,
+                // @ts-ignore
+                apiKey: window.apiSettings.azureApiKey,
+                body: apiBody
+            };
+        } else {
+            // OpenAI API
+            endpoint = window.CONFIG.AIAPI.ENDPOINTS.OPENAI;
+            // @ts-ignore
+            headers = {
+                // @ts-ignore
+                'Authorization': `Bearer ${window.apiSettings.openaiApiKey}`,
+                'Content-Type': 'application/json'
+            };
+            body = apiBody;
         }
 
         return { endpoint, headers, body };

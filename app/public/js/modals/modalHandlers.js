@@ -60,29 +60,39 @@ class ModalHandlers {
             // OpenAI系を選択 - OpenAI または Azure OpenAI を判定
             if (window.Elements.azureRadio.checked) {
                 window.AppState.apiSettings.apiType = 'azure';
-                
+
                 // Azure OpenAI APIキーとエンドポイントを更新
                 if (window.Elements.azureApiKeyInput) {
                     window.AppState.apiSettings.azureApiKey = window.Elements.azureApiKeyInput.value.trim();
                 }
-                
+
                 // モデルごとのエンドポイントを設定
-                const endpoints = {
-                    'gpt-4o-mini': window.Elements.azureEndpointGpt4oMini,
-                    'gpt-4o': window.Elements.azureEndpointGpt4o,
-                    'gpt-5-mini': window.Elements.azureEndpointGpt5Mini,
-                    'gpt-5': window.Elements.azureEndpointGpt5,
-                    'o1-mini': window.Elements.azureEndpointO1Mini,
-                    'o1': window.Elements.azureEndpointO1
+                const endpointIds = {
+                    'gpt-4o-mini': 'azureEndpointGpt4oMini',
+                    'gpt-4o': 'azureEndpointGpt4o',
+                    'gpt-5-mini': 'azureEndpointGpt5Mini',
+                    'gpt-5': 'azureEndpointGpt5',
+                    'o1-mini': 'azureEndpointO1Mini',
+                    'o1': 'azureEndpointO1'
                 };
-                
-                // 各エンドポイントを保存
-                Object.entries(endpoints).forEach(([model, element]) => {
-                    if (element) {
-                        window.AppState.apiSettings.azureEndpoints = window.AppState.apiSettings.azureEndpoints || {};
+
+                // 各エンドポイントを保存（window.ElementsまたはUICacheから取得）
+                window.AppState.apiSettings.azureEndpoints = {};
+                Object.entries(endpointIds).forEach(([model, elementId]) => {
+                    const element = window.Elements[elementId] || UICache.getInstance.get(elementId);
+                    if (element && element.value !== undefined) {
                         window.AppState.apiSettings.azureEndpoints[model] = element.value.trim();
                     }
                 });
+
+                // Azure埋め込みエンドポイントを保存（RAG用）
+                const embeddingEndpoint = document.getElementById('azureEndpointEmbedding');
+                if (embeddingEndpoint && embeddingEndpoint.value !== undefined) {
+                    Storage.getInstance.setItem(
+                        window.CONFIG.STORAGE.KEYS.AZURE_EMBEDDING_ENDPOINT,
+                        embeddingEndpoint.value.trim()
+                    );
+                }
             } else {
                 window.AppState.apiSettings.apiType = 'openai';
                 
@@ -106,6 +116,12 @@ class ModalHandlers {
         // ローカルストレージに保存
         // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.saveApiSettings(window.AppState.apiSettings);
+
+        // 埋め込みAPIのモードを再検出（APIキー変更に対応）
+        if (typeof EmbeddingAPI !== 'undefined') {
+            EmbeddingAPI.getInstance.refreshMode();
+        }
+
         UI.getInstance.Core.Notification.show('API設定を保存しました', 'success');
         ApiSettingsModal.getInstance.hideApiKeyModal();
     }
