@@ -33,6 +33,7 @@
     <link rel="stylesheet" href="css/components/rag/knowledge-base.css">
     <link rel="stylesheet" href="css/components/rag/confluence-settings.css">
     <link rel="stylesheet" href="css/components/artifact/artifact-panel.css">
+    <link rel="stylesheet" href="css/tools.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
     
@@ -691,6 +692,19 @@
     <script src="js/core/geminiApi.js"></script>
     <script src="js/core/claudeApi.js"></script>
     <script src="js/core/responsesApi.js"></script>
+
+    <!-- ツール機能関連のファイル -->
+    <script src="js/core/tools/toolRegistry.js"></script>
+    <script src="js/core/tools/toolSchemaConverter.js"></script>
+    <script src="js/core/tools/toolExecutor.js"></script>
+    <script src="js/core/tools/executors/ToolExecutorBase.js"></script>
+    <script src="js/core/tools/executors/PowerPointGenerator.js"></script>
+    <script src="js/core/tools/executors/ExcelProcessor.js"></script>
+    <script src="js/core/tools/executors/CanvasRenderer.js"></script>
+    <script src="js/core/tools/toolManager.js"></script>
+    <script src="js/components/toolUI/toolProgress.js"></script>
+    <script src="js/components/toolUI/fileDownloader.js"></script>
+    <script src="js/components/toolUI/toolPreview.js"></script>
 
     <!-- RAG関連のファイル -->
     <script src="js/core/rag/vectorStore.js"></script>

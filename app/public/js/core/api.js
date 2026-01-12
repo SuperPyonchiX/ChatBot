@@ -40,13 +40,24 @@ class AIAPI {
             if (!allSupportedModels.includes(model)) {
                 throw new Error(`サポートされていないモデルです: ${model}`);
             }
-            
+
+            // ツール機能が利用可能な場合、ツール定義を追加
+            if (this.#isToolsCompatibleModel(model)) {
+                const provider = this.#getProviderForModel(model);
+                options.enableTools = true;
+                options.tools = this.#getToolsForProvider(provider);
+                console.log(`🔧 ツール機能有効: model=${model}, provider=${provider}, tools=${options.tools?.length || 0}個`);
+                console.log('🔧 ツール定義:', options.tools);
+            } else {
+                console.log(`🔧 ツール機能無効: model=${model}, ToolManager定義=${typeof ToolManager !== 'undefined'}`);
+            }
+
             // Web検索が有効でResponses API対応モデルの場合はResponses APIを使用
             if (options.enableWebSearch && this.#isWebSearchCompatibleModel(model)) {
                 console.log('🌐 Web検索が有効なため、Responses APIを使用します');
                 return await ResponsesAPI.getInstance.callResponsesAPI(messages, model, attachments, options);
             }
-            
+
             // モデルに応じて適切なAPIクラスにルーティング
             if (window.CONFIG.MODELS.GEMINI.includes(model)) {
                 return await GeminiAPI.getInstance.callGeminiAPI(messages, model, attachments, options);
@@ -55,7 +66,7 @@ class AIAPI {
             } else {
                 return await OpenAIAPI.getInstance.callOpenAIAPI(messages, model, attachments, options);
             }
-            
+
         } catch (error) {
             console.error('AI API統合エラー:', error);
             throw error;
@@ -70,6 +81,42 @@ class AIAPI {
     #isWebSearchCompatibleModel(model) {
         // OpenAIのResponses APIでWeb検索をサポートするモデル
         return window.CONFIG.MODELS.OPENAI_WEB_SEARCH_COMPATIBLE.includes(model);
+    }
+
+    /**
+     * ツール機能対応モデルかどうかを判定
+     * @param {string} model - モデル名
+     * @returns {boolean} ツール機能対応モデルかどうか
+     */
+    #isToolsCompatibleModel(model) {
+        if (typeof ToolManager === 'undefined') {
+            return false;
+        }
+        return ToolManager.getInstance.isModelCompatible(model);
+    }
+
+    /**
+     * モデルからプロバイダを判定
+     * @param {string} model - モデル名
+     * @returns {string} プロバイダ名 ('claude', 'openai', 'gemini')
+     */
+    #getProviderForModel(model) {
+        if (typeof ToolManager === 'undefined') {
+            return 'openai';
+        }
+        return ToolManager.getInstance.getProviderForModel(model);
+    }
+
+    /**
+     * プロバイダ形式のツール定義を取得
+     * @param {string} provider - プロバイダ名
+     * @returns {Array} ツール定義の配列
+     */
+    #getToolsForProvider(provider) {
+        if (typeof ToolManager === 'undefined') {
+            return [];
+        }
+        return ToolManager.getInstance.getToolsForProvider(provider);
     }
 }
 

@@ -401,6 +401,10 @@ class ChatActions {
                         // ストリーミング完了時の処理
                         ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
                         fullResponseText = fullText;
+                    },
+                    onToolCall: async (event) => {
+                        // ツール呼び出しハンドリング
+                        await this.#handleToolCall(event, thinkingContainer, contentContainer);
                     }
                 }
             );
@@ -475,6 +479,108 @@ class ChatActions {
             }
         }
         return content;
+    }
+
+    /**
+     * ツール呼び出しイベントを処理
+     * @param {Object} event - ツールイベント（type: 'start' | 'delta' | 'complete' | 'error'）
+     * @param {HTMLElement} thinkingContainer - 思考過程表示コンテナ
+     * @param {HTMLElement} contentContainer - コンテンツ表示コンテナ
+     */
+    async #handleToolCall(event, thinkingContainer, contentContainer) {
+        if (!event) return;
+
+        const { type, toolCall } = event;
+
+        // delta イベントは進捗のみ（特別な処理は不要）
+        if (type === 'delta') {
+            return;
+        }
+
+        // start イベント: 思考過程にツール呼び出しを表示
+        if (type === 'start' && toolCall && thinkingContainer) {
+            const toolName = this.#getToolDisplayName(toolCall.name);
+            if (typeof ChatRenderer !== 'undefined') {
+                ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool', `${toolName}を実行中...`);
+            }
+            console.log(`🔧 ツール開始: ${toolCall.name}`);
+        }
+
+        // ツール実行（complete時）
+        if (type === 'complete' && toolCall && typeof ToolManager !== 'undefined') {
+            try {
+                console.log(`🔧 ツール実行: ${toolCall.name}`);
+                const result = await ToolManager.getInstance.handleToolCall(toolCall, toolCall.provider);
+
+                // 結果をUIに表示
+                if (result && contentContainer) {
+                    console.log(`🔧 ツール実行完了: ${result.type}`, result.filename || '');
+                    this.#displayToolResult(result, contentContainer);
+                } else {
+                    console.warn(`🔧 結果またはコンテナがありません`);
+                }
+
+                // 思考過程を更新（完了表示）
+                if (thinkingContainer && typeof ChatRenderer !== 'undefined') {
+                    const toolName = this.#getToolDisplayName(toolCall.name);
+                    ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool-complete', `${toolName}完了`);
+                }
+            } catch (error) {
+                console.error('ツール実行エラー:', error);
+                // エラーを思考過程に表示
+                if (thinkingContainer && typeof ChatRenderer !== 'undefined') {
+                    const toolName = this.#getToolDisplayName(toolCall.name);
+                    ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool-error', `${toolName}エラー: ${error.message}`);
+                }
+            }
+        }
+    }
+
+    /**
+     * ツール名の表示名を取得
+     * @param {string} name - ツール名
+     * @returns {string} 表示名
+     */
+    #getToolDisplayName(name) {
+        const toolNames = {
+            'generate_powerpoint': 'PowerPointスライド生成',
+            'process_excel': 'Excel処理',
+            'render_canvas': 'Canvas描画'
+        };
+        return toolNames[name] || name;
+    }
+
+    /**
+     * ツール実行結果をUIに表示
+     * @param {Object} result - ツール実行結果
+     * @param {HTMLElement} contentContainer - 表示先コンテナ
+     */
+    #displayToolResult(result, contentContainer) {
+        if (!result || !contentContainer) return;
+
+        // ファイル生成結果
+        if (result.type === 'file' && typeof FileDownloader !== 'undefined') {
+            const downloadCard = FileDownloader.getInstance.createDownloadCard(result);
+            if (downloadCard) {
+                contentContainer.appendChild(downloadCard);
+            }
+        }
+
+        // 画像生成結果
+        if (result.type === 'image' && typeof ToolPreview !== 'undefined') {
+            const preview = ToolPreview.getInstance.createImagePreview(result);
+            if (preview) {
+                contentContainer.appendChild(preview);
+            }
+        }
+
+        // 分析結果（テキスト）
+        if (result.type === 'analysis' && result.summary) {
+            const analysisDiv = document.createElement('div');
+            analysisDiv.className = 'tool-analysis-result';
+            analysisDiv.innerHTML = `<pre>${result.summary}</pre>`;
+            contentContainer.appendChild(analysisDiv);
+        }
     }
 
     /**

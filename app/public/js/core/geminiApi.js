@@ -31,6 +31,9 @@ class GeminiAPI {
      * @param {boolean} options.stream - ストリーミングを使用するかどうか
      * @param {Function} options.onChunk - ストリーミング時のチャンク受信コールバック関数
      * @param {Function} options.onComplete - ストリーミング完了時のコールバック関数
+     * @param {boolean} options.enableTools - ツール機能を使用するかどうか
+     * @param {Array} options.tools - ツール定義（Gemini形式）
+     * @param {Function} options.onToolCall - ツール呼び出し検出時のコールバック関数（任意）
      * @returns {Promise<string>} APIからの応答テキスト
      */
     async callGeminiAPI(messages, model, attachments = [], options = {}) {
@@ -39,7 +42,7 @@ class GeminiAPI {
             this.#validateAPISettings();
 
             // GeminiAPIリクエストを準備
-            const { endpoint, headers, body } = this.#prepareGeminiRequest(messages, model, attachments);
+            const { endpoint, headers, body } = this.#prepareGeminiRequest(messages, model, attachments, options);
 
             console.log(`Gemini APIリクエスト送信 (${model}):`, endpoint);
             console.log('📡 ストリーミング有効:', options.stream);
@@ -47,11 +50,12 @@ class GeminiAPI {
             // APIリクエストを実行
             if (options.stream) {
                 return await this.#executeStreamGeminiRequest(
-                    endpoint, 
-                    headers, 
-                    body, 
-                    options.onChunk, 
-                    options.onComplete
+                    endpoint,
+                    headers,
+                    body,
+                    options.onChunk,
+                    options.onComplete,
+                    options.onToolCall
                 );
             } else {
                 return await this.#executeGeminiRequest(endpoint, headers, body);
@@ -75,9 +79,9 @@ class GeminiAPI {
     /**
      * Gemini APIリクエストを準備
      */
-    #prepareGeminiRequest(messages, model, attachments = []) {
+    #prepareGeminiRequest(messages, model, attachments = [], options = {}) {
         const endpoint = `${window.CONFIG.AIAPI.ENDPOINTS.GEMINI}/${model}:streamGenerateContent`;
-        
+
         const headers = {
             'Content-Type': 'application/json',
             'x-goog-api-key': window.apiSettings.geminiApiKey
@@ -101,6 +105,11 @@ class GeminiAPI {
                 { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" }
             ]
         };
+
+        // ツール機能を追加
+        if (options.enableTools && options.tools && options.tools.length > 0) {
+            body.tools = options.tools;
+        }
 
         return { endpoint, headers, body };
     }
@@ -225,7 +234,7 @@ class GeminiAPI {
     /**
      * ストリーミングでGemini APIリクエストを実行
      */
-    async #executeStreamGeminiRequest(endpoint, headers, body, onChunk, onComplete) {
+    async #executeStreamGeminiRequest(endpoint, headers, body, onChunk, onComplete, onToolCall = null) {
         const controller = new AbortController();
         let timeoutId;
         let fullText = '';
@@ -303,6 +312,23 @@ class GeminiAPI {
                                                 onChunk(part.text);
                                                 fullText += part.text;
                                                 chunkCount++;
+                                            }
+
+                                            // functionCall の検出
+                                            if (part.functionCall && onToolCall) {
+                                                const toolCall = {
+                                                    id: `gemini_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                                    name: part.functionCall.name,
+                                                    arguments: part.functionCall.args || {},
+                                                    status: 'complete',
+                                                    provider: 'gemini'
+                                                };
+
+                                                try {
+                                                    onToolCall({ type: 'complete', toolCall });
+                                                } catch (error) {
+                                                    console.warn('ツール呼び出しコールバックエラー:', error);
+                                                }
                                             }
                                         }
                                     }
