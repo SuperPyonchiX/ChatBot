@@ -9,10 +9,10 @@ class ArtifactDetector {
     #artifactTagPattern = /<artifact\s+([^>]*)>([\s\S]*?)<\/artifact>/gi;
 
     // コードブロックのパターン（実行/プレビュー可能な言語）
-    #codeBlockPattern = /```(html|svg|mermaid|markdown|md|javascript|js|typescript|ts|python|py|cpp|c\+\+)([\s\S]*?)```/gi;
+    #codeBlockPattern = /```(html|svg|mermaid|markdown|md|drawio|draw\.io|mxfile|javascript|js|typescript|ts|python|py|cpp|c\+\+)([\s\S]*?)```/gi;
 
     // サポートする言語タイプ
-    #supportedTypes = ['html', 'svg', 'markdown', 'md', 'mermaid', 'javascript', 'js', 'typescript', 'ts', 'python', 'py', 'cpp', 'c++'];
+    #supportedTypes = ['html', 'svg', 'markdown', 'md', 'mermaid', 'drawio', 'draw.io', 'mxfile', 'javascript', 'js', 'typescript', 'ts', 'python', 'py', 'cpp', 'c++'];
 
     constructor() {
         if (ArtifactDetector.#instance) {
@@ -171,6 +171,11 @@ class ArtifactDetector {
             return 'mermaid';
         }
 
+        // Draw.ioかどうかチェック
+        if (/<mxfile[^>]*>/i.test(content) || /<diagram[^>]*>/i.test(content)) {
+            return 'drawio';
+        }
+
         // デフォルトはmarkdown
         return 'markdown';
     }
@@ -190,6 +195,9 @@ class ArtifactDetector {
             'markdown': 'markdown',
             'md': 'markdown',
             'mermaid': 'mermaid',
+            'drawio': 'drawio',
+            'draw.io': 'drawio',
+            'mxfile': 'drawio',
             'javascript': 'javascript',
             'js': 'javascript',
             'typescript': 'typescript',
@@ -222,6 +230,7 @@ class ArtifactDetector {
             'svg': 'SVG画像',
             'markdown': 'Markdownドキュメント',
             'mermaid': 'Mermaid図',
+            'drawio': 'Draw.io図',
             'javascript': 'JavaScriptコード',
             'typescript': 'TypeScriptコード',
             'python': 'Pythonコード',
@@ -245,6 +254,6 @@ class ArtifactDetector {
      * @returns {Array<string>} サポートされているタイプの配列
      */
     getSupportedTypes() {
-        return ['html', 'svg', 'markdown', 'mermaid', 'javascript', 'typescript', 'python', 'cpp'];
+        return ['html', 'svg', 'markdown', 'mermaid', 'drawio', 'javascript', 'typescript', 'python', 'cpp'];
     }
 }

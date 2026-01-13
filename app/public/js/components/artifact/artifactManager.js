@@ -220,7 +220,8 @@ class ArtifactManager {
             'html': 'html',
             'svg': 'svg',
             'markdown': 'md',
-            'mermaid': 'mmd'
+            'mermaid': 'mmd',
+            'drawio': 'drawio'
         };
 
         return extensions[type] || 'txt';
@@ -236,7 +237,8 @@ class ArtifactManager {
             'html': 'text/html',
             'svg': 'image/svg+xml',
             'markdown': 'text/markdown',
-            'mermaid': 'text/plain'
+            'mermaid': 'text/plain',
+            'drawio': 'application/xml'
         };
 
         return mimeTypes[type] || 'text/plain';

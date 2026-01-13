@@ -51,6 +51,9 @@ class ArtifactRenderer {
                 case 'mermaid':
                     await this.#renderMermaid(artifact.content, container);
                     break;
+                case 'drawio':
+                    await this.#renderDrawio(artifact.content, container);
+                    break;
                 case 'javascript':
                 case 'typescript':
                 case 'python':
@@ -255,6 +258,83 @@ class ArtifactRenderer {
             throw new Error(`Mermaid図の生成に失敗しました: ${error.message}`);
         }
 
+        container.appendChild(wrapper);
+    }
+
+    /**
+     * Draw.io図をレンダリング
+     * @param {string} content - Draw.io XMLコンテンツ
+     * @param {HTMLElement} container - コンテナ
+     */
+    async #renderDrawio(content, container) {
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('artifact-drawio-wrapper');
+
+        // 設定を取得
+        const config = window.CONFIG?.DRAWIO || {
+            EMBED_URL: 'https://embed.diagrams.net/',
+            PARAMS: { embed: 1, spin: 1, proto: 'json', configure: 1 }
+        };
+
+        // iframeを作成
+        const iframe = document.createElement('iframe');
+        iframe.classList.add('drawio-iframe');
+
+        // URLパラメータを構築
+        const params = new URLSearchParams(config.PARAMS);
+        iframe.src = `${config.EMBED_URL}?${params.toString()}`;
+
+        // メッセージハンドラを設定
+        const messageHandler = (event) => {
+            if (event.origin !== 'https://embed.diagrams.net') {
+                return;
+            }
+
+            try {
+                const message = JSON.parse(event.data);
+
+                if (message.event === 'init') {
+                    // Draw.ioが初期化されたらXMLを読み込み
+                    iframe.contentWindow.postMessage(JSON.stringify({
+                        action: 'load',
+                        xml: content
+                    }), '*');
+                } else if (message.event === 'configure') {
+                    // UI設定を送信
+                    iframe.contentWindow.postMessage(JSON.stringify({
+                        action: 'configure',
+                        config: {
+                            defaultFonts: ['Helvetica', 'Verdana', 'メイリオ', 'ＭＳ Ｐゴシック']
+                        }
+                    }), '*');
+                } else if (message.event === 'load') {
+                    console.log('[ArtifactRenderer] Draw.io図を読み込みました');
+                } else if (message.event === 'save') {
+                    // 保存イベント（編集後のXMLを取得可能）
+                    console.log('[ArtifactRenderer] Draw.io図が保存されました');
+                }
+            } catch (e) {
+                // JSON解析エラーは無視
+            }
+        };
+
+        window.addEventListener('message', messageHandler);
+
+        // iframeがアンマウントされたらリスナーを削除
+        const observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                for (const removedNode of mutation.removedNodes) {
+                    if (removedNode === wrapper || removedNode.contains(wrapper)) {
+                        window.removeEventListener('message', messageHandler);
+                        observer.disconnect();
+                        return;
+                    }
+                }
+            }
+        });
+        observer.observe(container.parentElement || document.body, { childList: true, subtree: true });
+
+        wrapper.appendChild(iframe);
         container.appendChild(wrapper);
     }
 
