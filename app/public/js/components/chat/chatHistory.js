@@ -65,6 +65,7 @@ class ChatHistory {
                     : this.#processContentArray(message.content);
 
                 // ChatRenderer のインスタンスが存在するか確認してから使用
+                let contentContainer = null;
                 try {
                     if (typeof ChatRenderer !== 'undefined' && ChatRenderer.getInstance) {
                         // 思考過程データがある場合は思考過程コンテナ付きで表示
@@ -95,10 +96,30 @@ class ChatHistory {
                                         );
                                     }
                                 }
+
+                                // ツール実行情報を復元
+                                if (message.thinkingData.toolCalls?.length > 0) {
+                                    for (const toolCall of message.thinkingData.toolCalls) {
+                                        // 「実行中...」を追加
+                                        ChatRenderer.getInstance.addThinkingItem(
+                                            result.thinkingContainer,
+                                            'tool',
+                                            `${toolCall.displayName}を実行中...`
+                                        );
+                                        // 「完了」を追加
+                                        ChatRenderer.getInstance.addThinkingItem(
+                                            result.thinkingContainer,
+                                            'tool-complete',
+                                            `${toolCall.displayName}完了`
+                                        );
+                                    }
+                                }
                             }
+                            contentContainer = result?.contentContainer;
                         } else {
                             // 思考過程なしの従来の表示
-                            await ChatRenderer.getInstance.addBotMessage(content, chatMessages, message.timestamp, false);
+                            const result = await ChatRenderer.getInstance.addBotMessage(content, chatMessages, message.timestamp, false);
+                            contentContainer = result?.contentContainer;
                         }
                     } else {
                         console.warn('ChatRenderer が見つからないため、シンプルなレンダリングを使用します');
@@ -107,6 +128,32 @@ class ChatHistory {
                 } catch (error) {
                     console.error('メッセージ表示中にエラーが発生:', error);
                     this.#renderSimpleAssistantMessage(content, chatMessages, message.timestamp);
+                }
+
+                // 生成ファイルの復元（IndexedDBから）
+                if (message.timestamp && typeof FileStorage !== 'undefined' && typeof FileDownloader !== 'undefined') {
+                    try {
+                        const files = await FileStorage.getInstance.getByMessageTimestamp(message.timestamp);
+                        if (files && files.length > 0) {
+                            // contentContainerがない場合は最後のメッセージから取得
+                            if (!contentContainer) {
+                                const lastMessage = chatMessages.querySelector('.message.bot:last-child');
+                                contentContainer = lastMessage?.querySelector('.markdown-content');
+                            }
+
+                            if (contentContainer) {
+                                for (const file of files) {
+                                    const downloadCard = await FileDownloader.getInstance.createDownloadCardFromStorage(file.id);
+                                    if (downloadCard) {
+                                        contentContainer.appendChild(downloadCard);
+                                    }
+                                }
+                                console.log(`[ChatHistory] ${files.length}件のファイルを復元`);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('[ChatHistory] ファイル復元エラー:', error);
+                    }
                 }
             }
         }
@@ -217,7 +264,8 @@ class ChatHistory {
         if (!thinkingData) return false;
         return (
             (thinkingData.webSearchQueries && thinkingData.webSearchQueries.length > 0) ||
-            (thinkingData.ragSources && thinkingData.ragSources.length > 0)
+            (thinkingData.ragSources && thinkingData.ragSources.length > 0) ||
+            (thinkingData.toolCalls && thinkingData.toolCalls.length > 0)
         );
     }
 

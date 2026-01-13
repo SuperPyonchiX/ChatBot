@@ -151,7 +151,7 @@ class ChatRenderer {
      * @param {string} message - メッセージ内容
      * @param {HTMLElement} chatMessages - メッセージを表示する要素
      * @param {number|null} timestamp - メッセージのタイムスタンプ
-     * @returns {Promise<{messageDiv: HTMLElement, thinkingContainer: HTMLElement}>}
+     * @returns {Promise<{messageDiv: HTMLElement, thinkingContainer: HTMLElement, contentContainer: HTMLElement}>}
      */
     async addBotMessageWithThinking(message, chatMessages, timestamp = null) {
         if (!chatMessages) return null;
@@ -197,7 +197,8 @@ class ChatRenderer {
 
         return {
             messageDiv: messageDiv,
-            thinkingContainer: thinkingContainer
+            thinkingContainer: thinkingContainer,
+            contentContainer: markdownContent
         };
     }
 
@@ -463,6 +464,64 @@ class ChatRenderer {
             console.error('ストリーミング中のMarkdown解析エラー:', e);
             container.textContent = currentFullText;
         }
+    }
+
+    /**
+     * ストリーミング中のステータス表示を更新します（ツール実行中など）
+     * @param {HTMLElement} container - 内容を表示するコンテナ要素（.markdown-content）
+     * @param {string} status - ステータスの種類 ('thinking' | 'tool-running' | 'tool-complete')
+     * @param {string} [toolName] - ツール名（tool-running時に使用）
+     */
+    updateStreamingStatus(container, status, toolName = '') {
+        if (!container) return;
+
+        // 現在のテキストコンテンツを保持（ツール完了後に復元）
+        const existingContent = container.querySelector('.streaming-status-temp');
+
+        let statusHtml = '';
+        switch (status) {
+            case 'tool-running':
+                const displayName = this.#getToolDisplayName(toolName);
+                statusHtml = `<p class="streaming-status streaming-status-tool">
+                    <span class="tool-status-icon">🔧</span>
+                    <span class="tool-status-text">${displayName}を作成中</span>
+                    <span class="typing-dots cyber-neon"><span></span><span></span><span></span></span>
+                </p>`;
+                break;
+            case 'tool-complete':
+                // ツール完了時はThinkingに戻す（テキストがある場合はそれを表示）
+                statusHtml = this.#formatSystemMessage('Thinking', true);
+                break;
+            case 'thinking':
+            default:
+                statusHtml = this.#formatSystemMessage('Thinking', true);
+                break;
+        }
+
+        // 既存のツール結果要素を保存
+        const toolResults = container.querySelectorAll('.tool-download-card, .tool-image-preview, .tool-analysis-result');
+        const savedToolResults = Array.from(toolResults);
+
+        container.innerHTML = statusHtml;
+
+        // ツール結果要素を再追加
+        savedToolResults.forEach(result => {
+            container.appendChild(result);
+        });
+    }
+
+    /**
+     * ツール名から表示名を取得
+     * @param {string} toolName - ツール内部名
+     * @returns {string} 表示名
+     */
+    #getToolDisplayName(toolName) {
+        const displayNames = {
+            'generate_powerpoint': 'PowerPoint',
+            'process_excel': 'Excel',
+            'render_canvas': 'Canvas画像'
+        };
+        return displayNames[toolName] || toolName;
     }
 
     /**

@@ -391,6 +391,22 @@ window.CONFIG = {
     },
 
     /**
+     * ファイルストレージ関連の設定（ツール生成ファイルの永続化）
+     */
+    FILE_STORAGE: {
+        // IndexedDBデータベース名
+        DB_NAME: 'ChatBotFileStorage',
+        // ストア名
+        STORE_NAME: 'generatedFiles',
+        // 保持日数（7日経過したファイルは自動削除）
+        RETENTION_DAYS: 7,
+        // 最大合計サイズ（500MB）
+        MAX_TOTAL_SIZE: 500 * 1024 * 1024,
+        // DBバージョン
+        DB_VERSION: 1
+    },
+
+    /**
      * Web検索関連の設定
      */
     WEB_SEARCH: {

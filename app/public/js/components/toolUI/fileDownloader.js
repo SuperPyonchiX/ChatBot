@@ -49,10 +49,45 @@ class FileDownloader {
     /**
      * ダウンロードカードを作成（外部から呼び出し可能）
      * @param {Object} result - ファイル結果
+     * @param {string} [fileId] - IndexedDBに保存されたファイルID
      * @returns {HTMLElement} ダウンロードカード要素
      */
-    createDownloadCard(result) {
-        return this.#createDownloadCard(result);
+    createDownloadCard(result, fileId = null) {
+        return this.#createDownloadCard(result, fileId);
+    }
+
+    /**
+     * fileIdからダウンロードカードを復元
+     * @param {string} fileId - IndexedDBに保存されたファイルID
+     * @returns {Promise<HTMLElement|null>} ダウンロードカード要素
+     */
+    async createDownloadCardFromStorage(fileId) {
+        if (!fileId || typeof FileStorage === 'undefined') {
+            return null;
+        }
+
+        try {
+            const fileRecord = await FileStorage.getInstance.get(fileId);
+            if (!fileRecord) {
+                console.warn(`[FileDownloader] ファイルが見つかりません: ${fileId}`);
+                return null;
+            }
+
+            // ファイルレコードをresult形式に変換
+            const result = {
+                type: 'file',
+                filename: fileRecord.filename,
+                mimeType: fileRecord.mimeType,
+                size: fileRecord.size,
+                blob: fileRecord.blob,
+                createdAt: fileRecord.createdAt
+            };
+
+            return this.#createDownloadCard(result, fileId);
+        } catch (error) {
+            console.error('[FileDownloader] ストレージからの復元エラー:', error);
+            return null;
+        }
     }
 
     /**
@@ -74,11 +109,17 @@ class FileDownloader {
     /**
      * ダウンロードカードを作成
      * @param {Object} result - ファイル結果
+     * @param {string} [fileId] - IndexedDBに保存されたファイルID
      * @returns {HTMLElement} ダウンロードカード要素
      */
-    #createDownloadCard(result) {
+    #createDownloadCard(result, fileId = null) {
         const card = document.createElement('div');
         card.className = 'tool-download-card';
+
+        // fileIdをdata属性として保存（復元時に使用）
+        if (fileId) {
+            card.dataset.fileId = fileId;
+        }
 
         const iconClass = this.#getFileIcon(result.mimeType);
         const iconColor = this.#getFileColor(result.mimeType);

@@ -373,7 +373,8 @@ class ChatActions {
             // 思考過程データを収集（ページ更新時の復元用）
             let thinkingData = {
                 webSearchQueries: [],
-                ragSources: ragSources.length > 0 ? ragSources : []
+                ragSources: ragSources.length > 0 ? ragSources : [],
+                toolCalls: []  // ツール実行情報
             };
 
             // ストリーミングAPI呼び出し
@@ -399,18 +400,26 @@ class ChatActions {
                     },
                     onComplete: (fullText) => {
                         // ストリーミング完了時の処理
-                        ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, fullText);
-                        fullResponseText = fullText;
+                        // ツール結果テキストが追加されている場合はfullResponseTextを使用
+                        const finalText = fullResponseText.length > fullText.length ? fullResponseText : fullText;
+                        ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, finalText);
+                        fullResponseText = finalText;
                     },
                     onToolCall: async (event) => {
-                        // ツール呼び出しハンドリング
-                        await this.#handleToolCall(event, thinkingContainer, contentContainer);
+                        // ツール呼び出しハンドリング（会話IDとタイムスタンプ、thinkingDataを渡す）
+                        const toolResultText = await this.#handleToolCall(event, thinkingContainer, contentContainer, conversation.id, botTimestamp, thinkingData);
+                        // ツール結果テキストをメッセージに追加
+                        if (toolResultText) {
+                            fullResponseText += toolResultText;
+                        }
                     }
                 }
             );
 
             // 思考過程データがあるかどうかを判定
-            const hasThinkingData = thinkingData.webSearchQueries.length > 0 || thinkingData.ragSources.length > 0;
+            const hasThinkingData = thinkingData.webSearchQueries.length > 0 ||
+                                   thinkingData.ragSources.length > 0 ||
+                                   thinkingData.toolCalls.length > 0;
 
             // 応答をメッセージ履歴に追加（思考過程データを含む）
             const assistantMessage = {
@@ -486,24 +495,33 @@ class ChatActions {
      * @param {Object} event - ツールイベント（type: 'start' | 'delta' | 'complete' | 'error'）
      * @param {HTMLElement} thinkingContainer - 思考過程表示コンテナ
      * @param {HTMLElement} contentContainer - コンテンツ表示コンテナ
+     * @param {string} conversationId - 会話ID
+     * @param {number} messageTimestamp - メッセージのタイムスタンプ
+     * @param {Object} thinkingData - 思考過程データ（復元用）
+     * @returns {Promise<string|null>} ツール結果テキスト（メッセージに追加用）
      */
-    async #handleToolCall(event, thinkingContainer, contentContainer) {
-        if (!event) return;
+    async #handleToolCall(event, thinkingContainer, contentContainer, conversationId, messageTimestamp, thinkingData) {
+        if (!event) return null;
 
         const { type, toolCall } = event;
 
         // delta イベントは進捗のみ（特別な処理は不要）
         if (type === 'delta') {
-            return;
+            return null;
         }
 
-        // start イベント: 思考過程にツール呼び出しを表示
+        // start イベント: 思考過程にツール呼び出しを表示 & ストリーミングステータス更新
         if (type === 'start' && toolCall && thinkingContainer) {
             const toolName = this.#getToolDisplayName(toolCall.name);
             if (typeof ChatRenderer !== 'undefined') {
                 ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool', `${toolName}を実行中...`);
+                // メイン表示を「○○を作成中...」に更新
+                if (contentContainer) {
+                    ChatRenderer.getInstance.updateStreamingStatus(contentContainer, 'tool-running', toolCall.name);
+                }
             }
             console.log(`🔧 ツール開始: ${toolCall.name}`);
+            return null;
         }
 
         // ツール実行（complete時）
@@ -512,10 +530,16 @@ class ChatActions {
                 console.log(`🔧 ツール実行: ${toolCall.name}`);
                 const result = await ToolManager.getInstance.handleToolCall(toolCall, toolCall.provider);
 
-                // 結果をUIに表示
+                let toolResultText = null;
+                let fileId = null;
+
+                // 結果をUIに表示 & ファイルを永続化
                 if (result && contentContainer) {
                     console.log(`🔧 ツール実行完了: ${result.type}`, result.filename || '');
-                    this.#displayToolResult(result, contentContainer);
+                    fileId = await this.#displayToolResult(result, contentContainer, conversationId, messageTimestamp);
+
+                    // ツール結果テキストを生成（AIへの認識用＆ユーザーへの説明用）
+                    toolResultText = this.#generateToolResultText(toolCall, result);
                 } else {
                     console.warn(`🔧 結果またはコンテナがありません`);
                 }
@@ -525,6 +549,29 @@ class ChatActions {
                     const toolName = this.#getToolDisplayName(toolCall.name);
                     ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool-complete', `${toolName}完了`);
                 }
+
+                // thinkingDataにツール情報を保存（復元用）
+                if (thinkingData && thinkingData.toolCalls) {
+                    thinkingData.toolCalls.push({
+                        name: toolCall.name,
+                        displayName: this.#getToolDisplayName(toolCall.name),
+                        status: 'complete',
+                        filename: result?.filename || null,
+                        fileId: fileId,
+                        params: this.#extractToolParams(toolCall)
+                    });
+                }
+
+                // ツール結果テキストをUIに追加表示
+                if (toolResultText && contentContainer && typeof Markdown !== 'undefined') {
+                    const toolResultDiv = document.createElement('div');
+                    toolResultDiv.className = 'tool-result-text';
+                    const renderedHtml = await Markdown.getInstance.renderMarkdown(toolResultText);
+                    toolResultDiv.innerHTML = renderedHtml;
+                    contentContainer.appendChild(toolResultDiv);
+                }
+
+                return toolResultText;
             } catch (error) {
                 console.error('ツール実行エラー:', error);
                 // エラーを思考過程に表示
@@ -532,8 +579,79 @@ class ChatActions {
                     const toolName = this.#getToolDisplayName(toolCall.name);
                     ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool-error', `${toolName}エラー: ${error.message}`);
                 }
+                return null;
             }
         }
+
+        return null;
+    }
+
+    /**
+     * ツール結果のテキストを生成（AI認識用＆ユーザー説明用）
+     * @param {Object} toolCall - ツール呼び出し情報
+     * @param {Object} result - ツール実行結果
+     * @returns {string} 結果テキスト
+     */
+    #generateToolResultText(toolCall, result) {
+        if (!toolCall || !result) return '';
+
+        const params = this.#extractToolParams(toolCall);
+
+        switch (toolCall.name) {
+            case 'generate_powerpoint':
+                const slides = params.slides || [];
+                const slideCount = slides.length;
+                const title = params.title || 'プレゼンテーション';
+
+                let slideDetails = '';
+                slides.forEach((slide, index) => {
+                    slideDetails += `\n### スライド${index + 1}: ${slide.title || '(タイトルなし)'}\n`;
+                    if (slide.subtitle) {
+                        slideDetails += `- サブタイトル: ${slide.subtitle}\n`;
+                    }
+                    if (slide.content) {
+                        // content配列の場合は結合
+                        const contentText = Array.isArray(slide.content)
+                            ? slide.content.join('\n  - ')
+                            : slide.content;
+                        slideDetails += `- 内容: ${contentText}\n`;
+                    }
+                    if (slide.layout) {
+                        slideDetails += `- レイアウト: ${slide.layout}\n`;
+                    }
+                });
+
+                return `\n\n---\n**PowerPoint作成完了**: ${result.filename}\n` +
+                    `- タイトル: ${title}\n` +
+                    `- スライド数: ${slideCount}枚\n` +
+                    `\n## スライド構成${slideDetails}`;
+            case 'process_excel':
+                return `\n\n---\n**Excel処理完了**: ${result.filename}`;
+            case 'render_canvas':
+                return `\n\n---\n**Canvas画像作成完了**: ${result.filename}`;
+            default:
+                return `\n\n---\n**ツール実行完了**: ${result.filename || toolCall.name}`;
+        }
+    }
+
+    /**
+     * ツール呼び出しからパラメータを抽出
+     * @param {Object} toolCall - ツール呼び出し情報
+     * @returns {Object} パラメータオブジェクト
+     */
+    #extractToolParams(toolCall) {
+        if (!toolCall) return {};
+
+        // 引数がJSON文字列の場合はパース
+        if (typeof toolCall.arguments === 'string') {
+            try {
+                return JSON.parse(toolCall.arguments);
+            } catch (e) {
+                return {};
+            }
+        }
+
+        return toolCall.arguments || toolCall.input || {};
     }
 
     /**
@@ -551,16 +669,32 @@ class ChatActions {
     }
 
     /**
-     * ツール実行結果をUIに表示
+     * ツール実行結果をUIに表示し、ファイルを永続化
      * @param {Object} result - ツール実行結果
      * @param {HTMLElement} contentContainer - 表示先コンテナ
+     * @param {string} conversationId - 会話ID
+     * @param {number} messageTimestamp - メッセージのタイムスタンプ
+     * @returns {Promise<string|null>} 保存したファイルID（ファイル以外の場合はnull）
      */
-    #displayToolResult(result, contentContainer) {
-        if (!result || !contentContainer) return;
+    async #displayToolResult(result, contentContainer, conversationId, messageTimestamp) {
+        if (!result || !contentContainer) return null;
+
+        let savedFileId = null;
 
         // ファイル生成結果
         if (result.type === 'file' && typeof FileDownloader !== 'undefined') {
-            const downloadCard = FileDownloader.getInstance.createDownloadCard(result);
+            // ファイルをIndexedDBに永続化
+            if (typeof FileStorage !== 'undefined' && result.blob) {
+                try {
+                    savedFileId = await FileStorage.getInstance.save(result, conversationId, messageTimestamp);
+                    console.log(`[ChatActions] ファイル永続化完了: ${savedFileId}`);
+                } catch (error) {
+                    console.error('[ChatActions] ファイル永続化エラー:', error);
+                }
+            }
+
+            // ダウンロードカードを作成（fileIdを含める）
+            const downloadCard = FileDownloader.getInstance.createDownloadCard(result, savedFileId);
             if (downloadCard) {
                 contentContainer.appendChild(downloadCard);
             }
@@ -581,6 +715,8 @@ class ChatActions {
             analysisDiv.innerHTML = `<pre>${result.summary}</pre>`;
             contentContainer.appendChild(analysisDiv);
         }
+
+        return savedFileId;
     }
 
     /**
