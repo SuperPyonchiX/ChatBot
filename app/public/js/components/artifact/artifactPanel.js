@@ -250,6 +250,13 @@ class ArtifactPanel {
             this.#typeBadge.textContent = artifact.type.toUpperCase();
         }
 
+        // 実行ボタンの表示/非表示を制御（実行可能言語のみ表示）
+        const runBtn = document.getElementById('artifactRunBtn');
+        if (runBtn) {
+            const isExecutable = this.#getExecutableLanguage(artifact.type) !== null;
+            runBtn.style.display = isExecutable ? '' : 'none';
+        }
+
         // プレビューをレンダリング
         if (this.#previewContainer && typeof ArtifactRenderer !== 'undefined') {
             await ArtifactRenderer.getInstance.render(artifact, this.#previewContainer);
