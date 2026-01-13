@@ -300,12 +300,20 @@ class ChatActions {
             }
 
             if (attachments && attachments.length > 0) {
-                displayAttachments = attachments.map(att => ({
-                    ...att,
-                    timestamp: timestamp
-                }));
+                const processedResult = await this.#processAttachments(attachments);
+                attachmentContent = processedResult.content;
 
-                attachmentContent = await this.#processAttachments(attachments);
+                // 元の添付ファイル + Officeファイルから抽出した画像を統合
+                displayAttachments = [
+                    ...attachments.map(att => ({
+                        ...att,
+                        timestamp: timestamp
+                    })),
+                    ...processedResult.extractedImages.map(img => ({
+                        ...img,
+                        timestamp: timestamp
+                    }))
+                ];
             }
 
             // 添付ファイルの内容を含めた最終的なメッセージを作成
@@ -469,25 +477,41 @@ class ChatActions {
     /**
      * 添付ファイルの内容を処理する
      * @param {Array} attachments - 添付ファイルの配列
-     * @returns {Promise<string>} 処理された添付ファイルの内容
+     * @returns {Promise<{content: string, extractedImages: Array}>} 処理結果（テキストと抽出画像）
      */
     async #processAttachments(attachments) {
         if (!attachments || !Array.isArray(attachments)) {
-            return '';
+            return { content: '', extractedImages: [] };
         }
 
         let content = '';
+        let extractedImages = [];
+
         for (const attachment of attachments) {
             if (!attachment || !attachment.type) continue;
 
-            if ((attachment.type === 'pdf' || 
-                 attachment.type === 'office' || 
-                 attachment.type === 'file') && 
+            // テキスト抽出
+            if ((attachment.type === 'pdf' ||
+                 attachment.type === 'office' ||
+                 attachment.type === 'file') &&
                 attachment.content) {
                 content += `\n${attachment.content}\n`;
             }
+
+            // Officeファイルから抽出した画像を収集
+            if (attachment.type === 'office' && attachment.images?.length > 0) {
+                for (const img of attachment.images) {
+                    extractedImages.push({
+                        type: 'image',
+                        name: `${attachment.name}_image`,
+                        mimeType: img.mimeType || 'image/png',
+                        data: img.data
+                    });
+                }
+            }
         }
-        return content;
+
+        return { content, extractedImages };
     }
 
     /**
