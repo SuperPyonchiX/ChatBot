@@ -1,4 +1,9 @@
 /* Markdownコンテンツの基本スタイル */
+.markdown-content {
+    color: #e0e0e0;
+    line-height: 1.6;
+}
+
 .markdown-content h1,
 .markdown-content h2,
 .markdown-content h3,
@@ -30,6 +35,21 @@
 
 .markdown-content p {
     margin-bottom: 1em;
+}
+
+/* リンクスタイル */
+.markdown-content a {
+    color: #58a6ff;
+    text-decoration: none;
+}
+
+.markdown-content a:hover {
+    color: #79c0ff;
+    text-decoration: underline;
+}
+
+.markdown-content a:visited {
+    color: #8b949e;
 }
 
 .markdown-content ul,
