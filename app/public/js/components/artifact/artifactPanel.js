@@ -133,10 +133,10 @@ class ArtifactPanel {
         const onMouseMove = (e) => {
             if (!this.#isResizing) return;
 
-            const diff = startX - e.clientX;
+            // ウィンドウ右端からマウス位置までの距離をパネル幅とする
             const newWidth = Math.min(
-                Math.max(startWidth + diff, 400),
-                window.innerWidth * 0.7
+                Math.max(window.innerWidth - e.clientX, 400),
+                window.innerWidth * 0.92
             );
 
             this.#panelElement.style.width = `${newWidth}px`;
@@ -210,6 +210,9 @@ class ArtifactPanel {
 
         this.#isOpen = false;
         this.#panelElement.classList.remove('open');
+
+        // リサイズで設定されたインラインスタイルをクリア
+        this.#panelElement.style.width = '';
 
         // app-containerからクラスを削除
         const appContainer = document.querySelector('.app-container');

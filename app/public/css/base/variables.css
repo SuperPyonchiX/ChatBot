@@ -219,9 +219,9 @@
     --cyber-animation-pulse: 2s;
 
     /* アーティファクトパネル */
-    --artifact-panel-width: 50%;
+    --artifact-panel-width: 33%;
     --artifact-panel-min-width: 400px;
-    --artifact-panel-max-width: 60%;
+    --artifact-panel-max-width: 92%;
     --artifact-panel-bg: var(--background-secondary);
     --artifact-panel-border: var(--cyber-border-color);
     --artifact-header-height: 48px;

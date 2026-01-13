@@ -1205,6 +1205,7 @@ class ChatRenderer {
         if (!language) return false;
         const artifactLanguages = [
             'html', 'svg', 'markdown', 'md', 'mermaid',
+            'drawio', 'draw.io', 'mxfile',
             'javascript', 'js', 'typescript', 'ts',
             'python', 'py', 'cpp', 'c++'
         ];
@@ -1266,6 +1267,9 @@ class ChatRenderer {
                 'markdown': 'markdown',
                 'md': 'markdown',
                 'mermaid': 'mermaid',
+                'drawio': 'drawio',
+                'draw.io': 'drawio',
+                'mxfile': 'drawio',
                 'javascript': 'javascript',
                 'js': 'javascript',
                 'typescript': 'typescript',

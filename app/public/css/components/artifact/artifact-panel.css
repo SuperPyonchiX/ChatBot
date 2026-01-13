@@ -17,6 +17,7 @@
     width: var(--artifact-panel-width);
     min-width: var(--artifact-panel-min-width);
     max-width: var(--artifact-panel-max-width);
+    flex-shrink: 0;
 }
 
 /* リサイズハンドル */
@@ -27,7 +28,7 @@
     width: var(--artifact-resize-handle-width);
     height: 100%;
     cursor: ew-resize;
-    background-color: transparent;
+    background-color: rgba(0, 255, 255, 0.1);
     transition: background-color var(--transition-fast);
     z-index: 10;
     display: none;
@@ -39,7 +40,7 @@
 
 .artifact-resize-handle:hover,
 .artifact-resize-handle.dragging {
-    background-color: var(--artifact-resize-handle-hover);
+    background-color: rgba(0, 255, 255, 0.4);
 }
 
 /* パネルヘッダー */
@@ -52,6 +53,8 @@
     gap: var(--spacing-md);
     border-bottom: 1px solid var(--artifact-panel-border);
     background: linear-gradient(180deg, var(--background-tertiary), transparent);
+    position: relative;
+    z-index: 15;  /* リサイズハンドル(z-index:10)より前面に配置 */
 }
 
 .artifact-title {

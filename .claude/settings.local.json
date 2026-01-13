@@ -36,7 +36,12 @@
       "Bash(tree:*)",
       "mcp__plugin_playwright_playwright__browser_evaluate",
       "Bash(node --check:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(start /b npm start)",
+      "mcp__plugin_playwright_playwright__browser_run_code",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_press_key",
+      "mcp__plugin_playwright_playwright__browser_drag"
     ]
   }
 }

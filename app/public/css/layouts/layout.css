@@ -89,8 +89,8 @@
 
 /* アーティファクトパネル表示時のレイアウト調整 */
 .app-container.with-artifact-panel .chat-container {
-    flex: 0 0 50%;
-    min-width: 400px;
+    flex: 1 1 auto;
+    min-width: 100px;
 }
 
 @media (max-width: 1024px) {
