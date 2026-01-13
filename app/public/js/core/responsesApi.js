@@ -59,11 +59,6 @@ class ResponsesAPI {
                 options.tools
             );
 
-            console.log(`Responses APIリクエスト送信 (${model}):`, endpoint);
-            console.log('🔍 Web検索有効:', options.enableWebSearch);
-            console.log('📡 ストリーミング有効:', options.stream);
-            // console.log('📦 リクエストボディ:', body);
-
             // APIリクエストを実行
             if (options.stream) {
                 return await this.#executeStreamResponsesRequest(
@@ -292,7 +287,6 @@ class ResponsesAPI {
         // カスタムツール（PowerPoint、Excel、Canvas等）を追加
         // Responses APIはfunction形式のツールをサポート
         if (enableTools && tools && tools.length > 0) {
-            console.log('🔧 Responses API: カスタムツールを追加中', tools.length, '個');
             for (const tool of tools) {
                 // OpenAI Chat Completions形式からResponses API形式に変換
                 if (tool.type === 'function' && tool.function) {
@@ -303,14 +297,12 @@ class ResponsesAPI {
                         parameters: tool.function.parameters
                     };
                     allTools.push(responsesTool);
-                    console.log('🔧 ツール追加:', responsesTool.name);
                 }
             }
         }
 
         if (allTools.length > 0) {
             body.tools = allTools;
-            console.log('🔧 Responses API: 最終ツール定義', JSON.stringify(allTools, null, 2));
         }
 
         return { endpoint, headers, body };
@@ -431,7 +423,6 @@ class ResponsesAPI {
                                 // イベントIDがある場合は重複チェック
                                 const eventId = jsonData.id || JSON.stringify(jsonData);
                                 if (processedEvents.has(eventId)) {
-                                    console.log('⏭️ 重複イベントをスキップ:', eventId);
                                     continue;
                                 }
                                 processedEvents.add(eventId);
@@ -452,7 +443,6 @@ class ResponsesAPI {
                                 if (onToolCall && typeof ToolExecutor !== 'undefined') {
                                     const toolCallResult = ToolExecutor.getInstance.detectToolCall(jsonData, 'openai-responses');
                                     if (toolCallResult) {
-                                        console.log('🔧 Responses APIツール呼び出し検出:', toolCallResult);
                                         onToolCall(toolCallResult);
                                         // ツール呼び出しイベントはテキスト抽出をスキップ
                                         if (toolCallResult.type === 'complete') {
@@ -720,9 +710,8 @@ class ResponsesAPI {
             if (thinkingContainer && chatRenderer && !alreadyAddedToThinking) {
                 try {
                     chatRenderer.addThinkingItem(thinkingContainer, 'web-search', completedSearchQuery);
-                    console.log('🔍 Web検索を思考過程に追加（確定クエリ）:', completedSearchQuery);
                 } catch (error) {
-                    console.error('🔍 思考過程への追加エラー:', error);
+                    console.error('思考過程への追加エラー:', error);
                 }
             }
 

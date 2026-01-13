@@ -288,16 +288,8 @@ class ChatActions {
             const isWebSearchEnabled = webExtractor && webExtractor.isWebSearchEnabled();
 
             // GPT-5シリーズはResponses API内蔵Web検索を使用
-            if (isWebSearchEnabled && window.CONFIG.MODELS.OPENAI_WEB_SEARCH_COMPATIBLE.includes(currentModel)) {
-                // Responses APIの内蔵Web検索を使用（APIレベルで自動処理）
-                console.log(`Responses API Web検索機能を有効にします: ${currentModel}`);
-            } else if (isWebSearchEnabled && window.CONFIG.MODELS.CLAUDE.includes(currentModel)) {
-                // Claude Web検索機能を有効にする
-                console.log(`Claude Web検索機能を有効にします: ${currentModel}`);
-            } else if (isWebSearchEnabled) {
-                // その他のモデルではWeb検索は利用できません
-                console.log(`${currentModel}はWeb検索に対応していません。GPT-5シリーズまたはClaude 4系・3.5シリーズを使用してください。`);
-            }
+            // Claude 4系・3.5シリーズはClaude Web検索機能を使用
+            // その他のモデルではWeb検索は利用できません
 
             if (attachments && attachments.length > 0) {
                 const processedResult = await this.#processAttachments(attachments);
@@ -544,14 +536,12 @@ class ChatActions {
                     ChatRenderer.getInstance.updateStreamingStatus(contentContainer, 'tool-running', toolCall.name);
                 }
             }
-            console.log(`🔧 ツール開始: ${toolCall.name}`);
             return null;
         }
 
         // ツール実行（complete時）
         if (type === 'complete' && toolCall && typeof ToolManager !== 'undefined') {
             try {
-                console.log(`🔧 ツール実行: ${toolCall.name}`);
                 const result = await ToolManager.getInstance.handleToolCall(toolCall, toolCall.provider);
 
                 let toolResultText = null;
@@ -559,13 +549,10 @@ class ChatActions {
 
                 // 結果をUIに表示 & ファイルを永続化
                 if (result && contentContainer) {
-                    console.log(`🔧 ツール実行完了: ${result.type}`, result.filename || '');
                     fileId = await this.#displayToolResult(result, contentContainer, conversationId, messageTimestamp);
 
                     // ツール結果テキストを生成（AIへの認識用＆ユーザーへの説明用）
                     toolResultText = this.#generateToolResultText(toolCall, result);
-                } else {
-                    console.warn(`🔧 結果またはコンテナがありません`);
                 }
 
                 // 思考過程を更新（完了表示）
@@ -711,9 +698,8 @@ class ChatActions {
             if (typeof FileStorage !== 'undefined' && result.blob) {
                 try {
                     savedFileId = await FileStorage.getInstance.save(result, conversationId, messageTimestamp);
-                    console.log(`[ChatActions] ファイル永続化完了: ${savedFileId}`);
                 } catch (error) {
-                    console.error('[ChatActions] ファイル永続化エラー:', error);
+                    // ファイル永続化エラーは無視して続行
                 }
             }
 

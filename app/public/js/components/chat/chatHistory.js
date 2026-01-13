@@ -148,7 +148,6 @@ class ChatHistory {
                                         contentContainer.appendChild(downloadCard);
                                     }
                                 }
-                                console.log(`[ChatHistory] ${files.length}件のファイルを復元`);
                             }
                         }
                     } catch (error) {

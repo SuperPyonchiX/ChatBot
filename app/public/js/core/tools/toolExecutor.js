@@ -233,13 +233,6 @@ class ToolExecutor {
      * @returns {Object|null} ツール呼び出し情報
      */
     #detectResponsesToolCall(event) {
-        // ツール関連イベントのみログ出力
-        if (event.type?.includes('function_call') ||
-            (event.type === 'response.output_item.added' && event.item?.type === 'function_call') ||
-            (event.type === 'response.output_item.done' && event.item?.type === 'function_call')) {
-            console.log('🔍 Responses APIツールイベント:', event.type);
-        }
-
         // response.output_item.added: function_callアイテムの追加（開始）
         if (event.type === 'response.output_item.added' && event.item?.type === 'function_call') {
             const callId = event.item.call_id || event.item.id || `resp_${Date.now()}`;
@@ -252,7 +245,6 @@ class ToolExecutor {
             };
             this.#pendingToolCalls.set(callId, toolCall);
             this.#partialJsonBuffers.set(callId, '');
-            console.log('🔧 ツール呼び出し開始:', toolCall);
             return { type: 'start', toolCall };
         }
 
@@ -278,7 +270,6 @@ class ToolExecutor {
                 };
                 this.#pendingToolCalls.set(callId, toolCall);
                 this.#partialJsonBuffers.set(callId, '');
-                console.log('🔧 ツール呼び出し開始（delta経由）:', toolCall);
             }
 
             if (callId) {
@@ -317,7 +308,6 @@ class ToolExecutor {
                 this.#pendingToolCalls.delete(callId);
                 this.#partialJsonBuffers.delete(callId);
                 this.#completedToolCalls.add(callId);
-                console.log('🔧 ツール呼び出し完了:', toolCall);
                 return { type: 'complete', toolCall };
             }
         }
@@ -335,7 +325,6 @@ class ToolExecutor {
 
             // 完了済みチェック（function_call_arguments.doneで既に処理済みの場合はスキップ）
             if (this.#completedToolCalls.has(callId)) {
-                console.log('🔧 ツール呼び出しは既に完了済み、スキップ:', callId);
                 return null;
             }
 
@@ -368,7 +357,6 @@ class ToolExecutor {
             this.#pendingToolCalls.delete(callId);
             this.#partialJsonBuffers.delete(callId);
             this.#completedToolCalls.add(callId);
-            console.log('🔧 ツール呼び出し完了（output_item.done）:', toolCall);
             return { type: 'complete', toolCall };
         }
 

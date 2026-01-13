@@ -46,15 +46,10 @@ class AIAPI {
                 const provider = this.#getProviderForModel(model);
                 options.enableTools = true;
                 options.tools = this.#getToolsForProvider(provider);
-                console.log(`🔧 ツール機能有効: model=${model}, provider=${provider}, tools=${options.tools?.length || 0}個`);
-                console.log('🔧 ツール定義:', options.tools);
-            } else {
-                console.log(`🔧 ツール機能無効: model=${model}, ToolManager定義=${typeof ToolManager !== 'undefined'}`);
             }
 
             // Web検索が有効でResponses API対応モデルの場合はResponses APIを使用
             if (options.enableWebSearch && this.#isWebSearchCompatibleModel(model)) {
-                console.log('🌐 Web検索が有効なため、Responses APIを使用します');
                 return await ResponsesAPI.getInstance.callResponsesAPI(messages, model, attachments, options);
             }
 

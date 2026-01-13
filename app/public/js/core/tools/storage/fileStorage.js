@@ -48,8 +48,6 @@ class FileStorage {
 
             // 古いファイルのクリーンアップを実行
             await this.#cleanupOldFiles();
-
-            console.log('[FileStorage] 初期化完了');
         } catch (error) {
             console.error('[FileStorage] 初期化エラー:', error);
             throw error;
@@ -119,7 +117,6 @@ class FileStorage {
             const request = store.put(fileRecord);
 
             request.onsuccess = () => {
-                console.log(`[FileStorage] ファイル保存: ${fileResult.filename} (ID: ${fileId})`);
                 resolve(fileId);
             };
 
@@ -234,7 +231,6 @@ class FileStorage {
             const request = store.delete(fileId);
 
             request.onsuccess = () => {
-                console.log(`[FileStorage] ファイル削除: ${fileId}`);
                 resolve();
             };
 
@@ -257,7 +253,6 @@ class FileStorage {
             await this.delete(file.id);
         }
 
-        console.log(`[FileStorage] 会話 ${conversationId} のファイル ${files.length} 件を削除`);
         return files.length;
     }
 
@@ -292,9 +287,6 @@ class FileStorage {
                     deletedCount++;
                     cursor.continue();
                 } else {
-                    if (deletedCount > 0) {
-                        console.log(`[FileStorage] 古いファイル ${deletedCount} 件をクリーンアップ`);
-                    }
                     resolve(deletedCount);
                 }
             };

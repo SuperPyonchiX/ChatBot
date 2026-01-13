@@ -783,18 +783,14 @@ class RAGManager {
         // 先に初期化を確認（#enabledの値がストレージから復元される）
         await this.#ensureInitialized();
 
-        console.log('📚 RAG augmentPrompt called, enabled:', this.#enabled);
-
         const emptyResult = returnSources ? { messages, sources: [] } : messages;
 
         if (!this.#enabled) {
-            console.log('📚 RAG is disabled, skipping augmentation');
             return emptyResult;
         }
 
         // ナレッジベースが空の場合はそのまま返す
         const docCount = await VectorStore.getInstance.getDocumentCount();
-        console.log('📚 RAG document count:', docCount);
         if (docCount === 0) {
             return emptyResult;
         }

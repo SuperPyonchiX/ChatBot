@@ -35,13 +35,10 @@ class ToolManager {
             return;
         }
 
-        console.log('ToolManager: 初期化開始');
-
         // 組み込みツールを登録
         await this.#registerBuiltInTools();
 
         this.#initialized = true;
-        console.log('ToolManager: 初期化完了');
     }
 
     /**

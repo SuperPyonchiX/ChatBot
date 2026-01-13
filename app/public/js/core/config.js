@@ -502,21 +502,12 @@ window.CONFIG = {
     }
 };
 
-// エンドポイントの検証ログ（開発用）
+// エンドポイントの検証（開発用）
 (function() {
     if (typeof window !== 'undefined' && window.location) {
-        console.log('🌐 現在のプロトコル:', window.location.protocol);
-        console.log('📍 APIエンドポイント:');
-        console.log('   - OpenAI:', window.CONFIG.AIAPI.ENDPOINTS.OPENAI);
-        console.log('   - Responses:', window.CONFIG.AIAPI.ENDPOINTS.RESPONSES);
-        console.log('   - Claude:', window.CONFIG.AIAPI.ENDPOINTS.CLAUDE);
-        console.log('   - Gemini:', window.CONFIG.AIAPI.ENDPOINTS.GEMINI);
-        
         if (window.location.protocol === 'file:') {
             console.warn('⚠️ ファイルプロトコルで開かれています。');
             console.warn('💡 推奨: npm start でサーバー経由で起動してください');
-        } else {
-            console.log('✅ Node.jsサーバー経由で実行中');
         }
     }
 })();

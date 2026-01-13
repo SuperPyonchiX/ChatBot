@@ -48,8 +48,6 @@ class ToolRegistry {
             parameters: toolDefinition.parameters || { type: 'object', properties: {} },
             executor: toolDefinition.executor
         });
-
-        console.log(`ツール登録: ${toolDefinition.name}`);
     }
 
     /**
