@@ -91,6 +91,25 @@
     box-shadow: none;
 }
 
+/* 停止ボタンモード */
+#sendButton.stop-mode {
+    background: linear-gradient(135deg, rgba(255, 100, 100, 0.2), rgba(255, 50, 50, 0.1));
+    border-color: rgba(255, 100, 100, 0.5);
+    color: #ff6464;
+}
+
+#sendButton.stop-mode:hover {
+    background: linear-gradient(135deg, rgba(255, 100, 100, 0.3), rgba(255, 50, 50, 0.2));
+    border-color: #ff6464;
+    box-shadow:
+        0 0 15px rgba(255, 100, 100, 0.3),
+        0 0 30px rgba(255, 100, 100, 0.1);
+}
+
+#sendButton.stop-mode:hover i {
+    text-shadow: 0 0 10px #ff6464;
+}
+
 /* プロンプトマネージャーボタン */
 .small-button {
     background-color: var(--background-quaternary);

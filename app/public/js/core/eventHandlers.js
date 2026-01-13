@@ -27,20 +27,55 @@ class EventHandlers {
     }
 
     /**
+     * メッセージ送信を処理します（UIの切り替えを含む）
+     */
+    async #handleSendMessage() {
+        // 送信ボタンを停止ボタンに切り替え
+        ChatUI.getInstance.showStopButton();
+
+        try {
+            await ChatActions.getInstance.sendMessage();
+        } finally {
+            // 送信完了後、送信ボタンに戻す
+            ChatUI.getInstance.showSendButton();
+        }
+    }
+
+    /**
      * チャット関連のイベントをセットアップします
      */
     setupChatEvents() {
-        if (!window.Elements.sendButton || !window.Elements.userInput || 
+        if (!window.Elements.sendButton || !window.Elements.userInput ||
             !window.Elements.newChatButton || !window.Elements.clearHistoryButton) return;
-        
-        // 送信ボタンのクリックイベント
-        window.Elements.sendButton.addEventListener('click', ChatActions.getInstance.sendMessage.bind(ChatActions.getInstance));
+
+        // 会話検索イベント
+        const chatSearchInput = document.getElementById('chatSearchInput');
+        if (chatSearchInput) {
+            chatSearchInput.addEventListener('input', (e) => {
+                ChatHistory.getInstance.setSearchQuery(e.target.value);
+            });
+        }
+
+        // 送信ボタンのクリックイベント（送信/停止の切り替え）
+        window.Elements.sendButton.addEventListener('click', () => {
+            if (ChatUI.getInstance.isStopMode()) {
+                // 停止モードの場合：リクエストを中断
+                window.AppState.abortCurrentRequest();
+                ChatUI.getInstance.showSendButton();
+            } else {
+                // 送信モードの場合：メッセージを送信
+                this.#handleSendMessage();
+            }
+        });
 
         // テキストエリアのEnterキーイベント（Shift+Enterで改行）
-        window.Elements.userInput.addEventListener('keydown', function(e) {
+        window.Elements.userInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                ChatActions.getInstance.sendMessage();
+                // ストリーミング中は送信しない
+                if (!window.AppState.isStreaming) {
+                    this.#handleSendMessage();
+                }
             }
         });
         

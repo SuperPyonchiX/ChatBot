@@ -319,12 +319,9 @@ class ChatActions {
 
             conversation.messages.push(userMessage);
 
-            // チャットタイトルの更新
-            if (conversation.title === '新しいチャット' && 
-                conversation.messages.filter(m => m.role === 'user').length === 1) {
-                conversation.title = userText.substring(0, 30) + (userText.length > 30 ? '...' : '');
-                titleUpdated = true;
-            }
+            // チャットタイトルの更新フラグ（AI生成は後で実行）
+            const shouldGenerateTitle = conversation.title === '新しいチャット' &&
+                conversation.messages.filter(m => m.role === 'user').length === 1;
 
             // APIリクエストの処理
             const effectiveSystemPrompt = systemPrompt || window.CONFIG.SYSTEM_PROMPTS.DEFAULT_SYSTEM_PROMPT;
@@ -377,6 +374,10 @@ class ChatActions {
                 toolCalls: []  // ツール実行情報
             };
 
+            // AbortControllerを作成
+            const abortController = window.AppState.createAbortController();
+            window.AppState.isStreaming = true;
+
             // ストリーミングAPI呼び出し
             await AIAPI.getInstance.callAIAPI(
                 messagesWithSystem,
@@ -384,6 +385,7 @@ class ChatActions {
                 displayAttachments,
                 {
                     stream: true,
+                    signal: abortController.signal,
                     enableWebSearch: isWebSearchEnabled && (window.CONFIG.MODELS.OPENAI_WEB_SEARCH_COMPATIBLE.includes(currentModel) || window.CONFIG.MODELS.CLAUDE.includes(currentModel)),
                     thinkingContainer: thinkingContainer, // Web検索用に渡す
                     onWebSearchQuery: (query) => {
@@ -435,9 +437,29 @@ class ChatActions {
 
             conversation.messages.push(assistantMessage);
 
+            // ストリーミング完了後にAbortControllerをクリア
+            window.AppState.clearAbortController();
+
+            // タイトル自動生成（非同期で実行、UIをブロックしない）
+            if (shouldGenerateTitle) {
+                this.#generateAndUpdateTitle(conversation, userText).catch(err => {
+                    console.warn('[ChatActions] タイトル自動生成エラー:', err.message);
+                });
+                titleUpdated = true;
+            }
+
             return { titleUpdated, response: fullResponseText };
 
         } catch (error) {
+            // AbortControllerをクリア
+            window.AppState.clearAbortController();
+
+            // 中断エラーの場合は特別な処理
+            if (error.name === 'AbortError') {
+                console.log('[ChatActions] リクエストがユーザーによって中断されました');
+                return { titleUpdated: false, aborted: true };
+            }
+
             // エラーメッセージを表示
             const errorMessage = error.message || 'APIリクエスト中にエラーが発生しました';
             this.#showErrorMessage(errorMessage, chatMessages);
@@ -504,6 +526,43 @@ class ChatActions {
         }
 
         return { content, extractedImages };
+    }
+
+    /**
+     * タイトルを自動生成して更新
+     * @param {Object} conversation - 会話オブジェクト
+     * @param {string} userText - ユーザーの最初のメッセージ
+     */
+    async #generateAndUpdateTitle(conversation, userText) {
+        try {
+            // TitleGeneratorが利用可能か確認
+            if (typeof TitleGenerator === 'undefined') {
+                // フォールバック：先頭30文字を使用
+                conversation.title = userText.substring(0, 30) + (userText.length > 30 ? '...' : '');
+            } else {
+                // AIでタイトルを生成
+                const generatedTitle = await TitleGenerator.getInstance.generateTitle(userText, conversation.model);
+                conversation.title = generatedTitle;
+            }
+
+            // 会話を保存
+            Storage.getInstance.saveConversations(window.AppState.conversations);
+
+            // サイドバーのチャット履歴を更新
+            if (typeof ChatHistory !== 'undefined') {
+                ChatHistory.getInstance.renderChatHistory(
+                    window.AppState.conversations,
+                    window.AppState.currentConversationId
+                );
+            }
+
+            console.log('[ChatActions] タイトル自動生成完了:', conversation.title);
+        } catch (error) {
+            console.error('[ChatActions] タイトル生成エラー:', error);
+            // エラー時はフォールバック
+            conversation.title = userText.substring(0, 30) + (userText.length > 30 ? '...' : '');
+            Storage.getInstance.saveConversations(window.AppState.conversations);
+        }
     }
 
     /**

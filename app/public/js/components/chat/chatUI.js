@@ -90,6 +90,40 @@ class ChatUI {
     }
 
     /**
+     * 送信ボタンを停止ボタンに変換します
+     */
+    showStopButton() {
+        const sendButton = window.Elements.sendButton;
+        if (!sendButton) return;
+
+        sendButton.classList.add('stop-mode');
+        sendButton.innerHTML = '<i class="fas fa-stop"></i>';
+        sendButton.title = '生成を停止';
+    }
+
+    /**
+     * 停止ボタンを送信ボタンに戻します
+     */
+    showSendButton() {
+        const sendButton = window.Elements.sendButton;
+        if (!sendButton) return;
+
+        sendButton.classList.remove('stop-mode');
+        sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        sendButton.title = 'メッセージを送信';
+        sendButton.disabled = false;
+    }
+
+    /**
+     * 送信ボタンが停止モードかどうかを判定します
+     * @returns {boolean} 停止モードかどうか
+     */
+    isStopMode() {
+        const sendButton = window.Elements.sendButton;
+        return sendButton?.classList.contains('stop-mode') ?? false;
+    }
+
+    /**
      * コードエディターモーダルを初期化します
      */
     initializeCodeEditor() {

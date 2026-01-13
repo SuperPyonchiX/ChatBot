@@ -25,6 +25,48 @@
     width: 0;
 }
 
+/* 会話検索コンテナ */
+.chat-search-container {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.chat-search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.chat-search-icon {
+    position: absolute;
+    left: var(--spacing-sm);
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+    pointer-events: none;
+}
+
+.chat-search-input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) calc(var(--spacing-sm) * 2 + 14px);
+    background: rgba(0, 20, 30, 0.6);
+    border: 1px solid rgba(0, 255, 255, 0.15);
+    border-radius: var(--border-radius-md);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-fast);
+}
+
+.chat-search-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.chat-search-input:focus {
+    outline: none;
+    border-color: rgba(0, 255, 255, 0.4);
+    background: rgba(0, 30, 40, 0.8);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+}
+
 /* サイドバーフッター */
 .sidebar-footer {
     padding: var(--spacing-md);

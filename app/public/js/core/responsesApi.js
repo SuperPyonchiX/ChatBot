@@ -69,10 +69,11 @@ class ResponsesAPI {
                     options.onComplete,
                     options.thinkingContainer,
                     options.onWebSearchQuery,
-                    options.onToolCall
+                    options.onToolCall,
+                    options.signal
                 );
             } else {
-                return await this.#executeResponsesRequest(endpoint, headers, body);
+                return await this.#executeResponsesRequest(endpoint, headers, body, options.signal);
             }
 
         } catch (error) {
@@ -310,12 +311,21 @@ class ResponsesAPI {
 
     /**
      * 非ストリーミングでResponses APIリクエストを実行
+     * @param {string} endpoint - APIエンドポイント
+     * @param {Object} headers - リクエストヘッダー
+     * @param {Object} body - リクエストボディ
+     * @param {AbortSignal} [externalSignal] - 外部からのAbortSignal
      */
-    async #executeResponsesRequest(endpoint, headers, body) {
+    async #executeResponsesRequest(endpoint, headers, body, externalSignal = null) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
             controller.abort();
         }, window.CONFIG.AIAPI.REQUEST_TIMEOUT);
+
+        // 外部signalが中断された場合、内部controllerも中断
+        if (externalSignal) {
+            externalSignal.addEventListener('abort', () => controller.abort());
+        }
 
         try {
             const response = await fetch(endpoint, {
@@ -330,7 +340,9 @@ class ResponsesAPI {
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Responses APIエラー:', errorText);
-                throw new Error(`Responses API error: ${response.status} ${errorText}`);
+                const error = new Error(`Responses API error: ${response.status} ${errorText}`);
+                error.status = response.status;
+                throw error;
             }
 
             const responseData = await response.json();
@@ -341,6 +353,9 @@ class ResponsesAPI {
         } catch (error) {
             clearTimeout(timeoutId);
             if (error.name === 'AbortError') {
+                if (externalSignal?.aborted) {
+                    throw error;
+                }
                 throw new Error('Responses APIリクエストがタイムアウトしました');
             }
             throw error;
@@ -357,8 +372,9 @@ class ResponsesAPI {
      * @param {HTMLElement|null} thinkingContainer - 思考過程コンテナ
      * @param {Function|null} onWebSearchQuery - Web検索クエリ取得時のコールバック
      * @param {Function|null} onToolCall - ツール呼び出し検出時のコールバック
+     * @param {AbortSignal} [externalSignal] - 外部からのAbortSignal
      */
-    async #executeStreamResponsesRequest(endpoint, headers, body, onChunk, onComplete, thinkingContainer = null, onWebSearchQuery = null, onToolCall = null) {
+    async #executeStreamResponsesRequest(endpoint, headers, body, onChunk, onComplete, thinkingContainer = null, onWebSearchQuery = null, onToolCall = null, externalSignal = null) {
         const controller = new AbortController();
         let timeoutId;
         let fullText = '';
@@ -366,6 +382,11 @@ class ResponsesAPI {
         let processedEvents = new Set(); // 重複イベント防止
         let webSearchStatusMessage = null; // Web検索ステータス管理
         let webSearchAddedToThinking = false; // 思考過程への追加フラグ
+
+        // 外部signalが中断された場合、内部controllerも中断
+        if (externalSignal) {
+            externalSignal.addEventListener('abort', () => controller.abort());
+        }
 
         const resetTimeout = () => {
             if (timeoutId) clearTimeout(timeoutId);
@@ -506,6 +527,14 @@ class ResponsesAPI {
             
             clearTimeout(timeoutId);
             if (error.name === 'AbortError') {
+                // 外部signalによる中断かタイムアウトかを判定
+                if (externalSignal?.aborted) {
+                    // 中断時も受信済みのテキストで完了コールバックを呼ぶ
+                    if (fullText && onComplete) {
+                        onComplete(fullText);
+                    }
+                    throw error;
+                }
                 throw new Error('Responses APIストリーミングがタイムアウトしました');
             }
             throw error;

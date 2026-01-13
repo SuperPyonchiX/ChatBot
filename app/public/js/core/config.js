@@ -90,7 +90,17 @@ window.CONFIG = {
      * APIリクエストの設定
      */
     AIAPI: {
-        // リトライ回数
+        // リトライ設定
+        RETRY: {
+            // 最大リトライ回数
+            MAX_RETRIES: 3,
+            // 基本遅延時間（ミリ秒）
+            BASE_DELAY: 1000,
+            // リトライ対象のHTTPステータスコード
+            RETRYABLE_STATUS_CODES: [429, 500, 502, 503, 504]
+        },
+
+        // リトライ回数（後方互換性のため残す）
         MAX_RETRIES: 3,
 
         // タイムアウト時間（ミリ秒）

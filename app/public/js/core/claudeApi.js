@@ -62,10 +62,11 @@ class ClaudeAPI {
                     options.onComplete,
                     options.thinkingContainer,
                     options.onWebSearchQuery,
-                    options.onToolCall
+                    options.onToolCall,
+                    options.signal
                 );
             } else {
-                return await this.#executeClaudeRequest(headers, body);
+                return await this.#executeClaudeRequest(headers, body, options.signal);
             }
 
         } catch (error) {
@@ -259,15 +260,23 @@ class ClaudeAPI {
      * 非ストリーミングClaudeリクエストを実行
      * @param {Object} headers - リクエストヘッダー
      * @param {Object} body - リクエストボディ
+     * @param {AbortSignal} [externalSignal] - 外部からのAbortSignal
      * @returns {Promise<string>} APIからの応答テキスト
      */
-    async #executeClaudeRequest(headers, body) {
+    async #executeClaudeRequest(headers, body, externalSignal = null) {
         try {
-            const response = await fetch(window.CONFIG.AIAPI.ENDPOINTS.CLAUDE, {
+            const fetchOptions = {
                 method: 'POST',
                 headers: headers,
                 body: (typeof body === 'string' ? body : JSON.stringify(body))
-            }).catch(error => {
+            };
+
+            // 外部signalがある場合は追加
+            if (externalSignal) {
+                fetchOptions.signal = externalSignal;
+            }
+
+            const response = await fetch(window.CONFIG.AIAPI.ENDPOINTS.CLAUDE, fetchOptions).catch(error => {
                 // ネットワークエラー（サーバー未起動など）の場合
                 if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
                     const endpoint = window.CONFIG.AIAPI.ENDPOINTS.CLAUDE;
@@ -304,6 +313,10 @@ class ClaudeAPI {
 
         } catch (error) {
             if (error.name === 'AbortError') {
+                // 外部signalによる中断
+                if (externalSignal?.aborted) {
+                    throw error;
+                }
                 throw new Error('リクエストがタイムアウトしました。');
             }
             throw error;
@@ -318,9 +331,11 @@ class ClaudeAPI {
      * @param {Function} onComplete - 完了時のコールバック
      * @param {HTMLElement} thinkingContainer - 思考過程コンテナ（任意）
      * @param {Function|null} onWebSearchQuery - Web検索クエリ取得時のコールバック（任意）
+     * @param {Function|null} onToolCall - ツール呼び出し時のコールバック（任意）
+     * @param {AbortSignal} [externalSignal] - 外部からのAbortSignal
      * @returns {Promise<string>} 空文字列（ストリーミングのため）
      */
-    async #executeStreamClaudeRequest(headers, body, onChunk, onComplete, thinkingContainer = null, onWebSearchQuery = null, onToolCall = null) {
+    async #executeStreamClaudeRequest(headers, body, onChunk, onComplete, thinkingContainer = null, onWebSearchQuery = null, onToolCall = null, externalSignal = null) {
         try {
             // Ensure stream flag is present in payload
             const payloadStr = (function(){
@@ -335,11 +350,22 @@ class ClaudeAPI {
                 return JSON.stringify(obj2);
             })();
 
-            const response = await fetch(window.CONFIG.AIAPI.ENDPOINTS.CLAUDE, {
+            const fetchOptions = {
                 method: 'POST',
                 headers: headers,
                 body: payloadStr
-            }).catch(error => {
+            };
+
+            // 外部signalがある場合は追加
+            if (externalSignal) {
+                fetchOptions.signal = externalSignal;
+            }
+
+            const response = await fetch(window.CONFIG.AIAPI.ENDPOINTS.CLAUDE, fetchOptions).catch(error => {
+                // 中断エラーはそのまま投げる
+                if (error.name === 'AbortError') {
+                    throw error;
+                }
                 // ネットワークエラー（サーバー未起動など）の場合
                 if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
                     const endpoint = window.CONFIG.AIAPI.ENDPOINTS.CLAUDE;

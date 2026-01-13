@@ -55,10 +55,11 @@ class GeminiAPI {
                     body,
                     options.onChunk,
                     options.onComplete,
-                    options.onToolCall
+                    options.onToolCall,
+                    options.signal
                 );
             } else {
-                return await this.#executeGeminiRequest(endpoint, headers, body);
+                return await this.#executeGeminiRequest(endpoint, headers, body, options.signal);
             }
 
         } catch (error) {
@@ -193,17 +194,26 @@ class GeminiAPI {
 
     /**
      * 非ストリーミングでGemini APIリクエストを実行
+     * @param {string} endpoint - APIエンドポイント
+     * @param {Object} headers - リクエストヘッダー
+     * @param {Object} body - リクエストボディ
+     * @param {AbortSignal} [externalSignal] - 外部からのAbortSignal
      */
-    async #executeGeminiRequest(endpoint, headers, body) {
+    async #executeGeminiRequest(endpoint, headers, body, externalSignal = null) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
             controller.abort();
         }, window.CONFIG.AIAPI.REQUEST_TIMEOUT);
 
+        // 外部signalが中断された場合、内部controllerも中断
+        if (externalSignal) {
+            externalSignal.addEventListener('abort', () => controller.abort());
+        }
+
         try {
             // 非ストリーミング用のエンドポイントに変更
             const nonStreamEndpoint = endpoint.replace(':streamGenerateContent', ':generateContent');
-            
+
             const response = await fetch(nonStreamEndpoint, {
                 method: 'POST',
                 headers: headers,
@@ -216,7 +226,9 @@ class GeminiAPI {
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Gemini APIエラー:', errorText);
-                throw new Error(`Gemini API error: ${response.status} ${errorText}`);
+                const error = new Error(`Gemini API error: ${response.status} ${errorText}`);
+                error.status = response.status;
+                throw error;
             }
 
             const responseData = await response.json();
@@ -225,6 +237,9 @@ class GeminiAPI {
         } catch (error) {
             clearTimeout(timeoutId);
             if (error.name === 'AbortError') {
+                if (externalSignal?.aborted) {
+                    throw error;
+                }
                 throw new Error('Gemini APIリクエストがタイムアウトしました');
             }
             throw error;
@@ -233,12 +248,24 @@ class GeminiAPI {
 
     /**
      * ストリーミングでGemini APIリクエストを実行
+     * @param {string} endpoint - APIエンドポイント
+     * @param {Object} headers - リクエストヘッダー
+     * @param {Object} body - リクエストボディ
+     * @param {Function} onChunk - チャンク受信時のコールバック
+     * @param {Function} onComplete - 完了時のコールバック
+     * @param {Function} [onToolCall] - ツール呼び出し時のコールバック
+     * @param {AbortSignal} [externalSignal] - 外部からのAbortSignal
      */
-    async #executeStreamGeminiRequest(endpoint, headers, body, onChunk, onComplete, onToolCall = null) {
+    async #executeStreamGeminiRequest(endpoint, headers, body, onChunk, onComplete, onToolCall = null, externalSignal = null) {
         const controller = new AbortController();
         let timeoutId;
         let fullText = '';
         let chunkCount = 0;
+
+        // 外部signalが中断された場合、内部controllerも中断
+        if (externalSignal) {
+            externalSignal.addEventListener('abort', () => controller.abort());
+        }
 
         const resetTimeout = () => {
             if (timeoutId) clearTimeout(timeoutId);
@@ -357,6 +384,14 @@ class GeminiAPI {
         } catch (error) {
             clearTimeout(timeoutId);
             if (error.name === 'AbortError') {
+                // 外部signalによる中断かタイムアウトかを判定
+                if (externalSignal?.aborted) {
+                    // 中断時も受信済みのテキストで完了コールバックを呼ぶ
+                    if (fullText && onComplete) {
+                        onComplete(fullText);
+                    }
+                    throw error;
+                }
                 throw new Error('Gemini APIストリーミングがタイムアウトしました');
             }
             throw error;

@@ -17,6 +17,10 @@ class ChatHistory {
         return ChatHistory.#instance;
     }
 
+    // 検索関連のプライベート変数
+    #searchQuery = '';
+    #lastRenderParams = null;
+
     /**
      * プライベートコンストラクタ
      */
@@ -24,6 +28,125 @@ class ChatHistory {
         if (ChatHistory.#instance) {
             throw new Error('ChatHistoryクラスは直接インスタンス化できません。ChatHistory.instanceを使用してください。');
         }
+    }
+
+    /**
+     * 検索クエリを設定して会話をフィルタリング
+     * @param {string} query - 検索クエリ
+     */
+    setSearchQuery(query) {
+        this.#searchQuery = query.toLowerCase().trim();
+        this.#reRenderWithSearch();
+    }
+
+    /**
+     * 検索クエリを取得
+     * @returns {string} 現在の検索クエリ
+     */
+    getSearchQuery() {
+        return this.#searchQuery;
+    }
+
+    /**
+     * 検索クエリをクリア
+     */
+    clearSearch() {
+        this.#searchQuery = '';
+        this.#reRenderWithSearch();
+    }
+
+    /**
+     * 検索結果で再レンダリング
+     */
+    #reRenderWithSearch() {
+        if (!this.#lastRenderParams) return;
+
+        const { conversations, currentConversationId, chatHistory, onSwitchConversation, onShowRenameModal, onDeleteConversation } = this.#lastRenderParams;
+
+        // 検索フィルタリング
+        const filteredConversations = this.#filterConversations(conversations);
+
+        // 会話履歴を再レンダリング（内部メソッドを使用）
+        this.#renderFilteredChatHistory(
+            filteredConversations,
+            currentConversationId,
+            chatHistory,
+            onSwitchConversation,
+            onShowRenameModal,
+            onDeleteConversation
+        );
+    }
+
+    /**
+     * 検索クエリで会話をフィルタリング
+     * @param {Array} conversations - 会話配列
+     * @returns {Array} フィルタリングされた会話配列
+     */
+    #filterConversations(conversations) {
+        if (!this.#searchQuery) {
+            return conversations;
+        }
+
+        return conversations.filter(conv => {
+            // タイトルで検索
+            if (conv.title && conv.title.toLowerCase().includes(this.#searchQuery)) {
+                return true;
+            }
+
+            // メッセージ内容で検索
+            if (conv.messages && Array.isArray(conv.messages)) {
+                return conv.messages.some(msg => {
+                    if (!msg || msg.role === 'system') return false;
+                    const content = typeof msg.content === 'string' ? msg.content : '';
+                    return content.toLowerCase().includes(this.#searchQuery);
+                });
+            }
+
+            return false;
+        });
+    }
+
+    /**
+     * フィルタリングされた会話履歴を表示（検索結果表示用）
+     */
+    #renderFilteredChatHistory(conversations, currentConversationId, chatHistory, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
+        if (!chatHistory || !Array.isArray(conversations)) return;
+
+        chatHistory.innerHTML = '';
+
+        if (conversations.length === 0) {
+            const emptyState = ChatUI.getInstance.createElement('div', {
+                classList: 'empty-history',
+                innerHTML: this.#searchQuery
+                    ? `<p>「${this.#searchQuery}」に一致する会話が見つかりません</p>`
+                    : `<p>会話履歴がありません</p><p>新しいチャットを開始してください</p>`
+            });
+            chatHistory.appendChild(emptyState);
+            return;
+        }
+
+        const promptGroups = this.#groupConversationsByPrompt(conversations);
+
+        Object.entries(promptGroups).forEach(([promptKey, groupConversations]) => {
+            if (!Array.isArray(groupConversations) || groupConversations.length === 0) return;
+
+            // @ts-ignore - Storageはカスタムクラス（型定義あり）
+            const categoryStates = Storage.getInstance.loadCategoryStates();
+            const isExpanded = categoryStates[promptKey] !== false;
+
+            const categorySection = this.#createCategorySection(
+                promptKey,
+                groupConversations,
+                isExpanded,
+                onSwitchConversation,
+                onShowRenameModal,
+                onDeleteConversation
+            );
+
+            chatHistory.appendChild(categorySection);
+        });
+
+        this.updateActiveChatInHistory(currentConversationId);
     }
 
     /**
@@ -184,22 +307,34 @@ class ChatHistory {
      */
     renderChatHistory(conversations, currentConversationId, chatHistory, onSwitchConversation, onShowRenameModal, onDeleteConversation) {
         if (!chatHistory || !Array.isArray(conversations)) return;
-        
+
+        // パラメータを保存（検索時の再レンダリング用）
+        this.#lastRenderParams = {
+            conversations,
+            currentConversationId,
+            chatHistory,
+            onSwitchConversation,
+            onShowRenameModal,
+            onDeleteConversation
+        };
+
+        // 検索クエリがある場合はフィルタリング
+        const filteredConversations = this.#filterConversations(conversations);
+
         chatHistory.innerHTML = '';
         
-        if (conversations.length === 0) {
+        if (filteredConversations.length === 0) {
             const emptyState = ChatUI.getInstance.createElement('div', {
                 classList: 'empty-history',
-                innerHTML: `
-                    <p>会話履歴がありません</p>
-                    <p>新しいチャットを開始してください</p>
-                `
+                innerHTML: this.#searchQuery
+                    ? `<p>「${this.#searchQuery}」に一致する会話が見つかりません</p>`
+                    : `<p>会話履歴がありません</p><p>新しいチャットを開始してください</p>`
             });
             chatHistory.appendChild(emptyState);
             return;
         }
-        
-        const promptGroups = this.#groupConversationsByPrompt(conversations);
+
+        const promptGroups = this.#groupConversationsByPrompt(filteredConversations);
         
         Object.entries(promptGroups).forEach(([promptKey, groupConversations]) => {
             if (!Array.isArray(groupConversations) || groupConversations.length === 0) return;

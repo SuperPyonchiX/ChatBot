@@ -97,6 +97,12 @@
                     <i class="fas fa-plus"></i> 新しいチャット
                 </button>
             </div>
+            <div class="chat-search-container">
+                <div class="chat-search-wrapper">
+                    <i class="fas fa-search chat-search-icon"></i>
+                    <input type="text" id="chatSearchInput" class="chat-search-input" placeholder="会話を検索..." />
+                </div>
+            </div>
             <div class="chat-history" id="chatHistory">
                 <!-- チャット履歴はJSで動的に追加 -->
             </div>
@@ -688,6 +694,7 @@
     <script src="js/core/geminiApi.js"></script>
     <script src="js/core/claudeApi.js"></script>
     <script src="js/core/responsesApi.js"></script>
+    <script src="js/core/titleGenerator.js"></script>
 
     <!-- ツール機能関連のファイル -->
     <script src="js/core/tools/toolRegistry.js"></script>

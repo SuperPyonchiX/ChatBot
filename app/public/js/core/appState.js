@@ -12,6 +12,8 @@ window.AppState = (function() {
     let _conversations = [];       // すべての会話データを保持する配列（他から参照されても実体は同じ）
     let _currentConversationId = null; // 現在選択中の会話IDを保持する変数
     let _currentAttachments = [];   // 現在の添付ファイル情報を保持する配列
+    let _currentAbortController = null; // 現在のAPIリクエストを中断するためのAbortController
+    let _isStreaming = false;      // ストリーミング中かどうかのフラグ
 
     return {
         /**
@@ -59,8 +61,48 @@ window.AppState = (function() {
         
         get currentAttachments() { return _currentAttachments; },
         set currentAttachments(value) { _currentAttachments = value; },
-        
+
+        get isStreaming() { return _isStreaming; },
+        set isStreaming(value) { _isStreaming = value; },
+
         get userPrompts() { return []; },
+
+        /**
+         * 新しいAbortControllerを作成して返します
+         * @returns {AbortController} 新しいAbortController
+         */
+        createAbortController() {
+            _currentAbortController = new AbortController();
+            return _currentAbortController;
+        },
+
+        /**
+         * 現在のAbortControllerを取得します
+         * @returns {AbortController|null} 現在のAbortController
+         */
+        getAbortController() {
+            return _currentAbortController;
+        },
+
+        /**
+         * 現在のAPIリクエストを中断します
+         */
+        abortCurrentRequest() {
+            if (_currentAbortController) {
+                _currentAbortController.abort();
+                _currentAbortController = null;
+                _isStreaming = false;
+                console.log('[AppState] リクエストを中断しました');
+            }
+        },
+
+        /**
+         * AbortControllerをクリアします
+         */
+        clearAbortController() {
+            _currentAbortController = null;
+            _isStreaming = false;
+        },
 
         /**
          * 指定したIDの会話を取得します
