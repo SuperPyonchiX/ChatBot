@@ -1,7 +1,7 @@
 /* Markdownコンテンツの基本スタイル */
 .markdown-content {
-    color: #e0e0e0;
-    line-height: 1.6;
+    color: var(--text-primary);
+    line-height: 1.7;
 }
 
 .markdown-content h1,
@@ -14,18 +14,18 @@
     margin-bottom: 0.5em;
     font-weight: 600;
     line-height: 1.25;
-    color: #e0e0e0;
+    color: var(--text-primary);
 }
 
 .markdown-content h1 {
     font-size: 1.5em;
-    border-bottom: 1px solid #404040;
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 0.3em;
 }
 
 .markdown-content h2 {
     font-size: 1.3em;
-    border-bottom: 1px solid #404040;
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 0.3em;
 }
 
@@ -39,17 +39,17 @@
 
 /* リンクスタイル */
 .markdown-content a {
-    color: #58a6ff;
+    color: var(--accent-color);
     text-decoration: none;
 }
 
 .markdown-content a:hover {
-    color: #79c0ff;
+    color: var(--accent-hover-color);
     text-decoration: underline;
 }
 
 .markdown-content a:visited {
-    color: #8b949e;
+    color: var(--text-secondary);
 }
 
 .markdown-content ul,
@@ -65,8 +65,10 @@
 .markdown-content blockquote {
     margin: 0 0 1em;
     padding: 0 1em;
-    color: #9e9e9e;
-    border-left: 0.25em solid #404040;
+    color: var(--text-secondary);
+    border-left: 0.25em solid var(--border-color);
+    background: var(--background-secondary);
+    border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
 }
 
 /* コードブロックとシンタックスハイライト */
@@ -76,27 +78,27 @@
     overflow: auto;
     font-size: 0.9em;
     line-height: 1.45;
-    background-color: #282c34;
-    border-radius: 6px;
+    background-color: #1e1e1e;
+    border-radius: var(--border-radius-md);
     position: relative;
-    border: 1px solid #404040;
+    border: 1px solid #3d3d3d;
 }
 
 .markdown-content code {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
+    background-color: var(--background-tertiary);
+    border-radius: var(--border-radius-sm);
     font-size: 0.9em;
     padding: 0.2em 0.4em;
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    color: #e0e0e0;
+    color: var(--text-primary);
 }
 
 .markdown-content pre code {
     background-color: transparent;
     padding: 0;
-    margin-top: 20px; /* 上部に余白を追加して言語表示と重ならないようにする */
-    display: block; /* ブロック要素として表示 */
-    color: inherit;
+    margin-top: 20px;
+    display: block;
+    color: #d4d4d4;
     font-size: 1em;
 }
 
@@ -109,7 +111,7 @@
 .markdown-content .token.prolog,
 .markdown-content .token.doctype,
 .markdown-content .token.cdata {
-    color: #8b949e;
+    color: #6a9955;
 }
 
 .markdown-content .token.namespace {
@@ -118,19 +120,27 @@
 
 .markdown-content .token.string,
 .markdown-content .token.attr-value {
-    color: #a5d6ff;
+    color: #ce9178;
 }
 
 .markdown-content .token.punctuation {
-    color: #79c0ff;
+    color: #d4d4d4;
 }
 
 .markdown-content .token.operator {
-    color: #79c0ff;
+    color: #d4d4d4;
 }
 
 .markdown-content .token.keyword {
-    color: #ff7b72;
+    color: #569cd6;
+}
+
+.markdown-content .token.function {
+    color: #dcdcaa;
+}
+
+.markdown-content .token.number {
+    color: #b5cea8;
 }
 
 /* テーブルスタイル */
@@ -142,18 +152,23 @@
 
 .markdown-content table th,
 .markdown-content table td {
-    padding: 6px 13px;
-    border: 1px solid #404040;
-    color: #e0e0e0;
+    padding: 8px 13px;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.markdown-content table th {
+    background-color: var(--background-secondary);
+    font-weight: 600;
 }
 
 .markdown-content table tr {
-    background-color: #2d2d2d;
-    border-top: 1px solid #404040;
+    background-color: var(--background-primary);
+    border-top: 1px solid var(--border-color);
 }
 
 .markdown-content table tr:nth-child(2n) {
-    background-color: #363636;
+    background-color: var(--background-secondary);
 }
 
 /* コードブロックのコピーボタン */
@@ -166,14 +181,13 @@
     top: 8px;
     left: 12px;
     font-size: 0.75em;
-    color: #e0e0e0;
-    background-color: rgba(30, 30, 30, 0.8);
+    color: #9d9d9d;
+    background-color: rgba(30, 30, 30, 0.9);
     padding: 3px 9px;
     border-radius: 4px;
     z-index: 11;
     font-weight: 500;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    max-width: calc(100% - 120px); /* 幅を制限して、コピーボタンとの競合を避ける */
+    max-width: calc(100% - 120px);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -201,22 +215,24 @@
     padding: 4px;
     background-color: rgba(255, 255, 255, 0.1);
     border: none;
-    border-radius: 4px;
-    color: #e0e0e0;
+    border-radius: var(--border-radius-sm);
+    color: #9d9d9d;
     font-size: 0.9em;
     transition: background-color 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 4px;
+    cursor: pointer;
 }
 
 .code-copy-button:hover, .code-edit-button:hover {
     background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
 }
 
 .code-copy-button.copied {
-    background-color: #10a37f;
+    background-color: var(--success-color);
     color: white;
 }
 
@@ -228,10 +244,11 @@
 .mermaid-diagram {
     margin: 1rem 0;
     text-align: center;
-    background: #f6f8fa;
-    border-radius: 6px;
+    background: var(--background-secondary);
+    border-radius: var(--border-radius-md);
     padding: 1rem;
     overflow: auto;
+    border: 1px solid var(--border-color);
 }
 
 .mermaid-diagram svg {
@@ -243,18 +260,18 @@
 .mermaid-error {
     margin: 1rem 0;
     padding: 1rem;
-    border-radius: 6px;
-    background-color: #fff0f0;
-    border: 1px solid #ffcccc;
-    color: #cc0000;
+    border-radius: var(--border-radius-md);
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
 }
 
 .mermaid-error pre {
     margin-top: 0.5rem;
     padding: 0.5rem;
-    background-color: #fff8f8;
-    border-radius: 4px;
-    border-left: 3px solid #ffaaaa;
+    background-color: #fff5f5;
+    border-radius: var(--border-radius-sm);
+    border-left: 3px solid #f87171;
     overflow-x: auto;
 }
 

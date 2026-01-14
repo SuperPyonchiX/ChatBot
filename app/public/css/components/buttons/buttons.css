@@ -1,36 +1,37 @@
 /* ボタンの基本スタイル */
 .new-chat-button {
     width: 100%;
-    padding: var(--spacing-sm);
-    background: linear-gradient(135deg, rgba(0, 255, 255, 0.05), rgba(0, 255, 255, 0.02));
-    color: var(--cyber-primary);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--background-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: var(--spacing-sm);
     transition: all var(--transition-fast);
+    font-weight: 500;
 }
 
 .new-chat-button:hover {
-    background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 255, 255, 0.05));
-    border-color: rgba(0, 255, 255, 0.4);
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+    background: var(--background-tertiary);
+    border-color: var(--border-color-hover);
 }
 
 .history-action-button {
     background: none;
     border: none;
-    color: var(--button-history-text);
+    color: var(--text-tertiary);
     padding: var(--spacing-xs);
     margin-right: var(--spacing-xs);
     opacity: var(--button-opacity-default);
-    transition: opacity var(--transition-fast);
+    transition: opacity var(--transition-fast), color var(--transition-fast);
 }
 
 .history-action-button:hover {
     opacity: 1;
+    color: var(--text-primary);
 }
 
 /* サイドバーフッターボタン */
@@ -38,8 +39,8 @@
     width: var(--button-size-md);
     height: var(--button-size-md);
     background: transparent;
-    color: rgba(0, 255, 255, 0.6);
-    border: 1px solid rgba(0, 255, 255, 0.2);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -48,18 +49,16 @@
 }
 
 .clear-history-button:hover, .settings-button:hover {
-    background-color: rgba(0, 255, 255, 0.1);
-    color: var(--cyber-primary);
-    border-color: rgba(0, 255, 255, 0.4);
-    transform: scale(var(--button-scale-hover));
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+    background-color: var(--background-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color-hover);
 }
 
 /* 送信ボタン */
 #sendButton {
-    background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 255, 255, 0.05));
-    color: var(--cyber-primary);
-    border: 1px solid rgba(0, 255, 255, 0.3);
+    background: var(--accent-color);
+    color: #ffffff;
+    border: none;
     border-radius: var(--border-radius-lg);
     width: var(--button-size-md);
     height: var(--button-size-md);
@@ -72,48 +71,28 @@
 }
 
 #sendButton:hover {
-    background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.1));
-    border-color: var(--cyber-primary);
-    box-shadow:
-        0 0 15px rgba(0, 255, 255, 0.3),
-        0 0 30px rgba(0, 255, 255, 0.1);
-}
-
-#sendButton:hover i {
-    text-shadow: 0 0 10px var(--cyber-primary);
+    background: var(--accent-hover-color);
 }
 
 #sendButton:disabled {
-    background: rgba(0, 255, 255, 0.02);
-    border-color: rgba(0, 255, 255, 0.1);
-    color: rgba(0, 255, 255, 0.3);
+    background: var(--background-tertiary);
+    color: var(--text-tertiary);
     cursor: not-allowed;
-    box-shadow: none;
 }
 
 /* 停止ボタンモード */
 #sendButton.stop-mode {
-    background: linear-gradient(135deg, rgba(255, 100, 100, 0.2), rgba(255, 50, 50, 0.1));
-    border-color: rgba(255, 100, 100, 0.5);
-    color: #ff6464;
+    background: var(--error-color);
 }
 
 #sendButton.stop-mode:hover {
-    background: linear-gradient(135deg, rgba(255, 100, 100, 0.3), rgba(255, 50, 50, 0.2));
-    border-color: #ff6464;
-    box-shadow:
-        0 0 15px rgba(255, 100, 100, 0.3),
-        0 0 30px rgba(255, 100, 100, 0.1);
-}
-
-#sendButton.stop-mode:hover i {
-    text-shadow: 0 0 10px #ff6464;
+    background: #dc2626;
 }
 
 /* プロンプトマネージャーボタン */
 .small-button {
-    background-color: var(--background-quaternary);
-    color: var(--button-text-color);
+    background-color: var(--background-secondary);
+    color: var(--text-primary);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
     padding: var(--spacing-xs) var(--spacing-md);
@@ -123,29 +102,30 @@
 }
 
 .small-button:hover {
-    background-color: var(--border-color-hover);
+    background-color: var(--background-tertiary);
 }
 
 .primary-button {
-    background-color: var(--primary-color);
-    color: var(--button-text-color);
+    background-color: transparent;
+    color: var(--text-primary);
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
+    border-radius: var(--border-radius-md);
     padding: var(--spacing-sm) var(--spacing-md);
     cursor: pointer;
-    /* height: 36px; */
-    transition: background-color var(--transition-fast);
+    transition: all var(--transition-fast);
+    font-weight: 500;
 }
 
 .primary-button:hover {
-    background-color: var(--border-color-hover);
+    background-color: var(--background-tertiary);
+    border-color: var(--border-color-hover);
 }
 
 /* セカンダリーボタン */
 .secondary-button {
-    background-color: var(--background-tertiary);
+    background-color: var(--background-secondary);
     border: 1px solid var(--border-color);
-    color: var(--button-text-color);
+    color: var(--text-primary);
     border-radius: var(--border-radius-sm);
     padding: var(--spacing-xs) var(--spacing-sm);
     cursor: pointer;
@@ -153,15 +133,15 @@
 }
 
 .secondary-button:hover {
-    background-color: var(--background-quaternary);
+    background-color: var(--background-tertiary);
 }
 
 /* コード実行ボタン */
 .code-execute-button {
     width: var(--button-size-sm);
     height: var(--button-size-sm);
-    background-color: var(--execute-button-bg);
-    color: var(--text-primary);
+    background-color: var(--accent-color);
+    color: #ffffff;
     border: none;
     border-radius: var(--border-radius-sm);
     font-size: var(--font-size-xs);
@@ -173,204 +153,50 @@
 }
 
 .code-execute-button:hover {
-    background-color: var(--execute-button-bg-hover);
+    background-color: var(--accent-hover-color);
 }
 
-/* ===== サイバー/テック風ボタンエフェクト ===== */
-
-/* 送信ボタンのサイバースタイル */
-#sendButton.cyber-style {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 255, 255, 0.1) 0%,
-        rgba(0, 100, 100, 0.2) 100%
-    );
-    border: 1px solid rgba(0, 255, 255, 0.4);
-    color: var(--cyber-primary);
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
+/* コピーボタン */
+.copy-button,
+.code-copy-button {
+    background: var(--background-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-sm);
 }
 
-#sendButton.cyber-style::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(0, 255, 255, 0.3),
-        transparent
-    );
-    transition: left 0.5s ease;
+.copy-button:hover,
+.code-copy-button:hover {
+    background: var(--background-quaternary);
+    color: var(--text-primary);
 }
 
-#sendButton.cyber-style:hover:not(:disabled)::before {
-    left: 100%;
+.copy-button.copied,
+.code-copy-button.copied {
+    background: var(--success-color);
+    color: #ffffff;
+    border-color: var(--success-color);
 }
 
-#sendButton.cyber-style:hover:not(:disabled) {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 255, 255, 0.2) 0%,
-        rgba(0, 150, 150, 0.3) 100%
-    );
-    box-shadow:
-        0 0 15px rgba(0, 255, 255, 0.4),
-        0 0 30px rgba(0, 255, 255, 0.2);
-    border-color: var(--cyber-primary);
-}
-
-#sendButton.cyber-style:hover:not(:disabled) i {
-    text-shadow: 0 0 10px var(--cyber-primary);
-}
-
-/* 設定/履歴ボタンのサイバースタイル */
-.settings-button.cyber-style,
-.clear-history-button.cyber-style {
+/* アイコンボタン共通 */
+.icon-button {
     background: transparent;
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    color: rgba(0, 255, 255, 0.7);
-    transition: all 0.3s ease;
+    border: none;
+    color: var(--text-secondary);
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.settings-button.cyber-style:hover,
-.clear-history-button.cyber-style:hover {
-    background: rgba(0, 255, 255, 0.1);
-    border-color: var(--cyber-primary);
-    box-shadow:
-        0 0 10px rgba(0, 255, 255, 0.3),
-        inset 0 0 10px rgba(0, 255, 255, 0.1);
-    color: var(--cyber-primary);
-    transform: scale(1.1);
-}
-
-/* 新規チャットボタンのサイバースタイル */
-.new-chat-button.cyber-style {
-    background: linear-gradient(
-        90deg,
-        rgba(0, 0, 0, 0.6) 0%,
-        rgba(0, 30, 40, 0.7) 100%
-    );
-    border: 1px solid rgba(0, 255, 255, 0.3);
-    color: var(--cyber-primary);
-    position: relative;
-    overflow: hidden;
-}
-
-.new-chat-button.cyber-style::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: rgba(0, 255, 255, 0.2);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: width 0.5s ease, height 0.5s ease;
-}
-
-.new-chat-button.cyber-style:hover::before {
-    width: 300%;
-    height: 300%;
-}
-
-.new-chat-button.cyber-style:hover {
-    border-color: var(--cyber-primary);
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-}
-
-/* コード実行ボタンのサイバースタイル */
-.code-execute-button.cyber-style {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 255, 100, 0.2) 0%,
-        rgba(0, 100, 50, 0.3) 100%
-    );
-    border: 1px solid rgba(0, 255, 100, 0.4);
-    color: var(--cyber-tertiary);
-}
-
-.code-execute-button.cyber-style:hover {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 255, 100, 0.3) 0%,
-        rgba(0, 150, 75, 0.4) 100%
-    );
-    box-shadow:
-        0 0 10px rgba(0, 255, 100, 0.4),
-        0 0 20px rgba(0, 255, 100, 0.2);
-    border-color: var(--cyber-tertiary);
-}
-
-/* コピーボタンのサイバースタイル */
-.copy-button.cyber-style,
-.code-copy-button.cyber-style {
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    color: rgba(0, 255, 255, 0.6);
-    transition: all 0.3s ease;
-}
-
-.copy-button.cyber-style:hover,
-.code-copy-button.cyber-style:hover {
-    background: rgba(0, 255, 255, 0.1);
-    border-color: var(--cyber-primary);
-    color: var(--cyber-primary);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-}
-
-.copy-button.cyber-style.copied,
-.code-copy-button.cyber-style.copied {
-    background: rgba(0, 255, 100, 0.2);
-    border-color: var(--cyber-tertiary);
-    color: var(--cyber-tertiary);
-    box-shadow: 0 0 15px rgba(0, 255, 100, 0.4);
-}
-
-/* グリッチホバー効果 */
-.cyber-button-glitch {
-    position: relative;
-}
-
-.cyber-button-glitch:hover {
-    animation: buttonGlitch 0.3s ease-in-out;
-}
-
-@keyframes buttonGlitch {
-    0%, 100% {
-        transform: translateX(0);
-    }
-    20% {
-        transform: translateX(-2px);
-        text-shadow: 2px 0 var(--glitch-color-1), -2px 0 var(--glitch-color-2);
-    }
-    40% {
-        transform: translateX(2px);
-        text-shadow: -2px 0 var(--glitch-color-1), 2px 0 var(--glitch-color-2);
-    }
-    60% {
-        transform: translateX(-1px);
-        text-shadow: 1px 0 var(--glitch-color-1), -1px 0 var(--glitch-color-2);
-    }
-    80% {
-        transform: translateX(1px);
-        text-shadow: -1px 0 var(--glitch-color-1), 1px 0 var(--glitch-color-2);
-    }
-}
-
-/* サイバーボタンのreduced-motion対応 */
-@media (prefers-reduced-motion: reduce) {
-    #sendButton.cyber-style::before,
-    .new-chat-button.cyber-style::before {
-        display: none !important;
-    }
-
-    .cyber-button-glitch:hover {
-        animation: none !important;
-    }
+.icon-button:hover {
+    background: var(--background-tertiary);
+    color: var(--text-primary);
 }

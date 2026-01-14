@@ -1,59 +1,114 @@
 /* チャットコンテナの見た目 */
 .chat-container {
-    background-color: var(--background-secondary);
+    background-color: var(--background-primary);
 }
 
 .chat-messages {
     background-color: var(--background-primary);
+    padding: var(--spacing-lg);
+    gap: var(--spacing-md);
 }
 
-/* メッセージスタイル */
+/* ===== メッセージスタイル（吹き出し風） ===== */
 .message {
     display: flex;
+    gap: 12px;
     max-width: 85%;
     position: relative;
-    padding-right: 32px;
+    padding: 8px 24px;
 }
 
+/* ユーザーメッセージ: 右寄せ */
 .message.user {
-    align-self: flex-end;
-    padding-right: 0;
-    padding-left: 32px;
+    margin-left: auto;
+    flex-direction: row-reverse;
 }
 
+/* AIメッセージ: 左寄せ */
 .message.bot {
-    align-self: flex-start;
+    margin-right: auto;
 }
 
+/* アバター（文字ベース） */
+.message-avatar {
+    width: var(--avatar-size);
+    height: var(--avatar-size);
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    text-transform: uppercase;
+}
+
+/* ユーザーアバター */
+.message-avatar.avatar-user {
+    background-color: var(--avatar-user-bg);
+}
+
+/* OpenAI/GPTアバター */
+.message-avatar.avatar-openai {
+    background-color: var(--avatar-openai-bg);
+}
+
+/* Claudeアバター */
+.message-avatar.avatar-claude {
+    background-color: var(--avatar-claude-bg);
+}
+
+/* Geminiアバター */
+.message-avatar.avatar-gemini {
+    background-color: var(--avatar-gemini-bg);
+}
+
+/* デフォルトアバター */
+.message-avatar.avatar-default {
+    background-color: var(--text-tertiary);
+}
+
+/* メッセージボディ（吹き出し） */
+.message-body {
+    flex: 1;
+    min-width: 0;
+    background: var(--bot-message-bg);
+    border-radius: var(--message-border-radius);
+    padding: 12px 16px;
+}
+
+.message.user .message-body {
+    background: var(--user-message-bg);
+    border-radius: var(--message-border-radius);
+}
+
+/* メッセージヘッダー */
+.message-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.message-sender {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.message-timestamp {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-weight: normal;
+}
+
+/* メッセージコンテンツ */
 .message-content {
     position: relative;
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: var(--border-radius-lg);
-    font-size: var(--font-size-md);
-    line-height: 1.4;
-    background: linear-gradient(135deg, rgba(0, 20, 30, 0.8), rgba(0, 30, 40, 0.6));
+    font-size: 15px;
+    line-height: 1.6;
     color: var(--text-primary);
-    width: 100%;
-    border: 1px solid rgba(0, 255, 255, 0.1);
-}
-
-.message.bot .message-content {
-    border-left: 3px solid var(--cyber-primary);
-}
-
-.message.user .message-content {
-    background: linear-gradient(135deg, rgba(255, 0, 255, 0.1), rgba(100, 0, 100, 0.15));
-    border: 1px solid rgba(255, 0, 255, 0.2);
-    border-right: 3px solid var(--cyber-secondary);
-}
-
-.message.bot.system-message.animate {
-    opacity: 1 !important; /* アニメーション完了後の透明度 */
-}
-
-.message.bot.system-message .message-content {
-    background-color: var(--background-secondary);
-    padding: var(--spacing-sm);
 }
 
 /* メッセージの添付ファイル表示 */
@@ -82,7 +137,131 @@
     word-break: break-all;
 }
 
-/* ファイルプレビュー */
+/* ===== メッセージアクション ===== */
+.message-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 10px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.message:hover .message-actions {
+    opacity: 1;
+}
+
+.action-btn {
+    padding: 5px 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+}
+
+.action-btn:hover {
+    background: var(--background-quaternary);
+    color: var(--text-primary);
+}
+
+.action-btn.active {
+    color: var(--accent-color);
+}
+
+.action-btn i {
+    font-size: 13px;
+}
+
+/* コピーボタン（レガシー対応） */
+.copy-button {
+    display: none;
+}
+
+/* ===== 編集モード ===== */
+.message.editing .message-content {
+    display: none;
+}
+
+.message.editing .message-actions {
+    display: none;
+}
+
+.message-edit-container {
+    width: 100%;
+}
+
+.message-edit-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    font-family: inherit;
+    resize: vertical;
+    background: var(--background-tertiary);
+    color: var(--text-primary);
+}
+
+.message-edit-textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.message-edit-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    justify-content: flex-end;
+}
+
+.edit-save-btn,
+.edit-cancel-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.edit-save-btn {
+    background: var(--accent-color);
+    color: #ffffff;
+    border: none;
+}
+
+.edit-save-btn:hover {
+    background: var(--accent-hover-color);
+}
+
+.edit-cancel-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.edit-cancel-btn:hover {
+    background: var(--background-tertiary);
+    color: var(--text-primary);
+}
+
+/* ===== リアクション ===== */
+.reaction-btn.liked {
+    color: var(--accent-color);
+}
+
+.reaction-btn.disliked {
+    color: var(--error-color);
+}
+
+/* ===== ファイルプレビュー ===== */
 .file-preview {
     display: none;
     position: absolute;
@@ -109,7 +288,7 @@
 .file-preview-item {
     display: flex;
     align-items: center;
-    background-color: var(--background-tertiary);
+    background-color: var(--background-quaternary);
     padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: var(--border-radius-sm);
     font-size: var(--font-size-sm);
@@ -126,119 +305,134 @@
     color: var(--error-color);
 }
 
-/* Bot応答のコードブロックスタイル */
-.message.bot .markdown-content pre {
-    background-color: #282c34;
-    margin-bottom: 1em;
-    padding: var(--spacing-md);
-    overflow: auto;
-    font-size: var(--font-size-sm);
-    line-height: 1.45;
-    border-radius: var(--border-radius-md);
-    position: relative;
-    border: 1px solid var(--border-color);
+/* ===== コードブロック ===== */
+.message .markdown-content pre {
+    background-color: #1e1e1e;
+    margin: 12px 0;
+    padding: 14px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+    border-radius: 8px;
+    border: 1px solid #3d3d3d;
 }
 
-.message.bot .markdown-content pre code {
+.message .markdown-content pre code {
     background-color: transparent;
     padding: 0;
-    color: inherit;
+    color: #d4d4d4;
     font-size: 1em;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
 }
 
-.message.bot .markdown-content code {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: var(--border-radius-sm);
-    font-size: var(--font-size-sm);
-    padding: 0.2em 0.4em;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+.message .markdown-content code {
+    background-color: var(--background-quaternary);
+    border-radius: 4px;
+    font-size: 13px;
+    padding: 2px 5px;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    color: var(--text-primary);
 }
 
-/* シンタックスハイライト（Bot応答用） */
-.message.bot .markdown-content .token.comment,
-.message.bot .markdown-content .token.prolog,
-.message.bot .markdown-content .token.doctype,
-.message.bot .markdown-content .token.cdata {
-    color: #8b949e;
+/* コードブロックラッパー */
+.code-block {
+    position: relative;
+    margin: 12px 0;
 }
 
-.message.bot .markdown-content .token.string,
-.message.bot .markdown-content .token.attr-value {
-    color: #a5d6ff;
+.code-language {
+    background: #2d2d2d;
+    color: #9ca3af;
+    padding: 6px 10px;
+    font-size: 11px;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid #3d3d3d;
+    border-bottom: none;
 }
 
-.message.bot .markdown-content .token.punctuation {
-    color: #79c0ff;
+.code-block pre {
+    margin-top: 0 !important;
+    border-radius: 0 0 8px 8px !important;
 }
 
-.message.bot .markdown-content .token.operator {
-    color: #79c0ff;
-}
-
-.message.bot .markdown-content .token.keyword {
-    color: #ff7b72;
-}
-
-/* コピーボタン */
-.copy-button {
+.code-block-toolbar {
     position: absolute;
-    top: var(--spacing-sm);
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    border-radius: var(--border-radius-sm);
-    color: rgba(0, 255, 255, 0.6);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    cursor: pointer;
-    font-size: var(--font-size-sm);
-    opacity: 0;
-    transition: all var(--transition-fast) ease;
-    z-index: 2;
-    width: 28px;
-    height: 28px;
+    top: 6px;
+    right: 6px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    gap: 4px;
+    z-index: 10;
 }
 
-.message.bot .copy-button {
-    right: -32px;
-    left: auto;
+.code-copy-button,
+.code-edit-button,
+.code-execute-button,
+.artifact-open-button {
+    padding: 5px 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #9ca3af;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 11px;
+    transition: all 0.15s ease;
 }
 
-.message.user .copy-button {
-    left: -32px;
-    right: auto;
-    border-color: rgba(255, 0, 255, 0.2);
-    color: rgba(255, 0, 255, 0.6);
+.code-copy-button:hover,
+.code-edit-button:hover,
+.code-execute-button:hover,
+.artifact-open-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
 }
 
-.message:hover .copy-button {
-    opacity: 1;
+.code-copy-button.copied {
+    background: var(--accent-color);
+    color: #ffffff;
 }
 
-.copy-button:hover {
-    background: rgba(0, 255, 255, 0.1);
-    border-color: var(--cyber-primary);
-    color: var(--cyber-primary);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+.code-execute-button {
+    background: rgba(16, 163, 127, 0.2);
 }
 
-/* ユーザーメッセージのコピーボタン（紫色に合わせる） */
-.message.user .copy-button:hover {
-    background: rgba(255, 0, 255, 0.1);
-    border-color: var(--cyber-secondary);
-    color: var(--cyber-secondary);
-    box-shadow: 0 0 10px rgba(255, 0, 255, 0.2);
+.code-execute-button:hover {
+    background: rgba(16, 163, 127, 0.4);
 }
 
-.copy-button.copied {
-    color: var(--cyber-tertiary);
-    background: rgba(0, 255, 100, 0.1);
-    border-color: var(--cyber-tertiary);
-    box-shadow: 0 0 10px rgba(0, 255, 100, 0.3);
+/* シンタックスハイライト */
+.message .markdown-content .token.comment,
+.message .markdown-content .token.prolog,
+.message .markdown-content .token.doctype,
+.message .markdown-content .token.cdata {
+    color: #6a9955;
 }
 
-/* 入力中表示 */
+.message .markdown-content .token.string,
+.message .markdown-content .token.attr-value {
+    color: #ce9178;
+}
+
+.message .markdown-content .token.punctuation {
+    color: #d4d4d4;
+}
+
+.message .markdown-content .token.operator {
+    color: #d4d4d4;
+}
+
+.message .markdown-content .token.keyword {
+    color: #569cd6;
+}
+
+.message .markdown-content .token.function {
+    color: #dcdcaa;
+}
+
+.message .markdown-content .token.number {
+    color: #b5cea8;
+}
+
+/* ===== タイピングインジケーター ===== */
 .typing-indicator .message-content {
     display: flex;
     align-items: center;
@@ -249,14 +443,18 @@
 }
 
 .typing-dots {
-    display: inline-block;
+    display: inline-flex;
+    gap: 4px;
     margin-left: 4px;
 }
 
 .typing-dots span {
+    width: 6px;
+    height: 6px;
+    background-color: var(--text-tertiary);
+    border-radius: 50%;
     animation: typingDot 1.4s infinite;
-    display: inline-block;
-    opacity: 0;
+    opacity: 0.4;
 }
 
 .typing-dots span:nth-child(1) {
@@ -272,25 +470,42 @@
 }
 
 @keyframes typingDot {
-    0% {
-        opacity: 0;
+    0%, 100% {
+        opacity: 0.4;
+        transform: scale(1);
     }
     50% {
         opacity: 1;
+        transform: scale(1.2);
     }
-    100% {
+}
+
+/* カーソル点滅 */
+.markdown-content.typing::after {
+    content: "|";
+    display: inline-block;
+    animation: cursorBlink 0.8s infinite;
+    font-weight: normal;
+    color: var(--text-tertiary);
+}
+
+@keyframes cursorBlink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
         opacity: 0;
     }
 }
 
-/* ファイルアップロード */
+/* ===== ファイルアップロード ===== */
 .file-upload-label {
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     padding: var(--spacing-xs) var(--spacing-sm);
-    color: var(--text-tertiary);
+    color: var(--text-secondary);
     transition: color var(--transition-fast);
 }
 
@@ -302,10 +517,12 @@
     display: none;
 }
 
-/* エラーメッセージ */
+/* ===== エラーメッセージ ===== */
 .message.error .message-content {
-    background-color: rgba(226, 85, 85, 0.1);
-    border: 1px solid rgba(226, 85, 85, 0.3);
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 12px;
 }
 
 .error-action {
@@ -322,143 +539,18 @@
     background-color: var(--background-quaternary);
 }
 
-/* ユーザーメッセージの特別なスタイル */
-.message.user .markdown-content {
-    color: white;
-}
-
-.message.user .markdown-content pre {
-    background-color: #282c34;
-}
-
-.message.user .markdown-content pre code {
-    background-color: transparent;
-    padding: 0;
-    color: inherit;
-    font-size: 1em;
-}
-
-.message.user .markdown-content code {
-    background-color: rgba(0, 0, 0, 0.2);
-    color: #e6e6e6;
-}
-
-.message.user .markdown-content a {
-    color: #e6e6e6;
-    text-decoration: underline;
-}
-
-.message.user .markdown-content blockquote {
-    border-left-color: rgba(255, 255, 255, 0.4);
-    color: rgba(255, 255, 255, 0.8);
-}
-
-/* ユーザーメッセージのシンタックスハイライト */
-.message.user .markdown-content .token.comment,
-.message.user .markdown-content .token.prolog,
-.message.user .markdown-content .token.doctype,
-.message.user .markdown-content .token.cdata {
-    color: #8b949e;
-}
-
-.message.user .markdown-content .token.string,
-.message.user .markdown-content .token.attr-value {
-    color: #a5d6ff;
-}
-
-.message.user .markdown-content .token.punctuation {
-    color: #79c0ff;
-}
-
-.message.user .markdown-content .token.operator {
-    color: #79c0ff;
-}
-
-.message.user .markdown-content .token.keyword {
-    color: #ff7b72;
-}
-
-/* ユーザーメッセージのコードブロック */
-.message.user .code-block {
-    position: relative;
-    margin: 1em 0;
-}
-
-.message.user .code-copy-button {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #e0e0e0;
-}
-
-.message.user .code-copy-button:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: #10a37f;
-}
-
-.message.user .code-copy-button.copied {
-    background-color: #10a37f;
-    color: white;
-}
-
-/* タイピングアニメーション */
-.typing-dots span {
-    animation: typingDot 1.4s infinite;
-    display: inline-block;
-    opacity: 0;
-}
-
-.typing-dots span:nth-child(1) {
-    animation-delay: 0s;
-}
-
-.typing-dots span:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.typing-dots span:nth-child(3) {
-    animation-delay: 0.4s;
-}
-
-@keyframes typingDot {
-    0% {
-        opacity: 0;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-    }
-}
-
-/* カーソルの点滅アニメーション（テキストの最後で点滅するカーソル） */
-.markdown-content.typing::after {
-    content: "|";
-    display: inline-block;
-    animation: cursorBlink 0.8s infinite;
-    font-weight: normal;
-    color: #aaa;
-}
-
-@keyframes cursorBlink {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0;
-    }
-}
-
-/* Mermaid図表示関連のスタイル */
+/* ===== Mermaid図表示 ===== */
 .mermaid-wrapper {
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    margin: 1em 0;
+    border-radius: 8px;
+    margin: 12px 0;
+    overflow: hidden;
 }
 
 .mermaid-toolbar {
     padding: var(--spacing-sm);
     border-bottom: 1px solid var(--border-color);
-    background-color: var(--background-tertiary);
+    background-color: var(--background-secondary);
     display: flex;
     justify-content: flex-end;
     gap: var(--spacing-sm);
@@ -469,7 +561,7 @@
     padding: var(--spacing-xs) var(--spacing-sm);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
-    background-color: var(--background-secondary);
+    background-color: var(--background-primary);
     color: var(--text-primary);
     cursor: pointer;
     display: flex;
@@ -481,7 +573,7 @@
 
 .mermaid-preview-toggle:hover,
 .mermaid-download:hover {
-    background-color: var(--background-quaternary);
+    background-color: var(--background-tertiary);
     border-color: var(--border-color-hover);
 }
 
@@ -516,8 +608,8 @@
 .mermaid-error {
     padding: var(--spacing-lg);
     color: var(--error-color);
-    background-color: rgba(220, 53, 69, 0.1);
-    border: 1px solid rgba(220, 53, 69, 0.3);
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: var(--border-radius-sm);
     margin: var(--spacing-sm);
 }
@@ -537,17 +629,17 @@
     white-space: pre-wrap;
 }
 
-/* Web情報取得中の表示 */
+/* ===== Web情報取得中表示 ===== */
 .web-fetch-loading {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    margin: 10px 0;
+    margin: 8px 0;
     padding: 8px 12px;
-    background-color: var(--background-light);
-    border-radius: 4px;
-    font-size: 0.9em;
-    color: var(--text-muted);
+    background-color: var(--background-tertiary);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
 }
 
 .web-fetch-loading p {
@@ -561,185 +653,144 @@
     margin-left: 4px;
 }
 
-.web-fetch-loading .typing-dots span {
-    animation: dotTyping 1.5s infinite ease-in-out;
-    opacity: 0.7;
-}
-
-.web-fetch-loading .typing-dots span:nth-child(2) {
-    animation-delay: 0.5s;
-}
-
-.web-fetch-loading .typing-dots span:nth-child(3) {
-    animation-delay: 1s;
-}
-
-@keyframes dotTyping {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
-}
-
-/* チャットアクションのスタイル */
-.chat-actions {
-    display: flex;
-    justify-content: flex-end;
-    padding: 8px;
-    border-top: 1px solid var(--border-color);
-    background-color: var(--background-color);
-}
-
-/* ===== サイバー/テック風メッセージスタイル ===== */
-
-/* ボットメッセージのサイバースタイル */
-.message.bot.cyber-style .message-content {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 20, 30, 0.9) 0%,
-        rgba(0, 40, 50, 0.8) 100%
-    );
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    border-left: 3px solid var(--cyber-primary);
-    position: relative;
-}
-
-/* スキャンライン効果 */
-.message.bot.cyber-style .message-content::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: repeating-linear-gradient(
-        0deg,
-        transparent 0px,
-        transparent 2px,
-        rgba(0, 255, 255, 0.015) 2px,
-        rgba(0, 255, 255, 0.015) 4px
-    );
-    pointer-events: none;
-    z-index: 1;
+/* ===== 思考過程コンテナ ===== */
+.thinking-process {
+    margin-bottom: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
     overflow: hidden;
 }
 
-/* ユーザーメッセージのサイバースタイル */
-.message.user.cyber-style .message-content {
-    background: linear-gradient(
-        135deg,
-        rgba(255, 0, 255, 0.15) 0%,
-        rgba(100, 0, 100, 0.2) 100%
-    );
-    border: 1px solid rgba(255, 0, 255, 0.3);
-    border-right: 3px solid var(--cyber-secondary);
+.thinking-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--background-tertiary);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease;
 }
 
-/* メッセージ出現アニメーション */
-.message.cyber-style {
-    animation: cyberMessageAppear 0.5s ease-out forwards;
+.thinking-header:hover {
+    background: var(--background-quaternary);
 }
 
-@keyframes cyberMessageAppear {
-    0% {
-        opacity: 0;
-        transform: translateY(10px);
-        filter: blur(5px);
+.thinking-toggle {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    transition: transform 0.2s ease;
+}
+
+.thinking-process[data-collapsed="false"] .thinking-toggle {
+    transform: rotate(90deg);
+}
+
+.thinking-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.thinking-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: var(--background-secondary);
+}
+
+.thinking-process[data-collapsed="false"] .thinking-content {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.thinking-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--border-color);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.thinking-item-icon {
+    flex-shrink: 0;
+}
+
+.thinking-item-text {
+    flex: 1;
+}
+
+/* ===== システムメッセージ ===== */
+.message.bot.system-message {
+    background: transparent;
+    max-width: 100%;
+    padding: 8px 24px;
+}
+
+.message.bot.system-message .message-body {
+    background-color: var(--background-tertiary);
+    padding: 10px 14px;
+    border-radius: 8px;
+}
+
+/* ===== レスポンシブ ===== */
+@media (max-width: 768px) {
+    .message {
+        padding: 8px 12px;
+        max-width: 92%;
     }
-    50% {
-        filter: blur(2px);
+
+    .message-body {
+        max-width: 100%;
     }
-    100% {
+
+    .message-actions {
         opacity: 1;
-        transform: translateY(0);
-        filter: blur(0);
+    }
+
+    .code-block-toolbar {
+        position: static;
+        margin-top: 8px;
+        justify-content: flex-end;
     }
 }
 
-/* コードブロックのサイバースタイル */
-.message.bot.cyber-style .code-block,
-.message.bot.cyber-style .markdown-content pre {
-    border: 1px solid rgba(0, 255, 255, 0.3);
-    background: rgba(0, 0, 0, 0.8);
-    box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.05);
-}
-
-.message.bot.cyber-style .code-language {
-    background: rgba(0, 255, 255, 0.1);
-    color: var(--cyber-primary);
-    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-}
-
-/* カーソルのサイバースタイル */
-.markdown-content.typing.cyber-style::after {
-    content: "_";
-    display: inline-block;
-    animation: cyberCursorBlink 0.6s step-end infinite;
-    color: var(--cyber-primary);
-    text-shadow: 0 0 10px var(--cyber-primary);
-    font-weight: bold;
-}
-
-@keyframes cyberCursorBlink {
-    0%, 50% {
-        opacity: 1;
+@media (max-width: 480px) {
+    .message {
+        padding: 6px 8px;
+        gap: 8px;
+        max-width: 95%;
     }
-    51%, 100% {
-        opacity: 0;
+
+    .message-avatar {
+        width: 26px;
+        height: 26px;
+        font-size: 11px;
+    }
+
+    .message-body {
+        padding: 10px 12px;
+    }
+
+    .message-content {
+        font-size: 14px;
+    }
+
+    .action-btn {
+        padding: 4px 6px;
+        font-size: 11px;
     }
 }
 
-/* サイバー風インラインコード */
-.message.bot.cyber-style .markdown-content code {
-    background-color: rgba(0, 255, 255, 0.1);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    color: #e0e6ed;
-}
-
-.message.user.cyber-style .markdown-content code {
-    background-color: rgba(255, 0, 255, 0.1);
-    border: 1px solid rgba(255, 0, 255, 0.2);
-    color: #f0e6f6;
-}
-
-/* サイバー風コードブロック内テキスト */
-.message.bot.cyber-style .markdown-content pre,
-.message.bot.cyber-style .markdown-content pre code {
-    color: #d0d8e0;
-}
-
-.message.user.cyber-style .markdown-content pre,
-.message.user.cyber-style .markdown-content pre code {
-    color: #e0d8e6;
-}
-
-/* サイバー風リンク */
-.message.bot.cyber-style .markdown-content a {
-    color: var(--cyber-primary);
-    text-decoration: none;
-    border-bottom: 1px solid rgba(0, 255, 255, 0.3);
-    transition: all 0.3s ease;
-}
-
-.message.bot.cyber-style .markdown-content a:hover {
-    text-shadow: 0 0 10px var(--cyber-primary);
-    border-bottom-color: var(--cyber-primary);
-}
-
-/* サイバー風引用ブロック */
-.message.bot.cyber-style .markdown-content blockquote {
-    border-left: 3px solid var(--cyber-primary);
-    background: rgba(0, 255, 255, 0.05);
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin: var(--spacing-sm) 0;
-}
-
-/* サイバーメッセージのreduced-motion対応 */
+/* ===== reduced-motion対応 ===== */
 @media (prefers-reduced-motion: reduce) {
-    .message.cyber-style {
+    .typing-dots span,
+    .markdown-content.typing::after,
+    .thinking-content,
+    .thinking-toggle {
         animation: none !important;
-    }
-
-    .markdown-content.typing.cyber-style::after {
-        animation: none !important;
-        opacity: 1;
+        transition: none !important;
     }
 }

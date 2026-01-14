@@ -33,23 +33,18 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    background: linear-gradient(135deg, rgba(0, 20, 30, 0.9), rgba(0, 30, 40, 0.8));
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    border-radius: var(--border-radius-lg);
+    background: var(--background-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-xl);
     padding: var(--spacing-sm);
     min-height: fit-content;
-    box-shadow:
-        0 0 10px rgba(0, 0, 0, 0.3),
-        inset 0 0 20px rgba(0, 255, 255, 0.02);
-    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
 }
 
 .input-wrapper:focus-within {
-    border-color: rgba(0, 255, 255, 0.4);
-    box-shadow:
-        0 0 15px rgba(0, 255, 255, 0.1),
-        0 0 30px rgba(0, 255, 255, 0.05),
-        inset 0 0 20px rgba(0, 255, 255, 0.03);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.1);
 }
 
 /* プロンプト候補表示エリアはinput-wrapper内で絶対配置 */
@@ -92,32 +87,30 @@
     border: none;
     padding: 8px;
     cursor: pointer;
-    color: rgba(0, 255, 255, 0.3);
-    opacity: 0.5;
+    color: var(--text-tertiary);
+    opacity: 0.3;
     transition: all var(--transition-fast);
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
 }
 
 .toggle-button:hover {
-    opacity: 0.8;
-    color: rgba(0, 255, 255, 0.6);
-    background-color: rgba(0, 255, 255, 0.05);
+    color: var(--text-secondary);
+    background-color: var(--background-tertiary);
+    opacity: 0.7;
 }
 
 .toggle-button.active {
+    color: var(--accent-color);
+    background-color: rgba(16, 163, 127, 0.1);
     opacity: 1;
-    color: var(--cyber-primary);
-    background-color: rgba(0, 255, 255, 0.1);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
 }
 
 .toggle-button.active:hover {
+    background-color: rgba(16, 163, 127, 0.15);
     opacity: 1;
-    background-color: rgba(0, 255, 255, 0.15);
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
 }
 
 .file-upload-label {
@@ -126,16 +119,14 @@
     justify-content: center;
     padding: 8px;
     cursor: pointer;
-    color: rgba(0, 255, 255, 0.5);
-    opacity: 0.6;
+    color: var(--text-tertiary);
     transition: all 0.2s ease;
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
 }
 
 .file-upload-label:hover {
-    opacity: 1;
-    color: var(--cyber-primary);
-    background-color: rgba(0, 255, 255, 0.05);
+    color: var(--text-secondary);
+    background-color: var(--background-tertiary);
 }
 
 .file-upload-label input[type="file"] {
@@ -145,30 +136,29 @@
 /* モデルセレクター */
 .model-selector select {
     padding: var(--model-selector-padding-y) var(--model-selector-padding-x);
-    border-radius: var(--border-radius-sm);
-    background: linear-gradient(135deg, rgba(0, 20, 30, 0.9), rgba(0, 30, 40, 0.8));
-    color: var(--cyber-primary);
-    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: var(--border-radius-md);
+    background: var(--background-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
     outline: none;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
+    font-size: var(--font-size-sm);
 }
 
 .model-selector select:hover {
-    background: linear-gradient(135deg, rgba(0, 30, 40, 0.9), rgba(0, 40, 50, 0.8));
-    border-color: rgba(0, 255, 255, 0.4);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+    border-color: var(--border-color-hover);
 }
 
 .model-selector select:focus {
-    border-color: var(--cyber-primary);
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.1);
 }
 
 /* モデルセレクターのドロップダウンオプション */
 .model-selector select option {
-    background-color: #0d1117;
-    color: var(--cyber-primary);
+    background-color: var(--background-primary);
+    color: var(--text-primary);
     padding: 8px;
 }
 

@@ -15,7 +15,7 @@
 }
 
 .category-header:hover {
-    background-color: var(--button-bg-hover-sidebar);
+    background-color: var(--background-tertiary);
 }
 
 .category-header i {
@@ -41,6 +41,7 @@
     cursor: pointer;
     border-radius: var(--border-radius-sm);
     transition: background-color var(--transition-fast);
+    font-size: var(--font-size-sm);
 }
 
 .category-name-container {

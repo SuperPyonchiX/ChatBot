@@ -1,23 +1,28 @@
 /* グローバルなCSS変数定義 */
 :root {
-    /* カラーパレット - サイバー/テック風 */
-    --background-primary: #0a0e14;
-    --background-secondary: #0d1117;
-    --background-tertiary: #151b23;
-    --background-quaternary: #1c2430;
-    --background-sidebar: #070a0f;
+    /* カラーパレット - ダークテーマ */
+    --background-primary: #212121;
+    --background-secondary: #171717;
+    --background-tertiary: #2f2f2f;
+    --background-quaternary: #3a3a3a;
+    --background-sidebar: #171717;
 
-    --text-primary: #c9d1d9;
-    --text-secondary: #8b949e;
-    --text-tertiary: #6e7681;
+    --text-primary: #ececec;
+    --text-secondary: #b4b4b4;
+    --text-tertiary: #8e8e8e;
 
-    --border-color: #21262d;
-    --border-color-hover: #30363d;
+    --border-color: #424242;
+    --border-color-hover: #5a5a5a;
 
-    --accent-color: #00d4aa;
-    --accent-hover-color: #00b894;
-    --error-color: #ff6b6b;
-    --success-color: #00ff88;
+    --accent-color: #10a37f;
+    --accent-hover-color: #1a7f64;
+    --error-color: #ef4444;
+    --success-color: #10a37f;
+
+    /* メッセージ専用 - 吹き出し用 */
+    --user-message-bg: #2f2f2f;
+    --bot-message-bg: #171717;
+    --message-border-radius: 18px;
     
     /* レイアウト */
     --spacing-xs: 4px;
@@ -194,43 +199,26 @@
     --file-icon-code: #007acc;
     --file-icon-default: #808080;
 
-    /* ===== サイバー/テック風カラーパレット ===== */
-    --cyber-primary: #00ffff;
-    --cyber-secondary: #ff00ff;
-    --cyber-tertiary: #00ff00;
-    --cyber-accent: #ff3366;
-
-    /* ネオングロー効果 */
-    --neon-glow-cyan: 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 20px #00ffff;
-    --neon-glow-magenta: 0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 20px #ff00ff;
-    --neon-glow-subtle: 0 0 5px rgba(0, 255, 255, 0.3), 0 0 10px rgba(0, 255, 255, 0.2);
-
-    /* サイバーボーダー */
-    --cyber-border-color: rgba(0, 255, 255, 0.3);
-    --cyber-border-glow: 0 0 10px rgba(0, 255, 255, 0.5);
-
-    /* グリッチ効果 */
-    --glitch-color-1: #ff00ff;
-    --glitch-color-2: #00ffff;
-
-    /* サイバーアニメーション速度 */
-    --cyber-animation-fast: 0.3s;
-    --cyber-animation-normal: 0.6s;
-    --cyber-animation-pulse: 2s;
-
     /* アーティファクトパネル */
     --artifact-panel-width: 33%;
     --artifact-panel-min-width: 400px;
     --artifact-panel-max-width: 92%;
     --artifact-panel-bg: var(--background-secondary);
-    --artifact-panel-border: var(--cyber-border-color);
+    --artifact-panel-border: var(--border-color);
     --artifact-header-height: 48px;
     --artifact-footer-height: 36px;
-    --artifact-tab-active-bg: rgba(0, 255, 255, 0.1);
-    --artifact-tab-hover-bg: rgba(0, 255, 255, 0.05);
-    --artifact-badge-bg: rgba(0, 255, 255, 0.2);
-    --artifact-badge-text: var(--cyber-primary);
+    --artifact-tab-active-bg: rgba(16, 163, 127, 0.1);
+    --artifact-tab-hover-bg: rgba(16, 163, 127, 0.05);
+    --artifact-badge-bg: rgba(16, 163, 127, 0.2);
+    --artifact-badge-text: var(--accent-color);
     --artifact-resize-handle-width: 6px;
-    --artifact-resize-handle-color: var(--cyber-border-color);
-    --artifact-resize-handle-hover: var(--cyber-primary);
+    --artifact-resize-handle-color: var(--border-color);
+    --artifact-resize-handle-hover: var(--accent-color);
+
+    /* アバター */
+    --avatar-size: 32px;
+    --avatar-user-bg: #6b7280;
+    --avatar-openai-bg: #10a37f;
+    --avatar-claude-bg: #d97706;
+    --avatar-gemini-bg: #4285f4;
 }

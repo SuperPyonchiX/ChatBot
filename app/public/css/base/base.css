@@ -57,6 +57,7 @@ input, textarea {
     align-items: center;
     transition: all var(--transition-fast);
     border: 1px solid transparent;
+    font-size: var(--font-size-sm);
 }
 
 .history-item:hover {

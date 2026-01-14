@@ -61,8 +61,7 @@
     flex: 1;
     font-size: var(--font-size-md);
     font-weight: 600;
-    color: var(--cyber-primary);
-    text-shadow: var(--neon-glow-subtle);
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -92,7 +91,7 @@
 
 .artifact-tab.active {
     background-color: var(--artifact-tab-active-bg);
-    color: var(--cyber-primary);
+    color: var(--accent-color);
 }
 
 /* アクションボタン */
@@ -117,7 +116,7 @@
 
 .artifact-action-btn:hover {
     background-color: var(--artifact-tab-hover-bg);
-    color: var(--cyber-primary);
+    color: var(--accent-color);
 }
 
 .artifact-action-btn.close-btn:hover {
@@ -277,14 +276,14 @@
 }
 
 .artifact-history-item:hover {
-    border-color: var(--cyber-primary);
+    border-color: var(--accent-color);
     color: var(--text-primary);
 }
 
 .artifact-history-item.active {
     background-color: var(--artifact-tab-active-bg);
-    border-color: var(--cyber-primary);
-    color: var(--cyber-primary);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
 }
 
 /* 履歴アイテム内のタイトル */
@@ -340,7 +339,7 @@
     padding: 4px 8px;
     background-color: var(--artifact-badge-bg);
     border: none;
-    color: var(--cyber-primary);
+    color: var(--accent-color);
     cursor: pointer;
     border-radius: var(--border-radius-sm);
     font-size: var(--font-size-xs);
@@ -351,7 +350,7 @@
 }
 
 .artifact-open-button:hover {
-    background-color: rgba(0, 255, 255, 0.3);
+    background-color: rgba(16, 163, 127, 0.3);
 }
 
 /* レスポンシブ対応 */

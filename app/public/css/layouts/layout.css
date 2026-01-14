@@ -17,8 +17,7 @@
     flex-direction: column;
     overflow: hidden;
     transition: transform var(--transition-normal) ease, width var(--transition-normal) ease;
-    border-right: 1px solid rgba(0, 255, 255, 0.1);
-    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.5);
+    border-right: 1px solid var(--border-color);
 }
 
 .sidebar.collapsed {
@@ -28,7 +27,7 @@
 /* 会話検索コンテナ */
 .chat-search-container {
     padding: var(--spacing-sm) var(--spacing-md);
-    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .chat-search-wrapper {
@@ -48,8 +47,8 @@
 .chat-search-input {
     width: 100%;
     padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) calc(var(--spacing-sm) * 2 + 14px);
-    background: rgba(0, 20, 30, 0.6);
-    border: 1px solid rgba(0, 255, 255, 0.15);
+    background: var(--background-primary);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     color: var(--text-primary);
     font-size: var(--font-size-sm);
@@ -62,19 +61,18 @@
 
 .chat-search-input:focus {
     outline: none;
-    border-color: rgba(0, 255, 255, 0.4);
-    background: rgba(0, 30, 40, 0.8);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+    border-color: var(--accent-color);
+    background: var(--background-primary);
 }
 
 /* サイドバーフッター */
 .sidebar-footer {
     padding: var(--spacing-md);
-    border-top: 1px solid rgba(0, 255, 255, 0.1);
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: space-around;
     gap: var(--spacing-sm);
-    background: linear-gradient(180deg, transparent, rgba(0, 255, 255, 0.02));
+    background: var(--background-sidebar);
 }
 
 /* サイドバートグルボタン */
@@ -144,68 +142,42 @@
 
 /* チャットヘッダー */
 .chat-header {
-    background: linear-gradient(90deg, var(--background-tertiary), rgba(0, 255, 255, 0.03));
+    background: var(--background-primary);
     color: var(--text-primary);
     padding: var(--spacing-md) var(--spacing-lg);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-color);
     position: relative;
-}
-
-.chat-header::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.3), transparent);
 }
 
 .chat-header h1 {
     font-size: var(--font-size-xl);
     font-weight: 600;
-    color: var(--cyber-primary);
-    text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    color: var(--text-primary);
 }
 
 /* チャットメッセージエリアレイアウト */
 .chat-messages {
     flex: 1;
-    padding: var(--spacing-lg);
+    padding: 0;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: 0;
     background-color: var(--background-primary);
-    /* サイバー風グリッド背景 */
-    background-image:
-        linear-gradient(rgba(0, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 30px 30px;
 }
 
 /* チャット入力エリアレイアウト */
 .chat-input-container {
     display: flex;
-    padding: var(--spacing-md);
-    border-top: 1px solid rgba(0, 255, 255, 0.1);
-    background: linear-gradient(0deg, rgba(0, 255, 255, 0.02), transparent);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-top: 1px solid var(--border-color);
+    background: var(--background-primary);
     align-items: flex-end;
     gap: var(--spacing-sm);
     position: relative;
-}
-
-.chat-input-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.3), transparent);
 }
 
 /* レスポンシブデザイン */
@@ -385,13 +357,13 @@ body.drag-over::after {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
-    border: 3px dashed var(--cyber-primary);
+    background: rgba(33, 33, 33, 0.95);
+    border: 3px dashed var(--accent-color);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: var(--font-size-xl);
-    color: var(--cyber-primary);
+    color: var(--accent-color);
     z-index: 9999;
     pointer-events: none;
 }

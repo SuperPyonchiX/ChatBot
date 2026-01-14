@@ -43,49 +43,60 @@ class ChatRenderer {
         const msgTimestamp = timestamp || Date.now();
         const fragment = document.createDocumentFragment();
 
-        // 直接DOMを操作して要素を作成
+        // メッセージコンテナ作成
         const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'user', 'cyber-style');
+        messageDiv.classList.add('message', 'user');
         messageDiv.dataset.timestamp = msgTimestamp.toString();
+        messageDiv.dataset.rawMessage = message || '';
         messageDiv.setAttribute('role', 'region');
         messageDiv.setAttribute('aria-label', 'あなたのメッセージ');
 
+        // アバター作成
+        const avatarDiv = this.#createAvatar('user');
+        messageDiv.appendChild(avatarDiv);
+
+        // メッセージボディ作成
+        const bodyDiv = document.createElement('div');
+        bodyDiv.className = 'message-body';
+
+        // ヘッダー（名前 + タイムスタンプ）
+        const headerDiv = this.#createMessageHeader('You', msgTimestamp);
+        bodyDiv.appendChild(headerDiv);
+
+        // コンテンツ
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        const copyButton = this.#createCopyButton(message || '');
 
         try {
             const renderedMarkdown = await Markdown.getInstance.renderMarkdown(message || '');
             const markdownContent = document.createElement('div');
             markdownContent.className = 'markdown-content';
             markdownContent.innerHTML = renderedMarkdown;
-
-            contentDiv.appendChild(copyButton);
             contentDiv.appendChild(markdownContent);
 
             if (attachments && attachments.length > 0) {
                 contentDiv.appendChild(ChatAttachmentViewer.getInstance.createAttachmentsElement(attachments));
             }
-
-            messageDiv.appendChild(contentDiv);
-            fragment.appendChild(messageDiv);
-            chatMessages.appendChild(fragment);
-
-            this.#applyCodeFormatting(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
         } catch (e) {
             console.error('ユーザーメッセージのMarkdown解析エラー:', e);
             const markdownContent = document.createElement('div');
             markdownContent.className = 'markdown-content';
             markdownContent.textContent = message || '';
-
-            contentDiv.appendChild(copyButton);
             contentDiv.appendChild(markdownContent);
-            messageDiv.appendChild(contentDiv);
-            fragment.appendChild(messageDiv);
-            chatMessages.appendChild(fragment);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+
+        bodyDiv.appendChild(contentDiv);
+
+        // アクションボタン（編集、コピー、削除）
+        const actionsDiv = this.#createUserMessageActions(messageDiv, message || '');
+        bodyDiv.appendChild(actionsDiv);
+
+        messageDiv.appendChild(bodyDiv);
+        fragment.appendChild(messageDiv);
+        chatMessages.appendChild(fragment);
+
+        this.#applyCodeFormatting(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     /**
@@ -101,44 +112,69 @@ class ChatRenderer {
         if (!chatMessages) return;
 
         const msgTimestamp = timestamp || Date.now();
+        const provider = this.#getCurrentProvider();
+
+        // メッセージコンテナ作成
         const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'bot', 'cyber-style');
+        messageDiv.classList.add('message', 'bot');
         messageDiv.dataset.timestamp = msgTimestamp.toString();
+        messageDiv.dataset.rawMessage = message || '';
         messageDiv.setAttribute('role', 'region');
         messageDiv.setAttribute('aria-label', 'AIからの返答');
 
+        // アバター作成
+        const avatarDiv = this.#createAvatar('bot', provider);
+        messageDiv.appendChild(avatarDiv);
+
+        // メッセージボディ作成
+        const bodyDiv = document.createElement('div');
+        bodyDiv.className = 'message-body';
+
+        // ヘッダー（名前 + タイムスタンプ）
+        const senderName = this.#getProviderDisplayName(provider);
+        const headerDiv = this.#createMessageHeader(senderName, msgTimestamp);
+        bodyDiv.appendChild(headerDiv);
+
+        // コンテンツ
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        const copyButton = this.#createCopyButton(message || '');
         const messageContent = document.createElement('div');
         messageContent.className = 'markdown-content';
 
         if (animate) {
             messageContent.innerHTML = '';
-            contentDiv.appendChild(copyButton);
             contentDiv.appendChild(messageContent);
-            messageDiv.appendChild(contentDiv);
+            bodyDiv.appendChild(contentDiv);
+            messageDiv.appendChild(bodyDiv);
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            this.#animateTyping(message, messageContent);
+            this.#animateTyping(message, messageContent).then(() => {
+                // アニメーション完了後にアクションボタンを追加
+                const actionsDiv = this.#createBotMessageActions(messageDiv, message || '');
+                bodyDiv.appendChild(actionsDiv);
+            });
         } else {
             try {
                 const renderedMarkdown = await Markdown.getInstance.renderMarkdown(message || '');
                 messageContent.innerHTML = renderedMarkdown;
-                contentDiv.appendChild(copyButton);
                 contentDiv.appendChild(messageContent);
-                messageDiv.appendChild(contentDiv);
+                bodyDiv.appendChild(contentDiv);
 
+                // アクションボタン（コピー、再生成、リアクション、削除）
+                const actionsDiv = this.#createBotMessageActions(messageDiv, message || '');
+                bodyDiv.appendChild(actionsDiv);
+
+                messageDiv.appendChild(bodyDiv);
                 chatMessages.appendChild(messageDiv);
                 this.#applyCodeFormatting(messageDiv);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             } catch (e) {
                 console.error('ボットメッセージのMarkdown解析エラー:', e);
                 messageContent.textContent = await this.#formatMessage(message || '');
-                contentDiv.appendChild(copyButton);
                 contentDiv.appendChild(messageContent);
-                messageDiv.appendChild(contentDiv);
+                bodyDiv.appendChild(contentDiv);
+                messageDiv.appendChild(bodyDiv);
                 chatMessages.appendChild(messageDiv);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
@@ -157,22 +193,36 @@ class ChatRenderer {
         if (!chatMessages) return null;
 
         const msgTimestamp = timestamp || Date.now();
+        const provider = this.#getCurrentProvider();
 
-        // メッセージ要素を作成
+        // メッセージコンテナ作成
         const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'bot', 'cyber-style');
+        messageDiv.classList.add('message', 'bot');
         messageDiv.dataset.timestamp = msgTimestamp.toString();
+        messageDiv.dataset.rawMessage = message || '';
         messageDiv.setAttribute('role', 'region');
         messageDiv.setAttribute('aria-label', 'AIからの返答');
 
+        // アバター作成
+        const avatarDiv = this.#createAvatar('bot', provider);
+        messageDiv.appendChild(avatarDiv);
+
+        // メッセージボディ作成
+        const bodyDiv = document.createElement('div');
+        bodyDiv.className = 'message-body';
+
+        // ヘッダー
+        const senderName = this.#getProviderDisplayName(provider);
+        const headerDiv = this.#createMessageHeader(senderName, msgTimestamp);
+        bodyDiv.appendChild(headerDiv);
+
+        // コンテンツ
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
 
         // 思考過程コンテナを作成（初期状態では非表示）
         const thinkingContainer = this.#createThinkingContainer();
-
-        // コピーボタンを作成
-        const copyButton = this.#createCopyButton(message || '');
+        contentDiv.appendChild(thinkingContainer);
 
         // 回答本文コンテナを作成
         const markdownContent = document.createElement('div');
@@ -186,11 +236,14 @@ class ChatRenderer {
             markdownContent.textContent = await this.#formatMessage(message || '');
         }
 
-        contentDiv.appendChild(thinkingContainer);
-        contentDiv.appendChild(copyButton);
         contentDiv.appendChild(markdownContent);
-        messageDiv.appendChild(contentDiv);
+        bodyDiv.appendChild(contentDiv);
 
+        // アクションボタン
+        const actionsDiv = this.#createBotMessageActions(messageDiv, message || '');
+        bodyDiv.appendChild(actionsDiv);
+
+        messageDiv.appendChild(bodyDiv);
         chatMessages.appendChild(messageDiv);
         this.#applyCodeFormatting(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -208,25 +261,41 @@ class ChatRenderer {
      * 思考過程コンテナと回答本文コンテナを分離して作成します
      * @param {HTMLElement} chatMessages - メッセージを表示する要素
      * @param {number|null} timestamp - メッセージのタイムスタンプ
-     * @returns {{messageDiv: HTMLElement, contentContainer: HTMLElement, thinkingContainer: HTMLElement}} メッセージ要素とコンテンツコンテナ
+     * @returns {{messageDiv: HTMLElement, contentContainer: HTMLElement, thinkingContainer: HTMLElement, bodyDiv: HTMLElement}} メッセージ要素とコンテンツコンテナ
      */
     addStreamingBotMessage(chatMessages, timestamp = null) {
         if (!chatMessages) return null;
 
         const msgTimestamp = timestamp || Date.now();
+        const provider = this.#getCurrentProvider();
 
-        // メッセージ要素を作成
+        // メッセージコンテナ作成
         const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'bot', 'cyber-style');
+        messageDiv.classList.add('message', 'bot');
         messageDiv.dataset.timestamp = msgTimestamp.toString();
         messageDiv.setAttribute('role', 'region');
         messageDiv.setAttribute('aria-label', 'AIからの返答');
 
+        // アバター作成
+        const avatarDiv = this.#createAvatar('bot', provider);
+        messageDiv.appendChild(avatarDiv);
+
+        // メッセージボディ作成
+        const bodyDiv = document.createElement('div');
+        bodyDiv.className = 'message-body';
+
+        // ヘッダー
+        const senderName = this.#getProviderDisplayName(provider);
+        const headerDiv = this.#createMessageHeader(senderName, msgTimestamp);
+        bodyDiv.appendChild(headerDiv);
+
+        // コンテンツ
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
 
         // 思考過程コンテナを作成（初期状態では非表示）
         const thinkingContainer = this.#createThinkingContainer();
+        contentDiv.appendChild(thinkingContainer);
 
         // 回答本文コンテナを作成
         const markdownContent = document.createElement('div');
@@ -235,9 +304,9 @@ class ChatRenderer {
         // 初期状態: Thinking表示
         markdownContent.innerHTML = this.#formatSystemMessage('Thinking', true);
 
-        contentDiv.appendChild(thinkingContainer);
         contentDiv.appendChild(markdownContent);
-        messageDiv.appendChild(contentDiv);
+        bodyDiv.appendChild(contentDiv);
+        messageDiv.appendChild(bodyDiv);
 
         chatMessages.appendChild(messageDiv);
         this.#smoothScrollToBottom(chatMessages);
@@ -245,7 +314,8 @@ class ChatRenderer {
         return {
             messageDiv: messageDiv,
             contentContainer: markdownContent,
-            thinkingContainer: thinkingContainer
+            thinkingContainer: thinkingContainer,
+            bodyDiv: bodyDiv
         };
     }
 
@@ -526,14 +596,15 @@ class ChatRenderer {
 
     /**
      * ストリーミングが完了したらボットメッセージを完成させる
-     * マークダウンレンダリングを適用し、コピーボタンを追加して最終的な表示を整えます
+     * マークダウンレンダリングを適用し、アクションボタンを追加して最終的な表示を整えます
      * 思考過程コンテナは保持されます
      * @param {HTMLElement} messageDiv - メッセージの親要素
      * @param {HTMLElement} container - 内容を表示するコンテナ要素（.markdown-content）
      * @param {string} fullText - 完全なレスポンステキスト
+     * @param {HTMLElement} [bodyDiv] - メッセージボディ要素（オプション）
      * @returns {Promise<void>}
      */
-    async finalizeStreamingBotMessage(messageDiv, container, fullText) {
+    async finalizeStreamingBotMessage(messageDiv, container, fullText, bodyDiv = null) {
         if (!messageDiv || !container) return;
 
         try {
@@ -550,23 +621,21 @@ class ChatRenderer {
                 savedToolResults.forEach(el => container.appendChild(el));
             }
 
+            // rawMessageを設定
+            messageDiv.dataset.rawMessage = fullText;
+
+            // アクションボタンを追加（新しいDOM構造用）
+            const body = bodyDiv || messageDiv.querySelector('.message-body');
+            if (body) {
+                this.addActionsToStreamingMessage(messageDiv, body, fullText);
+            }
+
             const contentDiv = messageDiv.querySelector('.message-content');
             if (contentDiv) {
-                // 既存のコピーボタンを削除
+                // 既存のコピーボタンを削除（レガシー対応）
                 const existingButton = contentDiv.querySelector('.copy-button');
                 if (existingButton) {
                     contentDiv.removeChild(existingButton);
-                }
-
-                // コピーボタンを追加（思考過程コンテナの前に挿入）
-                const copyButton = this.#createCopyButton(fullText);
-                const thinkingContainer = contentDiv.querySelector('.thinking-process');
-                if (thinkingContainer) {
-                    contentDiv.insertBefore(copyButton, thinkingContainer);
-                } else if (contentDiv.firstChild) {
-                    contentDiv.insertBefore(copyButton, contentDiv.firstChild);
-                } else {
-                    contentDiv.appendChild(copyButton);
                 }
             }
 
@@ -1525,7 +1594,7 @@ class ChatRenderer {
      */
     #formatSystemMessage(message, showDots) {
         const dotsHtml = showDots ?
-            '<span class="typing-dots cyber-neon"><span></span><span></span><span></span></span>' : '';
+            '<span class="typing-dots"><span></span><span></span><span></span></span>' : '';
         return `<p>${message}${dotsHtml}</p>`;
     }
 
@@ -1550,5 +1619,457 @@ class ChatRenderer {
                 container.scrollTop = container.scrollHeight;
             }, 50);
         }
+    }
+
+    // ========== 新規追加: ChatGPT風UI用ヘルパーメソッド ==========
+
+    /**
+     * 現在のAIプロバイダを取得する
+     * @returns {string} プロバイダ名 ('openai', 'claude', 'gemini')
+     */
+    #getCurrentProvider() {
+        const model = window.AppState?.getCurrentModel?.() || '';
+        if (model.includes('claude')) return 'claude';
+        if (model.includes('gemini')) return 'gemini';
+        return 'openai';
+    }
+
+    /**
+     * プロバイダの表示名を取得する
+     * @param {string} provider - プロバイダ名
+     * @returns {string} 表示名
+     */
+    #getProviderDisplayName(provider) {
+        const names = {
+            'openai': 'ChatGPT',
+            'claude': 'Claude',
+            'gemini': 'Gemini'
+        };
+        return names[provider] || 'AI';
+    }
+
+    /**
+     * アバター要素を作成する
+     * @param {string} role - 'user' または 'bot'
+     * @param {string} [provider] - AIプロバイダ名（botの場合）
+     * @returns {HTMLElement} アバター要素
+     */
+    #createAvatar(role, provider = 'openai') {
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+
+        if (role === 'user') {
+            avatar.textContent = 'U';
+            avatar.classList.add('avatar-user');
+        } else {
+            avatar.dataset.provider = provider;
+            // プロバイダー別の文字アイコン（著作権対応）
+            switch (provider) {
+                case 'openai':
+                    avatar.textContent = 'G';
+                    avatar.classList.add('avatar-openai');
+                    break;
+                case 'claude':
+                    avatar.textContent = 'C';
+                    avatar.classList.add('avatar-claude');
+                    break;
+                case 'gemini':
+                    avatar.textContent = 'G';
+                    avatar.classList.add('avatar-gemini');
+                    break;
+                default:
+                    avatar.textContent = 'A';
+                    avatar.classList.add('avatar-default');
+            }
+        }
+
+        return avatar;
+    }
+
+    /**
+     * メッセージヘッダーを作成する
+     * @param {string} senderName - 送信者名
+     * @param {number} timestamp - タイムスタンプ
+     * @returns {HTMLElement} ヘッダー要素
+     */
+    #createMessageHeader(senderName, timestamp) {
+        const header = document.createElement('div');
+        header.className = 'message-header';
+
+        const sender = document.createElement('span');
+        sender.className = 'message-sender';
+        sender.textContent = senderName;
+
+        const time = document.createElement('span');
+        time.className = 'message-timestamp';
+        time.textContent = this.#formatTimestamp(timestamp);
+        time.title = this.#formatFullTimestamp(timestamp);
+
+        header.appendChild(sender);
+        header.appendChild(time);
+
+        return header;
+    }
+
+    /**
+     * タイムスタンプをフォーマットする（短縮形式）
+     * @param {number} timestamp - タイムスタンプ
+     * @returns {string} フォーマットされた時刻
+     */
+    #formatTimestamp(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    /**
+     * タイムスタンプをフォーマットする（完全形式）
+     * @param {number} timestamp - タイムスタンプ
+     * @returns {string} フォーマットされた日時
+     */
+    #formatFullTimestamp(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleString('ja-JP');
+    }
+
+    /**
+     * ユーザーメッセージ用のアクションボタンを作成する
+     * @param {HTMLElement} messageDiv - メッセージ要素
+     * @param {string} messageText - メッセージテキスト
+     * @returns {HTMLElement} アクション要素
+     */
+    #createUserMessageActions(messageDiv, messageText) {
+        const actions = document.createElement('div');
+        actions.className = 'message-actions';
+
+        // 編集ボタン
+        const editBtn = document.createElement('button');
+        editBtn.className = 'action-btn edit-btn';
+        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+        editBtn.title = '編集';
+        editBtn.addEventListener('click', () => this.#handleEditMessage(messageDiv));
+        actions.appendChild(editBtn);
+
+        // コピーボタン
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'action-btn copy-btn';
+        copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+        copyBtn.title = 'コピー';
+        copyBtn.addEventListener('click', () => this.#handleCopyMessage(copyBtn, messageText));
+        actions.appendChild(copyBtn);
+
+        // 削除ボタン
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'action-btn delete-btn';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        deleteBtn.title = '削除';
+        deleteBtn.addEventListener('click', () => this.#handleDeleteMessage(messageDiv));
+        actions.appendChild(deleteBtn);
+
+        return actions;
+    }
+
+    /**
+     * ボットメッセージ用のアクションボタンを作成する
+     * @param {HTMLElement} messageDiv - メッセージ要素
+     * @param {string} messageText - メッセージテキスト
+     * @returns {HTMLElement} アクション要素
+     */
+    #createBotMessageActions(messageDiv, messageText) {
+        const actions = document.createElement('div');
+        actions.className = 'message-actions';
+
+        // コピーボタン
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'action-btn copy-btn';
+        copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+        copyBtn.title = 'コピー';
+        copyBtn.addEventListener('click', () => this.#handleCopyMessage(copyBtn, messageText));
+        actions.appendChild(copyBtn);
+
+        // 再生成ボタン
+        const regenerateBtn = document.createElement('button');
+        regenerateBtn.className = 'action-btn regenerate-btn';
+        regenerateBtn.innerHTML = '<i class="fas fa-redo"></i>';
+        regenerateBtn.title = '再生成';
+        regenerateBtn.addEventListener('click', () => this.#handleRegenerateMessage(messageDiv));
+        actions.appendChild(regenerateBtn);
+
+        // 👍 ボタン
+        const likeBtn = document.createElement('button');
+        likeBtn.className = 'action-btn reaction-btn like-btn';
+        likeBtn.innerHTML = '<i class="fas fa-thumbs-up"></i>';
+        likeBtn.title = '役に立った';
+        likeBtn.addEventListener('click', () => this.#handleReaction(messageDiv, likeBtn, 'like'));
+        actions.appendChild(likeBtn);
+
+        // 👎 ボタン
+        const dislikeBtn = document.createElement('button');
+        dislikeBtn.className = 'action-btn reaction-btn dislike-btn';
+        dislikeBtn.innerHTML = '<i class="fas fa-thumbs-down"></i>';
+        dislikeBtn.title = '改善が必要';
+        dislikeBtn.addEventListener('click', () => this.#handleReaction(messageDiv, dislikeBtn, 'dislike'));
+        actions.appendChild(dislikeBtn);
+
+        // 削除ボタン
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'action-btn delete-btn';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        deleteBtn.title = '削除';
+        deleteBtn.addEventListener('click', () => this.#handleDeleteMessage(messageDiv));
+        actions.appendChild(deleteBtn);
+
+        return actions;
+    }
+
+    /**
+     * メッセージ編集を処理する
+     * @param {HTMLElement} messageDiv - メッセージ要素
+     */
+    #handleEditMessage(messageDiv) {
+        if (!messageDiv || messageDiv.classList.contains('editing')) return;
+
+        const rawMessage = messageDiv.dataset.rawMessage || '';
+        const bodyDiv = messageDiv.querySelector('.message-body');
+        if (!bodyDiv) return;
+
+        messageDiv.classList.add('editing');
+
+        // 編集コンテナを作成
+        const editContainer = document.createElement('div');
+        editContainer.className = 'message-edit-container';
+
+        const textarea = document.createElement('textarea');
+        textarea.className = 'message-edit-textarea';
+        textarea.value = rawMessage;
+
+        const editActions = document.createElement('div');
+        editActions.className = 'message-edit-actions';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'edit-cancel-btn';
+        cancelBtn.textContent = 'キャンセル';
+        cancelBtn.addEventListener('click', () => {
+            messageDiv.classList.remove('editing');
+            editContainer.remove();
+        });
+
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'edit-save-btn';
+        saveBtn.textContent = '保存して送信';
+        saveBtn.addEventListener('click', () => {
+            const newMessage = textarea.value.trim();
+            if (newMessage) {
+                this.#submitEditedMessage(messageDiv, newMessage);
+            }
+        });
+
+        editActions.appendChild(cancelBtn);
+        editActions.appendChild(saveBtn);
+        editContainer.appendChild(textarea);
+        editContainer.appendChild(editActions);
+        bodyDiv.appendChild(editContainer);
+
+        textarea.focus();
+    }
+
+    /**
+     * 編集したメッセージを送信する
+     * @param {HTMLElement} messageDiv - メッセージ要素
+     * @param {string} newMessage - 新しいメッセージ
+     */
+    async #submitEditedMessage(messageDiv, newMessage) {
+        const timestamp = parseInt(messageDiv.dataset.timestamp, 10);
+        const chatMessages = messageDiv.closest('.chat-messages');
+
+        // 該当メッセージ以降を削除
+        let sibling = messageDiv.nextElementSibling;
+        while (sibling) {
+            const next = sibling.nextElementSibling;
+            sibling.remove();
+            sibling = next;
+        }
+        messageDiv.remove();
+
+        // AppStateの会話から該当メッセージ以降を削除
+        if (window.AppState?.currentConversationId) {
+            const conversation = window.AppState.getConversationById(window.AppState.currentConversationId);
+            if (conversation) {
+                const msgIndex = conversation.messages.findIndex(m =>
+                    m.timestamp === timestamp ||
+                    (m.role === 'user' && !m.timestamp)
+                );
+                if (msgIndex > 0) {
+                    conversation.messages = conversation.messages.slice(0, msgIndex);
+                }
+            }
+        }
+
+        // 新しいメッセージを送信
+        if (window.Elements?.userInput) {
+            window.Elements.userInput.value = newMessage;
+            if (typeof ChatActions !== 'undefined') {
+                await ChatActions.getInstance.sendMessage();
+            }
+        }
+    }
+
+    /**
+     * メッセージをコピーする
+     * @param {HTMLElement} button - ボタン要素
+     * @param {string} text - コピーするテキスト
+     */
+    async #handleCopyMessage(button, text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            button.innerHTML = '<i class="fas fa-check"></i>';
+            button.classList.add('active');
+            setTimeout(() => {
+                button.innerHTML = '<i class="fas fa-copy"></i>';
+                button.classList.remove('active');
+            }, 2000);
+        } catch (err) {
+            console.error('コピーに失敗しました:', err);
+        }
+    }
+
+    /**
+     * メッセージを再生成する
+     * @param {HTMLElement} messageDiv - メッセージ要素
+     */
+    async #handleRegenerateMessage(messageDiv) {
+        const chatMessages = messageDiv.closest('.chat-messages');
+        if (!chatMessages) return;
+
+        // 直前のユーザーメッセージを探す
+        let prevMessage = messageDiv.previousElementSibling;
+        while (prevMessage && !prevMessage.classList.contains('user')) {
+            prevMessage = prevMessage.previousElementSibling;
+        }
+
+        if (!prevMessage) {
+            console.warn('直前のユーザーメッセージが見つかりません');
+            return;
+        }
+
+        const userMessage = prevMessage.dataset.rawMessage || '';
+        const userTimestamp = parseInt(prevMessage.dataset.timestamp, 10);
+
+        // ユーザーメッセージも含めて削除する（sendMessageで再追加されるため）
+        let sibling = prevMessage;
+        while (sibling) {
+            const next = sibling.nextElementSibling;
+            sibling.remove();
+            sibling = next;
+        }
+
+        // AppStateの会話から該当メッセージ以降を削除
+        if (window.AppState?.currentConversationId) {
+            const conversation = window.AppState.getConversationById(window.AppState.currentConversationId);
+            if (conversation) {
+                // ユーザーメッセージも含めて削除（sendMessageで再追加されるため）
+                const msgIndex = conversation.messages.findIndex(m =>
+                    m.timestamp === userTimestamp ||
+                    (m.role === 'user' && m.content === userMessage)
+                );
+                if (msgIndex >= 0) {
+                    conversation.messages = conversation.messages.slice(0, msgIndex);
+                }
+            }
+        }
+
+        // メッセージを再送信
+        if (window.Elements?.userInput) {
+            window.Elements.userInput.value = userMessage;
+            if (typeof ChatActions !== 'undefined') {
+                await ChatActions.getInstance.sendMessage();
+            }
+        }
+    }
+
+    /**
+     * メッセージを削除する
+     * @param {HTMLElement} messageDiv - メッセージ要素
+     */
+    #handleDeleteMessage(messageDiv) {
+        if (!confirm('このメッセージを削除しますか？')) return;
+
+        const timestamp = parseInt(messageDiv.dataset.timestamp, 10);
+        const isUserMessage = messageDiv.classList.contains('user');
+
+        // DOM から削除
+        messageDiv.remove();
+
+        // AppStateの会話から削除
+        if (window.AppState?.currentConversationId) {
+            const conversation = window.AppState.getConversationById(window.AppState.currentConversationId);
+            if (conversation) {
+                const msgIndex = conversation.messages.findIndex(m => m.timestamp === timestamp);
+                if (msgIndex >= 0) {
+                    conversation.messages.splice(msgIndex, 1);
+                    // ストレージに保存
+                    if (typeof Storage !== 'undefined') {
+                        Storage.getInstance.saveConversations(window.AppState.conversations);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * リアクションを処理する
+     * @param {HTMLElement} messageDiv - メッセージ要素
+     * @param {HTMLElement} button - ボタン要素
+     * @param {string} type - 'like' または 'dislike'
+     */
+    #handleReaction(messageDiv, button, type) {
+        const timestamp = messageDiv.dataset.timestamp;
+        const conversationId = window.AppState?.currentConversationId;
+
+        if (!timestamp || !conversationId) return;
+
+        const reactionKey = `reaction_${conversationId}_${timestamp}`;
+        const currentReaction = localStorage.getItem(reactionKey);
+
+        // 同じボタンをクリックした場合はトグル
+        if (currentReaction === type) {
+            localStorage.removeItem(reactionKey);
+            button.classList.remove(type === 'like' ? 'liked' : 'disliked');
+        } else {
+            localStorage.setItem(reactionKey, type);
+
+            // 他のリアクションボタンのクラスを削除
+            const actions = messageDiv.querySelector('.message-actions');
+            if (actions) {
+                const likeBtn = actions.querySelector('.like-btn');
+                const dislikeBtn = actions.querySelector('.dislike-btn');
+                if (likeBtn) likeBtn.classList.remove('liked');
+                if (dislikeBtn) dislikeBtn.classList.remove('disliked');
+            }
+
+            button.classList.add(type === 'like' ? 'liked' : 'disliked');
+        }
+    }
+
+    /**
+     * ストリーミング完了後にアクションボタンを追加する
+     * @param {HTMLElement} messageDiv - メッセージ要素
+     * @param {HTMLElement} bodyDiv - メッセージボディ要素
+     * @param {string} fullText - 完全なメッセージテキスト
+     */
+    addActionsToStreamingMessage(messageDiv, bodyDiv, fullText) {
+        if (!messageDiv || !bodyDiv) return;
+
+        // rawMessageを設定
+        messageDiv.dataset.rawMessage = fullText;
+
+        // 既存のアクションがあれば削除
+        const existingActions = bodyDiv.querySelector('.message-actions');
+        if (existingActions) {
+            existingActions.remove();
+        }
+
+        // アクションボタンを追加
+        const actionsDiv = this.#createBotMessageActions(messageDiv, fullText);
+        bodyDiv.appendChild(actionsDiv);
     }
 }
