@@ -116,6 +116,29 @@ class FileHandler {
     }
 
     /**
+     * クリップボードからペーストされたファイルを処理します
+     * @param {File[]} files - ペーストされたファイルの配列
+     */
+    handlePastedFiles(files) {
+        if (!files || files.length === 0) return;
+
+        // 検証はFileValidatorに委譲
+        const validFiles = FileValidator.getInstance.validateFiles(files);
+        if (validFiles.length === 0) return;
+
+        // 選択済みファイルに追加
+        this.selectedFiles = [...this.selectedFiles, ...validFiles];
+
+        // UI更新はFileAttachmentUIに委譲
+        FileAttachmentUI.getInstance.updatePreview(this.selectedFiles);
+
+        // 添付完了イベントを発火
+        this.notifyAttachmentComplete(this.selectedFiles);
+
+        console.log('[FileHandler] クリップボードから画像を追加:', validFiles.length, '件');
+    }
+
+    /**
      * 許可されたファイル拡張子のリストを取得します
      * @returns {string[]} 許可された拡張子の配列
      */

@@ -376,3 +376,22 @@
         opacity: 0.8;
     }
 }
+
+/* ドラッグ＆ドロップオーバーレイ */
+body.drag-over::after {
+    content: 'ファイルをドロップして添付';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    border: 3px dashed var(--cyber-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xl);
+    color: var(--cyber-primary);
+    z-index: 9999;
+    pointer-events: none;
+}

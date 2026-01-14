@@ -151,18 +151,87 @@ class EventHandlers {
      */
     setupFileEvents() {
         if (!window.Elements.fileInput) return;
-        
+
         // FileHandlerの初期化を行う
         if (FileHandler.getInstance && FileHandler.getInstance.init) {
             FileHandler.getInstance.init();
         }
-        
+
         // ファイル選択イベント
         window.Elements.fileInput.addEventListener('change', FileHandler.getInstance.handleFileSelect.bind(FileHandler.getInstance));
 
         // カスタムイベントリスナー
         document.addEventListener('file-attached', e => window.AppState.currentAttachments = e.detail.attachments);
         document.addEventListener('attachment-removed', () => window.AppState.currentAttachments = []);
+
+        // クリップボードからの画像ペースト
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            const imageFiles = [];
+            for (const item of items) {
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    if (file) imageFiles.push(file);
+                }
+            }
+
+            if (imageFiles.length > 0) {
+                e.preventDefault();
+                FileHandler.getInstance.handlePastedFiles(imageFiles);
+            }
+        });
+
+        // ドラッグ＆ドロップでのファイル添付
+        this.#setupDragAndDrop();
+    }
+
+    /**
+     * ドラッグ＆ドロップのイベントをセットアップします
+     */
+    #setupDragAndDrop() {
+        const dropZone = document.body;
+        let dragCounter = 0;
+
+        // ドラッグオーバー時のデフォルト動作を無効化
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        // ドラッグエンター時
+        dropZone.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter++;
+            if (dragCounter === 1) {
+                dropZone.classList.add('drag-over');
+            }
+        });
+
+        // ドラッグリーブ時
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter--;
+            if (dragCounter === 0) {
+                dropZone.classList.remove('drag-over');
+            }
+        });
+
+        // ドロップ時
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter = 0;
+            dropZone.classList.remove('drag-over');
+
+            const files = Array.from(e.dataTransfer?.files || []);
+            if (files.length > 0) {
+                FileHandler.getInstance.handlePastedFiles(files);
+            }
+        });
     }
 
     /**
