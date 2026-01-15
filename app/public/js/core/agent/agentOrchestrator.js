@@ -389,70 +389,46 @@ class AgentOrchestrator {
     /**
      * ビルトインツールを初期化
      */
-    #initializeBuiltInTools() {
-        this.#availableTools = [
-            {
-                name: 'web_search',
-                description: 'Webを検索して最新の情報を取得します。質問やトピックを入力してください。',
-                parameters: {
-                    type: 'object',
-                    properties: {
-                        query: {
-                            type: 'string',
-                            description: '検索クエリ'
-                        }
-                    },
-                    required: ['query']
-                }
-            },
-            {
-                name: 'rag_search',
-                description: 'ナレッジベースを検索して関連情報を取得します。',
-                parameters: {
-                    type: 'object',
-                    properties: {
-                        query: {
-                            type: 'string',
-                            description: '検索クエリ'
-                        }
-                    },
-                    required: ['query']
-                }
-            },
-            {
-                name: 'code_execute',
-                description: 'JavaScriptまたはPythonコードを実行します。',
-                parameters: {
-                    type: 'object',
-                    properties: {
-                        language: {
-                            type: 'string',
-                            enum: ['javascript', 'python'],
-                            description: 'プログラミング言語'
+    async #initializeBuiltInTools() {
+        // AgentToolManagerが利用可能な場合はそれを使用
+        if (window.AgentToolManager) {
+            const toolManager = AgentToolManager.getInstance;
+            await toolManager.initialize();
+            this.#availableTools = toolManager.getAllTools();
+            console.log(`[AgentOrchestrator] AgentToolManagerからツールをロード: ${this.#availableTools.length}個`);
+        } else {
+            // フォールバック: 基本ツールを定義
+            this.#availableTools = [
+                {
+                    name: 'web_search',
+                    description: 'Webを検索して最新の情報を取得します。質問やトピックを入力してください。',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            query: {
+                                type: 'string',
+                                description: '検索クエリ'
+                            }
                         },
-                        code: {
-                            type: 'string',
-                            description: '実行するコード'
-                        }
-                    },
-                    required: ['language', 'code']
+                        required: ['query']
+                    }
+                },
+                {
+                    name: 'ask_user',
+                    description: 'ユーザーに質問や確認を求めます。',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            question: {
+                                type: 'string',
+                                description: 'ユーザーへの質問'
+                            }
+                        },
+                        required: ['question']
+                    }
                 }
-            },
-            {
-                name: 'ask_user',
-                description: 'ユーザーに質問や確認を求めます。',
-                parameters: {
-                    type: 'object',
-                    properties: {
-                        question: {
-                            type: 'string',
-                            description: 'ユーザーへの質問'
-                        }
-                    },
-                    required: ['question']
-                }
-            }
-        ];
+            ];
+        }
     }
 
     /**
@@ -560,6 +536,25 @@ class AgentOrchestrator {
     async #executeTool(toolName, parameters) {
         console.log(`[AgentOrchestrator] ツール実行: ${toolName}`, parameters);
 
+        // AgentToolManagerが利用可能な場合はそれを使用
+        if (window.AgentToolManager) {
+            const toolManager = window.AgentToolManager.getInstance;
+            const tool = toolManager.getTool(toolName);
+
+            if (tool && tool.execute) {
+                try {
+                    return await tool.execute(parameters);
+                } catch (error) {
+                    console.error(`[AgentOrchestrator] ツール実行エラー: ${toolName}`, error);
+                    return {
+                        success: false,
+                        error: error.message
+                    };
+                }
+            }
+        }
+
+        // フォールバック: 組み込みの実行ロジック
         switch (toolName) {
             case 'web_search':
                 return await this.#executeWebSearch(parameters);
