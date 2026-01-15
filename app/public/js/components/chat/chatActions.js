@@ -266,6 +266,14 @@ class ChatActions {
                 return { error: 'No message content' };
             }
 
+            // エージェントモードのチェック
+            if (this.#isAgentModeEnabled() && this.#shouldUseAgent(userText)) {
+                // ユーザー入力をクリア
+                userInput.value = '';
+                UIUtils.getInstance.autoResizeTextarea(userInput);
+                return await this.#processWithAgent(userText, chatMessages, conversation, attachments);
+            }
+
             // ユーザー入力をクリア
             userInput.value = '';
             UIUtils.getInstance.autoResizeTextarea(userInput);
@@ -873,6 +881,163 @@ class ChatActions {
         
         // チャット履歴の表示を更新
         this.renderChatHistory();
+    }
+
+    // ========================================
+    // エージェントモード関連メソッド
+    // ========================================
+
+    /**
+     * エージェントモードが有効かどうかを確認
+     * @returns {boolean}
+     */
+    #isAgentModeEnabled() {
+        // CONFIG設定でエージェント機能が有効かどうか
+        const configEnabled = window.CONFIG?.AGENT?.ENABLED === true;
+        // UIでエージェントモードが選択されているかどうか
+        const uiEnabled = window.AppState?.agentMode != null;
+        return configEnabled && uiEnabled;
+    }
+
+    /**
+     * エージェントモードを使用すべきかどうかを判定
+     * @param {string} userText - ユーザー入力
+     * @returns {boolean}
+     */
+    #shouldUseAgent(userText) {
+        if (typeof AgentOrchestrator === 'undefined') {
+            return false;
+        }
+        return AgentOrchestrator.getInstance.shouldUseAgent(userText);
+    }
+
+    /**
+     * エージェントモードでメッセージを処理
+     * @param {string} userText - ユーザー入力
+     * @param {HTMLElement} chatMessages - チャットメッセージコンテナ
+     * @param {Object} conversation - 会話オブジェクト
+     * @param {Array} attachments - 添付ファイル
+     * @returns {Promise<Object>} 処理結果
+     */
+    async #processWithAgent(userText, chatMessages, conversation, attachments = []) {
+        console.log('[ChatActions] エージェントモードで処理開始');
+
+        let titleUpdated = false;
+        const timestamp = Date.now();
+
+        // ユーザーメッセージを表示
+        await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, attachments, timestamp);
+
+        // 添付ファイルの処理
+        let attachmentContent = '';
+        if (attachments && attachments.length > 0) {
+            const processedResult = await this.#processAttachments(attachments);
+            attachmentContent = processedResult.content;
+        }
+
+        const finalMessage = attachmentContent ? `${userText}\n\n${attachmentContent}` : userText;
+
+        // ユーザーメッセージを会話に追加
+        const userMessage = {
+            role: 'user',
+            content: finalMessage,
+            timestamp: timestamp
+        };
+        conversation.messages.push(userMessage);
+
+        // タイトル自動生成の判定
+        const shouldGenerateTitle = conversation.title === '新しいチャット' &&
+            conversation.messages.filter(m => m.role === 'user').length === 1;
+
+        // エージェントUIを作成
+        const agentUI = AgentUI.getInstance;
+        const agentContainer = agentUI.createAgentContainer(chatMessages);
+
+        // AbortControllerを作成
+        const abortController = window.AppState.createAbortController();
+        window.AppState.isStreaming = true;
+
+        const botTimestamp = Date.now();
+
+        try {
+            // エージェントを実行
+            const result = await AgentOrchestrator.getInstance.runAgent(userText, {
+                context: {
+                    conversation,
+                    attachments
+                },
+                onObserve: (data) => {
+                    agentUI.showObservation(agentContainer, data);
+                    agentUI.updateProgress(agentContainer, data.iteration, window.CONFIG?.AGENT?.MAX_ITERATIONS || 10);
+                },
+                onThink: (data) => {
+                    agentUI.showThought(agentContainer, data);
+                },
+                onAct: (data) => {
+                    agentUI.showAction(agentContainer, data);
+                },
+                onResult: (data) => {
+                    agentUI.showResult(agentContainer, data);
+                },
+                onComplete: (data) => {
+                    agentUI.finalizeAgent(agentContainer, data);
+                },
+                onError: (error) => {
+                    agentUI.showError(agentContainer, error);
+                }
+            });
+
+            // 最終回答を取得
+            let finalResponse = '';
+            if (result.success && result.result?.response) {
+                finalResponse = result.result.response;
+            } else if (result.success && result.result) {
+                finalResponse = typeof result.result === 'string' ? result.result : JSON.stringify(result.result);
+            } else if (result.error) {
+                finalResponse = `エージェント実行エラー: ${result.error}`;
+            } else {
+                finalResponse = 'エージェントの実行が完了しましたが、明確な回答が得られませんでした。';
+            }
+
+            // アシスタントメッセージを会話に追加
+            const assistantMessage = {
+                role: 'assistant',
+                content: finalResponse,
+                timestamp: botTimestamp,
+                agentData: {
+                    mode: AgentOrchestrator.getInstance.getMode(),
+                    iterations: result.iterations?.length || 0,
+                    summary: result.summary
+                }
+            };
+            conversation.messages.push(assistantMessage);
+
+            // アシスタントメッセージをチャットに表示（エージェントコンテナとは別）
+            if (finalResponse && finalResponse !== '') {
+                const { messageDiv, contentContainer } = ChatRenderer.getInstance.addStreamingBotMessage(chatMessages, botTimestamp);
+                ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, finalResponse, finalResponse, true);
+                ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, finalResponse);
+            }
+
+            // タイトル自動生成
+            if (shouldGenerateTitle) {
+                this.#generateAndUpdateTitle(conversation, userText).catch(err => {
+                    console.warn('[ChatActions] タイトル自動生成エラー:', err.message);
+                });
+                titleUpdated = true;
+            }
+
+            window.AppState.clearAbortController();
+
+            return { titleUpdated };
+
+        } catch (error) {
+            console.error('[ChatActions] エージェント実行エラー:', error);
+            agentUI.showError(agentContainer, error);
+            window.AppState.clearAbortController();
+
+            return { error: error.message };
+        }
     }
 }
 

@@ -1,0 +1,760 @@
+/**
+ * agent.css
+ * エージェント機能のスタイル
+ */
+
+/* ========================================
+   Agent Container
+   ======================================== */
+
+.agent-container {
+    background: var(--background-tertiary, #1e1e1e);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: var(--border-radius-lg, 12px);
+    margin: var(--spacing-md, 16px) 0;
+    overflow: hidden;
+    font-size: 14px;
+}
+
+/* ========================================
+   Agent Header
+   ======================================== */
+
+.agent-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+    background: var(--background-secondary, #252526);
+    border-bottom: 1px solid var(--border-color, #3a3a3a);
+}
+
+.agent-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm, 8px);
+}
+
+.agent-icon {
+    font-size: 18px;
+}
+
+.agent-title {
+    font-weight: 600;
+    color: var(--text-primary, #ffffff);
+}
+
+.agent-mode-badge {
+    background: var(--accent-color, #10a37f);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.agent-header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm, 8px);
+}
+
+.agent-progress-text {
+    color: var(--text-secondary, #a0a0a0);
+    font-size: 12px;
+}
+
+.agent-progress-text.success {
+    color: var(--success-color, #4caf50);
+}
+
+.agent-progress-text.error {
+    color: var(--error-color, #f44336);
+}
+
+.agent-toggle-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #a0a0a0);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background var(--transition-fast, 0.15s);
+}
+
+.agent-toggle-btn:hover {
+    background: var(--background-tertiary, #1e1e1e);
+}
+
+/* ========================================
+   Agent Content
+   ======================================== */
+
+.agent-content {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: var(--spacing-md, 16px);
+    transition: max-height var(--transition-normal, 0.3s);
+}
+
+.agent-content.collapsed {
+    max-height: 0;
+    padding: 0 var(--spacing-md, 16px);
+}
+
+.agent-iterations {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md, 16px);
+}
+
+/* ========================================
+   Iteration Card
+   ======================================== */
+
+.agent-iteration {
+    border-left: 3px solid var(--accent-color, #10a37f);
+    padding-left: var(--spacing-md, 16px);
+    margin-left: var(--spacing-sm, 8px);
+}
+
+.iteration-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm, 8px);
+}
+
+.iteration-number {
+    font-weight: 600;
+    color: var(--text-primary, #ffffff);
+    font-size: 13px;
+}
+
+.iteration-status {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--background-secondary, #252526);
+    color: var(--text-secondary, #a0a0a0);
+}
+
+.iteration-status.success {
+    background: rgba(76, 175, 80, 0.2);
+    color: var(--success-color, #4caf50);
+}
+
+.iteration-status.error {
+    background: rgba(244, 67, 54, 0.2);
+    color: var(--error-color, #f44336);
+}
+
+.iteration-phases {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm, 8px);
+}
+
+/* ========================================
+   Phase Styles
+   ======================================== */
+
+.agent-phase {
+    background: var(--background-secondary, #252526);
+    border-radius: var(--border-radius-md, 8px);
+    padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+    border-left: 3px solid transparent;
+}
+
+.agent-phase-observe {
+    border-left-color: #3498db;
+}
+
+.agent-phase-think {
+    border-left-color: #9b59b6;
+}
+
+.agent-phase-act {
+    border-left-color: #e67e22;
+}
+
+.agent-phase-result {
+    border-left-color: #27ae60;
+}
+
+.agent-phase-error {
+    border-left-color: #e74c3c;
+}
+
+.phase-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs, 4px);
+    margin-bottom: var(--spacing-xs, 4px);
+}
+
+.phase-icon {
+    font-size: 14px;
+}
+
+.phase-name {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.agent-phase-observe .phase-name { color: #3498db; }
+.agent-phase-think .phase-name { color: #9b59b6; }
+.agent-phase-act .phase-name { color: #e67e22; }
+.agent-phase-result .phase-name { color: #27ae60; }
+.agent-phase-error .phase-name { color: #e74c3c; }
+
+.phase-content {
+    color: var(--text-secondary, #a0a0a0);
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.content-reasoning,
+.content-response {
+    white-space: pre-wrap;
+}
+
+.content-output,
+.content-json {
+    background: var(--background-primary, #1a1a1a);
+    padding: var(--spacing-sm, 8px);
+    border-radius: var(--border-radius-sm, 4px);
+    font-family: var(--font-mono, 'Consolas', monospace);
+    font-size: 12px;
+    overflow-x: auto;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.content-error {
+    color: var(--error-color, #f44336);
+}
+
+/* ========================================
+   Agent Controls
+   ======================================== */
+
+.agent-controls {
+    padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+    background: var(--background-secondary, #252526);
+    border-top: 1px solid var(--border-color, #3a3a3a);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md, 16px);
+}
+
+.agent-controls.hidden {
+    display: none;
+}
+
+.agent-progress-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--background-tertiary, #1e1e1e);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.agent-progress-fill {
+    height: 100%;
+    background: var(--accent-color, #10a37f);
+    transition: width var(--transition-fast, 0.15s);
+    width: 0%;
+}
+
+.agent-control-buttons {
+    display: flex;
+    gap: var(--spacing-xs, 4px);
+}
+
+.agent-pause-btn,
+.agent-stop-btn {
+    background: transparent;
+    border: 1px solid var(--border-color, #3a3a3a);
+    color: var(--text-secondary, #a0a0a0);
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: var(--border-radius-sm, 4px);
+    transition: all var(--transition-fast, 0.15s);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.agent-pause-btn:hover {
+    background: rgba(16, 163, 127, 0.1);
+    border-color: var(--accent-color, #10a37f);
+    color: var(--accent-color, #10a37f);
+}
+
+.agent-stop-btn:hover {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: var(--error-color, #f44336);
+    color: var(--error-color, #f44336);
+}
+
+/* ========================================
+   Error Display
+   ======================================== */
+
+.agent-error {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm, 8px);
+    padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+    background: rgba(244, 67, 54, 0.1);
+    border-radius: var(--border-radius-md, 8px);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    margin-top: var(--spacing-sm, 8px);
+}
+
+.agent-error .error-icon {
+    font-size: 16px;
+}
+
+.agent-error .error-message {
+    color: var(--error-color, #f44336);
+    font-size: 13px;
+}
+
+/* ========================================
+   Final Response
+   ======================================== */
+
+.agent-final-response {
+    margin-top: var(--spacing-md, 16px);
+    padding: var(--spacing-md, 16px);
+    background: rgba(16, 163, 127, 0.1);
+    border: 1px solid rgba(16, 163, 127, 0.3);
+    border-radius: var(--border-radius-md, 8px);
+}
+
+.final-response-header {
+    font-weight: 600;
+    color: var(--accent-color, #10a37f);
+    margin-bottom: var(--spacing-sm, 8px);
+    font-size: 13px;
+}
+
+.final-response-content {
+    color: var(--text-primary, #ffffff);
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+/* ========================================
+   Summary
+   ======================================== */
+
+.agent-summary {
+    margin-top: var(--spacing-md, 16px);
+}
+
+.summary-details {
+    background: var(--background-secondary, #252526);
+    border-radius: var(--border-radius-md, 8px);
+    overflow: hidden;
+}
+
+.summary-details summary {
+    padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+    cursor: pointer;
+    color: var(--text-secondary, #a0a0a0);
+    font-size: 12px;
+    user-select: none;
+}
+
+.summary-details summary:hover {
+    background: var(--background-tertiary, #1e1e1e);
+}
+
+.summary-content {
+    padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+    border-top: 1px solid var(--border-color, #3a3a3a);
+}
+
+.summary-item {
+    display: flex;
+    gap: var(--spacing-sm, 8px);
+    margin-bottom: var(--spacing-xs, 4px);
+    font-size: 12px;
+}
+
+.summary-label {
+    color: var(--text-secondary, #a0a0a0);
+    min-width: 80px;
+}
+
+.summary-value {
+    color: var(--text-primary, #ffffff);
+}
+
+/* ========================================
+   Scrollbar Styles
+   ======================================== */
+
+.agent-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.agent-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.agent-content::-webkit-scrollbar-thumb {
+    background: var(--border-color, #3a3a3a);
+    border-radius: 3px;
+}
+
+.agent-content::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary, #a0a0a0);
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.agent-phase:last-child {
+    animation: pulse 1s ease-in-out;
+}
+
+/* ========================================
+   Agent Mode Toggle (for settings)
+   ======================================== */
+
+.agent-mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md, 16px);
+    padding: var(--spacing-sm, 8px);
+}
+
+.agent-mode-toggle label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs, 4px);
+    cursor: pointer;
+    color: var(--text-secondary, #a0a0a0);
+    font-size: 13px;
+}
+
+.agent-mode-toggle input[type="radio"] {
+    accent-color: var(--accent-color, #10a37f);
+}
+
+.agent-mode-toggle input[type="radio"]:checked + span {
+    color: var(--text-primary, #ffffff);
+}
+
+/* ========================================
+   Agent Mode Toggle Button (入力エリア用)
+   ======================================== */
+
+#agentModeToggle {
+    position: relative;
+}
+
+#agentModeToggle.active {
+    background: rgba(16, 163, 127, 0.2);
+    border-color: var(--accent-color, #10a37f);
+}
+
+#agentModeToggle.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: var(--accent-color, #10a37f);
+    border-radius: 50%;
+}
+
+/* Agent Mode Selector Dropdown */
+.agent-mode-selector {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 8px;
+    background: var(--background-secondary, #252526);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: var(--border-radius-md, 8px);
+    padding: var(--spacing-sm, 8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    min-width: 200px;
+}
+
+.agent-mode-selector.hidden {
+    display: none;
+}
+
+.agent-mode-selector-header {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary, #a0a0a0);
+    margin-bottom: var(--spacing-xs, 4px);
+    padding-bottom: var(--spacing-xs, 4px);
+    border-bottom: 1px solid var(--border-color, #3a3a3a);
+}
+
+.agent-mode-option {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm, 8px);
+    padding: var(--spacing-sm, 8px);
+    border-radius: var(--border-radius-sm, 4px);
+    cursor: pointer;
+    transition: background var(--transition-fast, 0.15s);
+}
+
+.agent-mode-option:hover {
+    background: var(--background-tertiary, #1e1e1e);
+}
+
+.agent-mode-option.selected {
+    background: rgba(16, 163, 127, 0.15);
+}
+
+.agent-mode-option input[type="radio"] {
+    accent-color: var(--accent-color, #10a37f);
+    margin: 0;
+}
+
+.agent-mode-option-content {
+    flex: 1;
+}
+
+.agent-mode-option-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary, #ffffff);
+}
+
+.agent-mode-option-desc {
+    font-size: 11px;
+    color: var(--text-secondary, #a0a0a0);
+    margin-top: 2px;
+}
+
+/* Agent Status Indicator */
+.agent-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs, 4px);
+    font-size: 12px;
+    color: var(--text-secondary, #a0a0a0);
+    padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+    background: var(--background-tertiary, #1e1e1e);
+    border-radius: var(--border-radius-sm, 4px);
+    margin-left: auto;
+}
+
+.agent-status-indicator.active {
+    color: var(--accent-color, #10a37f);
+}
+
+.agent-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.agent-status-dot.pulse {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ========================================
+   Step Indicator (ステップインジケーター)
+   ======================================== */
+
+.agent-step-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs, 4px);
+    margin-left: auto;
+    margin-right: var(--spacing-md, 16px);
+}
+
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    opacity: 0.4;
+    transition: opacity var(--transition-fast, 0.15s);
+}
+
+.step-item.active {
+    opacity: 1;
+}
+
+.step-item.active .step-icon {
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.step-item.completed {
+    opacity: 0.8;
+}
+
+.step-item.completed .step-icon {
+    color: var(--success-color, #4caf50);
+}
+
+.step-icon {
+    font-size: 16px;
+}
+
+.step-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+.step-connector {
+    width: 20px;
+    height: 2px;
+    background: var(--border-color, #3a3a3a);
+    transition: background var(--transition-fast, 0.15s);
+}
+
+.step-connector.completed {
+    background: var(--success-color, #4caf50);
+}
+
+/* ========================================
+   Elapsed Time (経過時間表示)
+   ======================================== */
+
+.agent-elapsed-time {
+    font-family: var(--font-mono, 'Consolas', monospace);
+    font-size: 12px;
+    color: var(--text-secondary, #a0a0a0);
+    background: var(--background-tertiary, #1e1e1e);
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm, 4px);
+    min-width: 50px;
+    text-align: center;
+}
+
+/* ========================================
+   Iteration Duration (イテレーション経過時間)
+   ======================================== */
+
+.iteration-duration {
+    font-family: var(--font-mono, 'Consolas', monospace);
+    font-size: 11px;
+    color: var(--text-secondary, #a0a0a0);
+    margin-left: auto;
+}
+
+/* ========================================
+   Tools Used (使用ツール一覧)
+   ======================================== */
+
+.agent-tools-used {
+    margin-top: var(--spacing-md, 16px);
+    padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+    background: var(--background-secondary, #252526);
+    border-radius: var(--border-radius-md, 8px);
+}
+
+.tools-used-header {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary, #a0a0a0);
+    margin-bottom: var(--spacing-sm, 8px);
+}
+
+.tools-used-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs, 4px);
+}
+
+.tool-badge {
+    background: var(--background-tertiary, #1e1e1e);
+    color: var(--text-primary, #ffffff);
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm, 4px);
+    font-size: 11px;
+    font-family: var(--font-mono, 'Consolas', monospace);
+    border: 1px solid var(--border-color, #3a3a3a);
+}
+
+.tool-badge:hover {
+    border-color: var(--accent-color, #10a37f);
+}
+
+/* ========================================
+   Enhanced Progress Bar
+   ======================================== */
+
+.agent-progress-bar {
+    position: relative;
+}
+
+.agent-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 100%
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.agent-progress-fill {
+    position: relative;
+    z-index: 1;
+}
+
+/* ========================================
+   Responsive Adjustments
+   ======================================== */
+
+@media (max-width: 768px) {
+    .agent-step-indicator {
+        display: none;
+    }
+
+    .agent-header {
+        flex-wrap: wrap;
+    }
+
+    .agent-mode-selector {
+        min-width: 180px;
+    }
+}

@@ -183,6 +183,254 @@ class AIAPI {
         }
         return ToolManager.getInstance.getToolsForProvider(provider);
     }
+
+    /**
+     * ツール付きでAI APIを呼び出す（エージェントモード用）
+     * Function Calling形式でツールを使用し、非ストリーミングで結果を取得
+     * @async
+     * @param {Message[]} messages - 会話メッセージの配列
+     * @param {string} model - 使用するモデル名
+     * @param {Array} tools - ツール定義の配列（Function Calling形式）
+     * @param {Object} [options={}] - 追加オプション
+     * @returns {Promise<Object>} APIからの応答（content, toolCalls を含む）
+     */
+    async callAIAPIWithTools(messages, model, tools = [], options = {}) {
+        const apiSettings = window.AppState?.apiSettings || window.apiSettings;
+
+        // プロバイダを判定
+        const provider = this.#getProviderForModel(model);
+
+        try {
+            let response;
+
+            if (provider === 'claude') {
+                response = await this.#callClaudeWithTools(messages, model, tools, options, apiSettings);
+            } else if (provider === 'gemini') {
+                response = await this.#callGeminiWithTools(messages, model, tools, options, apiSettings);
+            } else {
+                response = await this.#callOpenAIWithTools(messages, model, tools, options, apiSettings);
+            }
+
+            return response;
+
+        } catch (error) {
+            console.error('[AIAPI] ツール付きAPI呼び出しエラー:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * OpenAI API をツール付きで呼び出し
+     * @param {Array} messages
+     * @param {string} model
+     * @param {Array} tools
+     * @param {Object} options
+     * @param {Object} apiSettings
+     * @returns {Promise<Object>}
+     */
+    async #callOpenAIWithTools(messages, model, tools, options, apiSettings) {
+        const endpoint = window.CONFIG.AIAPI.ENDPOINTS.OPENAI;
+
+        const requestBody = {
+            model: model,
+            messages: messages,
+            temperature: window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature,
+            max_tokens: window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens
+        };
+
+        if (tools && tools.length > 0) {
+            requestBody.tools = tools;
+            requestBody.tool_choice = 'auto';
+        }
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiSettings.openaiApiKey}`
+            },
+            body: JSON.stringify(requestBody),
+            signal: options.signal
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`OpenAI API エラー: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        const message = data.choices?.[0]?.message;
+
+        return {
+            content: message?.content || '',
+            toolCalls: message?.tool_calls?.map(tc => ({
+                id: tc.id,
+                name: tc.function.name,
+                parameters: JSON.parse(tc.function.arguments || '{}')
+            })) || null
+        };
+    }
+
+    /**
+     * Claude API をツール付きで呼び出し
+     * @param {Array} messages
+     * @param {string} model
+     * @param {Array} tools
+     * @param {Object} options
+     * @param {Object} apiSettings
+     * @returns {Promise<Object>}
+     */
+    async #callClaudeWithTools(messages, model, tools, options, apiSettings) {
+        const endpoint = window.CONFIG.AIAPI.ENDPOINTS.CLAUDE;
+
+        // メッセージをClaude形式に変換
+        const systemMessage = messages.find(m => m.role === 'system');
+        const conversationMessages = messages.filter(m => m.role !== 'system');
+
+        // ツールをClaude形式に変換
+        const claudeTools = tools.map(t => ({
+            name: t.function.name,
+            description: t.function.description,
+            input_schema: t.function.parameters
+        }));
+
+        const requestBody = {
+            model: model,
+            max_tokens: window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens,
+            messages: conversationMessages.map(m => ({
+                role: m.role,
+                content: m.content
+            }))
+        };
+
+        if (systemMessage) {
+            requestBody.system = systemMessage.content;
+        }
+
+        if (claudeTools.length > 0) {
+            requestBody.tools = claudeTools;
+        }
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiSettings.claudeApiKey,
+                'anthropic-version': window.CONFIG.AIAPI.ANTHROPIC_API_VERSION
+            },
+            body: JSON.stringify(requestBody),
+            signal: options.signal
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Claude API エラー: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+
+        // レスポンスを解析
+        let content = '';
+        let toolCalls = null;
+
+        for (const block of data.content || []) {
+            if (block.type === 'text') {
+                content += block.text;
+            } else if (block.type === 'tool_use') {
+                if (!toolCalls) toolCalls = [];
+                toolCalls.push({
+                    id: block.id,
+                    name: block.name,
+                    parameters: block.input
+                });
+            }
+        }
+
+        return { content, toolCalls };
+    }
+
+    /**
+     * Gemini API をツール付きで呼び出し
+     * @param {Array} messages
+     * @param {string} model
+     * @param {Array} tools
+     * @param {Object} options
+     * @param {Object} apiSettings
+     * @returns {Promise<Object>}
+     */
+    async #callGeminiWithTools(messages, model, tools, options, apiSettings) {
+        const endpoint = `${window.CONFIG.AIAPI.ENDPOINTS.GEMINI}/${model}:generateContent?key=${apiSettings.geminiApiKey}`;
+
+        // メッセージをGemini形式に変換
+        const systemInstruction = messages.find(m => m.role === 'system');
+        const conversationMessages = messages.filter(m => m.role !== 'system');
+
+        const contents = conversationMessages.map(m => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.content }]
+        }));
+
+        // ツールをGemini形式に変換
+        const geminiTools = tools.length > 0 ? [{
+            function_declarations: tools.map(t => ({
+                name: t.function.name,
+                description: t.function.description,
+                parameters: t.function.parameters
+            }))
+        }] : undefined;
+
+        const requestBody = {
+            contents,
+            generationConfig: {
+                temperature: window.CONFIG.AIAPI.DEFAULT_PARAMS.temperature,
+                maxOutputTokens: window.CONFIG.AIAPI.GEMINI_PARAMS.maxOutputTokens
+            }
+        };
+
+        if (systemInstruction) {
+            requestBody.systemInstruction = { parts: [{ text: systemInstruction.content }] };
+        }
+
+        if (geminiTools) {
+            requestBody.tools = geminiTools;
+        }
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody),
+            signal: options.signal
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Gemini API エラー: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        const candidate = data.candidates?.[0];
+        const parts = candidate?.content?.parts || [];
+
+        let content = '';
+        let toolCalls = null;
+
+        for (const part of parts) {
+            if (part.text) {
+                content += part.text;
+            } else if (part.functionCall) {
+                if (!toolCalls) toolCalls = [];
+                toolCalls.push({
+                    id: `gemini_${Date.now()}_${toolCalls.length}`,
+                    name: part.functionCall.name,
+                    parameters: part.functionCall.args || {}
+                });
+            }
+        }
+
+        return { content, toolCalls };
+    }
 }
 
 

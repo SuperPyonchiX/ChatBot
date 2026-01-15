@@ -33,6 +33,7 @@
     <link rel="stylesheet" href="css/components/rag/knowledge-base.css">
     <link rel="stylesheet" href="css/components/rag/confluence-settings.css">
     <link rel="stylesheet" href="css/components/artifact/artifact-panel.css">
+    <link rel="stylesheet" href="css/components/agent/agent.css">
     <link rel="stylesheet" href="css/tools.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -143,6 +144,9 @@
                     <div class="main-input-area">
                         <textarea id="userInput" placeholder="メッセージを入力..." rows="1"></textarea>
                         <div class="input-actions">
+                            <button id="agentModeToggle" class="toggle-button" title="エージェントモードのON/OFF切替">
+                                <span>🤖</span>
+                            </button>
                             <button id="webSearchToggle" class="toggle-button" title="Web検索機能のON/OFF切替">
                                 <span>🌐</span>
                             </button>
@@ -722,7 +726,14 @@
     <script src="js/utils/markdown.js"></script>
     <script src="js/core/userprompts/promptManager.js"></script>
     <script src="js/core/userprompts/promptSuggestions.js"></script>
-    
+
+    <!-- エージェント関連のファイル -->
+    <script src="js/core/agent/agentMemory.js"></script>
+    <script src="js/core/agent/agentLoop.js"></script>
+    <script src="js/core/agent/agentToolSelector.js"></script>
+    <script src="js/core/agent/agentOrchestrator.js"></script>
+    <script src="js/components/agent/agentUI.js"></script>
+
     <!-- アーティファクト関連のファイル -->
     <script src="js/components/artifact/artifactDetector.js"></script>
     <script src="js/components/artifact/artifactManager.js"></script>

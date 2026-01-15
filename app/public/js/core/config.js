@@ -524,6 +524,165 @@ window.CONFIG = {
             proto: 'json',
             configure: 1
         }
+    },
+
+    /**
+     * エージェント機能設定
+     * ReAct推論およびFunction Callingベースの自律的タスク実行
+     */
+    AGENT: {
+        // エージェント機能の有効/無効
+        ENABLED: true,
+
+        // デフォルトの推論モード ('react' | 'function_calling')
+        DEFAULT_MODE: 'react',
+
+        // 最大イテレーション回数（無限ループ防止）
+        MAX_ITERATIONS: 10,
+
+        // イテレーションごとのタイムアウト（ミリ秒）
+        TIMEOUT_PER_ITERATION: 30000,
+
+        // メモリ設定
+        MEMORY: {
+            // 短期メモリの最大アイテム数
+            SHORT_TERM_LIMIT: 50,
+            // 長期メモリの最大アイテム数
+            LONG_TERM_LIMIT: 200,
+            // タスク履歴の最大数
+            TASK_HISTORY_LIMIT: 100,
+            // 永続化用ストレージキー
+            PERSISTENCE_KEY: 'agent_memory',
+            // IndexedDB設定
+            INDEXEDDB_NAME: 'AgentMemoryDB',
+            INDEXEDDB_STORE: 'memories',
+            // IndexedDBを使用するか（falseの場合LocalStorageにフォールバック）
+            USE_INDEXEDDB: true
+        },
+
+        // エージェント用システムプロンプト
+        PROMPTS: {
+            // ReActモード用システムプロンプト
+            REACT_SYSTEM: `あなたは自律的に問題を解決するAIエージェントです。
+以下のReAct形式で思考と行動を行ってください：
+
+1. **Thought（思考）**: 現在の状況を分析し、次に何をすべきか考える
+2. **Action（行動）**: 利用可能なツールを使って情報を取得または処理する
+3. **Observation（観察）**: ツールの実行結果を観察する
+4. **Repeat（繰り返し）**: 目標が達成されるまで1-3を繰り返す
+5. **Final Answer（最終回答）**: 十分な情報が集まったら最終回答を提示する
+
+利用可能なツール:
+{{tools}}
+
+重要なルール:
+- 常にThought → Action → Observationの順序を守る
+- 1回のレスポンスでは1つのアクションのみ実行する
+- 十分な情報が集まったらFinal Answerを返す
+- 最大{{max_iterations}}回のイテレーションで完了すること`,
+
+            // Function Callingモード用システムプロンプト
+            FC_SYSTEM: `あなたは自律的に問題を解決するAIエージェントです。
+与えられたタスクを達成するため、必要に応じてツールを呼び出してください。
+
+利用可能なツール:
+{{tools}}
+
+タスクを完了したら、最終的な回答を提供してください。`,
+
+            // 観察フェーズ用テンプレート
+            OBSERVE_TEMPLATE: `現在のタスク: {{task}}
+前回のアクション結果: {{last_result}}
+これまでの観察: {{observations}}`,
+
+            // 思考フェーズ用テンプレート
+            THINK_TEMPLATE: `観察結果に基づいて、次のアクションを決定してください。
+目標: {{goal}}
+現在の状態: {{state}}
+利用可能なツール: {{tools}}`
+        },
+
+        // ビルトインエージェントツール
+        TOOLS: {
+            // デフォルトで有効なビルトインツール
+            BUILTIN: ['web_search', 'code_execute', 'rag_search', 'ask_user', 'file_read'],
+            // ツール自動選択を有効にするか
+            AUTO_SELECT: true,
+            // ツール選択時の最大ツール数
+            MAX_TOOLS_PER_CALL: 5
+        },
+
+        // UIカスタマイズ
+        UI: {
+            // フェーズごとのアイコン
+            PHASE_ICONS: {
+                observe: '🔍',
+                think: '💭',
+                act: '⚡',
+                result: '✅',
+                error: '❌'
+            },
+            // 展開/折りたたみのデフォルト状態
+            DEFAULT_EXPANDED: true
+        }
+    },
+
+    /**
+     * ワークフロービルダー設定
+     * ビジュアルワークフローの構築と自動化
+     */
+    WORKFLOW: {
+        // ワークフロー機能の有効/無効
+        ENABLED: true,
+
+        // キャンバス内の最大ノード数
+        MAX_NODES: 100,
+
+        // キャンバス内の最大接続数
+        MAX_CONNECTIONS: 200,
+
+        // 実行設定
+        EXECUTION: {
+            // ワークフロー全体の最大実行時間（ミリ秒）
+            MAX_TIME: 300000,
+            // ノードごとのタイムアウト（ミリ秒）
+            NODE_TIMEOUT: 60000,
+            // リトライ回数
+            RETRY_COUNT: 3,
+            // リトライ間隔（ミリ秒）
+            RETRY_DELAY: 1000
+        },
+
+        // キャンバス設定
+        CANVAS: {
+            // グリッドサイズ（ピクセル）
+            GRID_SIZE: 20,
+            // グリッドスナップを有効にするか
+            SNAP_TO_GRID: true,
+            // 最小ズーム倍率
+            MIN_ZOOM: 0.25,
+            // 最大ズーム倍率
+            MAX_ZOOM: 2,
+            // デフォルトズーム倍率
+            DEFAULT_ZOOM: 1
+        },
+
+        // ストレージ設定
+        STORAGE: {
+            // IndexedDBデータベース名
+            DB_NAME: 'ChatBot_Workflows',
+            // データベースバージョン
+            DB_VERSION: 1
+        },
+
+        // ノードカテゴリ定義
+        NODE_CATEGORIES: [
+            { id: 'control', name: 'Control', displayName: '制御', icon: 'fa-cogs' },
+            { id: 'ai', name: 'AI', displayName: 'AI', icon: 'fa-brain' },
+            { id: 'data', name: 'Data', displayName: 'データ', icon: 'fa-database' },
+            { id: 'processing', name: 'Processing', displayName: '処理', icon: 'fa-cog' },
+            { id: 'integration', name: 'Integration', displayName: '連携', icon: 'fa-plug' }
+        ]
     }
 };
 

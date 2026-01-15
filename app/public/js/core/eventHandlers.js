@@ -87,6 +87,95 @@ class EventHandlers {
 
         // 履歴クリアボタン
         window.Elements.clearHistoryButton.addEventListener('click', ChatActions.getInstance.clearAllHistory.bind(ChatActions.getInstance));
+
+        // エージェントモード切り替えボタン
+        this.#setupAgentModeToggle();
+    }
+
+    /**
+     * エージェントモード切り替えのセットアップ
+     */
+    #setupAgentModeToggle() {
+        const agentModeToggle = document.getElementById('agentModeToggle');
+        if (!agentModeToggle) return;
+
+        // モード選択ドロップダウンを作成
+        const selector = document.createElement('div');
+        selector.className = 'agent-mode-selector hidden';
+        selector.innerHTML = `
+            <div class="agent-mode-selector-header">Agent Mode</div>
+            <label class="agent-mode-option">
+                <input type="radio" name="agentMode" value="off" checked>
+                <div class="agent-mode-option-content">
+                    <div class="agent-mode-option-label">OFF</div>
+                    <div class="agent-mode-option-desc">通常のチャットモード</div>
+                </div>
+            </label>
+            <label class="agent-mode-option">
+                <input type="radio" name="agentMode" value="react">
+                <div class="agent-mode-option-content">
+                    <div class="agent-mode-option-label">ReAct</div>
+                    <div class="agent-mode-option-desc">思考→行動の推論ループ</div>
+                </div>
+            </label>
+            <label class="agent-mode-option">
+                <input type="radio" name="agentMode" value="function_calling">
+                <div class="agent-mode-option-content">
+                    <div class="agent-mode-option-label">Function Calling</div>
+                    <div class="agent-mode-option-desc">API直接呼び出し方式</div>
+                </div>
+            </label>
+        `;
+
+        // トグルボタンの親要素に追加
+        agentModeToggle.parentElement.style.position = 'relative';
+        agentModeToggle.parentElement.appendChild(selector);
+
+        // トグルボタンクリック時にドロップダウン表示
+        agentModeToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selector.classList.toggle('hidden');
+        });
+
+        // ラジオボタン変更時
+        selector.querySelectorAll('input[name="agentMode"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const value = e.target.value;
+
+                if (value === 'off') {
+                    window.AppState.agentMode = null;
+                    agentModeToggle.classList.remove('active');
+                } else {
+                    window.AppState.agentMode = value;
+                    agentModeToggle.classList.add('active');
+
+                    // AgentOrchestratorのモードを設定
+                    if (typeof AgentOrchestrator !== 'undefined') {
+                        AgentOrchestrator.getInstance.setMode(value);
+                    }
+                }
+
+                // 選択状態のスタイル更新
+                selector.querySelectorAll('.agent-mode-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                e.target.closest('.agent-mode-option').classList.add('selected');
+
+                console.log(`[EventHandlers] エージェントモード変更: ${value}`);
+            });
+        });
+
+        // ドキュメントクリックでドロップダウンを閉じる
+        document.addEventListener('click', (e) => {
+            if (!selector.contains(e.target) && !agentModeToggle.contains(e.target)) {
+                selector.classList.add('hidden');
+            }
+        });
+
+        // AppStateにagentModeプロパティがなければ追加
+        if (typeof window.AppState.agentMode === 'undefined') {
+            window.AppState.agentMode = null;
+        }
     }
 
     /**
