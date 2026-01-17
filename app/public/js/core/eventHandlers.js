@@ -244,6 +244,17 @@ class EventHandlers {
                 }
             });
         }
+
+        // チャットフロービルダー
+        const openChatFlowBuilderBtn = document.getElementById('openChatFlowBuilder');
+        if (openChatFlowBuilderBtn) {
+            openChatFlowBuilderBtn.addEventListener('click', async () => {
+                window.Elements.settingsMenu.style.display = 'none';
+                if (typeof ChatFlowBuilderModal !== 'undefined') {
+                    await ChatFlowBuilderModal.getInstance.show();
+                }
+            });
+        }
     }
 
     /**

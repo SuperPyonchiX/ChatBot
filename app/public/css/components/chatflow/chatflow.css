@@ -1,0 +1,624 @@
+/**
+ * chatflow.css
+ * チャットフロービルダーのスタイル
+ */
+
+/* ========================================
+   モーダルオーバーレイ
+   ======================================== */
+.chatflow-builder-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chatflow-builder-modal.hidden {
+    display: none;
+}
+
+.chatflow-builder-container {
+    width: 95vw;
+    height: 90vh;
+    max-width: 1600px;
+    background: var(--background-primary, #1e1e1e);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+/* ========================================
+   ヘッダー
+   ======================================== */
+.chatflow-builder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: var(--background-secondary, #252526);
+    border-bottom: 1px solid var(--border-color, #3a3a3a);
+}
+
+.chatflow-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chatflow-title-icon {
+    font-size: 24px;
+}
+
+.chatflow-name-input {
+    background: var(--background-tertiary, #1a1a1a);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text-primary, #e0e0e0);
+    font-size: 16px;
+    font-weight: 500;
+    min-width: 250px;
+}
+
+.chatflow-name-input:focus {
+    outline: none;
+    border-color: var(--accent-color, #00d4aa);
+}
+
+.chatflow-header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.chatflow-action-btn {
+    background: var(--background-tertiary, #1a1a1a);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text-secondary, #aaa);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.chatflow-action-btn:hover {
+    background: var(--background-hover, #333);
+    color: var(--text-primary, #e0e0e0);
+}
+
+.chatflow-action-btn.primary {
+    background: var(--accent-color, #00d4aa);
+    border-color: var(--accent-color, #00d4aa);
+    color: white;
+}
+
+.chatflow-action-btn.primary:hover {
+    background: var(--accent-hover, #00e5bb);
+}
+
+.chatflow-close-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 12px;
+    color: var(--text-muted, #888);
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.chatflow-close-btn:hover {
+    color: var(--error-color, #f44336);
+}
+
+/* ========================================
+   メインコンテンツ
+   ======================================== */
+.chatflow-builder-main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* ========================================
+   ノードパレット
+   ======================================== */
+.chatflow-palette {
+    width: 200px;
+    background: var(--background-secondary, #252526);
+    border-right: 1px solid var(--border-color, #3a3a3a);
+    display: flex;
+    flex-direction: column;
+}
+
+.chatflow-palette-header {
+    padding: 12px 16px;
+    font-weight: 600;
+    color: var(--text-primary, #e0e0e0);
+    border-bottom: 1px solid var(--border-color, #3a3a3a);
+}
+
+.chatflow-palette-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.chatflow-palette-category {
+    margin-bottom: 12px;
+}
+
+.chatflow-palette-category-header {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-muted, #888);
+    padding: 8px 8px 4px;
+    letter-spacing: 0.5px;
+}
+
+.chatflow-palette-node {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--background-tertiary, #1a1a1a);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: 6px;
+    margin-bottom: 4px;
+    cursor: grab;
+    transition: all 0.15s ease;
+}
+
+.chatflow-palette-node:hover {
+    background: var(--background-hover, #333);
+    border-color: var(--accent-color, #00d4aa);
+}
+
+.chatflow-palette-node-icon {
+    font-size: 16px;
+}
+
+.chatflow-palette-node-name {
+    font-size: 13px;
+    color: var(--text-primary, #e0e0e0);
+}
+
+/* ========================================
+   キャンバス
+   ======================================== */
+.chatflow-canvas-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: var(--background-tertiary, #1a1a1a);
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.chatflow-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3000px;
+    height: 2000px;
+    transform-origin: 0 0;
+}
+
+.chatflow-connections {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.chatflow-connection-path {
+    fill: none;
+    stroke: var(--accent-color, #00d4aa);
+    stroke-width: 2;
+    pointer-events: stroke;
+    cursor: pointer;
+}
+
+.chatflow-connection-path:hover {
+    stroke-width: 4;
+    stroke: var(--error-color, #f44336);
+}
+
+.chatflow-nodes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* ========================================
+   ノード
+   ======================================== */
+.chatflow-node {
+    position: absolute;
+    min-width: 180px;
+    background: var(--background-secondary, #252526);
+    border: 2px solid var(--border-color, #3a3a3a);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    cursor: default;
+    transition: box-shadow 0.15s ease;
+}
+
+.chatflow-node:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.chatflow-node.selected {
+    box-shadow: 0 0 0 3px var(--accent-color, #00d4aa);
+}
+
+.chatflow-node-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px 6px 0 0;
+    cursor: grab;
+    color: white;
+}
+
+.chatflow-node-icon {
+    font-size: 16px;
+}
+
+.chatflow-node-name {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.chatflow-node-ports {
+    padding: 8px 0;
+}
+
+.chatflow-node-port {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    cursor: pointer;
+}
+
+.chatflow-node-port.input {
+    justify-content: flex-start;
+}
+
+.chatflow-node-port.output {
+    justify-content: flex-end;
+}
+
+.chatflow-port-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--text-muted, #888);
+    border-radius: 50%;
+    transition: all 0.15s ease;
+}
+
+.chatflow-node-port:hover .chatflow-port-dot {
+    background: var(--accent-color, #00d4aa);
+    transform: scale(1.2);
+}
+
+.chatflow-port-label {
+    font-size: 11px;
+    color: var(--text-secondary, #aaa);
+}
+
+/* ========================================
+   ズームコントロール
+   ======================================== */
+.chatflow-zoom-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--background-secondary, #252526);
+    padding: 6px 12px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.chatflow-zoom-btn {
+    width: 28px;
+    height: 28px;
+    background: var(--background-tertiary, #1a1a1a);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: 50%;
+    color: var(--text-primary, #e0e0e0);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.chatflow-zoom-btn:hover {
+    background: var(--accent-color, #00d4aa);
+    border-color: var(--accent-color, #00d4aa);
+}
+
+.chatflow-zoom-level {
+    font-size: 12px;
+    color: var(--text-secondary, #aaa);
+    min-width: 40px;
+    text-align: center;
+}
+
+/* ========================================
+   プロパティパネル
+   ======================================== */
+.chatflow-properties {
+    width: 280px;
+    background: var(--background-secondary, #252526);
+    border-left: 1px solid var(--border-color, #3a3a3a);
+    display: flex;
+    flex-direction: column;
+}
+
+.chatflow-properties-header {
+    padding: 12px 16px;
+    font-weight: 600;
+    color: var(--text-primary, #e0e0e0);
+    border-bottom: 1px solid var(--border-color, #3a3a3a);
+}
+
+.chatflow-properties-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.chatflow-properties-empty {
+    color: var(--text-muted, #888);
+    text-align: center;
+    padding: 20px;
+}
+
+.chatflow-property-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color, #3a3a3a);
+}
+
+.chatflow-delete-node-btn {
+    background: transparent;
+    border: 1px solid var(--error-color, #f44336);
+    color: var(--error-color, #f44336);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.chatflow-delete-node-btn:hover {
+    background: var(--error-color, #f44336);
+    color: white;
+}
+
+.chatflow-property-group {
+    margin-bottom: 16px;
+}
+
+.chatflow-property-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary, #aaa);
+    margin-bottom: 6px;
+}
+
+.chatflow-property-group input[type="text"],
+.chatflow-property-group input[type="number"],
+.chatflow-property-group textarea,
+.chatflow-property-group select {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--background-tertiary, #1a1a1a);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: 4px;
+    color: var(--text-primary, #e0e0e0);
+    font-size: 13px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.chatflow-property-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.chatflow-property-group input:focus,
+.chatflow-property-group textarea:focus,
+.chatflow-property-group select:focus {
+    outline: none;
+    border-color: var(--accent-color, #00d4aa);
+}
+
+.chatflow-property-group input[type="checkbox"] {
+    width: auto;
+}
+
+/* ========================================
+   フッター
+   ======================================== */
+.chatflow-builder-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: var(--background-secondary, #252526);
+    border-top: 1px solid var(--border-color, #3a3a3a);
+}
+
+.chatflow-status {
+    font-size: 13px;
+    color: var(--text-secondary, #aaa);
+}
+
+.chatflow-status.error {
+    color: var(--error-color, #f44336);
+}
+
+.chatflow-footer-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ========================================
+   フロー一覧ドロワー
+   ======================================== */
+.chatflow-list-drawer {
+    position: absolute;
+    left: 220px;
+    top: 60px;
+    bottom: 60px;
+    width: 400px;
+    background: var(--background-secondary, #252526);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+.chatflow-list-drawer.hidden {
+    display: none;
+}
+
+.chatflow-list-drawer .drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color, #3a3a3a);
+}
+
+.chatflow-list-drawer .drawer-title {
+    font-weight: 600;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.chatflow-list-drawer .drawer-close {
+    background: none;
+    border: none;
+    color: var(--text-muted, #888);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.chatflow-list-drawer .drawer-close:hover {
+    color: var(--text-primary, #e0e0e0);
+}
+
+.chatflow-list-drawer .drawer-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.chatflow-list-empty {
+    color: var(--text-muted, #888);
+    text-align: center;
+    padding: 20px;
+}
+
+.chatflow-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--background-tertiary, #1a1a1a);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.chatflow-list-item-name {
+    font-weight: 500;
+    color: var(--text-primary, #e0e0e0);
+    margin-bottom: 4px;
+}
+
+.chatflow-list-item-meta {
+    font-size: 11px;
+    color: var(--text-muted, #888);
+}
+
+.chatflow-list-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.chatflow-list-btn {
+    padding: 6px 12px;
+    background: var(--background-secondary, #252526);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: 4px;
+    color: var(--text-secondary, #aaa);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.chatflow-list-btn:hover {
+    background: var(--accent-color, #00d4aa);
+    border-color: var(--accent-color, #00d4aa);
+    color: white;
+}
+
+.chatflow-list-btn.danger:hover {
+    background: var(--error-color, #f44336);
+    border-color: var(--error-color, #f44336);
+}
+
+/* ========================================
+   レスポンシブ
+   ======================================== */
+@media (max-width: 1200px) {
+    .chatflow-palette {
+        width: 160px;
+    }
+
+    .chatflow-properties {
+        width: 240px;
+    }
+}
+
+@media (max-width: 900px) {
+    .chatflow-builder-main {
+        flex-direction: column;
+    }
+
+    .chatflow-palette,
+    .chatflow-properties {
+        width: 100%;
+        height: auto;
+        max-height: 200px;
+    }
+
+    .chatflow-canvas-container {
+        flex: 1;
+    }
+}

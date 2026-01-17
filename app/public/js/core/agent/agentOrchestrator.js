@@ -678,18 +678,49 @@ class AgentOrchestrator {
     /**
      * ユーザーに質問
      * @param {Object} params
+     * @param {string} params.question - 質問テキスト
+     * @param {string[]} [params.options] - 選択肢（任意）
      * @returns {Promise<Object>}
      */
     async #askUser(params) {
-        const { question } = params;
+        const { question, options } = params;
 
-        // ユーザー入力を待つ（この実装では単純に質問を返す）
-        // 実際の実装ではUIを通じてユーザー入力を取得する
-        return {
-            success: true,
-            needsUserInput: true,
-            question
-        };
+        try {
+            // AskUserDialogを使用してユーザー入力を取得
+            if (typeof AskUserDialog !== 'undefined') {
+                const response = await AskUserDialog.getInstance.ask({
+                    question,
+                    options: options || []
+                });
+
+                return {
+                    success: true,
+                    result: response
+                };
+            }
+
+            // AskUserDialogが利用できない場合はフォールバック
+            console.warn('[AgentOrchestrator] AskUserDialog が利用できません');
+            return {
+                success: true,
+                needsUserInput: true,
+                question
+            };
+        } catch (error) {
+            // ユーザーがキャンセルした場合
+            if (error.message === 'ユーザーがキャンセルしました') {
+                return {
+                    success: false,
+                    cancelled: true,
+                    error: 'ユーザーが入力をキャンセルしました'
+                };
+            }
+
+            return {
+                success: false,
+                error: error.message
+            };
+        }
     }
 
     /**

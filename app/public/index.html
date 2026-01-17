@@ -35,6 +35,7 @@
     <link rel="stylesheet" href="css/components/artifact/artifact-panel.css">
     <link rel="stylesheet" href="css/components/agent/agent.css">
     <link rel="stylesheet" href="css/components/workflow/workflow.css">
+    <link rel="stylesheet" href="css/components/chatflow/chatflow.css">
     <link rel="stylesheet" href="css/tools.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -121,6 +122,7 @@
                         <button id="openPromptManager">ユーザープロンプト管理</button>
                         <button id="openKnowledgeBase">ナレッジベース (RAG)</button>
                         <button id="openWorkflowBuilder">ワークフロービルダー</button>
+                        <button id="openChatFlowBuilder">チャットフロービルダー</button>
                         <button id="openApiSettings">API設定</button>
                     </div>
                 </div>
@@ -498,6 +500,90 @@
                 <!-- 統計情報はJSで動的に生成 -->
             </div>
 
+            <!-- RAG設定セクション -->
+            <details class="kb-settings-section">
+                <summary class="kb-settings-header">
+                    <i class="fas fa-cog"></i>
+                    <span>RAG設定</span>
+                </summary>
+                <div class="kb-settings-content">
+                    <!-- 埋め込みモード選択 -->
+                    <div class="kb-setting-group">
+                        <label class="kb-setting-label">
+                            <i class="fas fa-microchip"></i>
+                            埋め込みモード
+                        </label>
+                        <select id="kbEmbeddingMode" class="kb-select">
+                            <option value="local">ローカル (all-MiniLM-L6-v2, 384次元)</option>
+                            <option value="openai">OpenAI (text-embedding-3-large, 3072次元)</option>
+                            <option value="azure">Azure OpenAI (text-embedding-3-large, 3072次元)</option>
+                        </select>
+                        <p class="kb-setting-hint">モード変更時は既存ドキュメントの再埋め込みが必要です</p>
+                    </div>
+
+                    <!-- チャンクサイズ -->
+                    <div class="kb-setting-group">
+                        <label class="kb-setting-label">
+                            <i class="fas fa-cut"></i>
+                            チャンクサイズ: <span id="kbChunkSizeValue">500</span>文字
+                        </label>
+                        <input type="range" id="kbChunkSize" class="kb-slider" min="100" max="2000" value="500" step="50">
+                    </div>
+
+                    <!-- チャンクオーバーラップ -->
+                    <div class="kb-setting-group">
+                        <label class="kb-setting-label">
+                            <i class="fas fa-layer-group"></i>
+                            オーバーラップ: <span id="kbChunkOverlapValue">50</span>文字
+                        </label>
+                        <input type="range" id="kbChunkOverlap" class="kb-slider" min="0" max="200" value="50" step="10">
+                    </div>
+
+                    <!-- 類似度閾値 -->
+                    <div class="kb-setting-group">
+                        <label class="kb-setting-label">
+                            <i class="fas fa-balance-scale"></i>
+                            類似度閾値: <span id="kbSimilarityThresholdValue">0.3</span>
+                        </label>
+                        <input type="range" id="kbSimilarityThreshold" class="kb-slider" min="0.1" max="0.9" value="0.3" step="0.05">
+                    </div>
+
+                    <!-- TOP_K -->
+                    <div class="kb-setting-group">
+                        <label class="kb-setting-label">
+                            <i class="fas fa-list-ol"></i>
+                            検索結果数 (Top-K)
+                        </label>
+                        <select id="kbTopK" class="kb-select">
+                            <option value="3">3件</option>
+                            <option value="5" selected>5件</option>
+                            <option value="10">10件</option>
+                            <option value="15">15件</option>
+                            <option value="20">20件</option>
+                        </select>
+                    </div>
+                </div>
+            </details>
+
+            <!-- 検索テストセクション -->
+            <details class="kb-search-test-section">
+                <summary class="kb-settings-header">
+                    <i class="fas fa-search"></i>
+                    <span>検索テスト</span>
+                </summary>
+                <div class="kb-search-test-content">
+                    <div class="kb-search-input-group">
+                        <input type="text" id="kbSearchQuery" class="kb-search-input" placeholder="検索クエリを入力...">
+                        <button id="kbSearchBtn" class="kb-search-btn">
+                            <i class="fas fa-search"></i> 検索
+                        </button>
+                    </div>
+                    <div id="kbSearchResults" class="kb-search-results">
+                        <!-- 検索結果はJSで動的に生成 -->
+                    </div>
+                </div>
+            </details>
+
             <!-- データソースタブ -->
             <div class="kb-datasource-tabs">
                 <button id="kbFileTab" class="kb-tab active">
@@ -743,6 +829,7 @@
     <script src="js/core/agent/tools/agentToolManager.js"></script>
     <script src="js/core/agent/agentOrchestrator.js"></script>
     <script src="js/components/agent/agentUI.js"></script>
+    <script src="js/components/agent/askUserDialog.js"></script>
 
     <!-- ワークフロー関連のファイル -->
     <script src="js/core/workflow/nodeRegistry.js"></script>
@@ -752,6 +839,13 @@
     <script src="js/components/workflow/nodePalette.js"></script>
     <script src="js/components/workflow/propertiesPanel.js"></script>
     <script src="js/modals/workflowBuilder/workflowBuilderModal.js"></script>
+
+    <!-- チャットフロー関連のファイル -->
+    <script src="js/core/chatflow/chatFlowNodes.js"></script>
+    <script src="js/core/chatflow/chatFlowSession.js"></script>
+    <script src="js/core/chatflow/chatFlowEngine.js"></script>
+    <script src="js/core/chatflow/chatFlowStorage.js"></script>
+    <script src="js/modals/chatFlowBuilder/chatFlowBuilderModal.js"></script>
 
     <!-- アーティファクト関連のファイル -->
     <script src="js/components/artifact/artifactDetector.js"></script>

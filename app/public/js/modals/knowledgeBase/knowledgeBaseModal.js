@@ -190,6 +190,223 @@ class KnowledgeBaseModal {
         if (spaceSelect) {
             spaceSelect.addEventListener('change', (e) => this.#handleSpaceChange(e));
         }
+
+        // ========================================
+        // RAG設定関連イベントリスナー
+        // ========================================
+        this.#setupRAGSettingsListeners();
+
+        // ========================================
+        // 検索テスト関連イベントリスナー
+        // ========================================
+        this.#setupSearchTestListeners();
+    }
+
+    /**
+     * RAG設定のイベントリスナーをセットアップ
+     */
+    #setupRAGSettingsListeners() {
+        // 埋め込みモード変更
+        const embeddingModeSelect = document.getElementById('kbEmbeddingMode');
+        if (embeddingModeSelect) {
+            embeddingModeSelect.addEventListener('change', (e) => this.#handleEmbeddingModeChange(e));
+        }
+
+        // チャンクサイズスライダー
+        const chunkSizeSlider = document.getElementById('kbChunkSize');
+        const chunkSizeValue = document.getElementById('kbChunkSizeValue');
+        if (chunkSizeSlider && chunkSizeValue) {
+            chunkSizeSlider.addEventListener('input', (e) => {
+                chunkSizeValue.textContent = e.target.value;
+            });
+            chunkSizeSlider.addEventListener('change', (e) => {
+                this.#saveRAGSetting('CHUNK_SIZE', parseInt(e.target.value));
+            });
+        }
+
+        // チャンクオーバーラップスライダー
+        const overlapSlider = document.getElementById('kbChunkOverlap');
+        const overlapValue = document.getElementById('kbChunkOverlapValue');
+        if (overlapSlider && overlapValue) {
+            overlapSlider.addEventListener('input', (e) => {
+                overlapValue.textContent = e.target.value;
+            });
+            overlapSlider.addEventListener('change', (e) => {
+                this.#saveRAGSetting('CHUNK_OVERLAP', parseInt(e.target.value));
+            });
+        }
+
+        // 類似度閾値スライダー
+        const thresholdSlider = document.getElementById('kbSimilarityThreshold');
+        const thresholdValue = document.getElementById('kbSimilarityThresholdValue');
+        if (thresholdSlider && thresholdValue) {
+            thresholdSlider.addEventListener('input', (e) => {
+                thresholdValue.textContent = e.target.value;
+            });
+            thresholdSlider.addEventListener('change', (e) => {
+                this.#saveRAGSetting('SIMILARITY_THRESHOLD', parseFloat(e.target.value));
+            });
+        }
+
+        // TOP_K変更
+        const topKSelect = document.getElementById('kbTopK');
+        if (topKSelect) {
+            topKSelect.addEventListener('change', (e) => {
+                this.#saveRAGSetting('TOP_K', parseInt(e.target.value));
+            });
+        }
+    }
+
+    /**
+     * 検索テストのイベントリスナーをセットアップ
+     */
+    #setupSearchTestListeners() {
+        const searchBtn = document.getElementById('kbSearchBtn');
+        const searchInput = document.getElementById('kbSearchQuery');
+
+        if (searchBtn) {
+            searchBtn.addEventListener('click', () => this.#performSearchTest());
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.#performSearchTest();
+                }
+            });
+        }
+    }
+
+    /**
+     * 埋め込みモード変更ハンドラー
+     * @param {Event} e
+     */
+    async #handleEmbeddingModeChange(e) {
+        const newMode = e.target.value;
+        const currentMode = await this.#getCurrentEmbeddingMode();
+
+        if (newMode !== currentMode) {
+            const stats = await RAGManager.getInstance.getStats();
+
+            if (stats.documentCount > 0) {
+                const confirmed = confirm(
+                    `埋め込みモードを変更すると、既存の ${stats.documentCount} 件のドキュメントは再埋め込みが必要になります。\n\n` +
+                    `注意: 異なる次元数のため、既存の埋め込みは使用できません。\n` +
+                    `既存のドキュメントを削除して新しいモードに切り替えますか？`
+                );
+
+                if (!confirmed) {
+                    e.target.value = currentMode;
+                    return;
+                }
+
+                // 既存データをクリア
+                await RAGManager.getInstance.clearAll();
+            }
+
+            // モードを変更
+            if (typeof EmbeddingAPI !== 'undefined') {
+                await EmbeddingAPI.getInstance.setMode(newMode);
+            }
+
+            this.#saveRAGSetting('EMBEDDING_MODE', newMode);
+            await this.#refreshUI();
+        }
+    }
+
+    /**
+     * 現在の埋め込みモードを取得
+     * @returns {Promise<string>}
+     */
+    async #getCurrentEmbeddingMode() {
+        const stored = Storage.getInstance.get('RAG_EMBEDDING_MODE');
+        return stored || 'local';
+    }
+
+    /**
+     * RAG設定を保存
+     * @param {string} key
+     * @param {*} value
+     */
+    #saveRAGSetting(key, value) {
+        Storage.getInstance.set(`RAG_${key}`, value);
+        console.log(`[KnowledgeBaseModal] RAG設定保存: ${key} = ${value}`);
+    }
+
+    /**
+     * 検索テストを実行
+     */
+    async #performSearchTest() {
+        const queryInput = document.getElementById('kbSearchQuery');
+        const resultsContainer = document.getElementById('kbSearchResults');
+        const searchBtn = document.getElementById('kbSearchBtn');
+
+        if (!queryInput || !resultsContainer) return;
+
+        const query = queryInput.value.trim();
+        if (!query) {
+            resultsContainer.innerHTML = '<div class="kb-search-empty">検索クエリを入力してください</div>';
+            return;
+        }
+
+        // ローディング表示
+        resultsContainer.innerHTML = '<div class="kb-search-loading"><i class="fas fa-spinner"></i> 検索中...</div>';
+        if (searchBtn) searchBtn.disabled = true;
+
+        try {
+            // RAGManagerで検索
+            const results = await RAGManager.getInstance.search(query);
+
+            if (!results || results.length === 0) {
+                resultsContainer.innerHTML = '<div class="kb-search-empty">結果が見つかりませんでした</div>';
+                return;
+            }
+
+            // 結果を表示
+            resultsContainer.innerHTML = results.map((result, index) => `
+                <div class="kb-search-result-item">
+                    <div class="kb-search-result-header">
+                        <span class="kb-search-result-source">
+                            #${index + 1} ${this.#escapeHtml(result.docName || '不明なドキュメント')}
+                        </span>
+                        <span class="kb-search-result-score">
+                            類似度: ${(result.similarity * 100).toFixed(1)}%
+                        </span>
+                    </div>
+                    <div class="kb-search-result-text">${this.#escapeHtml(this.#truncateText(result.text, 300))}</div>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            console.error('[KnowledgeBaseModal] 検索テストエラー:', error);
+            resultsContainer.innerHTML = `<div class="kb-search-empty">エラー: ${this.#escapeHtml(error.message)}</div>`;
+        } finally {
+            if (searchBtn) searchBtn.disabled = false;
+        }
+    }
+
+    /**
+     * テキストを切り詰める
+     * @param {string} text
+     * @param {number} maxLength
+     * @returns {string}
+     */
+    #truncateText(text, maxLength) {
+        if (!text) return '';
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+    }
+
+    /**
+     * HTMLエスケープ
+     * @param {string} text
+     * @returns {string}
+     */
+    #escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     /**
@@ -215,6 +432,53 @@ class KnowledgeBaseModal {
         await this.#updateStats();
         await this.#renderDocumentList();
         await this.#checkEmbeddingAvailability();
+        await this.#loadRAGSettings();
+    }
+
+    /**
+     * RAG設定をUIに読み込む
+     */
+    async #loadRAGSettings() {
+        // 埋め込みモード
+        const embeddingModeSelect = document.getElementById('kbEmbeddingMode');
+        if (embeddingModeSelect) {
+            const mode = await this.#getCurrentEmbeddingMode();
+            embeddingModeSelect.value = mode;
+        }
+
+        // チャンクサイズ
+        const chunkSizeSlider = document.getElementById('kbChunkSize');
+        const chunkSizeValue = document.getElementById('kbChunkSizeValue');
+        if (chunkSizeSlider && chunkSizeValue) {
+            const size = Storage.getInstance.get('RAG_CHUNK_SIZE') || 500;
+            chunkSizeSlider.value = size;
+            chunkSizeValue.textContent = size;
+        }
+
+        // チャンクオーバーラップ
+        const overlapSlider = document.getElementById('kbChunkOverlap');
+        const overlapValue = document.getElementById('kbChunkOverlapValue');
+        if (overlapSlider && overlapValue) {
+            const overlap = Storage.getInstance.get('RAG_CHUNK_OVERLAP') || 50;
+            overlapSlider.value = overlap;
+            overlapValue.textContent = overlap;
+        }
+
+        // 類似度閾値
+        const thresholdSlider = document.getElementById('kbSimilarityThreshold');
+        const thresholdValue = document.getElementById('kbSimilarityThresholdValue');
+        if (thresholdSlider && thresholdValue) {
+            const threshold = Storage.getInstance.get('RAG_SIMILARITY_THRESHOLD') || 0.3;
+            thresholdSlider.value = threshold;
+            thresholdValue.textContent = threshold;
+        }
+
+        // TOP_K
+        const topKSelect = document.getElementById('kbTopK');
+        if (topKSelect) {
+            const topK = Storage.getInstance.get('RAG_TOP_K') || 5;
+            topKSelect.value = topK;
+        }
     }
 
     /**

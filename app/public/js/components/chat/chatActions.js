@@ -266,6 +266,14 @@ class ChatActions {
                 return { error: 'No message content' };
             }
 
+            // チャットフローモードのチェック
+            if (this.#isChatFlowModeEnabled()) {
+                // ユーザー入力をクリア
+                userInput.value = '';
+                UIUtils.getInstance.autoResizeTextarea(userInput);
+                return await this.#processWithChatFlow(userText, chatMessages, conversation, attachments);
+            }
+
             // エージェントモードのチェック
             if (this.#isAgentModeEnabled() && this.#shouldUseAgent(userText)) {
                 // ユーザー入力をクリア
@@ -894,8 +902,9 @@ class ChatActions {
     #isAgentModeEnabled() {
         // CONFIG設定でエージェント機能が有効かどうか
         const configEnabled = window.CONFIG?.AGENT?.ENABLED === true;
-        // UIでエージェントモードが選択されているかどうか
-        const uiEnabled = window.AppState?.agentMode != null;
+        // UIでエージェントモードが選択されているかどうか（react または function_calling）
+        const agentMode = window.AppState?.agentMode;
+        const uiEnabled = agentMode === 'react' || agentMode === 'function_calling';
         return configEnabled && uiEnabled;
     }
 
@@ -1035,6 +1044,137 @@ class ChatActions {
             console.error('[ChatActions] エージェント実行エラー:', error);
             agentUI.showError(agentContainer, error);
             window.AppState.clearAbortController();
+
+            return { error: error.message };
+        }
+    }
+
+    // ========================================
+    // チャットフローモード関連メソッド
+    // ========================================
+
+    /**
+     * チャットフローモードが有効かどうかを確認
+     * @returns {boolean}
+     */
+    #isChatFlowModeEnabled() {
+        // CONFIG設定でチャットフロー機能が有効かどうか
+        const configEnabled = window.CONFIG?.CHATFLOW?.ENABLED === true;
+        // ChatFlowEngineが利用可能でアクティブなセッションがあるかどうか
+        if (!configEnabled || typeof ChatFlowEngine === 'undefined') {
+            return false;
+        }
+        // 現在の会話IDでアクティブなセッションがあるか確認
+        const conversationId = window.AppState?.currentConversationId;
+        if (!conversationId) {
+            return false;
+        }
+        return ChatFlowEngine.getInstance.hasActiveSession(conversationId);
+    }
+
+    /**
+     * チャットフローモードでメッセージを処理
+     * @param {string} userText - ユーザー入力
+     * @param {HTMLElement} chatMessages - チャットメッセージコンテナ
+     * @param {Object} conversation - 会話オブジェクト
+     * @param {Array} attachments - 添付ファイル
+     * @returns {Promise<Object>} 処理結果
+     */
+    async #processWithChatFlow(userText, chatMessages, conversation, attachments = []) {
+        console.log('[ChatActions] チャットフローモードで処理開始');
+
+        let titleUpdated = false;
+        const timestamp = Date.now();
+
+        // ユーザーメッセージを表示
+        await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, attachments, timestamp);
+
+        // 添付ファイルの処理
+        let attachmentContent = '';
+        if (attachments && attachments.length > 0) {
+            const processedResult = await this.#processAttachments(attachments);
+            attachmentContent = processedResult.content;
+        }
+
+        const finalMessage = attachmentContent ? `${userText}\n\n${attachmentContent}` : userText;
+
+        // ユーザーメッセージを会話に追加
+        const userMessage = {
+            role: 'user',
+            content: finalMessage,
+            timestamp: timestamp
+        };
+        conversation.messages.push(userMessage);
+
+        // タイトル自動生成の判定
+        const shouldGenerateTitle = conversation.title === '新しいチャット' &&
+            conversation.messages.filter(m => m.role === 'user').length === 1;
+
+        const botTimestamp = Date.now();
+
+        try {
+            // ChatFlowEngineにユーザー入力を渡す
+            const chatFlowEngine = ChatFlowEngine.getInstance;
+
+            // 現在の会話に関連するセッションを取得
+            const session = chatFlowEngine.getSessionByConversationId(conversation.id);
+            if (!session) {
+                throw new Error('アクティブなチャットフローセッションがありません');
+            }
+
+            // ストリーミング用のボットメッセージを表示
+            const { messageDiv, contentContainer } = ChatRenderer.getInstance.addStreamingBotMessage(chatMessages, botTimestamp);
+
+            let fullResponseText = '';
+
+            // ChatFlowEngineからの出力をリッスン
+            const outputHandler = (data) => {
+                if (data.content) {
+                    fullResponseText += data.content;
+                    ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, data.content, fullResponseText, fullResponseText === data.content);
+                }
+            };
+
+            chatFlowEngine.on('output', outputHandler);
+
+            // ユーザー入力を処理（セッションIDを渡す）
+            const result = await chatFlowEngine.processUserInput(session.sessionId, userText);
+
+            chatFlowEngine.off('output', outputHandler);
+
+            // ストリーミング完了
+            ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, fullResponseText);
+
+            // アシスタントメッセージを会話に追加
+            if (fullResponseText) {
+                const assistantMessage = {
+                    role: 'assistant',
+                    content: fullResponseText,
+                    timestamp: botTimestamp,
+                    chatFlowData: {
+                        flowId: result.flowId,
+                        sessionId: result.sessionId,
+                        nodeId: result.currentNodeId
+                    }
+                };
+                conversation.messages.push(assistantMessage);
+            }
+
+            // タイトル自動生成
+            if (shouldGenerateTitle) {
+                this.#generateAndUpdateTitle(conversation, userText).catch(err => {
+                    console.warn('[ChatActions] タイトル自動生成エラー:', err.message);
+                });
+                titleUpdated = true;
+            }
+
+            return { titleUpdated };
+
+        } catch (error) {
+            console.error('[ChatActions] チャットフロー実行エラー:', error);
+
+            // エラーメッセージを表示
+            this.#showErrorMessage(`チャットフロー実行エラー: ${error.message}`, chatMessages);
 
             return { error: error.message };
         }

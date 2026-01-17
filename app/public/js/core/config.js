@@ -683,6 +683,78 @@ window.CONFIG = {
             { id: 'processing', name: 'Processing', displayName: '処理', icon: 'fa-cog' },
             { id: 'integration', name: 'Integration', displayName: '連携', icon: 'fa-plug' }
         ]
+    },
+
+    /**
+     * チャットフロービルダー設定
+     * マルチターン会話フローの構築と管理
+     */
+    CHATFLOW: {
+        // チャットフロー機能の有効/無効
+        ENABLED: true,
+
+        // キャンバス内の最大ノード数
+        MAX_NODES: 50,
+
+        // キャンバス内の最大接続数
+        MAX_CONNECTIONS: 100,
+
+        // セッション設定
+        SESSION: {
+            // セッションの最大メッセージ数
+            MAX_MESSAGES: 100,
+            // セッション変数の最大数
+            MAX_VARIABLES: 50,
+            // セッションタイムアウト（ミリ秒、0=無制限）
+            TIMEOUT: 0,
+            // セッション永続化を有効にするか
+            PERSISTENCE: true
+        },
+
+        // 実行設定
+        EXECUTION: {
+            // フロー全体の最大実行時間（ミリ秒）
+            MAX_TIME: 600000,
+            // ノードごとのタイムアウト（ミリ秒）
+            NODE_TIMEOUT: 60000,
+            // ユーザー入力待機の最大時間（ミリ秒、0=無制限）
+            INPUT_WAIT_TIMEOUT: 0
+        },
+
+        // キャンバス設定
+        CANVAS: {
+            // グリッドサイズ（ピクセル）
+            GRID_SIZE: 20,
+            // グリッドスナップを有効にするか
+            SNAP_TO_GRID: true,
+            // 最小ズーム倍率
+            MIN_ZOOM: 0.25,
+            // 最大ズーム倍率
+            MAX_ZOOM: 2,
+            // デフォルトズーム倍率
+            DEFAULT_ZOOM: 1
+        },
+
+        // ストレージ設定
+        STORAGE: {
+            // IndexedDBデータベース名
+            DB_NAME: 'ChatBot_ChatFlows',
+            // データベースバージョン
+            DB_VERSION: 1,
+            // セッションストア名
+            SESSION_STORE: 'sessions',
+            // フロー定義ストア名
+            FLOW_STORE: 'flows'
+        },
+
+        // ノードカテゴリ定義
+        NODE_CATEGORIES: [
+            { id: 'control', name: 'Control', displayName: '制御', icon: 'fa-cogs' },
+            { id: 'ai', name: 'AI', displayName: 'AI', icon: 'fa-brain' },
+            { id: 'io', name: 'IO', displayName: '入出力', icon: 'fa-comments' },
+            { id: 'logic', name: 'Logic', displayName: 'ロジック', icon: 'fa-code-branch' },
+            { id: 'processing', name: 'Processing', displayName: '処理', icon: 'fa-cog' }
+        ]
     }
 };
 
