@@ -5,17 +5,40 @@
 
 .typing-dots span {
     display: inline-block;
-    animation: typingDot var(--animation-duration-slow) infinite;
-    opacity: 0;
-    margin: 0 var(--spacing-xs);
+    width: 6px;
+    height: 6px;
+    background: #b4b4b4;
+    background: var(--text-secondary, #b4b4b4);
+    border-radius: 50%;
+    margin: 0 4px;
+    margin: 0 var(--spacing-xs, 4px);
+
+    /* ベンダープレフィックス付きアニメーション */
+    -webkit-animation: typingDot 1.4s ease-in-out infinite;
+    animation: typingDot 1.4s ease-in-out infinite;
+    animation: typingDot var(--animation-duration-slow, 1.4s) ease-in-out infinite;
+
+    /* ハードウェアアクセラレーション */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: opacity;
 }
 
 .typing-dots span:nth-child(2) {
+    -webkit-animation-delay: 0.2s;
     animation-delay: 0.2s;
 }
 
 .typing-dots span:nth-child(3) {
+    -webkit-animation-delay: 0.4s;
     animation-delay: 0.4s;
+}
+
+/* WebKit用キーフレーム */
+@-webkit-keyframes typingDot {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
 }
 
 @keyframes typingDot {

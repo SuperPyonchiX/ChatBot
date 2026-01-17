@@ -442,43 +442,7 @@
     margin-right: var(--spacing-sm);
 }
 
-.typing-dots {
-    display: inline-flex;
-    gap: 4px;
-    margin-left: 4px;
-}
-
-.typing-dots span {
-    width: 6px;
-    height: 6px;
-    background-color: var(--text-tertiary);
-    border-radius: 50%;
-    animation: typingDot 1.4s infinite;
-    opacity: 0.4;
-}
-
-.typing-dots span:nth-child(1) {
-    animation-delay: 0s;
-}
-
-.typing-dots span:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.typing-dots span:nth-child(3) {
-    animation-delay: 0.4s;
-}
-
-@keyframes typingDot {
-    0%, 100% {
-        opacity: 0.4;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 1;
-        transform: scale(1.2);
-    }
-}
+/* .typing-dots スタイルは typing.css に統合済み */
 
 /* カーソル点滅 */
 .markdown-content.typing::after {
