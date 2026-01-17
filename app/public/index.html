@@ -34,6 +34,7 @@
     <link rel="stylesheet" href="css/components/rag/confluence-settings.css">
     <link rel="stylesheet" href="css/components/artifact/artifact-panel.css">
     <link rel="stylesheet" href="css/components/agent/agent.css">
+    <link rel="stylesheet" href="css/components/workflow/workflow.css">
     <link rel="stylesheet" href="css/tools.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -119,6 +120,7 @@
                         <button id="openSystemPromptSettings">システムプロンプト設定</button>
                         <button id="openPromptManager">ユーザープロンプト管理</button>
                         <button id="openKnowledgeBase">ナレッジベース (RAG)</button>
+                        <button id="openWorkflowBuilder">ワークフロービルダー</button>
                         <button id="openApiSettings">API設定</button>
                     </div>
                 </div>
@@ -741,6 +743,15 @@
     <script src="js/core/agent/tools/agentToolManager.js"></script>
     <script src="js/core/agent/agentOrchestrator.js"></script>
     <script src="js/components/agent/agentUI.js"></script>
+
+    <!-- ワークフロー関連のファイル -->
+    <script src="js/core/workflow/nodeRegistry.js"></script>
+    <script src="js/core/workflow/workflowEngine.js"></script>
+    <script src="js/core/workflow/workflowStorage.js"></script>
+    <script src="js/components/workflow/workflowCanvas.js"></script>
+    <script src="js/components/workflow/nodePalette.js"></script>
+    <script src="js/components/workflow/propertiesPanel.js"></script>
+    <script src="js/modals/workflowBuilder/workflowBuilderModal.js"></script>
 
     <!-- アーティファクト関連のファイル -->
     <script src="js/components/artifact/artifactDetector.js"></script>

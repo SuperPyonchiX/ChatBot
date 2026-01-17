@@ -433,4 +433,5 @@ class AIAPI {
     }
 }
 
-
+// グローバルに公開
+window.AIAPI = AIAPI;

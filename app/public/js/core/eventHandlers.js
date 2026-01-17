@@ -233,6 +233,17 @@ class EventHandlers {
                 KnowledgeBaseModal.getInstance.showModal();
             });
         }
+
+        // ワークフロービルダー
+        const openWorkflowBuilderBtn = document.getElementById('openWorkflowBuilder');
+        if (openWorkflowBuilderBtn) {
+            openWorkflowBuilderBtn.addEventListener('click', async () => {
+                window.Elements.settingsMenu.style.display = 'none';
+                if (typeof WorkflowBuilderModal !== 'undefined') {
+                    await WorkflowBuilderModal.getInstance.show();
+                }
+            });
+        }
     }
 
     /**
