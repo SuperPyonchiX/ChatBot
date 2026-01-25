@@ -46,6 +46,9 @@ class AgentOrchestrator {
     /** @type {number} */
     #maxIterations;
 
+    /** @type {number} */
+    #timeoutPerIteration;
+
     /** @type {boolean} */
     #isRunning = false;
 
@@ -70,6 +73,7 @@ class AgentOrchestrator {
         const config = window.CONFIG?.AGENT || {};
         this.#mode = config.DEFAULT_MODE || AgentOrchestrator.MODES.REACT;
         this.#maxIterations = config.MAX_ITERATIONS || 10;
+        this.#timeoutPerIteration = config.TIMEOUT_PER_ITERATION || 30000;
 
         this.#initializeBuiltInTools();
     }
@@ -380,6 +384,22 @@ class AgentOrchestrator {
      */
     getMaxIterations() {
         return this.#maxIterations;
+    }
+
+    /**
+     * イテレーションごとのタイムアウトを設定
+     * @param {number} timeout - タイムアウト（ミリ秒）
+     */
+    setTimeoutPerIteration(timeout) {
+        this.#timeoutPerIteration = Math.max(5000, Math.min(timeout, 300000)); // 5秒〜5分
+    }
+
+    /**
+     * イテレーションごとのタイムアウトを取得
+     * @returns {number}
+     */
+    getTimeoutPerIteration() {
+        return this.#timeoutPerIteration;
     }
 
     // ========================================
