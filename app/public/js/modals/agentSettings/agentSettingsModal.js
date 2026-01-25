@@ -384,13 +384,13 @@ class AgentSettingsModal {
     /**
      * アクティブタブをレンダリング
      */
-    #renderActiveTab() {
+    async #renderActiveTab() {
         switch (this.#activeTab) {
             case 'basic':
                 this.#renderBasicTab();
                 break;
             case 'tools':
-                this.#renderToolsTab();
+                await this.#renderToolsTab();
                 break;
             case 'prompts':
                 this.#renderPromptsTab();
@@ -513,12 +513,18 @@ class AgentSettingsModal {
     /**
      * ツール設定タブをレンダリング
      */
-    #renderToolsTab() {
+    async #renderToolsTab() {
         const container = this.#modalElement.querySelector('#agent-tab-tools');
         if (!container) return;
 
         // ビルトインツール一覧を取得
         const toolManager = window.AgentToolManager?.getInstance;
+
+        // ツールマネージャーが初期化されていない場合は初期化
+        if (toolManager) {
+            await toolManager.initialize();
+        }
+
         const allTools = toolManager?.getAllTools() || [];
 
         container.innerHTML = `
@@ -743,7 +749,7 @@ class AgentSettingsModal {
     #handleSave() {
         this.#saveSettings();
         this.#applySettings();
-        UI.getInstance.Core.Notification.show('設定を保存しました', 'success');
+        window.UI?.getInstance?.Core?.Notification?.show('設定を保存しました', 'success');
         this.hide(true);
     }
 
