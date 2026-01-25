@@ -149,6 +149,12 @@ class AgentSettingsModal {
         requestAnimationFrame(() => {
             this.#modalElement?.classList.add('visible');
             this.#overlayElement?.classList.add('visible');
+
+            // 初期フォーカスを設定
+            const firstFocusable = this.#modalElement?.querySelector(
+                'button.agent-settings-tab.active, input:not([disabled]), button:not([disabled])'
+            );
+            firstFocusable?.focus();
         });
 
         console.log('[AgentSettingsModal] モーダルを表示');
@@ -301,6 +307,36 @@ class AgentSettingsModal {
         this.#addEventHandler(document, 'keydown', (e) => {
             if (e.key === 'Escape' && this.#modalElement?.classList.contains('visible')) {
                 this.hide();
+            }
+        });
+
+        // フォーカストラップ
+        this.#setupFocusTrap();
+    }
+
+    /**
+     * フォーカストラップを設定
+     * モーダル内でTabキーを循環させる
+     */
+    #setupFocusTrap() {
+        this.#addEventHandler(this.#modalElement, 'keydown', (e) => {
+            if (e.key !== 'Tab') return;
+
+            const focusable = this.#modalElement.querySelectorAll(
+                'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            );
+
+            if (focusable.length === 0) return;
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
             }
         });
     }
@@ -707,6 +743,7 @@ class AgentSettingsModal {
     #handleSave() {
         this.#saveSettings();
         this.#applySettings();
+        UI.getInstance.Core.Notification.show('設定を保存しました', 'success');
         this.hide(true);
     }
 
