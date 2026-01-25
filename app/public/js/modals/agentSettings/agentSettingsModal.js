@@ -749,7 +749,7 @@ class AgentSettingsModal {
     #handleSave() {
         this.#saveSettings();
         this.#applySettings();
-        window.UI?.getInstance?.Core?.Notification?.show('設定を保存しました', 'success');
+        UI.getInstance.Core.Notification.show('設定を保存しました', 'success');
         this.hide(true);
     }
 
