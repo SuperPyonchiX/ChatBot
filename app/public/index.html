@@ -34,6 +34,7 @@
     <link rel="stylesheet" href="css/components/rag/confluence-settings.css">
     <link rel="stylesheet" href="css/components/artifact/artifact-panel.css">
     <link rel="stylesheet" href="css/components/agent/agent.css">
+    <link rel="stylesheet" href="css/components/agent/agent-settings.css">
     <link rel="stylesheet" href="css/components/workflow/workflow.css">
     <link rel="stylesheet" href="css/components/chatflow/chatflow.css">
     <link rel="stylesheet" href="css/tools.css">
@@ -123,6 +124,7 @@
                         <button id="openKnowledgeBase">ナレッジベース (RAG)</button>
                         <button id="openWorkflowBuilder">ワークフロービルダー</button>
                         <button id="openChatFlowBuilder">チャットフロービルダー</button>
+                        <button id="openAgentSettings">エージェント設定</button>
                         <button id="openApiSettings">API設定</button>
                     </div>
                 </div>
@@ -826,6 +828,10 @@
     <script src="js/core/agent/tools/ragSearchTool.js"></script>
     <script src="js/core/agent/tools/codeExecuteTool.js"></script>
     <script src="js/core/agent/tools/fileReadTool.js"></script>
+    <!-- カスタムツール関連 -->
+    <script src="js/core/agent/tools/customToolStorage.js"></script>
+    <script src="js/components/agent/customToolExecutor.js"></script>
+    <script src="js/components/agent/agentToolEditor.js"></script>
     <script src="js/core/agent/tools/agentToolManager.js"></script>
     <script src="js/core/agent/agentOrchestrator.js"></script>
     <script src="js/components/agent/agentUI.js"></script>
@@ -869,7 +875,8 @@
     <script src="js/modals/systemPrompt/systemPromptModal.js"></script>
     <script src="js/modals/promptManager/promptManagerModal.js"></script>
     <script src="js/modals/knowledgeBase/knowledgeBaseModal.js"></script>
-    
+    <script src="js/modals/agentSettings/agentSettingsModal.js"></script>
+
     <!-- Monaco Editor コントローラー -->
     <script src="js/core/monaco/MonacoEditorController.js"></script>
     

@@ -20,6 +20,12 @@ class AgentToolManager {
     /** @type {Map<string, ToolInstance>} */
     #tools = new Map();
 
+    /** @type {Set<string>} */
+    #enabledTools = new Set();
+
+    /** @type {Set<string>} */
+    #builtinToolNames = new Set();
+
     /** @type {boolean} */
     #initialized = false;
 
@@ -45,7 +51,7 @@ class AgentToolManager {
     }
 
     /**
-     * 初期化（ビルトインツールを登録）
+     * 初期化（ビルトイン + カスタムツールを登録）
      * @returns {Promise<void>}
      */
     async initialize() {
@@ -58,8 +64,95 @@ class AgentToolManager {
         // ビルトインツールを登録
         this.#registerBuiltInTools();
 
+        // カスタムツールを読み込み
+        await this.#loadCustomTools();
+
+        // 有効ツール設定を読み込み
+        this.#loadEnabledToolsConfig();
+
         this.#initialized = true;
-        console.log(`[AgentToolManager] 初期化完了: ${this.#tools.size}個のツール登録`);
+        console.log(`[AgentToolManager] 初期化完了: ${this.#tools.size}個のツール登録（ビルトイン: ${this.#builtinToolNames.size}, カスタム: ${this.#tools.size - this.#builtinToolNames.size}）`);
+    }
+
+    /**
+     * カスタムツールを読み込み
+     * @returns {Promise<void>}
+     */
+    async #loadCustomTools() {
+        const config = window.CONFIG?.AGENT?.CUSTOM_TOOLS;
+        if (!config?.ENABLED) {
+            console.log('[AgentToolManager] カスタムツールは無効');
+            return;
+        }
+
+        try {
+            // CustomToolStorageの初期化
+            if (window.CustomToolStorage) {
+                await CustomToolStorage.getInstance.initialize();
+                const customTools = await CustomToolStorage.getInstance.getAll({ enabledOnly: true });
+
+                for (const tool of customTools) {
+                    this.#registerCustomTool(tool);
+                }
+
+                console.log(`[AgentToolManager] ${customTools.length}個のカスタムツールを読み込み`);
+            }
+        } catch (error) {
+            console.error('[AgentToolManager] カスタムツール読み込みエラー:', error);
+        }
+    }
+
+    /**
+     * カスタムツールを登録
+     * @param {Object} toolDefinition
+     */
+    #registerCustomTool(toolDefinition) {
+        const toolInstance = {
+            name: toolDefinition.name,
+            description: toolDefinition.description,
+            parameters: toolDefinition.parameters,
+            keywords: toolDefinition.keywords || [],
+            isCustom: true,
+            execute: async (params) => {
+                if (window.CustomToolExecutor) {
+                    return await CustomToolExecutor.getInstance.execute(toolDefinition, params);
+                }
+                return {
+                    success: false,
+                    error: 'CustomToolExecutorが利用できません'
+                };
+            },
+            getToolDefinition: function() {
+                return {
+                    name: this.name,
+                    description: this.description,
+                    parameters: this.parameters
+                };
+            }
+        };
+
+        this.registerTool(toolInstance);
+    }
+
+    /**
+     * 有効ツール設定を読み込み
+     */
+    #loadEnabledToolsConfig() {
+        try {
+            const stored = localStorage.getItem('agent_settings');
+            if (stored) {
+                const settings = JSON.parse(stored);
+                if (settings.enabledBuiltinTools) {
+                    this.#enabledTools = new Set(settings.enabledBuiltinTools);
+                    return;
+                }
+            }
+        } catch (error) {
+            console.warn('[AgentToolManager] 有効ツール設定読み込みエラー:', error);
+        }
+
+        // デフォルト: 全ツール有効
+        this.#enabledTools = new Set(this.getToolNames());
     }
 
     /**
@@ -131,15 +224,25 @@ class AgentToolManager {
     /**
      * ツールを登録
      * @param {ToolInstance} tool - ツールインスタンス
+     * @param {boolean} [isBuiltin=false] - ビルトインツールかどうか
      */
-    registerTool(tool) {
+    registerTool(tool, isBuiltin = false) {
         if (!tool || !tool.name) {
             console.error('[AgentToolManager] 無効なツール:', tool);
             return;
         }
 
         this.#tools.set(tool.name, tool);
-        console.log(`[AgentToolManager] ツール登録: ${tool.name}`);
+
+        // ビルトインツール名を記録
+        if (isBuiltin || !tool.isCustom) {
+            this.#builtinToolNames.add(tool.name);
+        }
+
+        // デフォルトで有効にする
+        this.#enabledTools.add(tool.name);
+
+        console.log(`[AgentToolManager] ツール登録: ${tool.name}${tool.isCustom ? ' (カスタム)' : ''}`);
     }
 
     /**
@@ -333,6 +436,137 @@ class AgentToolManager {
         while (!this.#initialized) {
             await new Promise(resolve => setTimeout(resolve, 50));
         }
+    }
+
+    // ========================================
+    // 有効ツール管理
+    // ========================================
+
+    /**
+     * ツールが有効かどうか確認
+     * @param {string} name - ツール名
+     * @returns {boolean}
+     */
+    isToolEnabled(name) {
+        return this.#enabledTools.has(name);
+    }
+
+    /**
+     * 有効なツールのみを取得
+     * @returns {ToolInstance[]}
+     */
+    getEnabledTools() {
+        return this.getAllTools().filter(tool => this.#enabledTools.has(tool.name));
+    }
+
+    /**
+     * 有効ツールを設定
+     * @param {string[]} toolNames - 有効にするツール名の配列
+     */
+    setEnabledTools(toolNames) {
+        this.#enabledTools = new Set(toolNames);
+        console.log(`[AgentToolManager] 有効ツールを更新: ${toolNames.join(', ')}`);
+    }
+
+    /**
+     * ツールの有効/無効を切り替え
+     * @param {string} name - ツール名
+     * @param {boolean} enabled - 有効/無効
+     */
+    setToolEnabled(name, enabled) {
+        if (enabled) {
+            this.#enabledTools.add(name);
+        } else {
+            this.#enabledTools.delete(name);
+        }
+    }
+
+    /**
+     * ビルトインツールかどうか確認
+     * @param {string} name - ツール名
+     * @returns {boolean}
+     */
+    isBuiltinTool(name) {
+        return this.#builtinToolNames.has(name);
+    }
+
+    /**
+     * ビルトインツール一覧を取得
+     * @returns {ToolInstance[]}
+     */
+    getBuiltinTools() {
+        return this.getAllTools().filter(tool => this.#builtinToolNames.has(tool.name));
+    }
+
+    /**
+     * カスタムツール一覧を取得
+     * @returns {ToolInstance[]}
+     */
+    getCustomTools() {
+        return this.getAllTools().filter(tool => !this.#builtinToolNames.has(tool.name));
+    }
+
+    // ========================================
+    // カスタムツール管理
+    // ========================================
+
+    /**
+     * カスタムツールを再読み込み
+     * @returns {Promise<void>}
+     */
+    async reloadCustomTools() {
+        // 既存のカスタムツールを削除
+        for (const tool of this.getCustomTools()) {
+            this.unregisterTool(tool.name);
+        }
+
+        // カスタムツールを再読み込み
+        await this.#loadCustomTools();
+
+        console.log('[AgentToolManager] カスタムツールを再読み込みしました');
+    }
+
+    /**
+     * カスタムツールを追加
+     * @param {Object} toolDefinition - ツール定義
+     * @returns {Promise<void>}
+     */
+    async addCustomTool(toolDefinition) {
+        // ストレージに保存
+        if (window.CustomToolStorage) {
+            await CustomToolStorage.getInstance.save(toolDefinition);
+        }
+
+        // ツールマネージャーに登録
+        this.#registerCustomTool(toolDefinition);
+
+        console.log(`[AgentToolManager] カスタムツール追加: ${toolDefinition.name}`);
+    }
+
+    /**
+     * カスタムツールを削除
+     * @param {string} name - ツール名
+     * @returns {Promise<boolean>}
+     */
+    async removeCustomTool(name) {
+        const tool = this.getTool(name);
+        if (!tool || this.isBuiltinTool(name)) {
+            return false;
+        }
+
+        // ストレージから削除
+        if (window.CustomToolStorage) {
+            const stored = await CustomToolStorage.getInstance.getByName(name);
+            if (stored) {
+                await CustomToolStorage.getInstance.delete(stored.id);
+            }
+        }
+
+        // ツールマネージャーから削除
+        this.unregisterTool(name);
+
+        console.log(`[AgentToolManager] カスタムツール削除: ${name}`);
+        return true;
     }
 }
 

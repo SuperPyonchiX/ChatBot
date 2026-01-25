@@ -624,6 +624,74 @@ window.CONFIG = {
             },
             // 展開/折りたたみのデフォルト状態
             DEFAULT_EXPANDED: true
+        },
+
+        // カスタムツール設定
+        CUSTOM_TOOLS: {
+            // カスタムツール機能の有効/無効
+            ENABLED: true,
+            // 最大カスタムツール数
+            MAX_TOOLS: 50,
+            // ストレージキー
+            STORAGE_KEY: 'agent_custom_tools',
+            // IndexedDB設定
+            DB_NAME: 'AgentCustomToolsDB',
+            DB_STORE: 'tools',
+            // サンドボックス実行のタイムアウト（ミリ秒）
+            SANDBOX_TIMEOUT: 5000,
+            // 許可するAPI（セキュリティ）
+            ALLOWED_APIS: ['fetch', 'JSON', 'Math', 'Date', 'Array', 'Object', 'String', 'Number', 'console']
+        },
+
+        // 可視化設定
+        VISUALIZATION: {
+            // 思考ツリーを表示するか
+            SHOW_THOUGHT_TREE: true,
+            // タイムラインを表示するか
+            SHOW_TIMELINE: true,
+            // デバッグモード（詳細ログ）
+            DEBUG_MODE: false,
+            // 最大ログエントリ数
+            MAX_LOG_ENTRIES: 1000,
+            // アニメーション有効
+            ANIMATION_ENABLED: true
+        }
+    },
+
+    /**
+     * 対話型ボット設定
+     * FAQ対応ボット、シナリオ分岐会話の構築
+     */
+    CONVERSATIONAL_BOT: {
+        // 対話ボット機能の有効/無効
+        ENABLED: true,
+        // 最大インテント数
+        MAX_INTENTS: 100,
+        // 最大シナリオ数
+        MAX_SCENARIOS: 50,
+        // ストレージキー
+        STORAGE_KEY: 'conversational_bots',
+        // IndexedDB設定
+        DB_NAME: 'ConversationalBotDB',
+        DB_STORE: 'bots',
+        // ファジーマッチング閾値（0-1）
+        FUZZY_MATCH_THRESHOLD: 0.7,
+        // デフォルトのフォールバックタイプ
+        DEFAULT_FALLBACK_TYPE: 'llm',
+        // セッションタイムアウト（ミリ秒）
+        SESSION_TIMEOUT: 1800000,
+        // インテントタイプ
+        INTENT_TYPES: {
+            TEXT: 'text',
+            CHATFLOW: 'chatflow',
+            AGENT: 'agent',
+            WORKFLOW: 'workflow'
+        },
+        // ボットタイプ
+        BOT_TYPES: {
+            FAQ: 'faq',
+            SCENARIO: 'scenario',
+            HYBRID: 'hybrid'
         }
     },
 

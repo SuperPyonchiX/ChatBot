@@ -255,6 +255,17 @@ class EventHandlers {
                 }
             });
         }
+
+        // エージェント設定
+        const openAgentSettingsBtn = document.getElementById('openAgentSettings');
+        if (openAgentSettingsBtn) {
+            openAgentSettingsBtn.addEventListener('click', () => {
+                window.Elements.settingsMenu.style.display = 'none';
+                if (typeof AgentSettingsModal !== 'undefined') {
+                    AgentSettingsModal.getInstance.show();
+                }
+            });
+        }
     }
 
     /**
