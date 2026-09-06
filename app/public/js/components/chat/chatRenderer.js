@@ -28,6 +28,44 @@ class ChatRenderer {
     }
 
     /**
+     * メッセージの外枠（コンテナ・アバター・ボディ・ヘッダー・コンテンツ）を組み立てる
+     * user / bot の全メッセージ生成が共通で使う骨格
+     * @param {'user'|'bot'} role - メッセージの役割
+     * @param {Object} options - 組み立てオプション
+     * @param {number} options.timestamp - メッセージのタイムスタンプ
+     * @param {string} options.ariaLabel - スクリーンリーダー向けラベル
+     * @param {string|null} [options.provider=null] - bot の場合のプロバイダー名
+     * @param {string|null} [options.rawMessage=null] - dataset に保持する生テキスト。null なら設定しない
+     * @returns {{messageDiv: HTMLElement, bodyDiv: HTMLElement, contentDiv: HTMLElement}} 組み立てた要素
+     */
+    #buildMessageShell(role, { timestamp, ariaLabel, provider = null, rawMessage = null }) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', role);
+        messageDiv.dataset.timestamp = timestamp.toString();
+        if (rawMessage !== null) {
+            messageDiv.dataset.rawMessage = rawMessage;
+        }
+        messageDiv.setAttribute('role', 'region');
+        messageDiv.setAttribute('aria-label', ariaLabel);
+
+        const avatarDiv = role === 'user'
+            ? this.#createAvatar('user')
+            : this.#createAvatar('bot', provider);
+        messageDiv.appendChild(avatarDiv);
+
+        const bodyDiv = document.createElement('div');
+        bodyDiv.className = 'message-body';
+
+        const senderName = role === 'user' ? 'You' : this.#getProviderDisplayName(provider);
+        bodyDiv.appendChild(this.#createMessageHeader(senderName, timestamp));
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+
+        return { messageDiv, bodyDiv, contentDiv };
+    }
+
+    /**
      * ユーザーメッセージを追加する
      * ユーザーのメッセージとその添付ファイルをチャット画面に表示します
      * @async
@@ -43,29 +81,12 @@ class ChatRenderer {
         const msgTimestamp = timestamp || Date.now();
         const fragment = document.createDocumentFragment();
 
-        // メッセージコンテナ作成
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'user');
-        messageDiv.dataset.timestamp = msgTimestamp.toString();
-        messageDiv.dataset.rawMessage = message || '';
-        messageDiv.setAttribute('role', 'region');
-        messageDiv.setAttribute('aria-label', 'あなたのメッセージ');
-
-        // アバター作成
-        const avatarDiv = this.#createAvatar('user');
-        messageDiv.appendChild(avatarDiv);
-
-        // メッセージボディ作成
-        const bodyDiv = document.createElement('div');
-        bodyDiv.className = 'message-body';
-
-        // ヘッダー（名前 + タイムスタンプ）
-        const headerDiv = this.#createMessageHeader('You', msgTimestamp);
-        bodyDiv.appendChild(headerDiv);
-
-        // コンテンツ
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
+        // メッセージの骨格を作成
+        const { messageDiv, bodyDiv, contentDiv } = this.#buildMessageShell('user', {
+            timestamp: msgTimestamp,
+            ariaLabel: 'あなたのメッセージ',
+            rawMessage: message || ''
+        });
 
         try {
             const renderedMarkdown = await Markdown.getInstance.renderMarkdown(message || '');
@@ -114,30 +135,13 @@ class ChatRenderer {
         const msgTimestamp = timestamp || Date.now();
         const provider = this.#getCurrentProvider();
 
-        // メッセージコンテナ作成
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'bot');
-        messageDiv.dataset.timestamp = msgTimestamp.toString();
-        messageDiv.dataset.rawMessage = message || '';
-        messageDiv.setAttribute('role', 'region');
-        messageDiv.setAttribute('aria-label', 'AIからの返答');
-
-        // アバター作成
-        const avatarDiv = this.#createAvatar('bot', provider);
-        messageDiv.appendChild(avatarDiv);
-
-        // メッセージボディ作成
-        const bodyDiv = document.createElement('div');
-        bodyDiv.className = 'message-body';
-
-        // ヘッダー（名前 + タイムスタンプ）
-        const senderName = this.#getProviderDisplayName(provider);
-        const headerDiv = this.#createMessageHeader(senderName, msgTimestamp);
-        bodyDiv.appendChild(headerDiv);
-
-        // コンテンツ
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
+        // メッセージの骨格を作成
+        const { messageDiv, bodyDiv, contentDiv } = this.#buildMessageShell('bot', {
+            timestamp: msgTimestamp,
+            ariaLabel: 'AIからの返答',
+            provider,
+            rawMessage: message || ''
+        });
         const messageContent = document.createElement('div');
         messageContent.className = 'markdown-content';
 
@@ -195,30 +199,13 @@ class ChatRenderer {
         const msgTimestamp = timestamp || Date.now();
         const provider = this.#getCurrentProvider();
 
-        // メッセージコンテナ作成
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'bot');
-        messageDiv.dataset.timestamp = msgTimestamp.toString();
-        messageDiv.dataset.rawMessage = message || '';
-        messageDiv.setAttribute('role', 'region');
-        messageDiv.setAttribute('aria-label', 'AIからの返答');
-
-        // アバター作成
-        const avatarDiv = this.#createAvatar('bot', provider);
-        messageDiv.appendChild(avatarDiv);
-
-        // メッセージボディ作成
-        const bodyDiv = document.createElement('div');
-        bodyDiv.className = 'message-body';
-
-        // ヘッダー
-        const senderName = this.#getProviderDisplayName(provider);
-        const headerDiv = this.#createMessageHeader(senderName, msgTimestamp);
-        bodyDiv.appendChild(headerDiv);
-
-        // コンテンツ
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
+        // メッセージの骨格を作成
+        const { messageDiv, bodyDiv, contentDiv } = this.#buildMessageShell('bot', {
+            timestamp: msgTimestamp,
+            ariaLabel: 'AIからの返答',
+            provider,
+            rawMessage: message || ''
+        });
 
         // 思考過程コンテナを作成（初期状態では非表示）
         const thinkingContainer = this.#createThinkingContainer();
@@ -269,29 +256,12 @@ class ChatRenderer {
         const msgTimestamp = timestamp || Date.now();
         const provider = this.#getCurrentProvider();
 
-        // メッセージコンテナ作成
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'bot');
-        messageDiv.dataset.timestamp = msgTimestamp.toString();
-        messageDiv.setAttribute('role', 'region');
-        messageDiv.setAttribute('aria-label', 'AIからの返答');
-
-        // アバター作成
-        const avatarDiv = this.#createAvatar('bot', provider);
-        messageDiv.appendChild(avatarDiv);
-
-        // メッセージボディ作成
-        const bodyDiv = document.createElement('div');
-        bodyDiv.className = 'message-body';
-
-        // ヘッダー
-        const senderName = this.#getProviderDisplayName(provider);
-        const headerDiv = this.#createMessageHeader(senderName, msgTimestamp);
-        bodyDiv.appendChild(headerDiv);
-
-        // コンテンツ
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
+        // メッセージの骨格を作成
+        const { messageDiv, bodyDiv, contentDiv } = this.#buildMessageShell('bot', {
+            timestamp: msgTimestamp,
+            ariaLabel: 'AIからの返答',
+            provider
+        });
 
         // 思考過程コンテナを作成（初期状態では非表示）
         const thinkingContainer = this.#createThinkingContainer();
