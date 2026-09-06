@@ -637,6 +637,9 @@ class ChatHistory {
         messageDiv.classList.add('message', 'user');
         if (timestamp) messageDiv.dataset.timestamp = timestamp.toString();
         
+        const bodyDiv = document.createElement('div');
+        bodyDiv.className = 'message-body';
+        
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
         
@@ -659,7 +662,8 @@ class ChatHistory {
         }
         
         contentDiv.appendChild(messageContent);
-        messageDiv.appendChild(contentDiv);
+        bodyDiv.appendChild(contentDiv);
+        messageDiv.appendChild(bodyDiv);
         container.appendChild(messageDiv);
     }
     
@@ -668,8 +672,11 @@ class ChatHistory {
      */
     async #renderSimpleAssistantMessage(content, container, timestamp) {
         const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'assistant');
+        messageDiv.classList.add('message', 'bot');
         if (timestamp) messageDiv.dataset.timestamp = timestamp.toString();
+        
+        const bodyDiv = document.createElement('div');
+        bodyDiv.className = 'message-body';
         
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
@@ -686,7 +693,8 @@ class ChatHistory {
         }
         
         contentDiv.appendChild(messageContent);
-        messageDiv.appendChild(contentDiv);
+        bodyDiv.appendChild(contentDiv);
+        messageDiv.appendChild(bodyDiv);
         container.appendChild(messageDiv);
     }
 }

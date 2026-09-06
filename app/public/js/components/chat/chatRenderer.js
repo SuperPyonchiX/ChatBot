@@ -48,16 +48,13 @@ class ChatRenderer {
         messageDiv.setAttribute('role', 'region');
         messageDiv.setAttribute('aria-label', ariaLabel);
 
-        const avatarDiv = role === 'user'
-            ? this.#createAvatar('user')
-            : this.#createAvatar('bot', provider);
-        messageDiv.appendChild(avatarDiv);
+        // アバターは AI 側のみ。ユーザーの発言はバブルで判別できるため出さない
+        if (role !== 'user') {
+            messageDiv.appendChild(this.#createAvatar('bot', provider));
+        }
 
         const bodyDiv = document.createElement('div');
         bodyDiv.className = 'message-body';
-
-        const senderName = role === 'user' ? 'You' : this.#getProviderDisplayName(provider);
-        bodyDiv.appendChild(this.#createMessageHeader(senderName, timestamp));
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
@@ -1702,6 +1699,23 @@ class ChatRenderer {
     }
 
     /**
+     * メッセージのタイムスタンプ要素を作成する
+     * 送信者名ヘッダーを廃止したため、アクション列の末尾に添える
+     * @param {HTMLElement} messageDiv - タイムスタンプを持つメッセージ要素
+     * @returns {HTMLElement|null} タイムスタンプ要素。値が無い場合は null
+     */
+    #createTimestampElement(messageDiv) {
+        const raw = Number(messageDiv.dataset.timestamp);
+        if (!raw) return null;
+
+        const time = document.createElement('span');
+        time.className = 'message-timestamp';
+        time.textContent = this.#formatTimestamp(raw);
+        time.title = this.#formatFullTimestamp(raw);
+        return time;
+    }
+
+    /**
      * ユーザーメッセージ用のアクションボタンを作成する
      * @param {HTMLElement} messageDiv - メッセージ要素
      * @param {string} messageText - メッセージテキスト
@@ -1734,6 +1748,9 @@ class ChatRenderer {
         deleteBtn.title = '削除';
         deleteBtn.addEventListener('click', () => this.#handleDeleteMessage(messageDiv));
         actions.appendChild(deleteBtn);
+
+        const timestampEl = this.#createTimestampElement(messageDiv);
+        if (timestampEl) actions.appendChild(timestampEl);
 
         return actions;
     }
@@ -1787,6 +1804,9 @@ class ChatRenderer {
         deleteBtn.title = '削除';
         deleteBtn.addEventListener('click', () => this.#handleDeleteMessage(messageDiv));
         actions.appendChild(deleteBtn);
+
+        const timestampEl = this.#createTimestampElement(messageDiv);
+        if (timestampEl) actions.appendChild(timestampEl);
 
         return actions;
     }

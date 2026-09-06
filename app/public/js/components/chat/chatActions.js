@@ -495,9 +495,11 @@ class ChatActions {
         const errorMessageDiv = document.createElement('div');
         errorMessageDiv.classList.add('message', 'bot', 'error');
         errorMessageDiv.innerHTML = `
-            <div class="message-content">
-                <p>エラーが発生しました: ${errorMessage || '不明なエラー'}</p>
-                <button id="showApiSettings" class="error-action">API設定を確認する</button>
+            <div class="message-body">
+                <div class="message-content">
+                    <p>エラーが発生しました: ${errorMessage || '不明なエラー'}</p>
+                    <button id="showApiSettings" class="error-action">API設定を確認する</button>
+                </div>
             </div>
         `;
         chatMessages.appendChild(errorMessageDiv);

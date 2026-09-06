@@ -1,0 +1,128 @@
+/* ===== メッセージ表示（ChatGPT 風レイアウト） =====
+   chat.css の旧・吹き出しレイアウトを上書きする。
+   ユーザーは右寄せバブル、AI はアバター付きの全幅フラット。 */
+
+.chat-messages {
+    padding: var(--spacing-lg) 0 var(--spacing-xl);
+    gap: 0;
+}
+
+/* メッセージ行: 本文幅を固定して中央に置く */
+.message {
+    display: flex;
+    gap: var(--spacing-md);
+    width: 100%;
+    max-width: var(--message-max-width);
+    margin: 0 auto;
+    padding: var(--message-gap) var(--spacing-lg) 0;
+}
+
+/* ユーザー: 右寄せのバブル。アバターは出さない */
+.message.user {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+/* バブルの装飾は本文だけに掛ける。
+   アクション列は message-body 直下にあるため、body に背景を持たせると
+   ホバー用の余白までバブルに含まれて縦に間延びする */
+.message.user .message-body {
+    flex: 0 1 auto;
+    max-width: 70%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    background: transparent;
+    padding: 0;
+}
+
+.message.user .message-content {
+    max-width: 100%;
+    background: var(--user-bubble-bg);
+    border-radius: var(--user-bubble-radius);
+    padding: 10px var(--spacing-lg);
+}
+
+/* AI: 全幅フラット。背景も枠も持たない */
+.message.bot .message-body {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+}
+
+.message-avatar {
+    margin-top: 2px;
+}
+
+/* 送信者名ヘッダーは廃止（DOM 生成もしていない） */
+.message-header {
+    display: none;
+}
+
+.message-content {
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+/* ===== アクション列 =====
+   hover で不透明にする。高さは常時確保して行送りが動かないようにする */
+.message-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: var(--spacing-xs);
+    min-height: var(--message-actions-height);
+    opacity: 0;
+    transition: opacity var(--transition-fast) ease;
+}
+
+.message.user .message-actions {
+    justify-content: flex-end;
+}
+
+.message:hover .message-actions,
+.message:focus-within .message-actions {
+    opacity: 1;
+}
+
+.message-actions .message-timestamp {
+    margin-left: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+}
+
+.action-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    justify-content: center;
+    border-radius: var(--border-radius-md);
+    color: var(--text-secondary);
+}
+
+.action-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+}
+
+/* エラーメッセージも AI 側と同じ幅に載せる */
+.message.bot.error .message-body {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--surface-2);
+    border-left: 3px solid var(--error-color);
+    border-radius: var(--border-radius-lg);
+}
+
+/* 編集モードはバブル幅に縛られると打ちにくいので広げる */
+.message.user.editing .message-body {
+    max-width: 100%;
+    flex: 1 1 auto;
+    align-items: stretch;
+}
+
+.message.user.editing .message-content {
+    background: transparent;
+    padding: 0;
+}

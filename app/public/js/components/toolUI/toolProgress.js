@@ -112,7 +112,7 @@ class ToolProgress {
         const chatMessages = document.getElementById('chatMessages');
         if (!chatMessages) return;
 
-        const lastMessage = chatMessages.querySelector('.message.assistant:last-child');
+        const lastMessage = chatMessages.querySelector('.message.bot:last-child');
         if (!lastMessage) return;
 
         let container = lastMessage.querySelector('.tool-progress-container');
