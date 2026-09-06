@@ -135,7 +135,7 @@ class ChatFlowNodes {
                 messages.push({ role: 'user', content: prompt });
 
                 // モデル選択
-                const model = node.properties.model || document.getElementById('modelSelect')?.value || 'gpt-4o-mini';
+                const model = node.properties.model || document.getElementById('modelSelect')?.value || window.CONFIG.MODELS.DEFAULT;
 
                 // API呼び出し
                 if (typeof AIAPI !== 'undefined') {

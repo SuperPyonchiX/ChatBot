@@ -306,36 +306,41 @@ window.CONFIG = {
      * モデル関連の設定
      */
     MODELS: {
+        // 既定で選択されるモデル
+        DEFAULT: 'gpt-5.6-luna',
+
         // サポートされているモデル
-        OPENAI: ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5', 'gpt-5.2'],
+        OPENAI: ['gpt-5.6-luna', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.5', 'gpt-5.4-mini'],
         GEMINI: ['gemini-3-pro-preview', 'gemini-2.5-pro', 'gemini-2.5-flash'],
         CLAUDE: [
-            'claude-opus-4-5',
-            'claude-sonnet-4-5', 
+            'claude-fable-5-1',
+            'claude-opus-5',
+            'claude-sonnet-5',
             'claude-haiku-4-5'
         ],
-        
+
         // OpenAI Responses APIでのWeb検索をサポートするモデル
-        OPENAI_WEB_SEARCH_COMPATIBLE: ['gpt-5-mini', 'gpt-5', 'gpt-5.2'],
+        OPENAI_WEB_SEARCH_COMPATIBLE: ['gpt-5.6-luna', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.5', 'gpt-5.4-mini'],
         
         // モデルの表示名マッピング
         DISPLAY_NAMES: {
             // OpenAI
-            'gpt-4o-mini': 'GPT-4o Mini',
-            'gpt-4o': 'GPT-4o',
-            'gpt-5-mini': 'GPT-5 Mini',
-            'gpt-5': 'GPT-5',
-            'gpt-5.2': 'GPT-5.2',
+            'gpt-5.6-luna': 'GPT-5.6 Luna',
+            'gpt-5.6-sol': 'GPT-5.6 Sol',
+            'gpt-5.6-terra': 'GPT-5.6 Terra',
+            'gpt-5.5': 'GPT-5.5',
+            'gpt-5.4-mini': 'GPT-5.4 Mini',
 
             // Gemini
             'gemini-3-pro-preview': 'Gemini 3 Pro Preview',
             'gemini-2.5-pro': 'Gemini 2.5 Pro',
             'gemini-2.5-flash': 'Gemini 2.5 Flash',
-            
+
             // Claude
-            'claude-opus-4-5': 'Claude 4.5 Opus',
-            'claude-sonnet-4-5': 'Claude 4.5 Sonnet',
-            'claude-haiku-4-5': 'Claude 4.5 Haiku'
+            'claude-fable-5-1': 'Claude Fable 5.1',
+            'claude-opus-5': 'Claude Opus 5',
+            'claude-sonnet-5': 'Claude Sonnet 5',
+            'claude-haiku-4-5': 'Claude Haiku 4.5'
         }
     },
 
@@ -408,8 +413,8 @@ window.CONFIG = {
 
         // ツール対応モデル
         COMPATIBLE_MODELS: {
-            CLAUDE: ['claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'],
-            OPENAI: ['gpt-4o', 'gpt-4o-mini', 'gpt-5', 'gpt-5-mini', 'gpt-5.2'],
+            CLAUDE: ['claude-fable-5-1', 'claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5'],
+            OPENAI: ['gpt-5.6-luna', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.5', 'gpt-5.4-mini'],
             GEMINI: ['gemini-3-pro-preview', 'gemini-2.5-pro', 'gemini-2.5-flash']
         },
 

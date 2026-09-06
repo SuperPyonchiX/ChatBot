@@ -283,7 +283,7 @@ class ChatHistory {
         
         if (modelSelect) {
             try {
-                const model = conversation.model || 'gpt-4o-mini';
+                const model = conversation.model || window.CONFIG.MODELS.DEFAULT;
                 const modelExists = Array.from(modelSelect.options).some(option => option.value === model);
                 modelSelect.value = modelExists ? model : modelSelect.options[0].value;
             } catch (error) {

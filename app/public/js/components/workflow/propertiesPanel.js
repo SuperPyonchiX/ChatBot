@@ -293,7 +293,7 @@ class PropertiesPanel {
             }
         }
 
-        return models.length > 0 ? models : ['gpt-4o', 'gpt-5', 'claude-4.5-sonnet', 'gemini-2.5-pro'];
+        return models.length > 0 ? models : [window.CONFIG.MODELS.DEFAULT];
     }
 
     /**

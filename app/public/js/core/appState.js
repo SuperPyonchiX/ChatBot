@@ -127,7 +127,7 @@ window.AppState = (function() {
          */
         getCurrentModel() {
             const modelSelect =UICache.getInstance.get('modelSelect');
-            return modelSelect ? /** @type {HTMLSelectElement} */ (modelSelect).value : 'gpt-4o-mini';
+            return modelSelect ? /** @type {HTMLSelectElement} */ (modelSelect).value : window.CONFIG.MODELS.DEFAULT;
         }
     }.initialize(); // 即時実行して初期化済みのオブジェクトを返す
 })();

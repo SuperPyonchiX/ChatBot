@@ -367,7 +367,7 @@ class UI {
         });
 
         // デフォルト選択値の設定
-        const defaultModel = 'gpt-4o-mini';
+        const defaultModel = window.CONFIG.MODELS.DEFAULT;
         if (allModels.includes(defaultModel)) {
             modelSelect.value = defaultModel;
         }

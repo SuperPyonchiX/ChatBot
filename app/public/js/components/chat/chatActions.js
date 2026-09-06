@@ -476,6 +476,10 @@ class ChatActions {
             // AbortControllerをクリア
             window.AppState.clearAbortController();
 
+            // 応答が来なかったので待機中のメッセージを片付ける。
+            // これをしないと脈打つ丸が残り続ける
+            this.#cleanupPendingMessage(chatMessages);
+
             // 中断エラーの場合は特別な処理
             if (error.name === 'AbortError') {
                 console.log('[ChatActions] リクエストがユーザーによって中断されました');
@@ -487,6 +491,36 @@ class ChatActions {
             this.#showErrorMessage(errorMessage, chatMessages);
 
             return { titleUpdated: false, error: error.message || '内部エラーが発生しました' };
+        }
+    }
+
+    /**
+     * 応答が得られなかったストリーミングメッセージを片付けます
+     * 本文が空のままなら要素ごと取り除き、内容があれば完了状態にします。
+     * 対象は DOM から探す（呼び出し元の catch からは try 内の変数を参照できないため）
+     * @param {HTMLElement} chatMessages - メッセージ表示要素
+     * @returns {void}
+     */
+    #cleanupPendingMessage(chatMessages) {
+        const messageDiv = chatMessages?.querySelector('.message.bot.streaming');
+        if (!messageDiv) return;
+
+        StreamingIndicator.getInstance.finish(messageDiv);
+        messageDiv.classList.remove('streaming');
+
+        const thinkingContainer = messageDiv.querySelector('.thinking-process');
+        if (thinkingContainer) {
+            const startedAt = Number(messageDiv.dataset.streamStartedAt);
+            ChatRenderer.getInstance.finalizeThinking(thinkingContainer, {
+                elapsedMs: startedAt ? Date.now() - startedAt : undefined
+            });
+        }
+
+        // 本文も思考過程も無い空の吹き出しは残さない
+        const hasBody = (messageDiv.querySelector('.markdown-content')?.textContent ?? '').trim().length > 0;
+        const hasThinking = thinkingContainer && thinkingContainer.style.display !== 'none';
+        if (!hasBody && !hasThinking) {
+            messageDiv.remove();
         }
     }
 
