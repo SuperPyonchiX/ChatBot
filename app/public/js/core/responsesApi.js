@@ -682,7 +682,7 @@ class ResponsesAPI {
                         searchMessage,
                         {
                             status: 'searching',
-                            animation: 'gradient',
+                            animation: 'fade',
                             showDots: true
                         }
                     );

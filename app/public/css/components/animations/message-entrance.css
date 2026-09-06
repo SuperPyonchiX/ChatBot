@@ -1,0 +1,58 @@
+/* ===== メッセージの出現とストリーミング表示 =====
+   ChatGPT に合わせて、動きは「わずかに下から上がりながらフェードイン」だけに絞る。
+   拡大縮小・回転・走査線のような目を引く演出は使わない。 */
+
+@keyframes messageFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* 通常のメッセージ。system-message は system-messages.css 側が担当する */
+.message:not(.system-message) {
+    animation: messageFadeIn var(--transition-normal) ease-out;
+}
+
+/* ストリーミング中は本文が何度も差し替わるため、
+   出現アニメーションが繰り返し走らないように止める */
+.message.streaming {
+    animation: none;
+}
+
+/* ===== ストリーミングカーソル =====
+   生成中のメッセージの本文末尾に点滅する四角を出す */
+@keyframes streamingCaret {
+    0%, 45% { opacity: 1; }
+    55%, 100% { opacity: 0; }
+}
+
+/* markdown-content 自体に付けると最後のブロック要素の下の行に落ちるため、
+   末尾の段落・見出し・リスト項目の中に置いて文末へ続けて出す。
+   コードブロックや表で終わっているときは出さない */
+.message.streaming .markdown-content > p:last-child::after,
+.message.streaming .markdown-content > h1:last-child::after,
+.message.streaming .markdown-content > h2:last-child::after,
+.message.streaming .markdown-content > h3:last-child::after,
+.message.streaming .markdown-content > ul:last-child > li:last-child::after,
+.message.streaming .markdown-content > ol:last-child > li:last-child::after {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 1em;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    background: var(--text-primary);
+    border-radius: 1px;
+    animation: streamingCaret 1s steps(1, end) infinite;
+}
+
+/* 生成開始直後の Thinking 表示中はカーソルを出さない
+   （ドットとカーソルが並ぶと落ち着かないため） */
+.message.streaming .markdown-content > p:last-child:has(.typing-dots)::after {
+    content: none;
+}

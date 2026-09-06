@@ -278,6 +278,9 @@ class ChatRenderer {
         bodyDiv.appendChild(contentDiv);
         messageDiv.appendChild(bodyDiv);
 
+        // 生成中は本文末尾に点滅カーソルを出す（CSS の ::after が担当）
+        messageDiv.classList.add('streaming');
+
         chatMessages.appendChild(messageDiv);
         this.#smoothScrollToBottom(chatMessages);
 
@@ -525,7 +528,7 @@ class ChatRenderer {
                 statusHtml = `<p class="streaming-status streaming-status-tool">
                     <span class="tool-status-icon">🔧</span>
                     <span class="tool-status-text">${displayName}を作成中</span>
-                    <span class="typing-dots cyber-neon"><span></span><span></span><span></span></span>
+                    <span class="typing-dots"><span></span><span></span><span></span></span>
                 </p>`;
                 break;
             case 'tool-complete':
@@ -576,6 +579,9 @@ class ChatRenderer {
      */
     async finalizeStreamingBotMessage(messageDiv, container, fullText, bodyDiv = null) {
         if (!messageDiv || !container) return;
+
+        // 生成が終わったのでカーソルを止める
+        messageDiv.classList.remove('streaming');
 
         try {
             // ツール結果要素を退避（innerHTML上書き前に保存）

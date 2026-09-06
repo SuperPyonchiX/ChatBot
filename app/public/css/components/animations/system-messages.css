@@ -29,168 +29,24 @@
     background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(239, 68, 68, 0.1)) !important;
 }
 
-/* === アニメーション初期状態 === */
-.message.bot.system-message.anim-fade {
-    opacity: 0 !important;
-    transform: translateY(-12px) scale(0.95) !important;
-    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1) !important;
+/* === 出現アニメーション ===
+   ChatGPT に合わせて、わずかに下から上がりながらフェードインするだけにする。
+   走査線・グラデーション・リップル・パーティクルといった演出は廃止した。
+   anim-slide は横から入る派生で、それ以外の指定は fade と同じ扱いになる */
+.message.bot.system-message[class*="anim-"] {
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity var(--transition-fast) ease-out,
+                transform var(--transition-fast) ease-out;
 }
 
 .message.bot.system-message.anim-slide {
-    opacity: 0 !important;
-    transform: translateX(-30px) scale(0.95) !important;
-    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transform: translateX(-8px);
 }
 
-.message.bot.system-message.anim-pulse {
-    opacity: 0 !important;
-    transform: scale(0.9) !important;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.6, 1) !important;
-}
-
-.message.bot.system-message.anim-gradient {
-    opacity: 0 !important;
-    transform: translateY(-8px) !important;
-    transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
-}
-
-.message.bot.system-message.anim-ripple {
-    opacity: 0 !important;
-    transform: scale(0.8) !important;
-    transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-}
-
-.message.bot.system-message.anim-particles {
-    opacity: 0 !important;
-    transform: translateY(-16px) scale(0.92) !important;
-    transition: all 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-}
-
-.message.bot.system-message.anim-tech-scan {
-    opacity: 0 !important;
-    transform: perspective(1000px) rotateX(10deg) translateY(-10px) !important;
-    transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
-}
-
-/* === アニメーション実行状態 === */
-
-/* === アニメーション実行状態 === */
-.message.bot.system-message.anim-fade.animate,
-.message.bot.system-message.anim-slide.animate,
-.message.bot.system-message.anim-pulse.animate,
-.message.bot.system-message.anim-gradient.animate,
-.message.bot.system-message.anim-ripple.animate,
-.message.bot.system-message.anim-particles.animate,
-.message.bot.system-message.anim-tech-scan.animate {
-    opacity: 1 !important;
-    transform: translateY(0) translateX(0) scale(1) rotateX(0) !important;
-}
-
-/* === 特殊効果 === */
-
-/* Tech Scan Effect */
-.message.bot.system-message.anim-tech-scan::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -50%;
-    width: 20%;
-    height: 100%;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(59, 130, 246, 0.4), 
-        rgba(59, 130, 246, 0.8),
-        rgba(59, 130, 246, 0.4),
-        transparent);
-    transform: skewX(-25deg);
-    transition: left 1s ease-in-out;
-    pointer-events: none;
-    z-index: 2;
-    opacity: 0;
-}
-
-.message.bot.system-message.anim-tech-scan.animate::before {
-    left: 150%;
-    opacity: 0.5;
-    transition: left 1.5s ease-in-out;
-    animation: techScanLoop 3s infinite 1.5s;
-}
-
-@keyframes techScanLoop {
-    0% { left: -50%; opacity: 0; }
-    10% { opacity: 0.5; }
-    90% { opacity: 0.5; }
-    100% { left: 150%; opacity: 0; }
-}
-
-/* グラデーション効果 */
-.message.bot.system-message.anim-gradient::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(59, 130, 246, 0.15), 
-        transparent);
-    transition: left 1.5s ease-in-out;
-    pointer-events: none;
-    z-index: 1;
-}
-
-.message.bot.system-message.anim-gradient.animate::before {
-    left: 100%;
-}
-
-/* リップル効果 */
-.message.bot.system-message.anim-ripple::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: rgba(59, 130, 246, 0.3);
-    transform: translate(-50%, -50%);
-    opacity: 0;
-    pointer-events: none;
-    z-index: 1;
-    transition: all 0.8s ease-out;
-}
-
-.message.bot.system-message.anim-ripple.animate::after {
-    width: 300px; /* 大きくして全体をカバー */
-    height: 300px;
-    opacity: 0;
-    background: rgba(59, 130, 246, 0.0);
-}
-
-/* パーティクル効果 */
-.message.bot.system-message.anim-particles::before {
-    content: '✨';
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 14px;
-    opacity: 0;
-    transform: scale(0);
-    transition: all 0.6s ease-out 0.3s;
-    pointer-events: none;
-    z-index: 1;
-}
-
-.message.bot.system-message.anim-particles.animate::before {
+.message.bot.system-message[class*="anim-"].animate {
     opacity: 1;
-    transform: scale(1) rotate(360deg);
-    animation: particleFloat 3s ease-in-out infinite alternate;
-}
-
-@keyframes particleFloat {
-    0% { transform: scale(1) rotate(0deg) translateY(0); }
-    100% { transform: scale(1.2) rotate(10deg) translateY(-5px); }
+    transform: none;
 }
 
 /* タイピングドット - モダンなウェーブアニメーション */
@@ -484,11 +340,9 @@
 
 @keyframes toolIconPulse {
     0%, 100% {
-        transform: scale(1);
         opacity: 1;
     }
     50% {
-        transform: scale(1.1);
-        opacity: 0.8;
+        opacity: 0.55;
     }
 }
