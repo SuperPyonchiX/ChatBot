@@ -120,7 +120,7 @@
 /* チャットコンテナレイアウト */
 .chat-container {
     flex: 1;
-    background-color: var(--background-secondary);
+    background-color: var(--background-primary);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -144,16 +144,17 @@
 .chat-header {
     background: var(--background-primary);
     color: var(--text-primary);
-    padding: var(--spacing-md) var(--spacing-lg);
+    height: var(--header-height);
+    flex: 0 0 var(--header-height);
+    padding: 0 var(--spacing-lg);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border-color);
     position: relative;
 }
 
 .chat-header h1 {
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-lg);
     font-weight: 600;
     color: var(--text-primary);
 }
