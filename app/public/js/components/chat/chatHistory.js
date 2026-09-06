@@ -221,23 +221,23 @@ class ChatHistory {
                                     }
                                 }
 
-                                // ツール実行情報を復元
+                                // ツール実行情報を復元（完了行だけでよい。
+                                // 以前は「実行中...」と「完了」を両方作っていて行が2倍になっていた）
                                 if (message.thinkingData.toolCalls?.length > 0) {
-                                    for (const toolCall of message.thinkingData.toolCalls) {
-                                        // 「実行中...」を追加
-                                        ChatRenderer.getInstance.addThinkingItem(
-                                            result.thinkingContainer,
-                                            'tool',
-                                            `${toolCall.displayName}を実行中...`
-                                        );
-                                        // 「完了」を追加
+                                    message.thinkingData.toolCalls.forEach((toolCall, index) => {
                                         ChatRenderer.getInstance.addThinkingItem(
                                             result.thinkingContainer,
                                             'tool-complete',
-                                            `${toolCall.displayName}完了`
+                                            `${toolCall.displayName}完了`,
+                                            { key: `tool:${toolCall.id ?? index}` }
                                         );
-                                    }
+                                    });
                                 }
+
+                                // 復元したものは完了済みとして畳んでおく
+                                ChatRenderer.getInstance.finalizeThinking(result.thinkingContainer, {
+                                    elapsedMs: message.thinkingData.elapsedMs
+                                });
                             }
                             contentContainer = result?.contentContainer;
                         } else {

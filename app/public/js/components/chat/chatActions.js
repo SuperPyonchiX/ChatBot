@@ -438,9 +438,14 @@ class ChatActions {
             );
 
             // 思考過程データがあるかどうかを判定
+            // elapsedMs は付随情報なので、これ単独では思考過程を作らない
             const hasThinkingData = thinkingData.webSearchQueries.length > 0 ||
                                    thinkingData.ragSources.length > 0 ||
                                    thinkingData.toolCalls.length > 0;
+
+            if (hasThinkingData && messageDiv?.dataset?.streamStartedAt) {
+                thinkingData.elapsedMs = Date.now() - Number(messageDiv.dataset.streamStartedAt);
+            }
 
             // 応答をメッセージ履歴に追加（思考過程データを含む）
             const assistantMessage = {
@@ -596,6 +601,16 @@ class ChatActions {
      * @param {Object} thinkingData - 思考過程データ（復元用）
      * @returns {Promise<string|null>} ツール結果テキスト（メッセージに追加用）
      */
+    /**
+     * 思考過程アイテムの同一性を判定するキーを作ります
+     * 実行中と完了を同じ行として扱うために使います
+     * @param {Object} toolCall - ツール呼び出し情報
+     * @returns {string} アイテムキー
+     */
+    #getToolItemKey(toolCall) {
+        return `tool:${toolCall?.id ?? toolCall?.name ?? 'unknown'}`;
+    }
+
     async #handleToolCall(event, thinkingContainer, contentContainer, conversationId, messageTimestamp, thinkingData) {
         if (!event) return null;
 
@@ -610,7 +625,7 @@ class ChatActions {
         if (type === 'start' && toolCall && thinkingContainer) {
             const toolName = this.#getToolDisplayName(toolCall.name);
             if (typeof ChatRenderer !== 'undefined') {
-                ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool', `${toolName}を実行中...`);
+                ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool', `${toolName}を実行中...`, { key: this.#getToolItemKey(toolCall) });
                 // 待機インジケーターのラベルを「○○を作成しています」に更新
                 const streamingMessage = StreamingIndicator.getInstance.activeMessage;
                 if (streamingMessage) {
@@ -639,12 +654,13 @@ class ChatActions {
                 // 思考過程を更新（完了表示）
                 if (thinkingContainer && typeof ChatRenderer !== 'undefined') {
                     const toolName = this.#getToolDisplayName(toolCall.name);
-                    ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool-complete', `${toolName}完了`);
+                    ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool-complete', `${toolName}完了`, { key: this.#getToolItemKey(toolCall) });
                 }
 
                 // thinkingDataにツール情報を保存（復元用）
                 if (thinkingData && thinkingData.toolCalls) {
                     thinkingData.toolCalls.push({
+                        id: toolCall.id ?? null,
                         name: toolCall.name,
                         displayName: this.#getToolDisplayName(toolCall.name),
                         status: 'complete',
@@ -669,7 +685,7 @@ class ChatActions {
                 // エラーを思考過程に表示
                 if (thinkingContainer && typeof ChatRenderer !== 'undefined') {
                     const toolName = this.#getToolDisplayName(toolCall.name);
-                    ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool-error', `${toolName}エラー: ${error.message}`);
+                    ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool-error', `${toolName}エラー: ${error.message}`, { key: this.#getToolItemKey(toolCall) });
                 }
                 return null;
             }

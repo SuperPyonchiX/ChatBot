@@ -294,12 +294,15 @@ class ChatRenderer {
 
     /**
      * 思考過程コンテナを作成する
+     * 実行中（running）は現在のステップを1行だけ見せ、
+     * 完了（done）で「実行した処理を見る」の折りたたみに切り替わる
      * @returns {HTMLElement} 思考過程コンテナ要素
      */
     #createThinkingContainer() {
         const container = document.createElement('div');
         container.className = 'thinking-process';
-        container.dataset.collapsed = 'true'; // 初期状態は折りたたみ
+        container.dataset.collapsed = 'true';
+        container.dataset.mode = 'running';
         container.style.display = 'none'; // 思考アイテムがない場合は非表示
 
         // ヘッダー部分
@@ -307,27 +310,36 @@ class ChatRenderer {
         header.className = 'thinking-header';
         header.setAttribute('role', 'button');
         header.setAttribute('aria-expanded', 'false');
-        header.setAttribute('tabindex', '0');
+        // 実行中は開けないのでフォーカスも取らせない
+        header.setAttribute('tabindex', '-1');
 
-        const toggleIcon = document.createElement('span');
-        toggleIcon.className = 'thinking-toggle';
-        toggleIcon.textContent = '▶';
+        // 三角は CSS で描く。textContent は書かない（回転と記号差し替えの二重管理を避ける）
+        const chevron = document.createElement('span');
+        chevron.className = 'thinking-chevron';
+        chevron.setAttribute('aria-hidden', 'true');
 
         const title = document.createElement('span');
         title.className = 'thinking-title';
-        title.textContent = '思考過程';
 
-        header.appendChild(toggleIcon);
+        const elapsed = document.createElement('span');
+        elapsed.className = 'thinking-elapsed';
+
+        header.appendChild(chevron);
         header.appendChild(title);
+        header.appendChild(elapsed);
 
-        // コンテンツ部分
+        // コンテンツ部分（grid で高さを 0fr↔1fr させるため wrap を挟む）
+        const contentWrap = document.createElement('div');
+        contentWrap.className = 'thinking-content-wrap';
+
         const content = document.createElement('div');
         content.className = 'thinking-content';
 
+        contentWrap.appendChild(content);
         container.appendChild(header);
-        container.appendChild(content);
+        container.appendChild(contentWrap);
 
-        // 折りたたみ切り替えイベント
+        // 折りたたみ切り替えイベント（done のときだけ効く）
         header.addEventListener('click', () => this.#toggleThinkingCollapse(container));
         header.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -341,10 +353,12 @@ class ChatRenderer {
 
     /**
      * 思考過程の折りたたみを切り替える
+     * 実行中は開閉しない。三角の向きは CSS が data-collapsed を見て回す
      * @param {HTMLElement} container - 思考過程コンテナ
+     * @returns {void}
      */
     #toggleThinkingCollapse(container) {
-        if (!container) return;
+        if (!container || container.dataset.mode !== 'done') return;
 
         const isCollapsed = container.dataset.collapsed === 'true';
         container.dataset.collapsed = isCollapsed ? 'false' : 'true';
@@ -353,20 +367,75 @@ class ChatRenderer {
         if (header) {
             header.setAttribute('aria-expanded', isCollapsed ? 'true' : 'false');
         }
+    }
 
-        const toggle = container.querySelector('.thinking-toggle');
-        if (toggle) {
-            toggle.textContent = isCollapsed ? '▼' : '▶';
+    /**
+     * 実行中に見せる1行を更新する
+     * @param {HTMLElement} container - 思考過程コンテナ
+     * @param {string} text - 表示する文言
+     * @returns {void}
+     */
+    #setThinkingCurrentStep(container, text) {
+        if (!container || container.dataset.mode !== 'running' || !text) return;
+
+        const title = container.querySelector('.thinking-title');
+        if (title) title.textContent = text;
+    }
+
+    /**
+     * 思考過程を完了状態にする
+     * 見出しを「実行した処理を見る」に変え、折りたたみを開けるようにする
+     * @param {HTMLElement} container - 思考過程コンテナ
+     * @param {Object} [options] - オプション
+     * @param {number} [options.elapsedMs] - 応答にかかった時間（ミリ秒）
+     * @returns {void}
+     */
+    finalizeThinking(container, options = {}) {
+        if (!container || container.dataset.mode === 'done') return;
+
+        container.dataset.mode = 'done';
+
+        const title = container.querySelector('.thinking-title');
+        if (title) title.textContent = '実行した処理を見る';
+
+        const header = container.querySelector('.thinking-header');
+        if (header) header.setAttribute('tabindex', '0');
+
+        this.setThinkingElapsed(container, options.elapsedMs);
+    }
+
+    /**
+     * 経過時間の表示を更新する
+     * 短すぎる応答では表示しない（表示がちらつくため）
+     * @param {HTMLElement} container - 思考過程コンテナ
+     * @param {number} [elapsedMs] - 経過時間（ミリ秒）
+     * @returns {void}
+     */
+    setThinkingElapsed(container, elapsedMs) {
+        const elapsedEl = container?.querySelector('.thinking-elapsed');
+        if (!elapsedEl) return;
+
+        const minMs = window.CONFIG?.UI?.STREAMING?.ELAPSED_MIN_MS ?? 3000;
+        if (!elapsedMs || elapsedMs < minMs) {
+            elapsedEl.textContent = '';
+            return;
         }
+
+        elapsedEl.textContent = `${Math.round(elapsedMs / 1000)}秒`;
     }
 
     /**
      * 思考過程にアイテムを追加する
+     * 同じ key のアイテムが既にあれば、追加せずその場で内容を差し替える
+     * （ツールの「実行中」→「完了」が2行に増えるのを防ぐ）
      * @param {HTMLElement} thinkingContainer - 思考過程コンテナ
-     * @param {string} type - アイテムの種類 ('rag', 'web-search', 'thinking')
+     * @param {string} type - アイテムの種類 ('rag' | 'web-search' | 'tool' | 'tool-complete' | 'tool-error' | 'thinking')
      * @param {any} content - アイテムの内容
+     * @param {Object} [options] - オプション
+     * @param {string} [options.key] - 同一アイテムとして扱うためのキー
+     * @returns {void}
      */
-    addThinkingItem(thinkingContainer, type, content) {
+    addThinkingItem(thinkingContainer, type, content, options = {}) {
         if (!thinkingContainer) return;
 
         const thinkingContent = thinkingContainer.querySelector('.thinking-content');
@@ -375,9 +444,15 @@ class ChatRenderer {
         // コンテナを表示
         thinkingContainer.style.display = 'block';
 
-        const item = document.createElement('div');
+        const key = options.key;
+        const existing = key
+            ? thinkingContent.querySelector(`.thinking-item[data-key="${CSS.escape(key)}"]`)
+            : null;
+
+        const item = existing || document.createElement('div');
         item.className = 'thinking-item';
         item.dataset.type = type;
+        if (key) item.dataset.key = key;
 
         switch (type) {
             case 'rag':
@@ -401,7 +476,11 @@ class ChatRenderer {
                 break;
         }
 
-        thinkingContent.appendChild(item);
+        if (!existing) thinkingContent.appendChild(item);
+
+        // 実行中はヘッダーの1行を最新のステップに追従させる。
+        // アイテムは複数行を持つことがあるので空白を畳んで1行にする
+        this.#setThinkingCurrentStep(thinkingContainer, item.textContent.replace(/\s+/g, ' ').trim());
     }
 
     /**
@@ -567,6 +646,15 @@ class ChatRenderer {
         // 生成が終わったのでカーソルを止め、待機インジケーターを取り除く
         messageDiv.classList.remove('streaming');
         StreamingIndicator.getInstance.finish(messageDiv);
+
+        // 思考過程を完了状態にする（中断・エラー経路でもここを通る）
+        const thinkingContainer = messageDiv.querySelector('.thinking-process');
+        if (thinkingContainer) {
+            const startedAt = Number(messageDiv.dataset.streamStartedAt);
+            this.finalizeThinking(thinkingContainer, {
+                elapsedMs: startedAt ? Date.now() - startedAt : undefined
+            });
+        }
 
         try {
             // ツール結果要素を退避（innerHTML上書き前に保存）

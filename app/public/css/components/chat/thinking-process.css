@@ -1,0 +1,175 @@
+/* ===== 思考過程（ChatGPT 風） =====
+   実行中は現在のステップを1行だけ見せ、完了すると
+   「実行した処理を見る」の折りたたみに変わる。
+   定義はこのファイル1箇所だけ（以前は chat.css と system-messages.css に
+   重複していて、後勝ちで片方だけが効いていた）。 */
+
+.thinking-process {
+    margin-bottom: var(--spacing-md);
+}
+
+.thinking-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    user-select: none;
+}
+
+/* 三角は CSS で描く。JS は data-collapsed を切り替えるだけ */
+.thinking-chevron {
+    width: 0;
+    height: 0;
+    flex-shrink: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 5px solid currentColor;
+    transition: transform var(--transition-fast) ease;
+}
+
+.thinking-process[data-collapsed="false"] .thinking-chevron {
+    transform: rotate(90deg);
+}
+
+.thinking-title {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.thinking-elapsed {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+}
+
+.thinking-elapsed:not(:empty)::before {
+    content: '・';
+    margin-right: var(--spacing-xs);
+}
+
+/* ===== 実行中 =====
+   開閉させず、現在のステップをシマーで1行見せる */
+.thinking-process[data-mode="running"] .thinking-header {
+    cursor: default;
+    pointer-events: none;
+}
+
+.thinking-process[data-mode="running"] .thinking-chevron {
+    display: none;
+}
+
+.thinking-process[data-mode="running"] .thinking-title {
+    background-image: linear-gradient(
+        90deg,
+        var(--stream-shimmer-base) 0%,
+        var(--stream-shimmer-base) 40%,
+        var(--stream-shimmer-highlight) 50%,
+        var(--stream-shimmer-base) 60%,
+        var(--stream-shimmer-base) 100%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: streamShimmer var(--stream-shimmer-duration) linear infinite;
+}
+
+/* ===== 完了後 ===== */
+.thinking-process[data-mode="done"] .thinking-header {
+    cursor: pointer;
+    border-radius: var(--border-radius-md);
+}
+
+.thinking-process[data-mode="done"] .thinking-header:hover {
+    color: var(--text-primary);
+}
+
+.thinking-header:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    border-radius: var(--border-radius-sm);
+}
+
+/* ===== 開閉 =====
+   grid の 0fr↔1fr で開くので高さの上限が要らない。
+   以前は max-height:500px で、長い思考過程が切れていた */
+.thinking-content-wrap {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--thinking-collapse-duration) ease;
+}
+
+.thinking-process[data-collapsed="false"] .thinking-content-wrap {
+    grid-template-rows: 1fr;
+}
+
+.thinking-content {
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* 実行中は中身を出さない（ヘッダーの1行だけ見せる） */
+.thinking-process[data-mode="running"] .thinking-content-wrap {
+    grid-template-rows: 0fr;
+}
+
+.thinking-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) 0 var(--spacing-sm) var(--spacing-lg);
+    border-left: 2px solid var(--border-color);
+    margin-left: 2px;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.thinking-item-icon {
+    flex-shrink: 0;
+}
+
+.thinking-item-text,
+.thinking-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.thinking-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.rag-sources-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.rag-source-item {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+}
+
+.rag-source-similarity {
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .thinking-content-wrap {
+        transition: none;
+    }
+
+    .thinking-process[data-mode="running"] .thinking-title {
+        background: none;
+        color: var(--text-secondary);
+        animation: none;
+    }
+}
