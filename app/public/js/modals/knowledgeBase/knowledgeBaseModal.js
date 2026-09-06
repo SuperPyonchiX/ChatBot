@@ -319,8 +319,7 @@ class KnowledgeBaseModal {
      * @returns {Promise<string>}
      */
     async #getCurrentEmbeddingMode() {
-        const stored = Storage.getInstance.get('RAG_EMBEDDING_MODE');
-        return stored || 'local';
+        return Storage.getInstance.getItem('RAG_EMBEDDING_MODE', 'local');
     }
 
     /**
@@ -329,7 +328,7 @@ class KnowledgeBaseModal {
      * @param {*} value
      */
     #saveRAGSetting(key, value) {
-        Storage.getInstance.set(`RAG_${key}`, value);
+        Storage.getInstance.setItem(`RAG_${key}`, value);
         console.log(`[KnowledgeBaseModal] RAG設定保存: ${key} = ${value}`);
     }
 
@@ -450,7 +449,7 @@ class KnowledgeBaseModal {
         const chunkSizeSlider = document.getElementById('kbChunkSize');
         const chunkSizeValue = document.getElementById('kbChunkSizeValue');
         if (chunkSizeSlider && chunkSizeValue) {
-            const size = Storage.getInstance.get('RAG_CHUNK_SIZE') || 500;
+            const size = Storage.getInstance.getItem('RAG_CHUNK_SIZE', 500);
             chunkSizeSlider.value = size;
             chunkSizeValue.textContent = size;
         }
@@ -459,7 +458,7 @@ class KnowledgeBaseModal {
         const overlapSlider = document.getElementById('kbChunkOverlap');
         const overlapValue = document.getElementById('kbChunkOverlapValue');
         if (overlapSlider && overlapValue) {
-            const overlap = Storage.getInstance.get('RAG_CHUNK_OVERLAP') || 50;
+            const overlap = Storage.getInstance.getItem('RAG_CHUNK_OVERLAP', 50);
             overlapSlider.value = overlap;
             overlapValue.textContent = overlap;
         }
@@ -468,7 +467,7 @@ class KnowledgeBaseModal {
         const thresholdSlider = document.getElementById('kbSimilarityThreshold');
         const thresholdValue = document.getElementById('kbSimilarityThresholdValue');
         if (thresholdSlider && thresholdValue) {
-            const threshold = Storage.getInstance.get('RAG_SIMILARITY_THRESHOLD') || 0.3;
+            const threshold = Storage.getInstance.getItem('RAG_SIMILARITY_THRESHOLD', 0.3);
             thresholdSlider.value = threshold;
             thresholdValue.textContent = threshold;
         }
@@ -476,7 +475,7 @@ class KnowledgeBaseModal {
         // TOP_K
         const topKSelect = document.getElementById('kbTopK');
         if (topKSelect) {
-            const topK = Storage.getInstance.get('RAG_TOP_K') || 5;
+            const topK = Storage.getInstance.getItem('RAG_TOP_K', 5);
             topKSelect.value = topK;
         }
     }

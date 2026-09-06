@@ -39,7 +39,7 @@ class ChatFlowEngine {
      */
     async #loadChatFlows() {
         try {
-            const stored = Storage.getInstance.get('CHAT_FLOWS');
+            const stored = Storage.getInstance.getItem('CHAT_FLOWS');
             if (stored) {
                 const flows = JSON.parse(stored);
                 flows.forEach(flow => {
@@ -56,7 +56,7 @@ class ChatFlowEngine {
      */
     async #saveChatFlows() {
         const flows = Array.from(this.#chatFlows.values());
-        Storage.getInstance.set('CHAT_FLOWS', JSON.stringify(flows));
+        Storage.getInstance.setItem('CHAT_FLOWS', JSON.stringify(flows));
     }
 
     /**

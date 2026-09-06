@@ -373,3 +373,5 @@ class UI {
         }
     }
 }
+
+window.UI = UI;

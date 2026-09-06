@@ -112,3 +112,5 @@ class ToolRegistry {
         }));
     }
 }
+
+window.ToolRegistry = ToolRegistry;

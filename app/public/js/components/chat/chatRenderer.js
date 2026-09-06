@@ -2042,3 +2042,5 @@ class ChatRenderer {
         bodyDiv.appendChild(actionsDiv);
     }
 }
+
+window.ChatRenderer = ChatRenderer;

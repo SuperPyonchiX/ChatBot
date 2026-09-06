@@ -142,33 +142,35 @@ document.addEventListener('DOMContentLoaded', async function() {
     /**
      * Prism.jsの各言語コンポーネントを動的に読み込みます
      * 
+     * 言語コンポーネントには依存関係があり（clike → javascript / c / csharp / java / go、
+     * c → cpp、javascript → typescript、basic → visual-basic → vbnet）、
+     * 依存先より先に評価されると "Cannot set properties of undefined" で失敗する。
+     * そのため段ごとに順番に読み込み、同じ段の中だけ並列にする。
+     * 
      * @function _loadPrismComponents
      */
     function _loadPrismComponents() {
-        const prismComponents = [
-            // 基本コンポーネント (他の言語の基本となるもの)
-            'prism-clike.min.js',
-            'prism-markup.min.js',
-            
-            // 一般的な言語
-            'prism-javascript.min.js',
-            'prism-css.min.js',
-            'prism-python.min.js',
-            'prism-json.min.js',
-            'prism-typescript.min.js',
-            'prism-c.min.js',
-            'prism-cpp.min.js',
-            'prism-csharp.min.js',
-            'prism-java.min.js',
-            'prism-go.min.js',
-            'prism-rust.min.js',
-            'prism-sql.min.js',
-            'prism-bash.min.js',
-            
-            // Visual Basic系言語 (依存関係の順序に注意)
-            'prism-basic.min.js',            // Basic言語の基本コンポーネント
-            'prism-visual-basic.min.js',     // Visual Basic
-            'prism-vbnet.min.js'             // VB.NET
+        // 依存の浅いものから順に。同じ配列の中は互いに独立しているので並列で読んでよい
+        const componentStages = [
+            // 1段目: 他の言語のベースになるもの
+            ['prism-clike.min.js', 'prism-markup.min.js', 'prism-basic.min.js'],
+            // 2段目: 1段目にのみ依存するもの
+            [
+                'prism-javascript.min.js',
+                'prism-css.min.js',
+                'prism-python.min.js',
+                'prism-json.min.js',
+                'prism-c.min.js',
+                'prism-csharp.min.js',
+                'prism-java.min.js',
+                'prism-go.min.js',
+                'prism-rust.min.js',
+                'prism-sql.min.js',
+                'prism-bash.min.js',
+                'prism-visual-basic.min.js'
+            ],
+            // 3段目: 2段目に依存するもの
+            ['prism-typescript.min.js', 'prism-cpp.min.js', 'prism-vbnet.min.js']
         ];
         
         const plugins = [
@@ -190,28 +192,34 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
         };
         
-        // コンポーネントの読み込み
-        Promise.all(
-            prismComponents.map(component => 
+        const loadComponents = (components) => Promise.all(
+            components.map(component => 
                 loadScript(`https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/${component}`)
             )
-        )
-        .then(() => {
-            console.log('Prism language components loaded successfully');
-            // プラグインの読み込み
-            return Promise.all(
-                plugins.map(plugin => 
-                    loadScript(`https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/${plugin}`)
-                )
-            );
-        })
-        .then(() => {
-            console.log('Prism plugins loaded successfully');
-            // Prismの初期化（クライアント側のHTMLをハイライト）
-            if (typeof Prism !== 'undefined') {
-                Prism.highlightAll();
-            }
-        })
-        .catch(err => console.error('Failed to load Prism components:', err));
+        );
+        
+        // 段ごとに直列、段の中は並列で読み込む
+        componentStages
+            .reduce(
+                (chain, stage) => chain.then(() => loadComponents(stage)),
+                Promise.resolve()
+            )
+            .then(() => {
+                console.log('[Main] Prism言語コンポーネントを読み込みました');
+                // プラグインの読み込み
+                return Promise.all(
+                    plugins.map(plugin => 
+                        loadScript(`https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/${plugin}`)
+                    )
+                );
+            })
+            .then(() => {
+                console.log('[Main] Prismプラグインを読み込みました');
+                // Prismの初期化（クライアント側のHTMLをハイライト）
+                if (typeof Prism !== 'undefined') {
+                    Prism.highlightAll();
+                }
+            })
+            .catch(err => console.error('[Main] Prismコンポーネントの読み込みエラー:', err));
     }
 });
