@@ -10,6 +10,9 @@ class ChatRenderer {
     /** 単語分割器（生成コストが高いので使い回す） */
     #segmenter = null;
 
+    /** 描画待ちのストリーミング要求（コンテナごとに1件だけ保持する） */
+    #pendingRenders = new WeakMap();
+
     /**
      * シングルトンインスタンスを取得します
      * @returns {ChatRenderer} ChatRendererのシングルトンインスタンス
@@ -569,8 +572,42 @@ class ChatRenderer {
     async updateStreamingBotMessage(container, chunk, currentFullText) {
         if (!container) return;
 
-        // 直前の呼び出しがまだ Markdown 変換中でも新しいテキストで上書きしたいので、
-        // 世代番号を進めて「戻ってきたときに最新かどうか」を判定できるようにする
+        // チャンクは1秒間に何十回も届くが、描画はフレームに1回で足りる。
+        // 保留中の要求は最新テキストで上書きし、まとめて1回だけ描画する
+        const pending = this.#pendingRenders.get(container);
+        if (pending) {
+            pending.text = currentFullText;
+            return pending.promise;
+        }
+
+        const entry = { text: currentFullText, promise: null };
+        entry.promise = new Promise(resolve => {
+            requestAnimationFrame(() => {
+                // finalize などで取り消された場合は描画しない。
+                // rAF は登録済みだと止められないので、ここで自分の要求が
+                // まだ生きているかを確認する
+                if (this.#pendingRenders.get(container) !== entry) {
+                    resolve();
+                    return;
+                }
+
+                const text = entry.text;
+                this.#pendingRenders.delete(container);
+                this.#renderStreamingText(container, text).then(resolve, resolve);
+            });
+        });
+        this.#pendingRenders.set(container, entry);
+        return entry.promise;
+    }
+
+    /**
+     * ストリーミング中の本文を実際に描画します
+     * @param {HTMLElement} container - 本文コンテナ（.markdown-content）
+     * @param {string} currentFullText - これまでに受信したテキスト全体
+     * @returns {Promise<void>}
+     */
+    async #renderStreamingText(container, currentFullText) {
+        // Markdown 変換は非同期なので、戻ってきたときに自分が最新かを世代番号で判定する
         const seq = (Number(container.dataset.renderSeq) || 0) + 1;
         container.dataset.renderSeq = String(seq);
 
@@ -755,6 +792,10 @@ class ChatRenderer {
      */
     async finalizeStreamingBotMessage(messageDiv, container, fullText, bodyDiv = null) {
         if (!messageDiv || !container) return;
+
+        // 保留中のストリーミング描画を捨てる（完了後に古い本文で上書きされないように）
+        this.#pendingRenders.delete(container);
+        container.dataset.renderSeq = String((Number(container.dataset.renderSeq) || 0) + 1);
 
         // 生成が終わったのでカーソルを止め、待機インジケーターを取り除く
         messageDiv.classList.remove('streaming');
