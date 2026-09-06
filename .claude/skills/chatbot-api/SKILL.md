@@ -1,6 +1,6 @@
 ---
 name: chatbot-api
-description: ChatBotプロジェクトに新しいAIプロバイダを組み込む工程スキル。`js/core/xxxApi.js` のAPIクラス作成、`api.js` のルーティング追加、`config.js` の MODELS / ENDPOINTS / STORAGE.KEYS / TOOLS.COMPATIBLE_MODELS 追加、`app/server/index.js` のプロキシ追加、apiSettingsModal のキー入力欄追加、SSEストリーミング実装までを順に行う。「新しいAI APIを追加したい」「○○のモデルを使えるようにして」「プロキシを追加して」「ストリーミングに対応させて」で使う。エージェント用ツールの追加は chatbot-agent-tool、UI部品の追加は chatbot-component。
+description: ChatBotプロジェクトに新しいAIプロバイダを組み込む工程スキル。`js/core/xxxApi.js` のAPIクラス作成、`api.js` のルーティング追加、`config.js` の MODELS / ENDPOINTS / STORAGE.KEYS / TOOLS.COMPATIBLE_MODELS 追加、`app/server/index.js` のプロキシ追加、apiSettingsModal のキー入力欄追加、SSEストリーミング実装までを順に行う。「新しいAI APIを追加したい」「○○のモデルを使えるようにして」「プロキシを追加して」「ストリーミングに対応させて」で使う。AI が呼ぶツールの追加は chatbot-tool、UI部品の追加は chatbot-component。
 ---
 
 # AI プロバイダ追加

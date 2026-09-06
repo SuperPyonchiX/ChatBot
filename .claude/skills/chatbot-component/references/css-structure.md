@@ -10,12 +10,11 @@ app/public/css/
 ├── layouts/
 │   └── layout.css           # 全体レイアウト
 ├── components/
-│   ├── agent/               # エージェントUI・設定モーダル
 │   ├── animations/          # typing, system-messages
 │   ├── artifact/            # アーティファクトパネル
 │   ├── buttons/
 │   ├── chat/                # chat, markdown, chat-category
-│   ├── chatflow/            # チャットフロービルダー
+│   ├── codex/               # Codex 実行カード
 │   ├── code/                # コード実行, Monaco
 │   ├── file-preview/        # pdf, office, text
 │   ├── forms/               # forms, claude-websearch
@@ -24,7 +23,8 @@ app/public/css/
 │   ├── prompt/              # prompt-manager, prompt-suggestions
 │   ├── rag/                 # knowledge-base, confluence-settings
 │   ├── settings/            # settings-menu
-│   └── workflow/            # ワークフロービルダー
+│   ├── tools/               # ツール設定モーダル・カスタムツールエディタ
+│   └── workspace/           # ワークスペースモーダル
 └── tools.css                # チャットツールUI（例外的に css 直下）
 ```
 
@@ -35,7 +35,7 @@ app/public/css/
 `<head>` の `<!-- Components CSS -->` の並びに `<link>` を足す。順序は依存があるときだけ気にすればよい（後勝ち）。
 
 ```html
-<link rel="stylesheet" href="css/components/chatflow/chatflow.css">
+<link rel="stylesheet" href="css/components/workspace/workspace.css">
 <link rel="stylesheet" href="css/components/{カテゴリ}/{名前}.css">   <!-- 追加 -->
 <link rel="stylesheet" href="css/tools.css">
 ```

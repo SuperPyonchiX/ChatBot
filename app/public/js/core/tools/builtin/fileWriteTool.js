@@ -1,6 +1,6 @@
 /**
  * fileWriteTool.js
- * サーバー側ワークスペース（app/workspace）にファイルを書き込むエージェントツール
+ * サーバー側ワークスペース（app/workspace）にファイルを書き込むツール
  */
 
 /**

@@ -40,10 +40,7 @@
     <link rel="stylesheet" href="css/components/rag/knowledge-base.css">
     <link rel="stylesheet" href="css/components/rag/confluence-settings.css">
     <link rel="stylesheet" href="css/components/artifact/artifact-panel.css">
-    <link rel="stylesheet" href="css/components/agent/agent.css">
-    <link rel="stylesheet" href="css/components/agent/agent-settings.css">
-    <link rel="stylesheet" href="css/components/workflow/workflow.css">
-    <link rel="stylesheet" href="css/components/chatflow/chatflow.css">
+    <link rel="stylesheet" href="css/components/tools/tool-settings.css">
     <link rel="stylesheet" href="css/components/codex/codex.css">
     <link rel="stylesheet" href="css/components/workspace/workspace.css">
     <link rel="stylesheet" href="css/tools.css">
@@ -117,9 +114,7 @@
                         <button id="openSystemPromptSettings">システムプロンプト設定</button>
                         <button id="openPromptManager">ユーザープロンプト管理</button>
                         <button id="openKnowledgeBase">ナレッジベース (RAG)</button>
-                        <button id="openWorkflowBuilder">ワークフロービルダー</button>
-                        <button id="openChatFlowBuilder">チャットフロービルダー</button>
-                        <button id="openAgentSettings">エージェント設定</button>
+                        <button id="openToolSettings">ツール設定</button>
                         <button id="openWorkspace">ワークスペース (Codex)</button>
                         <button id="openApiSettings">API設定</button>
                     </div>
@@ -151,11 +146,11 @@
                                     <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.txt,.md,.csv,.pdf,.js,.html,.css,.json">
                                     <i class="fas fa-paperclip"></i>
                                 </label>
-                                <button id="agentModeToggle" class="toggle-button" title="エージェントモードのON/OFF切替">
-                                    <i class="fas fa-robot"></i>
-                                </button>
-                                <button id="webSearchToggle" class="toggle-button" title="Web検索機能のON/OFF切替">
+                                <button id="webSearchToggle" class="toggle-button" title="Web検索のON/OFF">
                                     <i class="fas fa-globe"></i>
+                                </button>
+                                <button id="codexToggle" class="toggle-button" title="Codex（ファイル作成・コマンド実行）のON/OFF">
+                                    <i class="fas fa-terminal"></i>
                                 </button>
                             </div>
                             <div class="composer-actions-right">
@@ -805,6 +800,19 @@
     <script src="js/core/tools/executors/ExcelProcessor.js"></script>
     <script src="js/core/tools/executors/CanvasRenderer.js"></script>
     <script src="js/core/tools/storage/fileStorage.js"></script>
+    <!-- 情報取得・実行系ツール（モデルが必要に応じて呼ぶ） -->
+    <script src="js/core/tools/builtin/webSearchTool.js"></script>
+    <script src="js/core/tools/builtin/urlFetchTool.js"></script>
+    <script src="js/core/tools/builtin/ragSearchTool.js"></script>
+    <script src="js/core/tools/builtin/calculatorTool.js"></script>
+    <script src="js/core/tools/builtin/codeExecuteTool.js"></script>
+    <script src="js/core/tools/builtin/codexTaskTool.js"></script>
+    <script src="js/core/tools/builtin/fileWriteTool.js"></script>
+    <script src="js/core/tools/builtin/shellExecuteTool.js"></script>
+    <!-- カスタムツール（ユーザー定義） -->
+    <script src="js/core/tools/custom/customToolStorage.js"></script>
+    <script src="js/core/tools/custom/customToolExecutor.js"></script>
+    <script src="js/components/tools/customToolEditor.js"></script>
     <script src="js/core/tools/toolManager.js"></script>
     <script src="js/components/toolUI/fileDownloader.js"></script>
     <script src="js/components/toolUI/toolPreview.js"></script>
@@ -821,46 +829,6 @@
     <script src="js/utils/markdown.js"></script>
     <script src="js/core/userprompts/promptManager.js"></script>
     <script src="js/core/userprompts/promptSuggestions.js"></script>
-
-    <!-- エージェント関連のファイル -->
-    <script src="js/core/agent/agentMemory.js"></script>
-    <script src="js/core/agent/agentLoop.js"></script>
-    <script src="js/core/agent/agentToolSelector.js"></script>
-    <!-- エージェントツール -->
-    <script src="js/core/agent/tools/webSearchTool.js"></script>
-    <script src="js/core/agent/tools/calculatorTool.js"></script>
-    <script src="js/core/agent/tools/urlFetchTool.js"></script>
-    <script src="js/core/agent/tools/textAnalyzerTool.js"></script>
-    <script src="js/core/agent/tools/ragSearchTool.js"></script>
-    <script src="js/core/agent/tools/codeExecuteTool.js"></script>
-    <script src="js/core/agent/tools/fileReadTool.js"></script>
-    <script src="js/core/agent/tools/codexTaskTool.js"></script>
-    <script src="js/core/agent/tools/fileWriteTool.js"></script>
-    <script src="js/core/agent/tools/shellExecuteTool.js"></script>
-    <!-- カスタムツール関連 -->
-    <script src="js/core/agent/tools/customToolStorage.js"></script>
-    <script src="js/components/agent/customToolExecutor.js"></script>
-    <script src="js/components/agent/agentToolEditor.js"></script>
-    <script src="js/core/agent/tools/agentToolManager.js"></script>
-    <script src="js/core/agent/agentOrchestrator.js"></script>
-    <script src="js/components/agent/agentUI.js"></script>
-    <script src="js/components/agent/askUserDialog.js"></script>
-
-    <!-- ワークフロー関連のファイル -->
-    <script src="js/core/workflow/nodeRegistry.js"></script>
-    <script src="js/core/workflow/workflowEngine.js"></script>
-    <script src="js/core/workflow/workflowStorage.js"></script>
-    <script src="js/components/workflow/workflowCanvas.js"></script>
-    <script src="js/components/workflow/nodePalette.js"></script>
-    <script src="js/components/workflow/propertiesPanel.js"></script>
-    <script src="js/modals/workflowBuilder/workflowBuilderModal.js"></script>
-
-    <!-- チャットフロー関連のファイル -->
-    <script src="js/core/chatflow/chatFlowNodes.js"></script>
-    <script src="js/core/chatflow/chatFlowSession.js"></script>
-    <script src="js/core/chatflow/chatFlowEngine.js"></script>
-    <script src="js/core/chatflow/chatFlowStorage.js"></script>
-    <script src="js/modals/chatFlowBuilder/chatFlowBuilderModal.js"></script>
 
     <!-- アーティファクト関連のファイル -->
     <script src="js/components/artifact/artifactDetector.js"></script>
@@ -886,7 +854,7 @@
     <script src="js/modals/systemPrompt/systemPromptModal.js"></script>
     <script src="js/modals/promptManager/promptManagerModal.js"></script>
     <script src="js/modals/knowledgeBase/knowledgeBaseModal.js"></script>
-    <script src="js/modals/agentSettings/agentSettingsModal.js"></script>
+    <script src="js/modals/toolSettings/toolSettingsModal.js"></script>
     <script src="js/modals/workspace/workspaceModal.js"></script>
 
     <!-- Monaco Editor コントローラー -->

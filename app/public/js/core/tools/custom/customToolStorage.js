@@ -44,7 +44,7 @@ class CustomToolStorage {
         }
         CustomToolStorage.#instance = this;
 
-        const config = window.CONFIG?.AGENT?.CUSTOM_TOOLS || {};
+        const config = window.CONFIG?.TOOLS?.CUSTOM || {};
         this.#dbName = config.DB_NAME || 'AgentCustomToolsDB';
         this.#storeName = config.DB_STORE || 'tools';
         this.#localStorageKey = config.STORAGE_KEY || 'agent_custom_tools';

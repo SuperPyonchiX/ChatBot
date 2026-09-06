@@ -2,7 +2,7 @@
  * webSearchTool.js
  * Web検索ツール
  * プロバイダ組み込みのWeb検索（OpenAI Responses API の web_search、Claude の web_search ツール）を
- * エージェントから呼べるようにラップする
+ * モデルがツールとして呼べるようにラップする
  */
 
 /**

@@ -1,6 +1,6 @@
 /**
  * codexTaskTool.js
- * サブエージェント（OpenAI Codex CLI）にコーディングタスクを委譲するエージェントツール
+ * サブエージェント（OpenAI Codex CLI）にコーディングタスクを委譲するツール
  * サーバー側ワークスペース（app/workspace）でファイル作成・編集・コマンド実行を行う
  */
 
@@ -78,9 +78,10 @@ class CodexTaskTool {
      * @param {string} params.task
      * @param {string[]} [params.files]
      * @param {string} [params.sandbox]
+     * @param {Object} [context] - 実行コンテキスト（container: 進捗カードの表示先）
      * @returns {Promise<CodexTaskResult>}
      */
-    async execute(params) {
+    async execute(params, context = {}) {
         const { task, files, sandbox } = params || {};
 
         if (!task || typeof task !== 'string') {
@@ -96,7 +97,7 @@ class CodexTaskTool {
         }
 
         await this.#acquire();
-        const card = this.#createCard(task);
+        const card = this.#createCard(task, context?.container);
         let jobId = null;
 
         try {
@@ -156,15 +157,13 @@ class CodexTaskTool {
     // ========================================
 
     /**
-     * 進捗カードをエージェント UI の中に作る（無ければ null）
+     * 進捗カードを表示先コンテナ（チャットの応答本文）に作る（無ければ null）
      * @param {string} task
+     * @param {HTMLElement} [host]
      * @returns {{el: HTMLElement}|null}
      */
-    #createCard(task) {
-        if (typeof CodexRunCard === 'undefined' || typeof AgentUI === 'undefined') return null;
-        const container = AgentUI.getInstance.getCurrentContainer?.();
-        const host = container?.querySelector('.agent-iterations') || container;
-        if (!host) return null;
+    #createCard(task, host) {
+        if (typeof CodexRunCard === 'undefined' || !host) return null;
         const el = CodexRunCard.getInstance.create(host, {
             title: `Codex: ${task.substring(0, 40)}${task.length > 40 ? '…' : ''}`
         });

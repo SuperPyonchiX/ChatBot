@@ -1,10 +1,10 @@
 /**
- * agentToolEditor.js
+ * customToolEditor.js
  * カスタムツール編集UI
  * ツールの追加、編集、テスト、インポート/エクスポート
  */
 
-class AgentToolEditor {
+class CustomToolEditor {
     static #instance = null;
 
     /** @type {HTMLElement|null} */
@@ -26,21 +26,21 @@ class AgentToolEditor {
      * @constructor
      */
     constructor() {
-        if (AgentToolEditor.#instance) {
-            return AgentToolEditor.#instance;
+        if (CustomToolEditor.#instance) {
+            return CustomToolEditor.#instance;
         }
-        AgentToolEditor.#instance = this;
+        CustomToolEditor.#instance = this;
     }
 
     /**
      * シングルトンインスタンスを取得
-     * @returns {AgentToolEditor}
+     * @returns {CustomToolEditor}
      */
     static get getInstance() {
-        if (!AgentToolEditor.#instance) {
-            AgentToolEditor.#instance = new AgentToolEditor();
+        if (!CustomToolEditor.#instance) {
+            CustomToolEditor.#instance = new CustomToolEditor();
         }
-        return AgentToolEditor.#instance;
+        return CustomToolEditor.#instance;
     }
 
     // ========================================
@@ -69,7 +69,7 @@ class AgentToolEditor {
             this.#overlayElement?.classList.add('visible');
         });
 
-        console.log('[AgentToolEditor] エディタを表示');
+        console.log('[CustomToolEditor] エディタを表示');
     }
 
     /**
@@ -110,46 +110,46 @@ class AgentToolEditor {
     async #createModal() {
         // オーバーレイ
         this.#overlayElement = document.createElement('div');
-        this.#overlayElement.className = 'agent-tool-editor-overlay';
+        this.#overlayElement.className = 'custom-tool-editor-overlay';
         this.#addEventHandler(this.#overlayElement, 'click', () => this.hide());
 
         // モーダル本体
         this.#modalElement = document.createElement('div');
-        this.#modalElement.className = 'agent-tool-editor-modal';
+        this.#modalElement.className = 'custom-tool-editor-modal';
         this.#modalElement.innerHTML = `
-            <div class="agent-tool-editor-header">
-                <h2 class="agent-tool-editor-title">
+            <div class="custom-tool-editor-header">
+                <h2 class="custom-tool-editor-title">
                     ${this.#isEditMode ? 'ツールを編集' : '新しいツールを作成'}
                 </h2>
-                <button class="agent-tool-editor-close" title="閉じる">
+                <button class="custom-tool-editor-close" title="閉じる">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="agent-tool-editor-content">
-                <div class="agent-tool-editor-form">
-                    <div class="agent-tool-editor-section">
-                        <label class="agent-tool-editor-label">ツール名 <span class="required">*</span></label>
-                        <input type="text" class="agent-tool-editor-input" id="tool-name"
+            <div class="custom-tool-editor-content">
+                <div class="custom-tool-editor-form">
+                    <div class="custom-tool-editor-section">
+                        <label class="custom-tool-editor-label">ツール名 <span class="required">*</span></label>
+                        <input type="text" class="custom-tool-editor-input" id="tool-name"
                             placeholder="例: weather_api" pattern="^[a-z_][a-z0-9_]*$">
-                        <span class="agent-tool-editor-hint">英小文字とアンダースコアのみ（例: my_tool）</span>
+                        <span class="custom-tool-editor-hint">英小文字とアンダースコアのみ（例: my_tool）</span>
                     </div>
 
-                    <div class="agent-tool-editor-section">
-                        <label class="agent-tool-editor-label">説明 <span class="required">*</span></label>
-                        <textarea class="agent-tool-editor-textarea" id="tool-description" rows="2"
+                    <div class="custom-tool-editor-section">
+                        <label class="custom-tool-editor-label">説明 <span class="required">*</span></label>
+                        <textarea class="custom-tool-editor-textarea" id="tool-description" rows="2"
                             placeholder="このツールが何をするか説明してください"></textarea>
                     </div>
 
-                    <div class="agent-tool-editor-section">
-                        <label class="agent-tool-editor-label">キーワード</label>
-                        <input type="text" class="agent-tool-editor-input" id="tool-keywords"
+                    <div class="custom-tool-editor-section">
+                        <label class="custom-tool-editor-label">キーワード</label>
+                        <input type="text" class="custom-tool-editor-input" id="tool-keywords"
                             placeholder="カンマ区切り（例: 天気, weather, 気象）">
-                        <span class="agent-tool-editor-hint">ツール選択時のマッチングに使用</span>
+                        <span class="custom-tool-editor-hint">ツール選択時のマッチングに使用</span>
                     </div>
 
-                    <div class="agent-tool-editor-section">
-                        <label class="agent-tool-editor-label">パラメータ（JSON Schema）</label>
-                        <textarea class="agent-tool-editor-textarea agent-tool-editor-code" id="tool-parameters" rows="8"
+                    <div class="custom-tool-editor-section">
+                        <label class="custom-tool-editor-label">パラメータ（JSON Schema）</label>
+                        <textarea class="custom-tool-editor-textarea custom-tool-editor-code" id="tool-parameters" rows="8"
                             placeholder='{
   "type": "object",
   "properties": {
@@ -162,49 +162,49 @@ class AgentToolEditor {
 }'></textarea>
                     </div>
 
-                    <div class="agent-tool-editor-section">
-                        <label class="agent-tool-editor-label">実行コード <span class="required">*</span></label>
-                        <textarea class="agent-tool-editor-textarea agent-tool-editor-code" id="tool-code" rows="12"
+                    <div class="custom-tool-editor-section">
+                        <label class="custom-tool-editor-label">実行コード <span class="required">*</span></label>
+                        <textarea class="custom-tool-editor-textarea custom-tool-editor-code" id="tool-code" rows="12"
                             placeholder="// paramsにパラメータが渡されます
 // fetch, JSON, Math, Date などが使用可能
 // 結果をreturnで返してください
 
 const response = await fetch(\`https://api.example.com/data?q=\${params.query}\`);
 return response;"></textarea>
-                        <span class="agent-tool-editor-hint">
+                        <span class="custom-tool-editor-hint">
                             利用可能: params, fetch, JSON, Math, Date, console.log
                         </span>
                     </div>
                 </div>
 
-                <div class="agent-tool-editor-test">
-                    <div class="agent-tool-editor-test-header">
+                <div class="custom-tool-editor-test">
+                    <div class="custom-tool-editor-test-header">
                         <h3>テスト実行</h3>
-                        <button class="agent-tool-editor-btn agent-tool-editor-btn-secondary" id="tool-test-btn">
+                        <button class="custom-tool-editor-btn custom-tool-editor-btn-secondary" id="tool-test-btn">
                             <i class="fas fa-play"></i> テスト
                         </button>
                     </div>
-                    <div class="agent-tool-editor-section">
-                        <label class="agent-tool-editor-label">テストパラメータ（JSON）</label>
-                        <textarea class="agent-tool-editor-textarea agent-tool-editor-code" id="tool-test-params" rows="4"
+                    <div class="custom-tool-editor-section">
+                        <label class="custom-tool-editor-label">テストパラメータ（JSON）</label>
+                        <textarea class="custom-tool-editor-textarea custom-tool-editor-code" id="tool-test-params" rows="4"
                             placeholder='{ "city": "Tokyo" }'></textarea>
                     </div>
-                    <div class="agent-tool-editor-test-result" id="tool-test-result">
+                    <div class="custom-tool-editor-test-result" id="tool-test-result">
                         <div class="test-result-placeholder">テスト結果がここに表示されます</div>
                     </div>
                 </div>
             </div>
-            <div class="agent-tool-editor-footer">
-                <div class="agent-tool-editor-footer-left">
-                    <button class="agent-tool-editor-btn agent-tool-editor-btn-secondary" id="tool-validate-btn">
+            <div class="custom-tool-editor-footer">
+                <div class="custom-tool-editor-footer-left">
+                    <button class="custom-tool-editor-btn custom-tool-editor-btn-secondary" id="tool-validate-btn">
                         <i class="fas fa-check-circle"></i> 検証
                     </button>
                 </div>
-                <div class="agent-tool-editor-footer-right">
-                    <button class="agent-tool-editor-btn agent-tool-editor-btn-secondary" id="tool-cancel-btn">
+                <div class="custom-tool-editor-footer-right">
+                    <button class="custom-tool-editor-btn custom-tool-editor-btn-secondary" id="tool-cancel-btn">
                         キャンセル
                     </button>
-                    <button class="agent-tool-editor-btn agent-tool-editor-btn-primary" id="tool-save-btn">
+                    <button class="custom-tool-editor-btn custom-tool-editor-btn-primary" id="tool-save-btn">
                         <i class="fas fa-save"></i> 保存
                     </button>
                 </div>
@@ -223,7 +223,7 @@ return response;"></textarea>
      */
     #setupEventHandlers() {
         // 閉じるボタン
-        const closeBtn = this.#modalElement.querySelector('.agent-tool-editor-close');
+        const closeBtn = this.#modalElement.querySelector('.custom-tool-editor-close');
         this.#addEventHandler(closeBtn, 'click', () => this.hide());
 
         // キャンセルボタン
@@ -295,7 +295,7 @@ return response;"></textarea>
         }
 
         // タイトルを更新
-        const title = this.#modalElement.querySelector('.agent-tool-editor-title');
+        const title = this.#modalElement.querySelector('.custom-tool-editor-title');
         if (title) {
             title.textContent = this.#isEditMode ? 'ツールを編集' : '新しいツールを作成';
         }
@@ -393,7 +393,6 @@ return response;"></textarea>
             const saved = await CustomToolStorage.getInstance.save(toolData);
 
             // ツールマネージャーに登録
-            await this.#registerToToolManager(saved);
 
             this.#showSuccess('ツールを保存しました');
             this.hide();
@@ -402,39 +401,9 @@ return response;"></textarea>
             window.dispatchEvent(new CustomEvent('customToolSaved', { detail: saved }));
 
         } catch (error) {
-            console.error('[AgentToolEditor] 保存エラー:', error);
+            console.error('[CustomToolEditor] 保存エラー:', error);
             this.#showError(`保存に失敗しました: ${error.message}`);
         }
-    }
-
-    /**
-     * ツールマネージャーに登録
-     * @param {Object} tool
-     */
-    async #registerToToolManager(tool) {
-        const toolManager = window.AgentToolManager?.getInstance;
-        if (!toolManager) return;
-
-        // カスタムツールインスタンスを作成
-        const toolInstance = {
-            name: tool.name,
-            description: tool.description,
-            parameters: tool.parameters,
-            keywords: tool.keywords,
-            isCustom: true,
-            execute: async (params) => {
-                return await CustomToolExecutor.getInstance.execute(tool, params);
-            },
-            getToolDefinition: function() {
-                return {
-                    name: this.name,
-                    description: this.description,
-                    parameters: this.parameters
-                };
-            }
-        };
-
-        toolManager.registerTool(toolInstance);
     }
 
     /**
@@ -571,4 +540,4 @@ return response;"></textarea>
 }
 
 // グローバルに公開
-window.AgentToolEditor = AgentToolEditor;
+window.CustomToolEditor = CustomToolEditor;

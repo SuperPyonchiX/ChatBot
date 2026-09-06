@@ -1,6 +1,6 @@
 /**
  * shellExecuteTool.js
- * サーバー側ワークスペース（app/workspace）でシェルコマンドを実行するエージェントツール
+ * サーバー側ワークスペース（app/workspace）でシェルコマンドを実行するツール
  * サーバーの WORKSPACE_EXEC_ENABLED=0 で無効化できる
  */
 

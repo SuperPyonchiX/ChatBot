@@ -1,13 +1,26 @@
 /**
  * toolManager.js
  * ツール機能の統合マネージャー
- * ツールの登録、プロバイダ対応、実行制御を一元管理
+ * ツールの登録（生成系 / 情報取得・実行系 / カスタム）、有効・無効の管理、
+ * プロバイダ対応、実行制御を一元管理する。モデルはここに登録されたツールを自分で選んで呼ぶ
  */
 class ToolManager {
     static #instance = null;
 
     // 初期化済みフラグ
     #initialized = false;
+
+    /** @type {Promise<void>|null} */
+    #initPromise = null;
+
+    /** @type {Set<string>} 有効なツール名 */
+    #enabledTools = new Set();
+
+    /** @type {Set<string>} カスタムツール名 */
+    #customToolNames = new Set();
+
+    /** @type {number} 1 回の送信でツール呼び出しを回す最大往復数 */
+    #maxRounds = 8;
 
     constructor() {
         if (ToolManager.#instance) {
@@ -34,15 +47,189 @@ class ToolManager {
         if (this.#initialized) {
             return;
         }
-
-        // 組み込みツールを登録
-        await this.#registerBuiltInTools();
-
-        this.#initialized = true;
+        if (this.#initPromise) {
+            return this.#initPromise;
+        }
+        this.#initPromise = (async () => {
+            await this.#registerBuiltInTools();
+            this.#registerAgentTools();
+            await this.#registerCustomTools();
+            this.#loadSettings();
+            this.#initialized = true;
+            console.log(`[ToolManager] 初期化完了: ${ToolRegistry.getInstance.getNames().length} 個登録 / ${this.#enabledTools.size} 個有効`);
+        })();
+        window.addEventListener('customToolSaved', () => this.reloadCustomTools());
+        window.addEventListener('customToolDeleted', () => this.reloadCustomTools());
+        return this.#initPromise;
     }
 
     /**
-     * 組み込みツールを登録
+     * 初期化が終わるまで待つ
+     * @returns {Promise<void>}
+     */
+    async waitForInitialization() {
+        if (this.#initialized) return;
+        await this.initialize();
+    }
+
+    /**
+     * 情報取得・実行系のビルトインツール（js/core/tools/builtin/）を登録
+     * 各ツールは { name, description, parameters, execute(params, context) } を持つシングルトン
+     */
+    #registerAgentTools() {
+        const registry = ToolRegistry.getInstance;
+        const classes = [
+            'WebSearchTool', 'UrlFetchTool', 'RagSearchTool', 'CalculatorTool',
+            'CodeExecuteTool', 'CodexTaskTool', 'FileWriteTool', 'ShellExecuteTool'
+        ];
+        for (const className of classes) {
+            const cls = window[className];
+            if (!cls?.getInstance) continue;
+            const tool = cls.getInstance;
+            registry.register({
+                name: tool.name,
+                description: tool.description,
+                parameters: tool.parameters,
+                executor: { execute: (params, context) => tool.execute(params, context) }
+            });
+        }
+    }
+
+    /**
+     * カスタムツール（CustomToolStorage）を登録
+     */
+    async #registerCustomTools() {
+        if (typeof CustomToolStorage === 'undefined' || typeof CustomToolExecutor === 'undefined') return;
+        if (window.CONFIG?.TOOLS?.CUSTOM?.ENABLED === false) return;
+        const registry = ToolRegistry.getInstance;
+        for (const name of this.#customToolNames) {
+            registry.unregister(name);
+        }
+        this.#customToolNames.clear();
+        try {
+            await CustomToolStorage.getInstance.initialize();
+            const tools = await CustomToolStorage.getInstance.getAll({ enabledOnly: true });
+            for (const def of tools) {
+                if (!def?.name || registry.has(def.name)) continue;
+                registry.register({
+                    name: def.name,
+                    description: def.description,
+                    parameters: def.parameters,
+                    executor: { execute: (params) => CustomToolExecutor.getInstance.execute(def, params) }
+                });
+                this.#customToolNames.add(def.name);
+            }
+        } catch (error) {
+            console.warn('[ToolManager] カスタムツール読み込みエラー:', error);
+        }
+    }
+
+    /**
+     * カスタムツールを読み直す（保存・削除後）
+     * @returns {Promise<void>}
+     */
+    async reloadCustomTools() {
+        await this.#registerCustomTools();
+        for (const name of this.#customToolNames) {
+            if (!this.#enabledTools.has(name) && !this.#isDisabledByUser(name)) {
+                this.#enabledTools.add(name);
+            }
+        }
+    }
+
+    /**
+     * localStorage の設定を読み込み、有効ツール集合を組み立てる
+     */
+    #loadSettings() {
+        const config = window.CONFIG?.TOOLS || {};
+        const defaultDisabled = new Set(config.DEFAULT_DISABLED || []);
+        const all = ToolRegistry.getInstance.getNames();
+        const stored = this.#readStoredSettings();
+
+        if (Array.isArray(stored.disabledTools)) {
+            const disabled = new Set(stored.disabledTools);
+            this.#enabledTools = new Set(all.filter(n => !disabled.has(n)));
+        } else {
+            this.#enabledTools = new Set(all.filter(n => !defaultDisabled.has(n)));
+        }
+        this.#maxRounds = Number(stored.maxRounds) || config.MAX_ROUNDS || 8;
+    }
+
+    /**
+     * @param {string} name
+     * @returns {boolean}
+     */
+    #isDisabledByUser(name) {
+        const stored = this.#readStoredSettings();
+        return Array.isArray(stored.disabledTools) && stored.disabledTools.includes(name);
+    }
+
+    /**
+     * @returns {{disabledTools?: string[], maxRounds?: number}}
+     */
+    #readStoredSettings() {
+        try {
+            const key = window.CONFIG?.STORAGE?.KEYS?.TOOL_SETTINGS || 'tool_settings';
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : {};
+        } catch {
+            return {};
+        }
+    }
+
+    /**
+     * 設定を保存する
+     * @param {Object} settings
+     * @param {string[]} [settings.enabledTools] - 有効にするツール名
+     * @param {number} [settings.maxRounds]
+     */
+    saveSettings(settings = {}) {
+        if (Array.isArray(settings.enabledTools)) {
+            this.#enabledTools = new Set(settings.enabledTools);
+        }
+        if (settings.maxRounds) {
+            this.#maxRounds = Math.max(1, Math.min(Number(settings.maxRounds), 30));
+        }
+        const all = ToolRegistry.getInstance.getNames();
+        const disabledTools = all.filter(n => !this.#enabledTools.has(n));
+        const key = window.CONFIG?.STORAGE?.KEYS?.TOOL_SETTINGS || 'tool_settings';
+        localStorage.setItem(key, JSON.stringify({ disabledTools, maxRounds: this.#maxRounds }));
+        console.log(`[ToolManager] 設定を保存: 有効 ${this.#enabledTools.size} / ${all.length}`);
+    }
+
+    /**
+     * 登録済みツールの一覧（設定 UI 用）
+     * @returns {Array<{name: string, description: string, enabled: boolean, isCustom: boolean, category: string}>}
+     */
+    getAllTools() {
+        const categories = window.CONFIG?.TOOLS?.CATEGORIES || {};
+        return ToolRegistry.getInstance.getAll().map(t => ({
+            name: t.name,
+            description: t.description,
+            enabled: this.#enabledTools.has(t.name),
+            isCustom: this.#customToolNames.has(t.name),
+            category: this.#customToolNames.has(t.name) ? 'custom' : (categories[t.name] || 'other')
+        }));
+    }
+
+    /**
+     * @param {string} name
+     * @returns {boolean}
+     */
+    isToolEnabled(name) {
+        return this.#enabledTools.has(name);
+    }
+
+    /**
+     * ツール呼び出しループの最大往復数
+     * @returns {number}
+     */
+    getMaxRounds() {
+        return this.#maxRounds;
+    }
+
+    /**
+     * 生成系の組み込みツール（PowerPoint / Excel / Canvas）を登録
      */
     async #registerBuiltInTools() {
         const registry = ToolRegistry.getInstance;
@@ -310,7 +497,9 @@ class ToolManager {
      * @returns {Array} ツール定義の配列
      */
     getToolsForProvider(provider) {
-        const schemas = ToolRegistry.getInstance.getSchemas();
+        const schemas = ToolRegistry.getInstance.getSchemas()
+            .filter(schema => this.#enabledTools.has(schema.name));
+        if (schemas.length === 0) return [];
         return ToolSchemaConverter.getInstance.convert(schemas, provider);
     }
 
@@ -331,10 +520,11 @@ class ToolManager {
      * ツール呼び出しを処理
      * @param {Object} toolCall - ツール呼び出し情報
      * @param {string} provider - プロバイダ名
+     * @param {Object} [context] - 実行コンテキスト（表示先コンテナなど）
      * @returns {Promise<Object>} 実行結果
      */
-    async handleToolCall(toolCall, provider) {
-        return await ToolExecutor.getInstance.execute(toolCall);
+    async handleToolCall(toolCall, provider, context = {}) {
+        return await ToolExecutor.getInstance.execute(toolCall, context);
     }
 
     /**

@@ -25,7 +25,7 @@ class CustomToolExecutor {
         }
         CustomToolExecutor.#instance = this;
 
-        const config = window.CONFIG?.AGENT?.CUSTOM_TOOLS || {};
+        const config = window.CONFIG?.TOOLS?.CUSTOM || {};
         this.#allowedGlobals = config.ALLOWED_APIS || [
             'fetch', 'JSON', 'Math', 'Date', 'Array', 'Object',
             'String', 'Number', 'Boolean', 'console', 'Promise',

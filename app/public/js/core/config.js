@@ -231,6 +231,8 @@ window.CONFIG = {
             CURRENT_CONVERSATION_ID: 'currentConversationId',
             ATTACHMENTS_PREFIX: 'attachments_',
             WEB_SEARCH_ENABLED: 'webSearchEnabled',
+            CODEX_ENABLED: 'codexEnabled',
+            TOOL_SETTINGS: 'tool_settings',
             RAG_ENABLED: 'ragEnabled',
             // 埋め込みAPI設定
             AZURE_EMBEDDING_ENDPOINT: 'azureEmbeddingEndpoint',
@@ -377,7 +379,7 @@ window.CONFIG = {
             LABELS: {
                 WEB_SEARCH: 'ウェブを検索しています',
                 WEB_SEARCH_ANALYZE: '検索結果を読んでいます',
-                TOOL_RUNNING: '{name}を作成しています',
+                TOOL_RUNNING: '{name}を実行しています',
                 RAG: 'ナレッジベースを参照しています'
             }
         },
@@ -402,17 +404,65 @@ window.CONFIG = {
     },
 
     /**
-     * ツール（エージェント）機能の設定
+     * ツール機能の設定（モデルが自分で呼ぶ Function Calling ツール）
      */
     TOOLS: {
-        // 有効なツール
-        ENABLED: ['generate_powerpoint', 'process_excel', 'render_canvas'],
+        // 1 回の送信でツール呼び出し → 結果返却 → 再生成を繰り返す最大往復数
+        MAX_ROUNDS: 8,
 
-        // UI に出すツールの表示名（以前は3箇所に重複していて文言も揃っていなかった）
+        // モデルに返すツール結果の最大文字数（超えた分は切り詰める）
+        RESULT_MAX_CHARS: 12000,
+
+        // 初期状態で無効にしておくツール（ホスト OS に触るものは明示的に有効化してもらう）
+        DEFAULT_DISABLED: ['codex_task', 'file_write', 'shell_execute'],
+
+        // UI に出すツールの表示名
         DISPLAY_NAMES: {
             generate_powerpoint: 'PowerPointスライド生成',
             process_excel: 'Excel処理',
-            render_canvas: 'Canvas描画'
+            render_canvas: 'Canvas描画',
+            web_search: 'Web検索',
+            url_fetch: 'URL取得',
+            rag_search: 'ナレッジ検索',
+            calculator: '計算',
+            code_execute: 'コード実行',
+            codex_task: 'Codex サブエージェント',
+            file_write: 'ファイル書き込み',
+            shell_execute: 'コマンド実行'
+        },
+
+        // ツール設定モーダルでの分類
+        CATEGORIES: {
+            generate_powerpoint: 'generate',
+            process_excel: 'generate',
+            render_canvas: 'generate',
+            web_search: 'info',
+            url_fetch: 'info',
+            rag_search: 'info',
+            calculator: 'exec',
+            code_execute: 'exec',
+            codex_task: 'workspace',
+            file_write: 'workspace',
+            shell_execute: 'workspace'
+        },
+        CATEGORY_LABELS: {
+            generate: 'ファイル生成',
+            info: '情報取得',
+            exec: '計算・実行',
+            workspace: 'ワークスペース操作（ホスト OS に触る）',
+            custom: 'カスタムツール',
+            other: 'その他'
+        },
+
+        // カスタムツール（ユーザー定義の JavaScript ツール）
+        CUSTOM: {
+            ENABLED: true,
+            MAX_TOOLS: 50,
+            STORAGE_KEY: 'agent_custom_tools',
+            DB_NAME: 'AgentCustomToolsDB',
+            DB_STORE: 'tools',
+            SANDBOX_TIMEOUT: 5000,
+            ALLOWED_APIS: ['fetch', 'JSON', 'Math', 'Date', 'Array', 'Object', 'String', 'Number', 'console']
         },
 
         // ツール対応モデル
@@ -570,146 +620,12 @@ window.CONFIG = {
     },
 
     /**
-     * エージェント機能設定
-     * ReAct推論およびFunction Callingベースの自律的タスク実行
-     */
-    AGENT: {
-        // エージェント機能の有効/無効
-        ENABLED: true,
-
-        // デフォルトの推論モード ('react' | 'function_calling')
-        DEFAULT_MODE: 'react',
-
-        // 最大イテレーション回数（無限ループ防止）
-        MAX_ITERATIONS: 10,
-
-        // イテレーションごとのタイムアウト（ミリ秒）
-        TIMEOUT_PER_ITERATION: 30000,
-
-        // メモリ設定
-        MEMORY: {
-            // 短期メモリの最大アイテム数
-            SHORT_TERM_LIMIT: 50,
-            // 長期メモリの最大アイテム数
-            LONG_TERM_LIMIT: 200,
-            // タスク履歴の最大数
-            TASK_HISTORY_LIMIT: 100,
-            // 永続化用ストレージキー
-            PERSISTENCE_KEY: 'agent_memory',
-            // IndexedDB設定
-            INDEXEDDB_NAME: 'AgentMemoryDB',
-            INDEXEDDB_STORE: 'memories',
-            // IndexedDBを使用するか（falseの場合LocalStorageにフォールバック）
-            USE_INDEXEDDB: true
-        },
-
-        // エージェント用システムプロンプト
-        PROMPTS: {
-            // ReActモード用システムプロンプト
-            REACT_SYSTEM: `あなたは自律的に問題を解決するAIエージェントです。
-以下のReAct形式で思考と行動を行ってください：
-
-1. **Thought（思考）**: 現在の状況を分析し、次に何をすべきか考える
-2. **Action（行動）**: 利用可能なツールを使って情報を取得または処理する
-3. **Observation（観察）**: ツールの実行結果を観察する
-4. **Repeat（繰り返し）**: 目標が達成されるまで1-3を繰り返す
-5. **Final Answer（最終回答）**: 十分な情報が集まったら最終回答を提示する
-
-利用可能なツール:
-{{tools}}
-
-重要なルール:
-- 常にThought → Action → Observationの順序を守る
-- 1回のレスポンスでは1つのアクションのみ実行する
-- 十分な情報が集まったらFinal Answerを返す
-- Action Input は JSON オブジェクト1つで書く（複数行にまたがってよい。ファイル内容など長い文字列も JSON 文字列として渡す）
-- 最大{{max_iterations}}回のイテレーションで完了すること`,
-
-            // Function Callingモード用システムプロンプト
-            FC_SYSTEM: `あなたは自律的に問題を解決するAIエージェントです。
-与えられたタスクを達成するため、必要に応じてツールを呼び出してください。
-
-利用可能なツール:
-{{tools}}
-
-タスクを完了したら、最終的な回答を提供してください。`,
-
-            // 観察フェーズ用テンプレート
-            OBSERVE_TEMPLATE: `現在のタスク: {{task}}
-前回のアクション結果: {{last_result}}
-これまでの観察: {{observations}}`,
-
-            // 思考フェーズ用テンプレート
-            THINK_TEMPLATE: `観察結果に基づいて、次のアクションを決定してください。
-目標: {{goal}}
-現在の状態: {{state}}
-利用可能なツール: {{tools}}`
-        },
-
-        // ビルトインエージェントツール
-        TOOLS: {
-            // デフォルトで有効なビルトインツール
-            // AgentToolManager に実際に登録されるツール名と一致させること
-            BUILTIN: ['web_search', 'calculator', 'url_fetch', 'text_analyzer', 'rag_search', 'code_execute', 'file_read', 'ask_user', 'codex_task', 'file_write', 'shell_execute'],
-            // ツール自動選択を有効にするか
-            AUTO_SELECT: true,
-            // ツール選択時の最大ツール数
-            MAX_TOOLS_PER_CALL: 5
-        },
-
-        // UIカスタマイズ
-        UI: {
-            // フェーズごとのアイコン
-            PHASE_ICONS: {
-                observe: '🔍',
-                think: '💭',
-                act: '⚡',
-                result: '✅',
-                error: '❌'
-            },
-            // 展開/折りたたみのデフォルト状態
-            DEFAULT_EXPANDED: true
-        },
-
-        // カスタムツール設定
-        CUSTOM_TOOLS: {
-            // カスタムツール機能の有効/無効
-            ENABLED: true,
-            // 最大カスタムツール数
-            MAX_TOOLS: 50,
-            // ストレージキー
-            STORAGE_KEY: 'agent_custom_tools',
-            // IndexedDB設定
-            DB_NAME: 'AgentCustomToolsDB',
-            DB_STORE: 'tools',
-            // サンドボックス実行のタイムアウト（ミリ秒）
-            SANDBOX_TIMEOUT: 5000,
-            // 許可するAPI（セキュリティ）
-            ALLOWED_APIS: ['fetch', 'JSON', 'Math', 'Date', 'Array', 'Object', 'String', 'Number', 'console']
-        },
-
-        // 可視化設定
-        VISUALIZATION: {
-            // 思考ツリーを表示するか
-            SHOW_THOUGHT_TREE: true,
-            // タイムラインを表示するか
-            SHOW_TIMELINE: true,
-            // デバッグモード（詳細ログ）
-            DEBUG_MODE: false,
-            // 最大ログエントリ数
-            MAX_LOG_ENTRIES: 1000,
-            // アニメーション有効
-            ANIMATION_ENABLED: true
-        }
-    },
-
-    /**
      * Codex CLI 連携設定
      * サーバーで OpenAI Codex CLI（codex exec --json）を子プロセス起動し、
      * サーバー側ワークスペース（app/workspace）でファイル作成・コマンド実行を行う
      */
     CODEX: {
-        // Codex 連携の有効/無効（無効にするとモード選択に出ない）
+        // Codex 連携の有効/無効（無効にすると入力欄の Codex トグルを隠す）
         ENABLED: true,
 
         // サーバーエンドポイント（app/server/codexRoutes.js）
@@ -762,173 +678,6 @@ window.CONFIG = {
             // 履歴復元カードを折りたたんだ状態で出すか
             RESTORED_COLLAPSED: true
         }
-    },
-
-    /**
-     * 対話型ボット設定
-     * FAQ対応ボット、シナリオ分岐会話の構築
-     */
-    CONVERSATIONAL_BOT: {
-        // 対話ボット機能の有効/無効
-        ENABLED: true,
-        // 最大インテント数
-        MAX_INTENTS: 100,
-        // 最大シナリオ数
-        MAX_SCENARIOS: 50,
-        // ストレージキー
-        STORAGE_KEY: 'conversational_bots',
-        // IndexedDB設定
-        DB_NAME: 'ConversationalBotDB',
-        DB_STORE: 'bots',
-        // ファジーマッチング閾値（0-1）
-        FUZZY_MATCH_THRESHOLD: 0.7,
-        // デフォルトのフォールバックタイプ
-        DEFAULT_FALLBACK_TYPE: 'llm',
-        // セッションタイムアウト（ミリ秒）
-        SESSION_TIMEOUT: 1800000,
-        // インテントタイプ
-        INTENT_TYPES: {
-            TEXT: 'text',
-            CHATFLOW: 'chatflow',
-            AGENT: 'agent',
-            WORKFLOW: 'workflow'
-        },
-        // ボットタイプ
-        BOT_TYPES: {
-            FAQ: 'faq',
-            SCENARIO: 'scenario',
-            HYBRID: 'hybrid'
-        }
-    },
-
-    /**
-     * ワークフロービルダー設定
-     * ビジュアルワークフローの構築と自動化
-     */
-    WORKFLOW: {
-        // ワークフロー機能の有効/無効
-        ENABLED: true,
-
-        // キャンバス内の最大ノード数
-        MAX_NODES: 100,
-
-        // キャンバス内の最大接続数
-        MAX_CONNECTIONS: 200,
-
-        // 実行設定
-        EXECUTION: {
-            // ワークフロー全体の最大実行時間（ミリ秒）
-            MAX_TIME: 300000,
-            // ノードごとのタイムアウト（ミリ秒）
-            NODE_TIMEOUT: 60000,
-            // リトライ回数
-            RETRY_COUNT: 3,
-            // リトライ間隔（ミリ秒）
-            RETRY_DELAY: 1000
-        },
-
-        // キャンバス設定
-        CANVAS: {
-            // グリッドサイズ（ピクセル）
-            GRID_SIZE: 20,
-            // グリッドスナップを有効にするか
-            SNAP_TO_GRID: true,
-            // 最小ズーム倍率
-            MIN_ZOOM: 0.25,
-            // 最大ズーム倍率
-            MAX_ZOOM: 2,
-            // デフォルトズーム倍率
-            DEFAULT_ZOOM: 1
-        },
-
-        // ストレージ設定
-        STORAGE: {
-            // IndexedDBデータベース名
-            DB_NAME: 'ChatBot_Workflows',
-            // データベースバージョン
-            DB_VERSION: 1
-        },
-
-        // ノードカテゴリ定義
-        NODE_CATEGORIES: [
-            { id: 'control', name: 'Control', displayName: '制御', icon: 'fa-cogs' },
-            { id: 'ai', name: 'AI', displayName: 'AI', icon: 'fa-brain' },
-            { id: 'data', name: 'Data', displayName: 'データ', icon: 'fa-database' },
-            { id: 'processing', name: 'Processing', displayName: '処理', icon: 'fa-cog' },
-            { id: 'integration', name: 'Integration', displayName: '連携', icon: 'fa-plug' }
-        ]
-    },
-
-    /**
-     * チャットフロービルダー設定
-     * マルチターン会話フローの構築と管理
-     */
-    CHATFLOW: {
-        // チャットフロー機能の有効/無効
-        ENABLED: true,
-
-        // キャンバス内の最大ノード数
-        MAX_NODES: 50,
-
-        // キャンバス内の最大接続数
-        MAX_CONNECTIONS: 100,
-
-        // セッション設定
-        SESSION: {
-            // セッションの最大メッセージ数
-            MAX_MESSAGES: 100,
-            // セッション変数の最大数
-            MAX_VARIABLES: 50,
-            // セッションタイムアウト（ミリ秒、0=無制限）
-            TIMEOUT: 0,
-            // セッション永続化を有効にするか
-            PERSISTENCE: true
-        },
-
-        // 実行設定
-        EXECUTION: {
-            // フロー全体の最大実行時間（ミリ秒）
-            MAX_TIME: 600000,
-            // ノードごとのタイムアウト（ミリ秒）
-            NODE_TIMEOUT: 60000,
-            // ユーザー入力待機の最大時間（ミリ秒、0=無制限）
-            INPUT_WAIT_TIMEOUT: 0
-        },
-
-        // キャンバス設定
-        CANVAS: {
-            // グリッドサイズ（ピクセル）
-            GRID_SIZE: 20,
-            // グリッドスナップを有効にするか
-            SNAP_TO_GRID: true,
-            // 最小ズーム倍率
-            MIN_ZOOM: 0.25,
-            // 最大ズーム倍率
-            MAX_ZOOM: 2,
-            // デフォルトズーム倍率
-            DEFAULT_ZOOM: 1
-        },
-
-        // ストレージ設定
-        STORAGE: {
-            // IndexedDBデータベース名
-            DB_NAME: 'ChatBot_ChatFlows',
-            // データベースバージョン
-            DB_VERSION: 1,
-            // セッションストア名
-            SESSION_STORE: 'sessions',
-            // フロー定義ストア名
-            FLOW_STORE: 'flows'
-        },
-
-        // ノードカテゴリ定義
-        NODE_CATEGORIES: [
-            { id: 'control', name: 'Control', displayName: '制御', icon: 'fa-cogs' },
-            { id: 'ai', name: 'AI', displayName: 'AI', icon: 'fa-brain' },
-            { id: 'io', name: 'IO', displayName: '入出力', icon: 'fa-comments' },
-            { id: 'logic', name: 'Logic', displayName: 'ロジック', icon: 'fa-code-branch' },
-            { id: 'processing', name: 'Processing', displayName: '処理', icon: 'fa-cog' }
-        ]
     }
 };
 

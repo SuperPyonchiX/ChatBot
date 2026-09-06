@@ -1,6 +1,6 @@
 ---
 name: chatbot-component
-description: ChatBotプロジェクトにUIコンポーネントやモーダルを追加する工程スキル。`js/components/{機能}/` または `js/modals/{機能}/{機能}Modal.js` のシングルトンクラス作成、`css/components/{カテゴリ}/` へのCSS追加とCSS変数の使用、index.html への `<link>` / `<script>` 追加位置、イベント登録パターンを扱う。「新しい画面を作って」「モーダルを追加して」「サイドバーにボタンを足して」「このCSSをどこに置けばいい」で使う。AI API の追加は chatbot-api、フロービルダーのノード追加は chatbot-flow-node、エージェントツールは chatbot-agent-tool。
+description: ChatBotプロジェクトにUIコンポーネントやモーダルを追加する工程スキル。`js/components/{機能}/` または `js/modals/{機能}/{機能}Modal.js` のシングルトンクラス作成、`css/components/{カテゴリ}/` へのCSS追加とCSS変数の使用、index.html への `<link>` / `<script>` 追加位置、イベント登録パターンを扱う。「新しい画面を作って」「モーダルを追加して」「サイドバーにボタンを足して」「このCSSをどこに置けばいい」で使う。AI API の追加は chatbot-api、AI が呼ぶツールは chatbot-tool。
 ---
 
 # UI コンポーネント追加
@@ -27,8 +27,8 @@ description: ChatBotプロジェクトにUIコンポーネントやモーダル�
 
 | 用途 | ファイル |
 | --- | --- |
-| タブ付きモーダル（最新） | `js/modals/agentSettings/agentSettingsModal.js` |
-| キャンバス・パレット・プロパティパネル | `js/modals/chatFlowBuilder/chatFlowBuilderModal.js`, `js/components/workflow/*` |
+| 動的生成するモーダル（最新） | `js/modals/toolSettings/toolSettingsModal.js`, `js/components/tools/customToolEditor.js` |
+| 静的 HTML + `UIUtils.toggleModal` のモーダル | `js/modals/workspace/workspaceModal.js` |
 | チャット表示 | `js/components/chat/chatRenderer.js`, `chatUI.js` |
 | サイドバー | `js/components/sidebar/sidebar.js` |
 | 単純なフォームモーダル | `js/modals/renameChat/renameChatModal.js` |

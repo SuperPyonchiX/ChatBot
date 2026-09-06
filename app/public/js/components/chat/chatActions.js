@@ -8,6 +8,7 @@ class ChatActions {
 
     // DOM要素
     #webSearchToggle;
+    #codexToggle;
     #toggleStatus;
 
     /**
@@ -45,6 +46,40 @@ class ChatActions {
                 this.#webSearchToggle.classList.add('active');
             }
         }
+
+        // Codex トグル（ON のあいだはメッセージを Codex CLI に直接渡す）
+        this.#codexToggle = document.getElementById('codexToggle');
+        if (this.#codexToggle) {
+            if (window.CONFIG?.CODEX?.ENABLED === false) {
+                this.#codexToggle.hidden = true;
+            }
+            window.AppState.codexEnabled = this.#loadCodexEnabled();
+            this.#codexToggle.classList.toggle('active', window.AppState.codexEnabled);
+        }
+    }
+
+    /**
+     * Codex トグルの保存状態を読む
+     * @returns {boolean}
+     */
+    #loadCodexEnabled() {
+        try {
+            const key = window.CONFIG?.STORAGE?.KEYS?.CODEX_ENABLED || 'codexEnabled';
+            return localStorage.getItem(key) === 'true';
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Codex トグルの状態を保存する
+     * @param {boolean} enabled
+     */
+    #saveCodexEnabled(enabled) {
+        try {
+            const key = window.CONFIG?.STORAGE?.KEYS?.CODEX_ENABLED || 'codexEnabled';
+            localStorage.setItem(key, enabled ? 'true' : 'false');
+        } catch { /* noop */ }
     }
 
     /**
@@ -57,6 +92,15 @@ class ChatActions {
                 const currentState = webContentExtractor.isWebSearchEnabled();
                 webContentExtractor.setWebSearchEnabled(!currentState);
                 this.#updateToggleButtonState();
+            });
+        }
+        if (this.#codexToggle) {
+            this.#codexToggle.addEventListener('click', () => {
+                const next = !window.AppState.codexEnabled;
+                window.AppState.codexEnabled = next;
+                this.#saveCodexEnabled(next);
+                this.#codexToggle.classList.toggle('active', next);
+                console.log(`[ChatActions] Codex トグル: ${next ? 'ON' : 'OFF'}`);
             });
         }
     }
@@ -266,30 +310,12 @@ class ChatActions {
                 return { error: 'No message content' };
             }
 
-            // チャットフローモードのチェック
-            if (this.#isChatFlowModeEnabled()) {
-                // ユーザー入力をクリア
-                userInput.value = '';
-                UIUtils.getInstance.autoResizeTextarea(userInput);
-                ChatUI.getInstance.updateSendButtonState();
-                return await this.#processWithChatFlow(userText, chatMessages, conversation, attachments);
-            }
-
-            // Codex モードのチェック（キーワード判定はせず常に Codex に委譲）
+            // Codex トグルが ON ならメッセージを Codex CLI に直接渡す
             if (this.#isCodexModeEnabled()) {
                 userInput.value = '';
                 UIUtils.getInstance.autoResizeTextarea(userInput);
                 ChatUI.getInstance.updateSendButtonState();
                 return await this.#processWithCodex(userText, chatMessages, conversation, attachments);
-            }
-
-            // エージェントモードのチェック
-            if (this.#isAgentModeEnabled() && this.#shouldUseAgent(userText)) {
-                // ユーザー入力をクリア
-                userInput.value = '';
-                UIUtils.getInstance.autoResizeTextarea(userInput);
-                ChatUI.getInstance.updateSendButtonState();
-                return await this.#processWithAgent(userText, chatMessages, conversation, attachments);
             }
 
             // ユーザー入力をクリア
@@ -404,44 +430,82 @@ class ChatActions {
             const abortController = window.AppState.createAbortController();
             window.AppState.isStreaming = true;
 
-            // ストリーミングAPI呼び出し
-            await AIAPI.getInstance.callAIAPI(
-                messagesWithSystem,
-                conversation.model,
-                displayAttachments,
-                {
-                    stream: true,
-                    signal: abortController.signal,
-                    enableWebSearch: isWebSearchEnabled && (window.CONFIG.MODELS.OPENAI_WEB_SEARCH_COMPATIBLE.includes(currentModel) || window.CONFIG.MODELS.CLAUDE.includes(currentModel)),
-                    thinkingContainer: thinkingContainer, // Web検索用に渡す
-                    onWebSearchQuery: (query) => {
-                        // Web検索クエリを収集（復元用）
-                        if (query && !thinkingData.webSearchQueries.includes(query)) {
-                            thinkingData.webSearchQueries.push(query);
-                        }
-                    },
-                    onChunk: (chunk) => {
-                        fullResponseText += chunk;
-                        // ストリーミング中のメッセージ更新
-                        ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, chunk, fullResponseText);
-                    },
-                    onComplete: (fullText) => {
-                        // ストリーミング完了時の処理
-                        // ツール結果テキストが追加されている場合はfullResponseTextを使用
-                        const finalText = fullResponseText.length > fullText.length ? fullResponseText : fullText;
-                        ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, finalText);
-                        fullResponseText = finalText;
-                    },
-                    onToolCall: async (event) => {
-                        // ツール呼び出しハンドリング（会話IDとタイムスタンプ、thinkingDataを渡す）
-                        const toolResultText = await this.#handleToolCall(event, thinkingContainer, contentContainer, conversation.id, botTimestamp, thinkingData);
-                        // ツール結果テキストをメッセージに追加
-                        if (toolResultText) {
-                            fullResponseText += toolResultText;
+            // ツール呼び出しが続く限り往復する
+            // モデルがツールを呼ぶ → ここで実行 → 結果をテキストで返す → 続きを生成、を MAX_ROUNDS まで繰り返す
+            const maxRounds = (typeof ToolManager !== 'undefined') ? ToolManager.getInstance.getMaxRounds() : 1;
+            const webSearchOption = isWebSearchEnabled && (window.CONFIG.MODELS.OPENAI_WEB_SEARCH_COMPATIBLE.includes(currentModel) || window.CONFIG.MODELS.CLAUDE.includes(currentModel));
+            let roundMessages = messagesWithSystem;
+            let round = 0;
+
+            while (true) {
+                round++;
+                const isLastRound = round >= maxRounds;
+                const textBefore = fullResponseText;
+                const separator = textBefore ? '\n\n' : '';
+                let roundText = '';
+                /** @type {Promise<Object|null>[]} */
+                const pendingTools = [];
+
+                const returned = await AIAPI.getInstance.callAIAPI(
+                    roundMessages,
+                    conversation.model,
+                    round === 1 ? displayAttachments : [],
+                    {
+                        stream: true,
+                        signal: abortController.signal,
+                        enableWebSearch: webSearchOption,
+                        thinkingContainer: thinkingContainer, // Web検索用に渡す
+                        onWebSearchQuery: (query) => {
+                            if (query && !thinkingData.webSearchQueries.includes(query)) {
+                                thinkingData.webSearchQueries.push(query);
+                            }
+                        },
+                        onChunk: (chunk) => {
+                            roundText += chunk;
+                            fullResponseText = textBefore + (roundText ? separator : '') + roundText;
+                            ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, chunk, fullResponseText);
+                        },
+                        onComplete: () => {
+                            // 確定処理はループを抜けたあとにまとめて行う（途中往復ではツール結果を返して続きを生成する）
+                        },
+                        onToolCall: (event) => {
+                            if (event?.type === 'complete' && event.toolCall) {
+                                pendingTools.push(this.#handleToolCall(event, thinkingContainer, contentContainer, conversation.id, botTimestamp, thinkingData));
+                            } else {
+                                this.#handleToolCall(event, thinkingContainer, contentContainer, conversation.id, botTimestamp, thinkingData);
+                            }
                         }
                     }
+                );
+
+                // 非ストリーミングで本文が返ってきた場合の保険
+                if (!roundText && typeof returned === 'string' && returned) {
+                    roundText = returned;
+                    fullResponseText = textBefore + separator + roundText;
+                    ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, returned, fullResponseText);
                 }
-            );
+
+                const executed = (await Promise.all(pendingTools)).filter(Boolean);
+                if (executed.length === 0 || abortController.signal.aborted) {
+                    break;
+                }
+                if (isLastRound) {
+                    console.warn(`[ChatActions] ツール往復の上限（${maxRounds}）に達したため打ち切ります`);
+                    break;
+                }
+
+                // 次の往復: プロバイダ非依存にするため、ツール結果はテキストとしてユーザー発言に載せる
+                roundMessages = [
+                    ...roundMessages,
+                    {
+                        role: 'assistant',
+                        content: roundText || `(ツールを呼び出しました: ${executed.map(e => e.toolCall.name).join(', ')})`
+                    },
+                    { role: 'user', content: this.#buildToolResultsMessage(executed) }
+                ];
+            }
+
+            ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, fullResponseText);
 
             // 思考過程データがあるかどうかを判定
             // elapsedMs は付随情報なので、これ単独では思考過程を作らない
@@ -639,7 +703,7 @@ class ChatActions {
      * @param {string} conversationId - 会話ID
      * @param {number} messageTimestamp - メッセージのタイムスタンプ
      * @param {Object} thinkingData - 思考過程データ（復元用）
-     * @returns {Promise<string|null>} ツール結果テキスト（メッセージに追加用）
+     * @returns {Promise<{toolCall: Object, result?: Object, error?: string}|null>} 実行結果（complete 時のみ）
      */
     /**
      * 思考過程アイテムの同一性を判定するキーを作ります
@@ -666,43 +730,37 @@ class ChatActions {
             const toolName = this.#getToolDisplayName(toolCall.name);
             if (typeof ChatRenderer !== 'undefined') {
                 ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool', `${toolName}を実行中...`, { key: this.#getToolItemKey(toolCall) });
-                // 待機インジケーターのラベルを「○○を作成しています」に更新
                 const streamingMessage = StreamingIndicator.getInstance.activeMessage;
                 if (streamingMessage) {
-                    ChatRenderer.getInstance.updateStreamingStatus(streamingMessage, 'tool-running', toolCall.name);
+                    ChatRenderer.getInstance.updateStreamingStatus(streamingMessage, 'tool-running', toolName);
                 }
             }
             return null;
         }
 
-        // ツール実行（complete時）
+        // ツール実行（complete時）。結果はモデルに返すため呼び出し元へ渡す
         if (type === 'complete' && toolCall && typeof ToolManager !== 'undefined') {
+            const toolName = this.#getToolDisplayName(toolCall.name);
+            if (thinkingContainer && typeof ChatRenderer !== 'undefined') {
+                ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool', `${toolName}を実行中...`, { key: this.#getToolItemKey(toolCall) });
+            }
             try {
-                const result = await ToolManager.getInstance.handleToolCall(toolCall, toolCall.provider);
+                const result = await ToolManager.getInstance.handleToolCall(toolCall, toolCall.provider, { container: contentContainer });
 
-                let toolResultText = null;
                 let fileId = null;
-
-                // 結果をUIに表示 & ファイルを永続化
                 if (result && contentContainer) {
                     fileId = await this.#displayToolResult(result, contentContainer, conversationId, messageTimestamp);
-
-                    // ツール結果テキストを生成（AIへの認識用＆ユーザーへの説明用）
-                    toolResultText = this.#generateToolResultText(toolCall, result);
                 }
 
-                // 思考過程を更新（完了表示）
                 if (thinkingContainer && typeof ChatRenderer !== 'undefined') {
-                    const toolName = this.#getToolDisplayName(toolCall.name);
                     ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool-complete', `${toolName}完了`, { key: this.#getToolItemKey(toolCall) });
                 }
 
-                // thinkingDataにツール情報を保存（復元用）
                 if (thinkingData && thinkingData.toolCalls) {
                     thinkingData.toolCalls.push({
                         id: toolCall.id ?? null,
                         name: toolCall.name,
-                        displayName: this.#getToolDisplayName(toolCall.name),
+                        displayName: toolName,
                         status: 'complete',
                         filename: result?.filename || null,
                         fileId: fileId,
@@ -710,24 +768,22 @@ class ChatActions {
                     });
                 }
 
-                // ツール結果テキストをUIに追加表示
-                if (toolResultText && contentContainer && typeof Markdown !== 'undefined') {
-                    const toolResultDiv = document.createElement('div');
-                    toolResultDiv.className = 'tool-result-text';
-                    const renderedHtml = await Markdown.getInstance.renderMarkdown(toolResultText);
-                    toolResultDiv.innerHTML = renderedHtml;
-                    contentContainer.appendChild(toolResultDiv);
-                }
-
-                return toolResultText;
+                return { toolCall, result };
             } catch (error) {
                 console.error('ツール実行エラー:', error);
-                // エラーを思考過程に表示
                 if (thinkingContainer && typeof ChatRenderer !== 'undefined') {
-                    const toolName = this.#getToolDisplayName(toolCall.name);
                     ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool-error', `${toolName}エラー: ${error.message}`, { key: this.#getToolItemKey(toolCall) });
                 }
-                return null;
+                if (thinkingData && thinkingData.toolCalls) {
+                    thinkingData.toolCalls.push({
+                        id: toolCall.id ?? null,
+                        name: toolCall.name,
+                        displayName: toolName,
+                        status: 'error',
+                        params: this.#extractToolParams(toolCall)
+                    });
+                }
+                return { toolCall, error: error.message };
             }
         }
 
@@ -735,51 +791,57 @@ class ChatActions {
     }
 
     /**
-     * ツール結果のテキストを生成（AI認識用＆ユーザー説明用）
-     * @param {Object} toolCall - ツール呼び出し情報
-     * @param {Object} result - ツール実行結果
-     * @returns {string} 結果テキスト
+     * ツール実行結果をモデルに返すためのメッセージ本文を組み立てる
+     * @param {Array<{toolCall: Object, result?: Object, error?: string}>} executed
+     * @returns {string}
      */
-    #generateToolResultText(toolCall, result) {
-        if (!toolCall || !result) return '';
+    #buildToolResultsMessage(executed) {
+        const maxChars = window.CONFIG?.TOOLS?.RESULT_MAX_CHARS || 12000;
+        const blocks = executed.map(({ toolCall, result, error }) => {
+            const payload = error
+                ? { success: false, error }
+                : this.#summarizeToolResultForModel(result);
+            let text = JSON.stringify(payload, null, 0);
+            if (text.length > maxChars) {
+                text = text.substring(0, maxChars) + `... (${text.length - maxChars} 文字省略)`;
+            }
+            return `<tool_result name="${toolCall.name}"${toolCall.id ? ` id="${toolCall.id}"` : ''}>\n${text}\n</tool_result>`;
+        });
+        return [
+            '以下は、あなたが呼び出したツールの実行結果です。この結果を踏まえてユーザーへの回答を続けてください。',
+            '結果をそのまま貼り付けず、必要な情報だけを使ってください。さらにツールが必要なら続けて呼び出して構いません。',
+            '',
+            ...blocks
+        ].join('\n');
+    }
 
-        const params = this.#extractToolParams(toolCall);
-
-        switch (toolCall.name) {
-            case 'generate_powerpoint':
-                const slides = params.slides || [];
-                const slideCount = slides.length;
-                const title = params.title || 'プレゼンテーション';
-
-                let slideDetails = '';
-                slides.forEach((slide, index) => {
-                    slideDetails += `\n### スライド${index + 1}: ${slide.title || '(タイトルなし)'}\n`;
-                    if (slide.subtitle) {
-                        slideDetails += `- サブタイトル: ${slide.subtitle}\n`;
-                    }
-                    if (slide.content) {
-                        // content配列の場合は結合
-                        const contentText = Array.isArray(slide.content)
-                            ? slide.content.join('\n  - ')
-                            : slide.content;
-                        slideDetails += `- 内容: ${contentText}\n`;
-                    }
-                    if (slide.layout) {
-                        slideDetails += `- レイアウト: ${slide.layout}\n`;
-                    }
-                });
-
-                return `\n\n---\n**PowerPoint作成完了**: ${result.filename}\n` +
-                    `- タイトル: ${title}\n` +
-                    `- スライド数: ${slideCount}枚\n` +
-                    `\n## スライド構成${slideDetails}`;
-            case 'process_excel':
-                return `\n\n---\n**Excel処理完了**: ${result.filename}`;
-            case 'render_canvas':
-                return `\n\n---\n**Canvas画像作成完了**: ${result.filename}`;
-            default:
-                return `\n\n---\n**ツール実行完了**: ${result.filename || toolCall.name}`;
+    /**
+     * モデルに返すツール結果を軽量化する（Blob や data URL は落とす）
+     * @param {Object} result
+     * @returns {Object}
+     */
+    #summarizeToolResultForModel(result) {
+        if (result === null || result === undefined) return { success: true };
+        if (typeof result !== 'object') return { success: true, result };
+        if (result.type === 'file') {
+            return {
+                success: true, type: 'file', filename: result.filename, mimeType: result.mimeType, size: result.size,
+                note: 'ファイルはユーザーの画面にダウンロードカードとして表示済み。ファイル名と内容の要点だけ伝えればよい'
+            };
         }
+        if (result.type === 'image') {
+            return {
+                success: true, type: 'image', filename: result.filename, width: result.width, height: result.height,
+                note: '画像はユーザーの画面にプレビュー表示済み'
+            };
+        }
+        const copy = {};
+        for (const [key, value] of Object.entries(result)) {
+            if (value instanceof Blob) continue;
+            if (typeof value === 'string' && value.startsWith('data:')) continue;
+            copy[key] = value;
+        }
+        return copy;
     }
 
     /**
@@ -949,178 +1011,20 @@ class ChatActions {
     }
 
     // ========================================
-    // エージェントモード関連メソッド
-    // ========================================
-
-    /**
-     * エージェントモードが有効かどうかを確認
-     * @returns {boolean}
-     */
-    #isAgentModeEnabled() {
-        // CONFIG設定でエージェント機能が有効かどうか
-        const configEnabled = window.CONFIG?.AGENT?.ENABLED === true;
-        // UIでエージェントモードが選択されているかどうか（react または function_calling）
-        const agentMode = window.AppState?.agentMode;
-        const uiEnabled = agentMode === 'react' || agentMode === 'function_calling';
-        return configEnabled && uiEnabled;
-    }
-
-    /**
-     * エージェントモードを使用すべきかどうかを判定
-     * @param {string} userText - ユーザー入力
-     * @returns {boolean}
-     */
-    #shouldUseAgent(userText) {
-        if (typeof AgentOrchestrator === 'undefined') {
-            return false;
-        }
-        return AgentOrchestrator.getInstance.shouldUseAgent(userText);
-    }
-
-    /**
-     * エージェントモードでメッセージを処理
-     * @param {string} userText - ユーザー入力
-     * @param {HTMLElement} chatMessages - チャットメッセージコンテナ
-     * @param {Object} conversation - 会話オブジェクト
-     * @param {Array} attachments - 添付ファイル
-     * @returns {Promise<Object>} 処理結果
-     */
-    async #processWithAgent(userText, chatMessages, conversation, attachments = []) {
-        console.log('[ChatActions] エージェントモードで処理開始');
-
-        let titleUpdated = false;
-        const timestamp = Date.now();
-
-        // ユーザーメッセージを表示
-        await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, attachments, timestamp);
-
-        // 添付ファイルの処理
-        let attachmentContent = '';
-        if (attachments && attachments.length > 0) {
-            const processedResult = await this.#processAttachments(attachments);
-            attachmentContent = processedResult.content;
-        }
-
-        const finalMessage = attachmentContent ? `${userText}\n\n${attachmentContent}` : userText;
-
-        // ユーザーメッセージを会話に追加
-        const userMessage = {
-            role: 'user',
-            content: finalMessage,
-            timestamp: timestamp
-        };
-        conversation.messages.push(userMessage);
-
-        // タイトル自動生成の判定
-        const shouldGenerateTitle = conversation.title === '新しいチャット' &&
-            conversation.messages.filter(m => m.role === 'user').length === 1;
-
-        // エージェントUIを作成
-        const agentUI = AgentUI.getInstance;
-        const agentContainer = agentUI.createAgentContainer(chatMessages);
-
-        // AbortControllerを作成
-        const abortController = window.AppState.createAbortController();
-        window.AppState.isStreaming = true;
-
-        const botTimestamp = Date.now();
-
-        try {
-            // エージェントを実行
-            const result = await AgentOrchestrator.getInstance.runAgent(userText, {
-                context: {
-                    conversation,
-                    attachments
-                },
-                onObserve: (data) => {
-                    agentUI.showObservation(agentContainer, data);
-                    agentUI.updateProgress(agentContainer, data.iteration, window.CONFIG?.AGENT?.MAX_ITERATIONS || 10);
-                },
-                onThink: (data) => {
-                    agentUI.showThought(agentContainer, data);
-                },
-                onAct: (data) => {
-                    agentUI.showAction(agentContainer, data);
-                },
-                onResult: (data) => {
-                    agentUI.showResult(agentContainer, data);
-                },
-                onComplete: (data) => {
-                    agentUI.finalizeAgent(agentContainer, data);
-                },
-                onError: (error) => {
-                    agentUI.showError(agentContainer, error);
-                }
-            });
-
-            // 最終回答を取得
-            let finalResponse = '';
-            if (result.success && result.result?.response) {
-                finalResponse = result.result.response;
-            } else if (result.success && result.result) {
-                finalResponse = typeof result.result === 'string' ? result.result : JSON.stringify(result.result);
-            } else if (result.error) {
-                finalResponse = `エージェント実行エラー: ${result.error}`;
-            } else {
-                finalResponse = 'エージェントの実行が完了しましたが、明確な回答が得られませんでした。';
-            }
-
-            // アシスタントメッセージを会話に追加
-            const assistantMessage = {
-                role: 'assistant',
-                content: finalResponse,
-                timestamp: botTimestamp,
-                agentData: {
-                    mode: AgentOrchestrator.getInstance.getMode(),
-                    iterations: result.iterations?.length || 0,
-                    summary: result.summary
-                }
-            };
-            conversation.messages.push(assistantMessage);
-
-            // アシスタントメッセージをチャットに表示（エージェントコンテナとは別）
-            if (finalResponse && finalResponse !== '') {
-                const { messageDiv, contentContainer } = ChatRenderer.getInstance.addStreamingBotMessage(chatMessages, botTimestamp);
-                ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, finalResponse, finalResponse);
-                ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, finalResponse);
-            }
-
-            // タイトル自動生成
-            if (shouldGenerateTitle) {
-                this.#generateAndUpdateTitle(conversation, userText).catch(err => {
-                    console.warn('[ChatActions] タイトル自動生成エラー:', err.message);
-                });
-                titleUpdated = true;
-            }
-
-            window.AppState.clearAbortController();
-
-            return { titleUpdated };
-
-        } catch (error) {
-            console.error('[ChatActions] エージェント実行エラー:', error);
-            agentUI.showError(agentContainer, error);
-            window.AppState.clearAbortController();
-
-            return { error: error.message };
-        }
-    }
-
-    // ========================================
     // Codex モード関連メソッド
     // ========================================
 
     /**
-     * Codex モードが有効かどうかを確認
+     * Codex トグルが ON かどうか
      * @returns {boolean}
      */
     #isCodexModeEnabled() {
         const configEnabled = window.CONFIG?.CODEX?.ENABLED === true;
-        return configEnabled && window.AppState?.agentMode === 'codex' && typeof CodexClient !== 'undefined';
+        return configEnabled && window.AppState?.codexEnabled === true && typeof CodexClient !== 'undefined';
     }
 
     /**
-     * Codex モードでメッセージを処理
+     * Codex トグル ON 時の送信処理
      * サーバー側で Codex CLI を起動し、進捗カードを描画してから最終メッセージを表示する
      * @param {string} userText - ユーザー入力
      * @param {HTMLElement} chatMessages - チャットメッセージコンテナ
@@ -1129,7 +1033,7 @@ class ChatActions {
      * @returns {Promise<Object>} 処理結果
      */
     async #processWithCodex(userText, chatMessages, conversation, attachments = []) {
-        console.log('[ChatActions] Codex モードで処理開始');
+        console.log('[ChatActions] Codex に委譲して処理開始');
 
         let titleUpdated = false;
         const timestamp = Date.now();
@@ -1234,136 +1138,6 @@ class ChatActions {
         }
     }
 
-    // ========================================
-    // チャットフローモード関連メソッド
-    // ========================================
-
-    /**
-     * チャットフローモードが有効かどうかを確認
-     * @returns {boolean}
-     */
-    #isChatFlowModeEnabled() {
-        // CONFIG設定でチャットフロー機能が有効かどうか
-        const configEnabled = window.CONFIG?.CHATFLOW?.ENABLED === true;
-        // ChatFlowEngineが利用可能でアクティブなセッションがあるかどうか
-        if (!configEnabled || typeof ChatFlowEngine === 'undefined') {
-            return false;
-        }
-        // 現在の会話IDでアクティブなセッションがあるか確認
-        const conversationId = window.AppState?.currentConversationId;
-        if (!conversationId) {
-            return false;
-        }
-        return ChatFlowEngine.getInstance.hasActiveSession(conversationId);
-    }
-
-    /**
-     * チャットフローモードでメッセージを処理
-     * @param {string} userText - ユーザー入力
-     * @param {HTMLElement} chatMessages - チャットメッセージコンテナ
-     * @param {Object} conversation - 会話オブジェクト
-     * @param {Array} attachments - 添付ファイル
-     * @returns {Promise<Object>} 処理結果
-     */
-    async #processWithChatFlow(userText, chatMessages, conversation, attachments = []) {
-        console.log('[ChatActions] チャットフローモードで処理開始');
-
-        let titleUpdated = false;
-        const timestamp = Date.now();
-
-        // ユーザーメッセージを表示
-        await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, attachments, timestamp);
-
-        // 添付ファイルの処理
-        let attachmentContent = '';
-        if (attachments && attachments.length > 0) {
-            const processedResult = await this.#processAttachments(attachments);
-            attachmentContent = processedResult.content;
-        }
-
-        const finalMessage = attachmentContent ? `${userText}\n\n${attachmentContent}` : userText;
-
-        // ユーザーメッセージを会話に追加
-        const userMessage = {
-            role: 'user',
-            content: finalMessage,
-            timestamp: timestamp
-        };
-        conversation.messages.push(userMessage);
-
-        // タイトル自動生成の判定
-        const shouldGenerateTitle = conversation.title === '新しいチャット' &&
-            conversation.messages.filter(m => m.role === 'user').length === 1;
-
-        const botTimestamp = Date.now();
-
-        try {
-            // ChatFlowEngineにユーザー入力を渡す
-            const chatFlowEngine = ChatFlowEngine.getInstance;
-
-            // 現在の会話に関連するセッションを取得
-            const session = chatFlowEngine.getSessionByConversationId(conversation.id);
-            if (!session) {
-                throw new Error('アクティブなチャットフローセッションがありません');
-            }
-
-            // ストリーミング用のボットメッセージを表示
-            const { messageDiv, contentContainer } = ChatRenderer.getInstance.addStreamingBotMessage(chatMessages, botTimestamp);
-
-            let fullResponseText = '';
-
-            // ChatFlowEngineからの出力をリッスン
-            const outputHandler = (data) => {
-                if (data.content) {
-                    fullResponseText += data.content;
-                    ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, data.content, fullResponseText);
-                }
-            };
-
-            chatFlowEngine.on('output', outputHandler);
-
-            // ユーザー入力を処理（セッションIDを渡す）
-            const result = await chatFlowEngine.processUserInput(session.sessionId, userText);
-
-            chatFlowEngine.off('output', outputHandler);
-
-            // ストリーミング完了
-            ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, fullResponseText);
-
-            // アシスタントメッセージを会話に追加
-            if (fullResponseText) {
-                const assistantMessage = {
-                    role: 'assistant',
-                    content: fullResponseText,
-                    timestamp: botTimestamp,
-                    chatFlowData: {
-                        flowId: result.flowId,
-                        sessionId: result.sessionId,
-                        nodeId: result.currentNodeId
-                    }
-                };
-                conversation.messages.push(assistantMessage);
-            }
-
-            // タイトル自動生成
-            if (shouldGenerateTitle) {
-                this.#generateAndUpdateTitle(conversation, userText).catch(err => {
-                    console.warn('[ChatActions] タイトル自動生成エラー:', err.message);
-                });
-                titleUpdated = true;
-            }
-
-            return { titleUpdated };
-
-        } catch (error) {
-            console.error('[ChatActions] チャットフロー実行エラー:', error);
-
-            // エラーメッセージを表示
-            this.#showErrorMessage(`チャットフロー実行エラー: ${error.message}`, chatMessages);
-
-            return { error: error.message };
-        }
-    }
 }
 
 // チャットアクションの初期化

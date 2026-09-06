@@ -16,7 +16,7 @@ scripts\StartChatBot.bat             # Node 確認 → install → 起動 → �
 
 - **ビルドなし・ES Modules なし**。`index.html` 末尾の `<script>` 列を上から順に評価する。クラスは `window.Xxx = Xxx` でグローバル公開して次のスクリプトから参照する
 - `jsconfig.json` で `checkJs` 有効。型は JSDoc で書く
-- 永続化は LocalStorage（設定、API キーは暗号化）と IndexedDB（RAG ベクトル、エージェント記憶、カスタムツール、生成ファイル、ワークフロー）
+- 永続化は LocalStorage（設定、API キーは暗号化、ツールの有効/無効）と IndexedDB（RAG ベクトル、カスタムツール、生成ファイル）
 - 外部ライブラリは CDN を `<head>` で読む。npm 依存はサーバー側の express / http-proxy-middleware / cors のみ
 
 ## サブシステム地図
@@ -24,23 +24,20 @@ scripts\StartChatBot.bat             # Node 確認 → install → 起動 → �
 | サブシステム | 入口 | 補足 |
 | --- | --- | --- |
 | AI API | `js/core/api.js` | モデル名で `openaiApi.js` / `claudeApi.js` / `geminiApi.js` / `responsesApi.js` に委譲。モデル一覧は `config.js` の `MODELS` が正本 |
-| チャットツール | `js/core/tools/toolManager.js` | 通常チャットの Function Calling。Excel / PowerPoint / Canvas 生成 |
-| エージェント | `js/core/agent/agentOrchestrator.js` | ReAct ループ。ツールは `agent/tools/agentToolManager.js`、UI は `components/agent/`、設定は `modals/agentSettings/` |
-| ワークフロー | `js/core/workflow/nodeRegistry.js`, `workflowEngine.js` | DAG 実行。ビルダーは `modals/workflowBuilder/` + `components/workflow/` |
-| チャットフロー | `js/core/chatflow/chatFlowNodes.js`, `chatFlowEngine.js` | 会話内の逐次遷移。ビルダーは `modals/chatFlowBuilder/` |
+| ツール | `js/core/tools/toolManager.js` | 通常チャットの Function Calling。生成系（`executors/`）、情報取得・実行系（`builtin/`）、カスタム（`custom/`）を 1 つの `ToolRegistry` に登録し、有効/無効を localStorage `tool_settings` で管理。設定 UI は `modals/toolSettings/` |
 | RAG | `js/core/rag/ragManager.js` | ローカル埋め込み（Transformers.js）or OpenAI / Azure。Confluence 取り込みは `confluenceDataSource.js` |
 | コード実行 | `js/core/executors/codeExecutor.js` | JS / TS / Python / C++ / HTML。言語別は `executors/languages/` |
 | アーティファクト | `js/components/artifact/artifactManager.js` | HTML / SVG / Mermaid / Markdown / Draw.io のプレビュー |
-| Codex 連携 | `js/core/codex/codexClient.js` | サーバー `app/server/codexRoutes.js` が `codex exec --json` を spawn し SSE 中継。作業先は `app/workspace/`。チャット内カードは `components/codex/`、エージェントからは `agent/tools/codexTaskTool.js` |
+| Codex 連携 | `js/core/codex/codexClient.js` | サーバー `app/server/codexRoutes.js` が `codex exec --json` を spawn し SSE 中継。作業先は `app/workspace/`。入力欄の Codex トグル ON で `chatActions.js#processWithCodex` に分岐。チャット内カードは `components/codex/`、AI からは `tools/builtin/codexTaskTool.js` |
 | チャット UI | `js/components/chat/` | 表示 `chatRenderer.js`、送信 `chatActions.js`、履歴 `chatHistory.js` |
 | モーダル | `js/modals/{機能}/{機能}Modal.js` | 開閉の共通処理は `modalHandlers.js` |
 | サーバー | `app/server/index.js` | 下記 |
 
-**ツールは2系統あり混同しない。** `js/core/tools/` は通常チャット用で `ToolRegistry` に登録する。`js/core/agent/tools/` はエージェントループ専用で `AgentToolManager` に登録する。レジストリもスキーマ定義も別で、片方に登録してももう片方には現れない。
+**ツールの往復は `chatActions.js#processAndSendMessage` が回す。** モデルがツールを呼ぶ → `ToolManager.handleToolCall` で実行 → 結果を `<tool_result>` テキストとして user メッセージに載せて再呼び出し、を `TOOLS.MAX_ROUNDS` まで繰り返す。プロバイダ固有の tool メッセージ形式（`role:'tool'` / `tool_result` / `functionResponse`）は使っていない。ユーザーが選ぶ「モード」は無く、例外は入力欄の Codex トグル（メッセージを Codex CLI に直接渡す）だけ。
 
 ## スクリプト読み込み順
 
-新規ファイルは `index.html` の同じサブシステムのコメントブロック内に、依存先の後・依存元の前に置く。ブロックは上から順に: 実行環境 → Core（`config.js` 先頭）→ Utils → Components / API → ツール機能 → RAG → エージェント（内側に「エージェントツール」「カスタムツール関連」）→ ワークフロー → チャットフロー → アーティファクト → コンポーネント → モーダル → Monaco → `main.js`（必ず最後）。
+新規ファイルは `index.html` の同じサブシステムのコメントブロック内に、依存先の後・依存元の前に置く。ブロックは上から順に: 実行環境 → Core（`config.js` 先頭）→ Utils → Components / API → ツール機能（内側に「情報取得・実行系ツール」「カスタムツール」、末尾が `toolManager.js`）→ RAG → アーティファクト → コンポーネント → モーダル → Monaco → `main.js`（必ず最後）。
 
 CSS は `<head>` の `<!-- Components CSS -->` の並びに `<link>` を足す。`css/tools.css` だけ `components/` の外にある例外。
 
@@ -87,7 +84,7 @@ window.ClassName = ClassName;
 
 ### 設定値・ログ・エラー
 
-- 数値や URL のハードコード禁止。すべて `window.CONFIG`（`js/core/config.js`）から取る。新しい設定はサブシステムに対応するトップレベルキー（`AGENT` `TOOLS` `WORKFLOW` `CHATFLOW` `RAG` `UI` など）の下に追加する
+- 数値や URL のハードコード禁止。すべて `window.CONFIG`（`js/core/config.js`）から取る。新しい設定はサブシステムに対応するトップレベルキー（`TOOLS` `CODEX` `RAG` `UI` `ARTIFACT` など）の下に追加する
 - パブリックメソッドには JSDoc（`@param` `@returns` `@throws`）を書く
 - ログは `console.log('[ModuleName] ...')` の形でモジュール名を前置する。成功 / 警告 / エラーの区別に絵文字を使ってよい
 - 例外は `console.error('[ModuleName] 処理名エラー:', error)` で記録してから再スローする
@@ -101,8 +98,7 @@ window.ClassName = ClassName;
 | スキル | 使う場面 |
 | --- | --- |
 | `chatbot-api` | AI プロバイダの追加、プロキシ追加、ストリーミング |
-| `chatbot-agent-tool` | エージェントツール / チャットツールの追加 |
-| `chatbot-flow-node` | ワークフロー / チャットフローのノード追加 |
+| `chatbot-tool` | AI が呼び出すツール（Function Calling）の追加 |
 | `chatbot-component` | UI 部品・モーダル・CSS の追加 |
 
 ## 変更後の確認
