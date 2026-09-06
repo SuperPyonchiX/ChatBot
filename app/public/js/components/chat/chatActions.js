@@ -611,9 +611,10 @@ class ChatActions {
             const toolName = this.#getToolDisplayName(toolCall.name);
             if (typeof ChatRenderer !== 'undefined') {
                 ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'tool', `${toolName}を実行中...`);
-                // メイン表示を「○○を作成中...」に更新
-                if (contentContainer) {
-                    ChatRenderer.getInstance.updateStreamingStatus(contentContainer, 'tool-running', toolCall.name);
+                // 待機インジケーターのラベルを「○○を作成しています」に更新
+                const streamingMessage = StreamingIndicator.getInstance.activeMessage;
+                if (streamingMessage) {
+                    ChatRenderer.getInstance.updateStreamingStatus(streamingMessage, 'tool-running', toolCall.name);
                 }
             }
             return null;

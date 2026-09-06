@@ -353,6 +353,17 @@ window.CONFIG = {
         // テキストエリアの最大高さ比率（画面の高さに対する割合）
         TEXTAREA_MAX_HEIGHT_RATIO: 0.4,
 
+        // ストリーミング中の待機表示
+        STREAMING: {
+            // 「何をしているか」を示すラベル。語れないときは表示せず丸だけにする
+            LABELS: {
+                WEB_SEARCH: 'ウェブを検索しています',
+                WEB_SEARCH_ANALYZE: '検索結果を読んでいます',
+                TOOL_RUNNING: '{name}を作成しています',
+                RAG: 'ナレッジベースを参照しています'
+            }
+        },
+
         // サイドバーの会話履歴
         SIDEBAR: {
             // グルーピング方式: 'date'（今日/昨日/過去7日...）| 'prompt'（システムプロンプト単位）

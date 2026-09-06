@@ -3,29 +3,32 @@
     display: inline-block;
 }
 
-/* 完全に消えるとちらついて見えるので、薄くなるだけに留める */
+/* ドットの定義はここ1箇所だけ。以前は system-messages.css にも
+   別サイズ・別アニメの定義があり、置き場所で見た目が変わっていた */
 .typing-dots span {
     display: inline-block;
-    width: 5px;
-    height: 5px;
+    width: 4px;
+    height: 4px;
     margin: 0 2px;
     border-radius: 50%;
-    background: var(--text-secondary);
-    animation: typingDot var(--animation-duration-slow) ease-in-out infinite;
-    will-change: opacity;
+    background: currentColor;
+    animation: typingWave var(--animation-duration-slow) ease-in-out infinite;
+    will-change: transform, opacity;
 }
 
-.typing-dots span:nth-child(2) {
-    animation-delay: 0.16s;
-}
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+.typing-dots span:nth-child(3) { animation-delay: 0s; }
 
-.typing-dots span:nth-child(3) {
-    animation-delay: 0.32s;
-}
-
-@keyframes typingDot {
-    0%, 100% { opacity: 0.25; }
-    50% { opacity: 1; }
+@keyframes typingWave {
+    0%, 60%, 100% {
+        transform: translateY(0) scale(0.6);
+        opacity: 0.35;
+    }
+    30% {
+        transform: translateY(-3px) scale(1.2);
+        opacity: 1;
+    }
 }
 
 .typing-indicator {

@@ -51,8 +51,13 @@
     animation: streamingCaret 1s steps(1, end) infinite;
 }
 
-/* 生成開始直後の Thinking 表示中はカーソルを出さない
-   （ドットとカーソルが並ぶと落ち着かないため） */
-.message.streaming .markdown-content > p:last-child:has(.typing-dots)::after {
+/* 待機インジケーター（丸／シマー）が出ている間はカーソルを出さない。
+   本文が流れ始めてインジケーターが hidden になった時点でカーソルに切り替わる */
+.message.streaming:has(.stream-indicator:not([data-state="hidden"])) .markdown-content > p:last-child::after,
+.message.streaming:has(.stream-indicator:not([data-state="hidden"])) .markdown-content > h1:last-child::after,
+.message.streaming:has(.stream-indicator:not([data-state="hidden"])) .markdown-content > h2:last-child::after,
+.message.streaming:has(.stream-indicator:not([data-state="hidden"])) .markdown-content > h3:last-child::after,
+.message.streaming:has(.stream-indicator:not([data-state="hidden"])) .markdown-content > ul:last-child > li:last-child::after,
+.message.streaming:has(.stream-indicator:not([data-state="hidden"])) .markdown-content > ol:last-child > li:last-child::after {
     content: none;
 }

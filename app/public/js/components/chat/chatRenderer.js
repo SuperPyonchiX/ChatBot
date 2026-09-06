@@ -267,16 +267,16 @@ class ChatRenderer {
         const thinkingContainer = this.#createThinkingContainer();
         contentDiv.appendChild(thinkingContainer);
 
-        // 回答本文コンテナを作成
+        // 回答本文コンテナを作成（最初のチャンクが来るまでは空）
         const markdownContent = document.createElement('div');
         markdownContent.className = 'markdown-content';
-
-        // 初期状態: Thinking表示
-        markdownContent.innerHTML = this.#formatSystemMessage('Thinking', true);
 
         contentDiv.appendChild(markdownContent);
         bodyDiv.appendChild(contentDiv);
         messageDiv.appendChild(bodyDiv);
+
+        // 待機インジケーターを本文の外に置く。中に置くと本文の innerHTML 置換で消えてしまう
+        StreamingIndicator.getInstance.attach(messageDiv, contentDiv);
 
         // 生成中は本文末尾に点滅カーソルを出す（CSS の ::after が担当）
         messageDiv.classList.add('streaming');
@@ -490,6 +490,11 @@ class ChatRenderer {
 
         try {
             const renderedHTML = await Markdown.getInstance.renderMarkdown(currentFullText);
+
+            // 本文が出るので待機インジケーターを隠す（2回目以降は即座に戻る）
+            const messageDiv = container.closest('.message');
+            if (messageDiv) StreamingIndicator.getInstance.onBodyChunk(messageDiv);
+
             const chatMessages = container.closest('.chat-messages');
             if (chatMessages) {
                 const isNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
@@ -511,46 +516,25 @@ class ChatRenderer {
 
     /**
      * ストリーミング中のステータス表示を更新します（ツール実行中など）
-     * @param {HTMLElement} container - 内容を表示するコンテナ要素（.markdown-content）
-     * @param {string} status - ステータスの種類 ('thinking' | 'tool-running' | 'tool-complete')
+     * 表示の実体は本文の外にある待機インジケーターが持つため、
+     * ここではラベルの出し入れだけを行い本文には触れません
+     * @param {HTMLElement} messageDiv - 対象のメッセージ要素
+     * @param {string} status - ステータスの種類 ('thinking' | 'tool-running')
      * @param {string} [toolName] - ツール名（tool-running時に使用）
+     * @returns {void}
      */
-    updateStreamingStatus(container, status, toolName = '') {
-        if (!container) return;
+    updateStreamingStatus(messageDiv, status, toolName = '') {
+        if (!messageDiv) return;
 
-        // 現在のテキストコンテンツを保持（ツール完了後に復元）
-        const existingContent = container.querySelector('.streaming-status-temp');
+        const indicator = StreamingIndicator.getInstance;
 
-        let statusHtml = '';
-        switch (status) {
-            case 'tool-running':
-                const displayName = this.#getToolDisplayName(toolName);
-                statusHtml = `<p class="streaming-status streaming-status-tool">
-                    <span class="tool-status-icon">🔧</span>
-                    <span class="tool-status-text">${displayName}を作成中</span>
-                    <span class="typing-dots"><span></span><span></span><span></span></span>
-                </p>`;
-                break;
-            case 'tool-complete':
-                // ツール完了時はThinkingに戻す（テキストがある場合はそれを表示）
-                statusHtml = this.#formatSystemMessage('Thinking', true);
-                break;
-            case 'thinking':
-            default:
-                statusHtml = this.#formatSystemMessage('Thinking', true);
-                break;
+        if (status === 'tool-running') {
+            const template = window.CONFIG?.UI?.STREAMING?.LABELS?.TOOL_RUNNING ?? '{name}';
+            indicator.setLabel(messageDiv, template.replace('{name}', this.#getToolDisplayName(toolName)));
+            return;
         }
 
-        // 既存のツール結果要素を保存
-        const toolResults = container.querySelectorAll('.tool-download-card, .tool-image-preview, .tool-analysis-result');
-        const savedToolResults = Array.from(toolResults);
-
-        container.innerHTML = statusHtml;
-
-        // ツール結果要素を再追加
-        savedToolResults.forEach(result => {
-            container.appendChild(result);
-        });
+        indicator.clearLabel(messageDiv);
     }
 
     /**
@@ -580,12 +564,13 @@ class ChatRenderer {
     async finalizeStreamingBotMessage(messageDiv, container, fullText, bodyDiv = null) {
         if (!messageDiv || !container) return;
 
-        // 生成が終わったのでカーソルを止める
+        // 生成が終わったのでカーソルを止め、待機インジケーターを取り除く
         messageDiv.classList.remove('streaming');
+        StreamingIndicator.getInstance.finish(messageDiv);
 
         try {
             // ツール結果要素を退避（innerHTML上書き前に保存）
-            const toolResults = container.querySelectorAll('.tool-download-card, .tool-image-preview, .tool-analysis-result');
+            const toolResults = container.querySelectorAll('.tool-download-card, .tool-image-preview, .tool-analysis-result, .tool-result-text');
             const savedToolResults = Array.from(toolResults);
 
             // 回答本文のみを更新（思考過程コンテナは保持される）

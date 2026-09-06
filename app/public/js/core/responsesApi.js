@@ -637,77 +637,12 @@ class ResponsesAPI {
                                    (jsonData.output && jsonData.output.some(item => item.type === 'web_search_call'));
 
         if (isWebSearchStarting) {
-            // 検索クエリを取得
-            const searchQuery = extractSearchQuery(jsonData);
+            // 待機インジケーターのラベルを差し替えるだけでよい。
+            // 検索クエリは思考過程アイテム側に残すので、ここでは本文へ流さない
+            StreamingIndicator.getInstance.setActiveLabel(
+                window.CONFIG?.UI?.STREAMING?.LABELS?.WEB_SEARCH ?? 'ウェブを検索しています'
+            );
 
-            // システムメッセージを「Web検索を実行中」に更新
-            const searchMessage = searchQuery ?
-                `🔍 Web検索を実行中: "${searchQuery}"` :
-                '🔍 Web検索を実行中';
-
-            // 既存のThinkingメッセージを探して更新（thinkingContainerの有無に関わらず）
-            const existingThinkingMessage = /** @type {HTMLElement|null} */ (chatMessages.querySelector('.message.bot:last-child'));
-            if (existingThinkingMessage && chatRenderer) {
-                try {
-                    chatRenderer.updateSystemMessage(
-                        existingThinkingMessage,
-                        searchMessage,
-                        {
-                            status: 'searching',
-                            animate: true,
-                            showDots: true
-                        }
-                    );
-                } catch (error) {
-                    console.error('🔍 Thinkingメッセージ更新エラー:', error);
-                }
-            }
-
-            // 思考過程コンテナがある場合
-            // Web検索開始時はクエリがまだ取得できないので、思考過程への追加はcompletedSearchQueryで行う
-            if (thinkingContainer) {
-                // addedToThinkingはfalseのまま返す（クエリ確定時に追加するため）
-                return { statusMessage: existingThinkingMessage, shouldSkip: true, addedToThinking: false };
-            }
-
-            // 思考過程コンテナがない場合の処理
-            if (existingThinkingMessage) {
-                return { statusMessage: existingThinkingMessage, shouldSkip: true, addedToThinking: false };
-            }
-
-            if (!currentStatusMessage && !thinkingContainer) {
-                try {
-                    const statusResult = chatRenderer.addSystemMessage(
-                        /** @type {HTMLElement} */ (chatMessages),
-                        searchMessage,
-                        {
-                            status: 'searching',
-                            animation: 'fade',
-                            showDots: true
-                        }
-                    );
-                    return { statusMessage: statusResult.messageDiv, shouldSkip: true, addedToThinking: false };
-                } catch (error) {
-                    console.error('🔍 システムメッセージ作成エラー:', error);
-                }
-            } else if (!thinkingContainer) {
-                try {
-                    chatRenderer.updateSystemMessage(
-                        currentStatusMessage,
-                        searchMessage,
-                        {
-                            status: 'searching',
-                            animate: true,
-                            showDots: true
-                        }
-                    );
-                } catch (error) {
-                    console.error('🔍 システムメッセージ更新エラー:', error);
-                }
-                return { statusMessage: currentStatusMessage, shouldSkip: true, addedToThinking: false };
-            }
-
-            // thinkingContainerがある場合はシステムメッセージは作成しない
             return { statusMessage: currentStatusMessage, shouldSkip: true, addedToThinking: alreadyAddedToThinking };
         }
         
@@ -744,48 +679,18 @@ class ResponsesAPI {
                 }
             }
 
-            // システムメッセージを「検索結果を分析中」に更新（thinkingContainerの有無に関わらず）
-            const existingMessage = currentStatusMessage || /** @type {HTMLElement|null} */ (chatMessages.querySelector('.message.bot:last-child'));
-            if (existingMessage && chatRenderer) {
-                try {
-                    const processingMessage = `🔍 検索結果を分析中: "${completedSearchQuery}"`;
-                    chatRenderer.updateSystemMessage(
-                        existingMessage,
-                        processingMessage,
-                        {
-                            status: 'processing',
-                            animate: true,
-                            showDots: true
-                        }
-                    );
-
-                    // 少し遅延して「Thinking...」に戻す
-                    setTimeout(() => {
-                        try {
-                            chatRenderer.updateSystemMessage(
-                                existingMessage,
-                                'Thinking',
-                                {
-                                    status: 'thinking',
-                                    animate: true,
-                                    showDots: true
-                                }
-                            );
-                        } catch (e) {
-                            console.warn('Thinkingへの復帰エラー:', e);
-                        }
-                    }, 1500);
-                } catch (error) {
-                    console.error('🔍 検索結果処理メッセージ更新エラー:', error);
-                }
-            }
+            // 待機インジケーターを「検索結果を読んでいます」に切り替える
+            const labels = window.CONFIG?.UI?.STREAMING?.LABELS ?? {};
+            StreamingIndicator.getInstance.setActiveLabel(
+                labels.WEB_SEARCH_ANALYZE ?? '検索結果を読んでいます'
+            );
 
             if (thinkingContainer) {
-                return { statusMessage: existingMessage, shouldSkip: true, addedToThinking: true };
+                return { statusMessage: currentStatusMessage, shouldSkip: true, addedToThinking: true };
             }
 
             // thinkingContainerがない場合
-            return { statusMessage: existingMessage, shouldSkip: true, addedToThinking: false };
+            return { statusMessage: currentStatusMessage, shouldSkip: true, addedToThinking: false };
         }
 
         return { statusMessage: currentStatusMessage, shouldSkip: false, addedToThinking: alreadyAddedToThinking };
