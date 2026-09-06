@@ -352,6 +352,12 @@ window.CONFIG = {
         // テキストエリアの最大高さ比率（画面の高さに対する割合）
         TEXTAREA_MAX_HEIGHT_RATIO: 0.4,
 
+        // サイドバーの会話履歴
+        SIDEBAR: {
+            // グルーピング方式: 'date'（今日/昨日/過去7日...）| 'prompt'（システムプロンプト単位）
+            GROUPING: 'date'
+        },
+
         // タイピングエフェクト設定
         TYPING_EFFECT: {
             // 表示速度（ミリ秒）- 小さいほど速く表示

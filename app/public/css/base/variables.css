@@ -60,7 +60,7 @@
     
     /* レイアウト固定値 */
     --sidebar-width: 260px;
-    --header-height: 60px;
+    --header-height: 52px;
     --modal-max-width: 900px;
     
     /* スピナー */
@@ -221,4 +221,45 @@
     --avatar-openai-bg: #10a37f;
     --avatar-claude-bg: #d97706;
     --avatar-gemini-bg: #4285f4;
+
+    /* ===== ChatGPT 風レイアウト ===== */
+    --content-max-width: 768px;
+    --message-max-width: 768px;
+    --composer-max-width: 768px;
+
+    /* 面の階層（直書きグレーの置換先） */
+    --surface-1: #3a3a3a;
+    --surface-2: #2a2a2a;
+    --surface-3: #1a1a1a;
+    --surface-hover: rgba(255, 255, 255, 0.05);
+    --surface-active: rgba(255, 255, 255, 0.1);
+
+    /* 状態色（未定義のまま参照されていたもの） */
+    --info-color: #4a9eff;
+    --warning-color: #f59e0b;
+    --text-muted: var(--text-tertiary);
+    --primary-color: var(--accent-color);
+    --accent-hover: var(--accent-hover-color);
+    --focus-ring: 0 0 0 2px rgba(16, 163, 127, 0.45);
+
+    /* メッセージ */
+    --user-bubble-bg: #303030;
+    --user-bubble-radius: 20px;
+    --message-gap: 24px;
+    --message-actions-height: 28px;
+
+    /* コンポーザー（入力エリア） */
+    --composer-radius: 26px;
+    --composer-bg: #303030;
+    --composer-border: transparent;
+    --composer-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+
+    /* サイドバー項目 */
+    --sidebar-item-radius: 8px;
+    --sidebar-item-hover-bg: rgba(255, 255, 255, 0.06);
+    --sidebar-item-active-bg: rgba(255, 255, 255, 0.1);
+
+    /* フォント */
+    --font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Noto Sans JP", Meiryo, sans-serif;
+    --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
