@@ -71,7 +71,7 @@
     justify-content: center;
     padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: var(--border-radius-sm);
-    background-color: var(--background-button);
+    background-color: var(--background-tertiary);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
     cursor: pointer;
@@ -79,7 +79,7 @@
 }
 
 .editor-button:hover {
-    background-color: var(--background-button-hover);
+    background-color: var(--background-quaternary);
 }
 
 .editor-button i {
@@ -87,12 +87,12 @@
 }
 
 .run-button {
-    background-color: var(--color-success);
+    background-color: var(--success-color);
     color: white;
 }
 
 .run-button:hover {
-    background-color: var(--color-success-hover);
+    background-color: var(--accent-hover-color);
 }
 
 .monaco-editor-container {
@@ -120,7 +120,7 @@
     align-items: center;
     height: 100%;
     width: 100%;
-    background-color: #1e1e1e;
+    background-color: var(--background-primary);
     color: #ffffff;
     font-size: 14px;
 }
@@ -140,16 +140,16 @@
     font-size: 14px;
     line-height: 1.5;
     tab-size: 4;
-    background-color: #1e1e1e;
-    color: #ddd;
-    border: 1px solid #444;
+    background-color: var(--background-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
     border-radius: 3px;
     padding: 10px;
     outline: none;
 }
 
 .simple-editor-fallback textarea:focus {
-    border-color: #007acc;
+    border-color: var(--info-color);
 }
 
 .code-execution-preview {

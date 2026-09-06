@@ -1371,12 +1371,12 @@ class ChatRenderer {
 
         const {
             status = 'thinking',
-            animation = 'tech-scan',
+            animation = 'fade',
             showDots = true
         } = options;
 
         const messageDiv = ChatUI.getInstance.createElement('div', {
-            classList: ['message', 'bot', 'system-message', 'cyber-style', `anim-${animation}`],
+            classList: ['message', 'bot', 'system-message', `anim-${animation}`],
             attributes: {
                 'role': 'status',
                 'aria-live': 'polite',
@@ -1384,6 +1384,8 @@ class ChatRenderer {
             }
         });
 
+        // 他のメッセージと同じ骨格に揃える（message > message-body > message-content）
+        const bodyDiv = ChatUI.getInstance.createElement('div', { classList: 'message-body' });
         const contentDiv = ChatUI.getInstance.createElement('div', { classList: 'message-content' });
 
         const messageContent = ChatUI.getInstance.createElement('div', {
@@ -1392,12 +1394,11 @@ class ChatRenderer {
         });
 
         contentDiv.appendChild(messageContent);
-        messageDiv.appendChild(contentDiv);
+        bodyDiv.appendChild(contentDiv);
+        messageDiv.appendChild(bodyDiv);
 
         // DOMに追加
         chatMessages.appendChild(messageDiv);
-
-        console.log(`📝 messageDiv classes: ${messageDiv.className}`);
 
         // アニメーション開始（次フレームで実行してCSSが確実に適用されるようにする）
         setTimeout(() => {

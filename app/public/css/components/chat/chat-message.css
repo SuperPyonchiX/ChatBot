@@ -93,7 +93,9 @@
     color: var(--text-tertiary);
 }
 
-.action-btn {
+/* .action-btn はワークフロー等でも使われる汎用クラス名のため、
+   メッセージのアクション列に限定する */
+.message-actions .action-btn {
     width: 28px;
     height: 28px;
     padding: 0;
@@ -102,7 +104,7 @@
     color: var(--text-secondary);
 }
 
-.action-btn:hover {
+.message-actions .action-btn:hover {
     background: var(--surface-hover);
     color: var(--text-primary);
 }
@@ -125,4 +127,23 @@
 .message.user.editing .message-content {
     background: transparent;
     padding: 0;
+}
+
+/* システムメッセージ（進捗表示）も本文と同じ幅・位置に載せる。
+   system-messages.css の margin:8px 0 が margin:0 auto を上書きするため打ち消す */
+.message.bot.system-message {
+    margin: 0 auto;
+    padding-top: var(--spacing-md);
+}
+
+.message.bot.system-message .message-body {
+    /* アバターが無い分だけ本文の左端を AI メッセージと揃える */
+    margin-left: calc(var(--avatar-size) + var(--spacing-md));
+}
+
+.message.bot.system-message .message-content {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-lg);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
 }

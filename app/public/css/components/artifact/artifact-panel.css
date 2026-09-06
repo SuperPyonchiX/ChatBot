@@ -125,12 +125,12 @@
 
 /* 実行ボタン */
 .artifact-action-btn#artifactRunBtn {
-    color: #00ff88;
+    color: var(--accent-color);
 }
 
 .artifact-action-btn#artifactRunBtn:hover {
     background-color: rgba(0, 255, 136, 0.2);
-    color: #00ff88;
+    color: var(--accent-color);
 }
 
 .artifact-action-btn.running {

@@ -37,7 +37,7 @@
     width: 90%;
     max-width: 700px;
     max-height: 85vh;
-    background: var(--background-secondary, #2a2a2a);
+    background: var(--background-secondary);
     border-radius: 12px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
     z-index: 9999;
@@ -63,7 +63,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
-    border-bottom: 1px solid var(--border-color, #3a3a3a);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .agent-settings-title {
@@ -73,7 +73,7 @@
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: var(--text-primary, #ececec);
+    color: var(--text-primary);
 }
 
 .agent-settings-icon {
@@ -88,15 +88,15 @@
     height: 32px;
     border: none;
     background: transparent;
-    color: var(--text-secondary, #888);
+    color: var(--text-secondary);
     cursor: pointer;
     border-radius: 6px;
     transition: background 0.2s, color 0.2s;
 }
 
 .agent-settings-close:hover {
-    background: var(--background-hover, #3a3a3a);
-    color: var(--text-primary, #ececec);
+    background: var(--background-hover);
+    color: var(--text-primary);
 }
 
 /* ========================================
@@ -107,8 +107,8 @@
     display: flex;
     gap: 4px;
     padding: 8px 16px 0;
-    border-bottom: 1px solid var(--border-color, #3a3a3a);
-    background: var(--background-primary, #212121);
+    border-bottom: 1px solid var(--border-color);
+    background: var(--background-primary);
 }
 
 .agent-settings-tab {
@@ -118,7 +118,7 @@
     padding: 10px 16px;
     border: none;
     background: transparent;
-    color: var(--text-secondary, #888);
+    color: var(--text-secondary);
     font-size: 14px;
     cursor: pointer;
     border-radius: 8px 8px 0 0;
@@ -127,13 +127,13 @@
 }
 
 .agent-settings-tab:hover {
-    background: var(--background-hover, #3a3a3a);
-    color: var(--text-primary, #ececec);
+    background: var(--background-hover);
+    color: var(--text-primary);
 }
 
 .agent-settings-tab.active {
-    background: var(--background-secondary, #2a2a2a);
-    color: var(--accent-primary, #4a9eff);
+    background: var(--background-secondary);
+    color: var(--accent-color);
 }
 
 .agent-settings-tab.active::after {
@@ -143,7 +143,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: var(--accent-primary, #4a9eff);
+    background: var(--accent-color);
 }
 
 .agent-settings-tab i {
@@ -185,7 +185,7 @@
     margin: 0 0 12px;
     font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary, #ececec);
+    color: var(--text-primary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -193,12 +193,12 @@
 .agent-settings-description {
     margin: 0 0 12px;
     font-size: 13px;
-    color: var(--text-secondary, #888);
+    color: var(--text-secondary);
     line-height: 1.5;
 }
 
 .agent-settings-description code {
-    background: var(--background-tertiary, #1a1a1a);
+    background: var(--background-tertiary);
     padding: 2px 6px;
     border-radius: 4px;
     font-family: 'Consolas', monospace;
@@ -221,13 +221,13 @@
     display: block;
     margin-bottom: 6px;
     font-size: 14px;
-    color: var(--text-primary, #ececec);
+    color: var(--text-primary);
 }
 
 .agent-settings-hint {
     display: block;
     font-size: 12px;
-    color: var(--text-secondary, #888);
+    color: var(--text-secondary);
     margin-top: 2px;
 }
 
@@ -235,27 +235,27 @@
     width: 100%;
     max-width: 200px;
     padding: 8px 12px;
-    border: 1px solid var(--border-color, #3a3a3a);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    background: var(--background-primary, #212121);
-    color: var(--text-primary, #ececec);
+    background: var(--background-primary);
+    color: var(--text-primary);
     font-size: 14px;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .agent-settings-input:focus {
     outline: none;
-    border-color: var(--accent-primary, #4a9eff);
+    border-color: var(--accent-color);
     box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.2);
 }
 
 .agent-settings-textarea {
     width: 100%;
     padding: 12px;
-    border: 1px solid var(--border-color, #3a3a3a);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    background: var(--background-primary, #212121);
-    color: var(--text-primary, #ececec);
+    background: var(--background-primary);
+    color: var(--text-primary);
     font-size: 13px;
     font-family: 'Consolas', monospace;
     resize: vertical;
@@ -265,7 +265,7 @@
 
 .agent-settings-textarea:focus {
     outline: none;
-    border-color: var(--accent-primary, #4a9eff);
+    border-color: var(--accent-color);
     box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.2);
 }
 
@@ -284,14 +284,14 @@
     align-items: flex-start;
     gap: 12px;
     padding: 12px;
-    border: 1px solid var(--border-color, #3a3a3a);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
 }
 
 .agent-settings-radio:hover {
-    background: var(--background-hover, #2f2f2f);
+    background: var(--background-hover);
 }
 
 .agent-settings-radio input {
@@ -302,14 +302,14 @@
     flex-shrink: 0;
     width: 20px;
     height: 20px;
-    border: 2px solid var(--border-color, #3a3a3a);
+    border: 2px solid var(--border-color);
     border-radius: 50%;
     position: relative;
     transition: border-color 0.2s;
 }
 
 .agent-settings-radio input:checked + .agent-settings-radio-mark {
-    border-color: var(--accent-primary, #4a9eff);
+    border-color: var(--accent-color);
 }
 
 .agent-settings-radio input:checked + .agent-settings-radio-mark::after {
@@ -320,7 +320,7 @@
     transform: translate(-50%, -50%);
     width: 10px;
     height: 10px;
-    background: var(--accent-primary, #4a9eff);
+    background: var(--accent-color);
     border-radius: 50%;
 }
 
@@ -331,12 +331,12 @@
 }
 
 .agent-settings-radio-label strong {
-    color: var(--text-primary, #ececec);
+    color: var(--text-primary);
     font-size: 14px;
 }
 
 .agent-settings-radio-label small {
-    color: var(--text-secondary, #888);
+    color: var(--text-secondary);
     font-size: 12px;
 }
 
@@ -359,15 +359,15 @@
     flex-shrink: 0;
     width: 20px;
     height: 20px;
-    border: 2px solid var(--border-color, #3a3a3a);
+    border: 2px solid var(--border-color);
     border-radius: 4px;
     position: relative;
     transition: border-color 0.2s, background 0.2s;
 }
 
 .agent-settings-checkbox input:checked + .agent-settings-checkbox-mark {
-    border-color: var(--accent-primary, #4a9eff);
-    background: var(--accent-primary, #4a9eff);
+    border-color: var(--accent-color);
+    background: var(--accent-color);
 }
 
 .agent-settings-checkbox input:checked + .agent-settings-checkbox-mark::after {
@@ -386,17 +386,17 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    color: var(--text-primary, #ececec);
+    color: var(--text-primary);
 }
 
 .agent-settings-checkbox-label strong {
-    color: var(--text-primary, #ececec);
+    color: var(--text-primary);
     font-size: 14px;
     font-weight: 500;
 }
 
 .agent-settings-checkbox-label small {
-    color: var(--text-secondary, #888);
+    color: var(--text-secondary);
     font-size: 12px;
 }
 
@@ -418,15 +418,15 @@
     align-items: center;
     gap: 12px;
     padding: 10px 12px;
-    background: var(--background-primary, #212121);
-    border: 1px solid var(--border-color, #3a3a3a);
+    background: var(--background-primary);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
 }
 
 .agent-settings-tool-item:hover {
-    background: var(--background-hover, #2f2f2f);
+    background: var(--background-hover);
 }
 
 .agent-settings-tool-item input {
@@ -446,14 +446,14 @@
     flex-shrink: 0;
     width: 18px;
     height: 18px;
-    border: 2px solid var(--border-color, #3a3a3a);
+    border: 2px solid var(--border-color);
     border-radius: 4px;
     transition: border-color 0.2s, background 0.2s;
 }
 
 .agent-settings-tool-item:has(input:checked)::before {
-    border-color: var(--accent-primary, #4a9eff);
-    background: var(--accent-primary, #4a9eff);
+    border-color: var(--accent-color);
+    background: var(--accent-color);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
     background-size: 14px;
     background-position: center;
@@ -470,14 +470,14 @@
     display: block;
     font-size: 14px;
     font-weight: 500;
-    color: var(--text-primary, #ececec);
+    color: var(--text-primary);
     font-family: 'Consolas', monospace;
 }
 
 .agent-settings-tool-desc {
     display: block;
     font-size: 12px;
-    color: var(--text-secondary, #888);
+    color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -494,7 +494,7 @@
 .agent-settings-prompt-actions {
     margin-top: 16px;
     padding-top: 16px;
-    border-top: 1px solid var(--border-color, #3a3a3a);
+    border-top: 1px solid var(--border-color);
 }
 
 /* ========================================
@@ -506,8 +506,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
-    border-top: 1px solid var(--border-color, #3a3a3a);
-    background: var(--background-primary, #212121);
+    border-top: 1px solid var(--border-color);
+    background: var(--background-primary);
     border-radius: 0 0 12px 12px;
 }
 
@@ -538,21 +538,21 @@
 }
 
 .agent-settings-btn-primary {
-    background: var(--accent-primary, #4a9eff);
+    background: var(--accent-color);
     color: white;
 }
 
 .agent-settings-btn-primary:hover {
-    background: var(--accent-primary-hover, #3a8eef);
+    background: var(--accent-hover-color);
 }
 
 .agent-settings-btn-secondary {
-    background: var(--background-tertiary, #3a3a3a);
-    color: var(--text-primary, #ececec);
+    background: var(--background-tertiary);
+    color: var(--text-primary);
 }
 
 .agent-settings-btn-secondary:hover {
-    background: var(--background-hover, #4a4a4a);
+    background: var(--background-hover);
 }
 
 /* ========================================
@@ -571,13 +571,13 @@
 
 .agent-settings-content::-webkit-scrollbar-thumb,
 .agent-settings-tool-list::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb, #4a4a4a);
+    background: var(--border-color);
     border-radius: 4px;
 }
 
 .agent-settings-content::-webkit-scrollbar-thumb:hover,
 .agent-settings-tool-list::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover, #5a5a5a);
+    background: var(--border-color-hover);
 }
 
 /* ========================================
@@ -641,7 +641,7 @@
     width: 95%;
     max-width: 900px;
     max-height: 90vh;
-    background: var(--background-secondary, #2a2a2a);
+    background: var(--background-secondary);
     border-radius: 12px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     z-index: 10001;
@@ -663,14 +663,14 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
-    border-bottom: 1px solid var(--border-color, #3a3a3a);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .agent-tool-editor-title {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: var(--text-primary, #ececec);
+    color: var(--text-primary);
 }
 
 .agent-tool-editor-close {
@@ -681,15 +681,15 @@
     height: 32px;
     border: none;
     background: transparent;
-    color: var(--text-secondary, #888);
+    color: var(--text-secondary);
     cursor: pointer;
     border-radius: 6px;
     transition: background 0.2s, color 0.2s;
 }
 
 .agent-tool-editor-close:hover {
-    background: var(--background-hover, #3a3a3a);
-    color: var(--text-primary, #ececec);
+    background: var(--background-hover);
+    color: var(--text-primary);
 }
 
 .agent-tool-editor-content {
@@ -716,26 +716,26 @@
 .agent-tool-editor-label {
     font-size: 14px;
     font-weight: 500;
-    color: var(--text-primary, #ececec);
+    color: var(--text-primary);
 }
 
 .agent-tool-editor-label .required {
-    color: #ef4444;
+    color: var(--error-color);
 }
 
 .agent-tool-editor-input {
     padding: 8px 12px;
-    border: 1px solid var(--border-color, #3a3a3a);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    background: var(--background-primary, #212121);
-    color: var(--text-primary, #ececec);
+    background: var(--background-primary);
+    color: var(--text-primary);
     font-size: 14px;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .agent-tool-editor-input:focus {
     outline: none;
-    border-color: var(--accent-primary, #4a9eff);
+    border-color: var(--accent-color);
     box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.2);
 }
 
@@ -746,10 +746,10 @@
 
 .agent-tool-editor-textarea {
     padding: 10px 12px;
-    border: 1px solid var(--border-color, #3a3a3a);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    background: var(--background-primary, #212121);
-    color: var(--text-primary, #ececec);
+    background: var(--background-primary);
+    color: var(--text-primary);
     font-size: 14px;
     resize: vertical;
     min-height: 60px;
@@ -758,7 +758,7 @@
 
 .agent-tool-editor-textarea:focus {
     outline: none;
-    border-color: var(--accent-primary, #4a9eff);
+    border-color: var(--accent-color);
     box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.2);
 }
 
@@ -770,7 +770,7 @@
 
 .agent-tool-editor-hint {
     font-size: 12px;
-    color: var(--text-secondary, #888);
+    color: var(--text-secondary);
 }
 
 /* テストセクション */
@@ -779,9 +779,9 @@
     flex-direction: column;
     gap: 16px;
     padding: 16px;
-    background: var(--background-primary, #212121);
+    background: var(--background-primary);
     border-radius: 8px;
-    border: 1px solid var(--border-color, #3a3a3a);
+    border: 1px solid var(--border-color);
 }
 
 .agent-tool-editor-test-header {
@@ -794,12 +794,12 @@
     margin: 0;
     font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary, #ececec);
+    color: var(--text-primary);
 }
 
 .agent-tool-editor-test-result {
     padding: 12px;
-    background: var(--background-tertiary, #1a1a1a);
+    background: var(--background-tertiary);
     border-radius: 6px;
     min-height: 100px;
     max-height: 200px;
@@ -807,12 +807,12 @@
 }
 
 .test-result-placeholder {
-    color: var(--text-secondary, #888);
+    color: var(--text-secondary);
     font-size: 13px;
 }
 
 .test-result-loading {
-    color: var(--accent-primary, #4a9eff);
+    color: var(--accent-color);
     font-size: 14px;
 }
 
@@ -830,7 +830,7 @@
 }
 
 .test-result-error {
-    color: #ef4444;
+    color: var(--error-color);
     font-size: 14px;
 }
 
@@ -841,11 +841,11 @@
 .test-result-output {
     margin-top: 12px;
     padding: 12px;
-    background: var(--background-secondary, #2a2a2a);
+    background: var(--background-secondary);
     border-radius: 4px;
     font-family: 'Consolas', monospace;
     font-size: 12px;
-    color: var(--text-primary, #ececec);
+    color: var(--text-primary);
     white-space: pre-wrap;
     word-break: break-all;
     max-height: 150px;
@@ -856,7 +856,7 @@
 .test-result-warnings {
     margin-top: 8px;
     padding: 8px;
-    background: var(--background-secondary, #2a2a2a);
+    background: var(--background-secondary);
     border-radius: 4px;
     font-size: 12px;
     line-height: 1.5;
@@ -872,8 +872,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
-    border-top: 1px solid var(--border-color, #3a3a3a);
-    background: var(--background-primary, #212121);
+    border-top: 1px solid var(--border-color);
+    background: var(--background-primary);
     border-radius: 0 0 12px 12px;
 }
 
@@ -901,21 +901,21 @@
 }
 
 .agent-tool-editor-btn-primary {
-    background: var(--accent-primary, #4a9eff);
+    background: var(--accent-color);
     color: white;
 }
 
 .agent-tool-editor-btn-primary:hover {
-    background: var(--accent-primary-hover, #3a8eef);
+    background: var(--accent-hover-color);
 }
 
 .agent-tool-editor-btn-secondary {
-    background: var(--background-tertiary, #3a3a3a);
-    color: var(--text-primary, #ececec);
+    background: var(--background-tertiary);
+    color: var(--text-primary);
 }
 
 .agent-tool-editor-btn-secondary:hover {
-    background: var(--background-hover, #4a4a4a);
+    background: var(--background-hover);
 }
 
 /* レスポンシブ */
@@ -935,23 +935,23 @@
 
 .agent-settings-input:focus,
 .agent-settings-textarea:focus {
-    outline: 2px solid var(--accent-primary, #4a9eff);
+    outline: 2px solid var(--accent-color);
     outline-offset: 2px;
 }
 
 .agent-settings-btn:focus-visible {
-    outline: 2px solid var(--accent-primary, #4a9eff);
+    outline: 2px solid var(--accent-color);
     outline-offset: 2px;
 }
 
 .agent-settings-tab:focus-visible {
-    outline: 2px solid var(--accent-primary, #4a9eff);
+    outline: 2px solid var(--accent-color);
     outline-offset: -2px;
 }
 
 .agent-settings-radio:focus-within,
 .agent-settings-checkbox:focus-within {
-    outline: 2px solid var(--accent-primary, #4a9eff);
+    outline: 2px solid var(--accent-color);
     outline-offset: 2px;
     border-radius: 8px;
 }

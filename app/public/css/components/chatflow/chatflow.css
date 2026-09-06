@@ -27,7 +27,7 @@
     width: 95vw;
     height: 90vh;
     max-width: 1600px;
-    background: var(--background-primary, #1e1e1e);
+    background: var(--background-primary);
     border-radius: 12px;
     display: flex;
     flex-direction: column;
@@ -44,8 +44,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
-    background: var(--background-secondary, #252526);
-    border-bottom: 1px solid var(--border-color, #3a3a3a);
+    background: var(--background-secondary);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .chatflow-header-left {
@@ -59,11 +59,11 @@
 }
 
 .chatflow-name-input {
-    background: var(--background-tertiary, #1a1a1a);
-    border: 1px solid var(--border-color, #3a3a3a);
+    background: var(--background-tertiary);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 8px 12px;
-    color: var(--text-primary, #e0e0e0);
+    color: var(--text-primary);
     font-size: 16px;
     font-weight: 500;
     min-width: 250px;
@@ -71,7 +71,7 @@
 
 .chatflow-name-input:focus {
     outline: none;
-    border-color: var(--accent-color, #00d4aa);
+    border-color: var(--accent-color);
 }
 
 .chatflow-header-actions {
@@ -80,41 +80,41 @@
 }
 
 .chatflow-action-btn {
-    background: var(--background-tertiary, #1a1a1a);
-    border: 1px solid var(--border-color, #3a3a3a);
+    background: var(--background-tertiary);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 8px 12px;
-    color: var(--text-secondary, #aaa);
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .chatflow-action-btn:hover {
-    background: var(--background-hover, #333);
-    color: var(--text-primary, #e0e0e0);
+    background: var(--background-hover);
+    color: var(--text-primary);
 }
 
 .chatflow-action-btn.primary {
-    background: var(--accent-color, #00d4aa);
-    border-color: var(--accent-color, #00d4aa);
+    background: var(--accent-color);
+    border-color: var(--accent-color);
     color: white;
 }
 
 .chatflow-action-btn.primary:hover {
-    background: var(--accent-hover, #00e5bb);
+    background: var(--accent-hover);
 }
 
 .chatflow-close-btn {
     background: transparent;
     border: none;
     padding: 8px 12px;
-    color: var(--text-muted, #888);
+    color: var(--text-muted);
     cursor: pointer;
     font-size: 18px;
 }
 
 .chatflow-close-btn:hover {
-    color: var(--error-color, #f44336);
+    color: var(--error-color);
 }
 
 /* ========================================
@@ -131,8 +131,8 @@
    ======================================== */
 .chatflow-palette {
     width: 200px;
-    background: var(--background-secondary, #252526);
-    border-right: 1px solid var(--border-color, #3a3a3a);
+    background: var(--background-secondary);
+    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
 }
@@ -140,8 +140,8 @@
 .chatflow-palette-header {
     padding: 12px 16px;
     font-weight: 600;
-    color: var(--text-primary, #e0e0e0);
-    border-bottom: 1px solid var(--border-color, #3a3a3a);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .chatflow-palette-content {
@@ -157,7 +157,7 @@
 .chatflow-palette-category-header {
     font-size: 11px;
     text-transform: uppercase;
-    color: var(--text-muted, #888);
+    color: var(--text-muted);
     padding: 8px 8px 4px;
     letter-spacing: 0.5px;
 }
@@ -167,8 +167,8 @@
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: var(--background-tertiary, #1a1a1a);
-    border: 1px solid var(--border-color, #3a3a3a);
+    background: var(--background-tertiary);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     margin-bottom: 4px;
     cursor: grab;
@@ -176,8 +176,8 @@
 }
 
 .chatflow-palette-node:hover {
-    background: var(--background-hover, #333);
-    border-color: var(--accent-color, #00d4aa);
+    background: var(--background-hover);
+    border-color: var(--accent-color);
 }
 
 .chatflow-palette-node-icon {
@@ -186,7 +186,7 @@
 
 .chatflow-palette-node-name {
     font-size: 13px;
-    color: var(--text-primary, #e0e0e0);
+    color: var(--text-primary);
 }
 
 /* ========================================
@@ -196,7 +196,7 @@
     flex: 1;
     position: relative;
     overflow: hidden;
-    background: var(--background-tertiary, #1a1a1a);
+    background: var(--background-tertiary);
     background-image:
         linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
@@ -223,7 +223,7 @@
 
 .chatflow-connection-path {
     fill: none;
-    stroke: var(--accent-color, #00d4aa);
+    stroke: var(--accent-color);
     stroke-width: 2;
     pointer-events: stroke;
     cursor: pointer;
@@ -231,7 +231,7 @@
 
 .chatflow-connection-path:hover {
     stroke-width: 4;
-    stroke: var(--error-color, #f44336);
+    stroke: var(--error-color);
 }
 
 .chatflow-nodes {
@@ -248,8 +248,8 @@
 .chatflow-node {
     position: absolute;
     min-width: 180px;
-    background: var(--background-secondary, #252526);
-    border: 2px solid var(--border-color, #3a3a3a);
+    background: var(--background-secondary);
+    border: 2px solid var(--border-color);
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     cursor: default;
@@ -261,7 +261,7 @@
 }
 
 .chatflow-node.selected {
-    box-shadow: 0 0 0 3px var(--accent-color, #00d4aa);
+    box-shadow: 0 0 0 3px var(--accent-color);
 }
 
 .chatflow-node-header {
@@ -306,19 +306,19 @@
 .chatflow-port-dot {
     width: 10px;
     height: 10px;
-    background: var(--text-muted, #888);
+    background: var(--text-muted);
     border-radius: 50%;
     transition: all 0.15s ease;
 }
 
 .chatflow-node-port:hover .chatflow-port-dot {
-    background: var(--accent-color, #00d4aa);
+    background: var(--accent-color);
     transform: scale(1.2);
 }
 
 .chatflow-port-label {
     font-size: 11px;
-    color: var(--text-secondary, #aaa);
+    color: var(--text-secondary);
 }
 
 /* ========================================
@@ -332,7 +332,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: var(--background-secondary, #252526);
+    background: var(--background-secondary);
     padding: 6px 12px;
     border-radius: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -341,10 +341,10 @@
 .chatflow-zoom-btn {
     width: 28px;
     height: 28px;
-    background: var(--background-tertiary, #1a1a1a);
-    border: 1px solid var(--border-color, #3a3a3a);
+    background: var(--background-tertiary);
+    border: 1px solid var(--border-color);
     border-radius: 50%;
-    color: var(--text-primary, #e0e0e0);
+    color: var(--text-primary);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -353,13 +353,13 @@
 }
 
 .chatflow-zoom-btn:hover {
-    background: var(--accent-color, #00d4aa);
-    border-color: var(--accent-color, #00d4aa);
+    background: var(--accent-color);
+    border-color: var(--accent-color);
 }
 
 .chatflow-zoom-level {
     font-size: 12px;
-    color: var(--text-secondary, #aaa);
+    color: var(--text-secondary);
     min-width: 40px;
     text-align: center;
 }
@@ -369,8 +369,8 @@
    ======================================== */
 .chatflow-properties {
     width: 280px;
-    background: var(--background-secondary, #252526);
-    border-left: 1px solid var(--border-color, #3a3a3a);
+    background: var(--background-secondary);
+    border-left: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
 }
@@ -378,8 +378,8 @@
 .chatflow-properties-header {
     padding: 12px 16px;
     font-weight: 600;
-    color: var(--text-primary, #e0e0e0);
-    border-bottom: 1px solid var(--border-color, #3a3a3a);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .chatflow-properties-content {
@@ -389,7 +389,7 @@
 }
 
 .chatflow-properties-empty {
-    color: var(--text-muted, #888);
+    color: var(--text-muted);
     text-align: center;
     padding: 20px;
 }
@@ -400,13 +400,13 @@
     align-items: center;
     margin-bottom: 16px;
     padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-color, #3a3a3a);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .chatflow-delete-node-btn {
     background: transparent;
-    border: 1px solid var(--error-color, #f44336);
-    color: var(--error-color, #f44336);
+    border: 1px solid var(--error-color);
+    color: var(--error-color);
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 11px;
@@ -414,7 +414,7 @@
 }
 
 .chatflow-delete-node-btn:hover {
-    background: var(--error-color, #f44336);
+    background: var(--error-color);
     color: white;
 }
 
@@ -425,7 +425,7 @@
 .chatflow-property-label {
     display: block;
     font-size: 12px;
-    color: var(--text-secondary, #aaa);
+    color: var(--text-secondary);
     margin-bottom: 6px;
 }
 
@@ -435,10 +435,10 @@
 .chatflow-property-group select {
     width: 100%;
     padding: 8px 10px;
-    background: var(--background-tertiary, #1a1a1a);
-    border: 1px solid var(--border-color, #3a3a3a);
+    background: var(--background-tertiary);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
-    color: var(--text-primary, #e0e0e0);
+    color: var(--text-primary);
     font-size: 13px;
     font-family: inherit;
     box-sizing: border-box;
@@ -453,7 +453,7 @@
 .chatflow-property-group textarea:focus,
 .chatflow-property-group select:focus {
     outline: none;
-    border-color: var(--accent-color, #00d4aa);
+    border-color: var(--accent-color);
 }
 
 .chatflow-property-group input[type="checkbox"] {
@@ -468,17 +468,17 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
-    background: var(--background-secondary, #252526);
-    border-top: 1px solid var(--border-color, #3a3a3a);
+    background: var(--background-secondary);
+    border-top: 1px solid var(--border-color);
 }
 
 .chatflow-status {
     font-size: 13px;
-    color: var(--text-secondary, #aaa);
+    color: var(--text-secondary);
 }
 
 .chatflow-status.error {
-    color: var(--error-color, #f44336);
+    color: var(--error-color);
 }
 
 .chatflow-footer-actions {
@@ -495,8 +495,8 @@
     top: 60px;
     bottom: 60px;
     width: 400px;
-    background: var(--background-secondary, #252526);
-    border: 1px solid var(--border-color, #3a3a3a);
+    background: var(--background-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     display: flex;
@@ -513,24 +513,24 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 16px;
-    border-bottom: 1px solid var(--border-color, #3a3a3a);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .chatflow-list-drawer .drawer-title {
     font-weight: 600;
-    color: var(--text-primary, #e0e0e0);
+    color: var(--text-primary);
 }
 
 .chatflow-list-drawer .drawer-close {
     background: none;
     border: none;
-    color: var(--text-muted, #888);
+    color: var(--text-muted);
     font-size: 18px;
     cursor: pointer;
 }
 
 .chatflow-list-drawer .drawer-close:hover {
-    color: var(--text-primary, #e0e0e0);
+    color: var(--text-primary);
 }
 
 .chatflow-list-drawer .drawer-content {
@@ -540,7 +540,7 @@
 }
 
 .chatflow-list-empty {
-    color: var(--text-muted, #888);
+    color: var(--text-muted);
     text-align: center;
     padding: 20px;
 }
@@ -550,21 +550,21 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-    background: var(--background-tertiary, #1a1a1a);
-    border: 1px solid var(--border-color, #3a3a3a);
+    background: var(--background-tertiary);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     margin-bottom: 8px;
 }
 
 .chatflow-list-item-name {
     font-weight: 500;
-    color: var(--text-primary, #e0e0e0);
+    color: var(--text-primary);
     margin-bottom: 4px;
 }
 
 .chatflow-list-item-meta {
     font-size: 11px;
-    color: var(--text-muted, #888);
+    color: var(--text-muted);
 }
 
 .chatflow-list-item-actions {
@@ -574,23 +574,23 @@
 
 .chatflow-list-btn {
     padding: 6px 12px;
-    background: var(--background-secondary, #252526);
-    border: 1px solid var(--border-color, #3a3a3a);
+    background: var(--background-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
-    color: var(--text-secondary, #aaa);
+    color: var(--text-secondary);
     font-size: 12px;
     cursor: pointer;
 }
 
 .chatflow-list-btn:hover {
-    background: var(--accent-color, #00d4aa);
-    border-color: var(--accent-color, #00d4aa);
+    background: var(--accent-color);
+    border-color: var(--accent-color);
     color: white;
 }
 
 .chatflow-list-btn.danger:hover {
-    background: var(--error-color, #f44336);
-    border-color: var(--error-color, #f44336);
+    background: var(--error-color);
+    border-color: var(--error-color);
 }
 
 /* ========================================
