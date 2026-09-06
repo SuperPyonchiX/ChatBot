@@ -44,6 +44,8 @@
     <link rel="stylesheet" href="css/components/agent/agent-settings.css">
     <link rel="stylesheet" href="css/components/workflow/workflow.css">
     <link rel="stylesheet" href="css/components/chatflow/chatflow.css">
+    <link rel="stylesheet" href="css/components/codex/codex.css">
+    <link rel="stylesheet" href="css/components/workspace/workspace.css">
     <link rel="stylesheet" href="css/tools.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -118,6 +120,7 @@
                         <button id="openWorkflowBuilder">ワークフロービルダー</button>
                         <button id="openChatFlowBuilder">チャットフロービルダー</button>
                         <button id="openAgentSettings">エージェント設定</button>
+                        <button id="openWorkspace">ワークスペース (Codex)</button>
                         <button id="openApiSettings">API設定</button>
                     </div>
                 </div>
@@ -457,6 +460,30 @@
     </div>
 
     <!-- RAGナレッジベースモーダル -->
+    <!-- ワークスペース（Codex 作業ディレクトリ）モーダル -->
+    <div id="workspaceModal" class="modal">
+        <div class="modal-content workspace-modal-content">
+            <h2><i class="fas fa-folder-open"></i> ワークスペース</h2>
+            <div class="workspace-toolbar">
+                <span class="workspace-root" id="workspaceRoot" title="サーバー側の作業ディレクトリ"></span>
+                <button id="workspaceRefresh" class="secondary-button" title="更新"><i class="fas fa-sync-alt"></i></button>
+            </div>
+            <div class="workspace-body">
+                <ul id="workspaceFileList" class="workspace-file-list"></ul>
+                <div class="workspace-preview-pane">
+                    <div class="workspace-preview-header">
+                        <span id="workspacePreviewTitle">ファイルを選択してください</span>
+                        <button id="workspaceDownload" class="secondary-button" disabled title="ダウンロード"><i class="fas fa-download"></i></button>
+                    </div>
+                    <pre id="workspacePreview" class="workspace-preview"></pre>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="workspaceClose" class="primary-button">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <div id="knowledgeBaseModal" class="modal">
         <div class="modal-content knowledge-base-modal">
             <h2><i class="fas fa-book"></i> ナレッジベース</h2>
@@ -751,6 +778,7 @@
     <script src="js/core/appState.js"></script>
     <script src="js/core/ui.js"></script>
     <script src="js/core/eventHandlers.js"></script>
+    <script src="js/core/codex/codexClient.js"></script>
 
     <!-- Utils -->
     <script src="js/utils/fileHandler.js"></script>
@@ -806,6 +834,9 @@
     <script src="js/core/agent/tools/ragSearchTool.js"></script>
     <script src="js/core/agent/tools/codeExecuteTool.js"></script>
     <script src="js/core/agent/tools/fileReadTool.js"></script>
+    <script src="js/core/agent/tools/codexTaskTool.js"></script>
+    <script src="js/core/agent/tools/fileWriteTool.js"></script>
+    <script src="js/core/agent/tools/shellExecuteTool.js"></script>
     <!-- カスタムツール関連 -->
     <script src="js/core/agent/tools/customToolStorage.js"></script>
     <script src="js/components/agent/customToolExecutor.js"></script>
@@ -839,6 +870,7 @@
 
     <!-- コンポーネント関連のファイル -->
     <script src="js/components/chat/chatUI.js"></script>
+    <script src="js/components/codex/codexRunCard.js"></script>
     <script src="js/components/chat/streamingIndicator.js"></script>
     <script src="js/components/chat/chatRenderer.js"></script>
     <script src="js/components/chat/chatHistory.js"></script>
@@ -855,6 +887,7 @@
     <script src="js/modals/promptManager/promptManagerModal.js"></script>
     <script src="js/modals/knowledgeBase/knowledgeBaseModal.js"></script>
     <script src="js/modals/agentSettings/agentSettingsModal.js"></script>
+    <script src="js/modals/workspace/workspaceModal.js"></script>
 
     <!-- Monaco Editor コントローラー -->
     <script src="js/core/monaco/MonacoEditorController.js"></script>

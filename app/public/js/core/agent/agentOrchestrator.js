@@ -246,24 +246,23 @@ class AgentOrchestrator {
                     signal: this.#abortController?.signal
                 });
 
-                // ツール呼び出しがある場合
+                // ツール呼び出しがある場合（複数あれば並列実行 = サブエージェントの同時起動）
                 if (response.toolCalls && response.toolCalls.length > 0) {
-                    for (const toolCall of response.toolCalls) {
-                        const result = await this.#executeTool(
-                            toolCall.name,
-                            toolCall.parameters
-                        );
+                    const results = await Promise.all(
+                        response.toolCalls.map(toolCall => this.#executeTool(toolCall.name, toolCall.parameters))
+                    );
 
-                        // 結果をメッセージに追加
-                        messages.push({
-                            role: 'assistant',
-                            content: null,
-                            tool_calls: [toolCall]
-                        });
+                    // assistant 1 件に全 tool_calls をまとめ、tool 結果を同じ順で積む
+                    messages.push({
+                        role: 'assistant',
+                        content: null,
+                        tool_calls: response.toolCalls
+                    });
+                    response.toolCalls.forEach((toolCall, i) => {
                         messages.push({
                             role: 'tool',
                             tool_call_id: toolCall.id,
-                            content: JSON.stringify(result)
+                            content: JSON.stringify(results[i])
                         });
 
                         iterations.push({
@@ -273,10 +272,10 @@ class AgentOrchestrator {
                                 toolName: toolCall.name,
                                 parameters: toolCall.parameters
                             },
-                            result,
+                            result: results[i],
                             timestamp: Date.now()
                         });
-                    }
+                    });
                 } else {
                     // ツール呼び出しがない場合は完了
                     isComplete = true;

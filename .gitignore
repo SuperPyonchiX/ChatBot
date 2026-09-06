@@ -26,3 +26,6 @@ desktop.ini
 # Build
 dist/
 build/
+
+# Codex workspace (generated files)
+app/workspace/

@@ -365,13 +365,13 @@ class AgentLoop {
                 }
             }
 
-            // Action Input パターンも検出
-            const inputMatch = response.match(/Action Input[:\s]*(.+?)(?=\n|$)/is);
-            if (inputMatch) {
+            // Action Input パターンも検出（複数行 JSON に対応）
+            const actionInput = this.#extractActionInput(response);
+            if (actionInput !== null) {
                 try {
-                    parameters = JSON.parse(inputMatch[1].trim());
+                    parameters = JSON.parse(actionInput);
                 } catch {
-                    parameters = { input: inputMatch[1].trim() };
+                    parameters = { input: actionInput };
                 }
             }
 
@@ -400,6 +400,58 @@ class AgentLoop {
             response: response,
             reasoning: response
         };
+    }
+
+    /**
+     * "Action Input:" 以降の引数テキストを取り出す
+     * 先頭が { または [ なら括弧のバランスで JSON の終端まで（複数行可）、
+     * それ以外は次の Observation: / Thought: か末尾まで
+     * @param {string} response
+     * @returns {string|null}
+     */
+    #extractActionInput(response) {
+        const match = response.match(/Action Input[:\s]*/i);
+        if (!match) return null;
+        let rest = response.slice(match.index + match[0].length).trim();
+        // ```json ... ``` で囲まれている場合はフェンスを外す
+        const fence = rest.match(/^```(?:json)?\s*([\s\S]*?)```/i);
+        if (fence) rest = fence[1].trim();
+
+        const open = rest[0];
+        if (open === '{' || open === '[') {
+            const close = open === '{' ? '}' : ']';
+            let depth = 0;
+            let inString = false;
+            let escaped = false;
+            for (let i = 0; i < rest.length; i++) {
+                const ch = rest[i];
+                if (inString) {
+                    if (escaped) {
+                        escaped = false;
+                    } else if (ch === '\\') {
+                        escaped = true;
+                    } else if (ch === '"') {
+                        inString = false;
+                    }
+                    continue;
+                }
+                if (ch === '"') {
+                    inString = true;
+                } else if (ch === open) {
+                    depth++;
+                } else if (ch === close) {
+                    depth--;
+                    if (depth === 0) {
+                        return rest.slice(0, i + 1);
+                    }
+                }
+            }
+            // 閉じ括弧が見つからなければ全文を返して JSON.parse に失敗させる
+            return rest;
+        }
+
+        const stop = rest.search(/\n\s*(Observation|Thought|Final Answer)[:\s]/i);
+        return (stop === -1 ? rest : rest.slice(0, stop)).trim();
     }
 
     /**

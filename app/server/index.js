@@ -19,6 +19,7 @@ const { exec } = require('child_process');
 const fs = require('fs').promises;
 const os = require('os');
 const crypto = require('crypto');
+const { registerCodexRoutes, WORKSPACE_DIR, EXEC_ENABLED } = require('./codexRoutes');
 
 // ポート設定
 const PORT = process.env.PORT || 50000;
@@ -390,6 +391,11 @@ app.all('/api/fetch-url', express.json({ limit: '10mb' }), async (req, res) => {
 });
 
 // ========================================
+// Codex CLI 連携 / ワークスペース API（server/codexRoutes.js）
+// ========================================
+registerCodexRoutes(app);
+
+// ========================================
 // C++ コンパイル・実行 API
 // ========================================
 app.post('/api/compile/cpp', express.json({ limit: '1mb' }), async (req, res) => {
@@ -524,6 +530,12 @@ app.listen(PORT, () => {
     console.log(`   - Confluence:        http://localhost:${PORT}/confluence-proxy`);
     console.log(`   - Fetch URL:         http://localhost:${PORT}/api/fetch-url?url=...`);
     console.log(`   - C++ Compile:       http://localhost:${PORT}/api/compile/cpp`);
+    console.log(`   - Codex Run (SSE):   http://localhost:${PORT}/api/codex/run`);
+    console.log(`   - Codex Cancel:      http://localhost:${PORT}/api/codex/cancel`);
+    console.log(`   - Workspace:         http://localhost:${PORT}/api/workspace/{files,file,exec}`);
+    console.log('');
+    console.log(`Workspace Dir: ${WORKSPACE_DIR}`);
+    console.log(`Workspace Exec: ${EXEC_ENABLED ? 'enabled' : 'disabled (WORKSPACE_EXEC_ENABLED=0)'}`);
     console.log('');
     console.log(`Open http://localhost:${PORT} in your browser`);
     console.log('');

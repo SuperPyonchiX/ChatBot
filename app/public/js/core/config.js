@@ -622,6 +622,7 @@ window.CONFIG = {
 - 常にThought → Action → Observationの順序を守る
 - 1回のレスポンスでは1つのアクションのみ実行する
 - 十分な情報が集まったらFinal Answerを返す
+- Action Input は JSON オブジェクト1つで書く（複数行にまたがってよい。ファイル内容など長い文字列も JSON 文字列として渡す）
 - 最大{{max_iterations}}回のイテレーションで完了すること`,
 
             // Function Callingモード用システムプロンプト
@@ -649,7 +650,7 @@ window.CONFIG = {
         TOOLS: {
             // デフォルトで有効なビルトインツール
             // AgentToolManager に実際に登録されるツール名と一致させること
-            BUILTIN: ['web_search', 'calculator', 'url_fetch', 'text_analyzer', 'rag_search', 'code_execute', 'file_read', 'ask_user'],
+            BUILTIN: ['web_search', 'calculator', 'url_fetch', 'text_analyzer', 'rag_search', 'code_execute', 'file_read', 'ask_user', 'codex_task', 'file_write', 'shell_execute'],
             // ツール自動選択を有効にするか
             AUTO_SELECT: true,
             // ツール選択時の最大ツール数
@@ -699,6 +700,67 @@ window.CONFIG = {
             MAX_LOG_ENTRIES: 1000,
             // アニメーション有効
             ANIMATION_ENABLED: true
+        }
+    },
+
+    /**
+     * Codex CLI 連携設定
+     * サーバーで OpenAI Codex CLI（codex exec --json）を子プロセス起動し、
+     * サーバー側ワークスペース（app/workspace）でファイル作成・コマンド実行を行う
+     */
+    CODEX: {
+        // Codex 連携の有効/無効（無効にするとモード選択に出ない）
+        ENABLED: true,
+
+        // サーバーエンドポイント（app/server/codexRoutes.js）
+        ENDPOINTS: {
+            RUN: '/api/codex/run',
+            CANCEL: '/api/codex/cancel',
+            WORKSPACE_FILES: '/api/workspace/files',
+            WORKSPACE_FILE: '/api/workspace/file',
+            WORKSPACE_EXEC: '/api/workspace/exec'
+        },
+
+        // サンドボックス ('read-only' | 'workspace-write' | 'danger-full-access')
+        DEFAULT_SANDBOX: 'workspace-write',
+
+        // Codex に渡すモデル（null なら CLI 側の既定）
+        DEFAULT_MODEL: null,
+
+        // `-c key=value` で渡す追加設定（Windows でサンドボックスが効かない場合などに使う）
+        EXTRA_CONFIG: [],
+
+        // codex_task ツールの並列上限（サーバー側 CODEX_MAX_PARALLEL と揃える）
+        MAX_PARALLEL: 3,
+
+        // 1 実行のタイムアウト（ミリ秒）
+        TIMEOUT_MS: 600000,
+
+        // ワークスペース関連
+        WORKSPACE: {
+            // shell_execute のタイムアウト（ミリ秒）
+            EXEC_TIMEOUT_MS: 60000,
+            // プレビューで表示する最大バイト数
+            MAX_FILE_PREVIEW: 1048576,
+            // Codex 完了時にワークスペース一覧を自動更新するか
+            REFRESH_ON_COMPLETE: true
+        },
+
+        // UI
+        UI: {
+            // item.type ごとのアイコン
+            ITEM_ICONS: {
+                reasoning: '💭',
+                command_execution: '⌨️',
+                file_change: '📝',
+                agent_message: '🤖',
+                mcp_tool_call: '🔌',
+                error: '❌'
+            },
+            // コマンド出力の表示上限（行）
+            MAX_OUTPUT_LINES: 200,
+            // 履歴復元カードを折りたたんだ状態で出すか
+            RESTORED_COLLAPSED: true
         }
     },
 

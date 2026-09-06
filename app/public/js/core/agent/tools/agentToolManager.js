@@ -193,6 +193,21 @@ class AgentToolManager {
             this.registerTool(FileReadTool.getInstance);
         }
 
+        // Codex サブエージェント
+        if (window.CodexTaskTool) {
+            this.registerTool(CodexTaskTool.getInstance);
+        }
+
+        // File Write（ワークスペース）
+        if (window.FileWriteTool) {
+            this.registerTool(FileWriteTool.getInstance);
+        }
+
+        // Shell Execute（ワークスペース）
+        if (window.ShellExecuteTool) {
+            this.registerTool(ShellExecuteTool.getInstance);
+        }
+
         // ask_user ツール（組み込み）
         this.registerTool({
             name: 'ask_user',
@@ -420,9 +435,9 @@ class AgentToolManager {
 
             if (['web_search', 'url_fetch', 'rag_search', 'file_read'].includes(name)) {
                 categories.information.push(name);
-            } else if (['calculator', 'text_analyzer'].includes(name)) {
+            } else if (['calculator', 'text_analyzer', 'file_write'].includes(name)) {
                 categories.processing.push(name);
-            } else if (['code_execute'].includes(name)) {
+            } else if (['code_execute', 'codex_task', 'shell_execute'].includes(name)) {
                 categories.execution.push(name);
             } else if (['ask_user'].includes(name)) {
                 categories.interaction.push(name);

@@ -166,4 +166,7 @@ AGENT: {
 | `rag_search` | ragSearchTool.js | ナレッジベース検索 |
 | `code_execute` | codeExecuteTool.js | コード実行（CodeExecutor 経由） |
 | `file_read` | fileReadTool.js | 添付・保存ファイルの読み取り |
+| `codex_task` | codexTaskTool.js | Codex CLI をサブエージェントとして起動（`CodexClient` 経由、並列可） |
+| `file_write` | fileWriteTool.js | サーバー側ワークスペースへ書き込み（`POST /api/workspace/file`） |
+| `shell_execute` | shellExecuteTool.js | ワークスペースでコマンド実行（`POST /api/workspace/exec`） |
 | `ask_user` | agentToolManager.js 内に直書き | ユーザーへの質問（askUserDialog） |

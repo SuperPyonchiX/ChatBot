@@ -131,6 +131,14 @@ class EventHandlers {
                     <div class="agent-mode-option-desc">API直接呼び出し方式</div>
                 </div>
             </label>
+            ${window.CONFIG?.CODEX?.ENABLED ? `
+            <label class="agent-mode-option">
+                <input type="radio" name="agentMode" value="codex">
+                <div class="agent-mode-option-content">
+                    <div class="agent-mode-option-label">Codex</div>
+                    <div class="agent-mode-option-desc">OpenAI Codex CLI でファイル作成・コマンド実行</div>
+                </div>
+            </label>` : ''}
         `;
 
         // トグルボタンの親要素に追加
@@ -155,8 +163,8 @@ class EventHandlers {
                     window.AppState.agentMode = value;
                     agentModeToggle.classList.add('active');
 
-                    // AgentOrchestratorのモードを設定
-                    if (typeof AgentOrchestrator !== 'undefined') {
+                    // AgentOrchestratorのモードを設定（codex は Orchestrator を使わない）
+                    if (value !== 'codex' && typeof AgentOrchestrator !== 'undefined') {
                         AgentOrchestrator.getInstance.setMode(value);
                     }
                 }
@@ -258,6 +266,17 @@ class EventHandlers {
                 window.Elements.settingsMenu.style.display = 'none';
                 if (typeof ChatFlowBuilderModal !== 'undefined') {
                     await ChatFlowBuilderModal.getInstance.show();
+                }
+            });
+        }
+
+        // ワークスペース（Codex 作業ディレクトリ）
+        const openWorkspaceBtn = document.getElementById('openWorkspace');
+        if (openWorkspaceBtn) {
+            openWorkspaceBtn.addEventListener('click', () => {
+                window.Elements.settingsMenu.style.display = 'none';
+                if (typeof WorkspaceModal !== 'undefined') {
+                    WorkspaceModal.getInstance.show();
                 }
             });
         }

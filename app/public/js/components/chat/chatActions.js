@@ -275,6 +275,14 @@ class ChatActions {
                 return await this.#processWithChatFlow(userText, chatMessages, conversation, attachments);
             }
 
+            // Codex モードのチェック（キーワード判定はせず常に Codex に委譲）
+            if (this.#isCodexModeEnabled()) {
+                userInput.value = '';
+                UIUtils.getInstance.autoResizeTextarea(userInput);
+                ChatUI.getInstance.updateSendButtonState();
+                return await this.#processWithCodex(userText, chatMessages, conversation, attachments);
+            }
+
             // エージェントモードのチェック
             if (this.#isAgentModeEnabled() && this.#shouldUseAgent(userText)) {
                 // ユーザー入力をクリア
@@ -1094,6 +1102,134 @@ class ChatActions {
             agentUI.showError(agentContainer, error);
             window.AppState.clearAbortController();
 
+            return { error: error.message };
+        }
+    }
+
+    // ========================================
+    // Codex モード関連メソッド
+    // ========================================
+
+    /**
+     * Codex モードが有効かどうかを確認
+     * @returns {boolean}
+     */
+    #isCodexModeEnabled() {
+        const configEnabled = window.CONFIG?.CODEX?.ENABLED === true;
+        return configEnabled && window.AppState?.agentMode === 'codex' && typeof CodexClient !== 'undefined';
+    }
+
+    /**
+     * Codex モードでメッセージを処理
+     * サーバー側で Codex CLI を起動し、進捗カードを描画してから最終メッセージを表示する
+     * @param {string} userText - ユーザー入力
+     * @param {HTMLElement} chatMessages - チャットメッセージコンテナ
+     * @param {Object} conversation - 会話オブジェクト
+     * @param {Array} attachments - 添付ファイル
+     * @returns {Promise<Object>} 処理結果
+     */
+    async #processWithCodex(userText, chatMessages, conversation, attachments = []) {
+        console.log('[ChatActions] Codex モードで処理開始');
+
+        let titleUpdated = false;
+        const timestamp = Date.now();
+
+        await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, attachments, timestamp);
+
+        let attachmentContent = '';
+        if (attachments && attachments.length > 0) {
+            const processedResult = await this.#processAttachments(attachments);
+            attachmentContent = processedResult.content;
+        }
+        const prompt = attachmentContent ? `${userText}\n\n${attachmentContent}` : userText;
+
+        conversation.messages.push({ role: 'user', content: prompt, timestamp });
+
+        const shouldGenerateTitle = conversation.title === '新しいチャット' &&
+            conversation.messages.filter(m => m.role === 'user').length === 1;
+
+        const card = CodexRunCard.getInstance;
+        const abortController = window.AppState.createAbortController();
+        window.AppState.isStreaming = true;
+        let jobId = null;
+
+        const cardEl = card.create(chatMessages, {
+            onStop: () => {
+                if (jobId) CodexClient.getInstance.cancel(jobId);
+                abortController.abort();
+            }
+        });
+
+        const botTimestamp = Date.now();
+
+        try {
+            const runOnce = async (threadId) => CodexClient.getInstance.run({
+                prompt,
+                threadId,
+                signal: abortController.signal,
+                onJob: (id) => { jobId = id; },
+                onEvent: (event) => card.appendEvent(cardEl, event),
+                onStderr: (line) => card.appendStderr(cardEl, line),
+                onError: (err) => card.showError(cardEl, err.message)
+            });
+
+            let result = await runOnce(conversation.codexThreadId || null);
+
+            // resume 失敗（スレッドが見つからない等）は新規スレッドで 1 回だけやり直す
+            if (!result.success && !result.aborted && conversation.codexThreadId &&
+                /thread|session|resume|not found/i.test(result.error || '')) {
+                console.warn('[ChatActions] Codex resume 失敗。新規スレッドで再実行:', result.error);
+                conversation.codexThreadId = null;
+                result = await runOnce(null);
+            }
+
+            card.finalize(cardEl, result);
+
+            if (result.threadId) {
+                conversation.codexThreadId = result.threadId;
+            }
+
+            let finalResponse = result.finalMessage || '';
+            if (!finalResponse) {
+                if (result.aborted) {
+                    finalResponse = 'Codex の実行を中断しました。';
+                } else if (result.error) {
+                    finalResponse = `Codex 実行エラー: ${result.error}`;
+                } else {
+                    finalResponse = 'Codex の実行が完了しましたが、メッセージは返されませんでした。';
+                }
+            }
+
+            conversation.messages.push({
+                role: 'assistant',
+                content: finalResponse,
+                timestamp: botTimestamp,
+                codexData: card.summarize(result)
+            });
+
+            // エージェント経路と同じく await しない（描画はフレーム単位でまとめられるため、
+            // 非表示タブでは待つと戻ってこない）
+            const { messageDiv, contentContainer } = ChatRenderer.getInstance.addStreamingBotMessage(chatMessages, botTimestamp);
+            ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, finalResponse, finalResponse);
+            ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, finalResponse);
+
+            Storage.getInstance.saveConversations(window.AppState.conversations);
+
+            if (shouldGenerateTitle) {
+                this.#generateAndUpdateTitle(conversation, userText).catch(err => {
+                    console.warn('[ChatActions] タイトル自動生成エラー:', err.message);
+                });
+                titleUpdated = true;
+            }
+
+            window.AppState.clearAbortController();
+            return { titleUpdated };
+
+        } catch (error) {
+            console.error('[ChatActions] Codex 実行エラー:', error);
+            card.showError(cardEl, error.message);
+            card.finalize(cardEl, { success: false, error: error.message });
+            window.AppState.clearAbortController();
             return { error: error.message };
         }
     }

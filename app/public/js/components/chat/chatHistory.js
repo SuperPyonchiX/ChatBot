@@ -241,6 +241,10 @@ class ChatHistory {
                             }
                             contentContainer = result?.contentContainer;
                         } else {
+                            // Codex 実行の要約カードを本文の前に復元
+                            if (message.codexData && typeof CodexRunCard !== 'undefined') {
+                                CodexRunCard.getInstance.createFromSummary(chatMessages, message.codexData);
+                            }
                             // 思考過程なしの従来の表示
                             const result = await ChatRenderer.getInstance.addBotMessage(content, chatMessages, message.timestamp, false);
                             contentContainer = result?.contentContainer;

@@ -31,6 +31,7 @@ scripts\StartChatBot.bat             # Node 確認 → install → 起動 → �
 | RAG | `js/core/rag/ragManager.js` | ローカル埋め込み（Transformers.js）or OpenAI / Azure。Confluence 取り込みは `confluenceDataSource.js` |
 | コード実行 | `js/core/executors/codeExecutor.js` | JS / TS / Python / C++ / HTML。言語別は `executors/languages/` |
 | アーティファクト | `js/components/artifact/artifactManager.js` | HTML / SVG / Mermaid / Markdown / Draw.io のプレビュー |
+| Codex 連携 | `js/core/codex/codexClient.js` | サーバー `app/server/codexRoutes.js` が `codex exec --json` を spawn し SSE 中継。作業先は `app/workspace/`。チャット内カードは `components/codex/`、エージェントからは `agent/tools/codexTaskTool.js` |
 | チャット UI | `js/components/chat/` | 表示 `chatRenderer.js`、送信 `chatActions.js`、履歴 `chatHistory.js` |
 | モーダル | `js/modals/{機能}/{機能}Modal.js` | 開閉の共通処理は `modalHandlers.js` |
 | サーバー | `app/server/index.js` | 下記 |
@@ -93,7 +94,7 @@ window.ClassName = ClassName;
 
 ## サーバー
 
-`app/server/index.js` は2形式のルートを持つ。パスをそのまま転送するだけなら `createProxyMiddleware`（`/openai` `/responses` `/anthropic` `/gemini`）。ヘッダ組み替えや転送先が動的なら `app.post`（`/azure-openai` `/openai-embeddings` `/azure-openai-embeddings` `/confluence-proxy` `/api/compile/cpp`）。新規外部 API は後者で書き、`app.listen` 内の `Proxy Endpoints:` ログにも1行足す。
+`app/server/index.js` は2形式のルートを持つ。パスをそのまま転送するだけなら `createProxyMiddleware`（`/openai` `/responses` `/anthropic` `/gemini`）。ヘッダ組み替えや転送先が動的なら `app.post`（`/azure-openai` `/openai-embeddings` `/azure-openai-embeddings` `/confluence-proxy` `/api/compile/cpp`）。新規外部 API は後者で書き、`app.listen` 内の `Proxy Endpoints:` ログにも1行足す。Codex / ワークスペース系（`/api/codex/*` `/api/workspace/*`）だけは `app/server/codexRoutes.js` に分離してあり、`registerCodexRoutes(app)` で登録する。
 
 ## スキル
 

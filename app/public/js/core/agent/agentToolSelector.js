@@ -24,11 +24,15 @@ class AgentToolSelector {
         },
         code: {
             keywords: ['実行', 'コード', 'プログラム', '計算', 'execute', 'run', 'code', 'calculate', 'compute'],
-            tools: ['code_execute']
+            tools: ['code_execute', 'codex_task', 'shell_execute']
         },
         data: {
             keywords: ['データ', '分析', '処理', 'ファイル', 'data', 'analyze', 'process', 'file'],
-            tools: ['rag_search', 'code_execute']
+            tools: ['rag_search', 'code_execute', 'file_write']
+        },
+        coding: {
+            keywords: ['実装', '作成して', '作って', '編集して', '書いて', 'リファクタ', 'テスト', 'ビルド', 'implement', 'refactor', 'create', 'build', 'write'],
+            tools: ['codex_task', 'file_write', 'shell_execute']
         },
         interaction: {
             keywords: ['確認', '質問', 'ユーザー', 'confirm', 'ask', 'user', 'input'],

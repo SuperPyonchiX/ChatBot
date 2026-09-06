@@ -16,6 +16,9 @@
 | `app.post` | `/confluence-proxy` | ボディの `targetUrl`（動的、認証ヘッダ組み替え） |
 | `app.all` | `/api/fetch-url?url=` | 汎用URL取得（url_fetch ツール / http ノード用） |
 | `app.post` | `/api/compile/cpp` | ローカル g++ |
+| `app.post` | `/api/codex/run` | Codex CLI を `spawn` し JSONL を SSE 中継（`server/codexRoutes.js`） |
+| `app.post` | `/api/codex/cancel` | 実行中 Codex ジョブの停止 |
+| `app.get` / `app.post` | `/api/workspace/files` `/file` `/exec` | ワークスペース一覧・読み書き・コマンド実行（同上） |
 
 使い分け: **パスをそのまま転送するだけなら `createProxyMiddleware`**。ヘッダを組み替える・転送先がユーザー設定で変わる・レスポンスを加工するなら `app.post` 型。最近追加されたものは全部 `app.post` 型で、`/confluence-proxy` が最新の書き方。
 
