@@ -5,19 +5,19 @@
 ## 主な特徴
 
 - 複数プロバイダ/モデル対応（OpenAI, Azure OpenAI, Claude, Gemini）
-	- OpenAI: gpt-4o-mini, gpt-4o, gpt-5-mini, gpt-5
-	- Claude: claude-opus-4-1, claude-sonnet-4-0, claude-3-5-haiku-latest
-	- Gemini: gemini-2.5-pro, gemini-2.5-flash
+	- OpenAI: gpt-4o-mini, gpt-4o, gpt-5-mini, gpt-5, gpt-5.2
+	- Claude: claude-opus-4-5, claude-sonnet-4-5, claude-haiku-4-5
+	- Gemini: gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash
 - ストリーミング表示（SSE）と入力中アニメーション
 - Web検索連携
-	- OpenAI Responses API: gpt-5-mini / gpt-5 で対応
+	- OpenAI Responses API: gpt-5-mini / gpt-5 / gpt-5.2 で対応
 	- Claude: 全対応モデルでツール呼び出しにより対応
 - **RAG（知識ベース）**: ドキュメントをアップロードしてAIの回答に活用
 	- ローカル埋め込み（Transformers.js）で外部API不要
 	- 対応形式: PDF, Word, Excel, PowerPoint, テキスト
 - マークダウン表示＋コードハイライト＋Mermaid図プレビュー（SVG保存/全画面表示）
 - 添付ファイル（画像ほか）とプレビュー
-- コード実行（JavaScript / Python[Pyodide] / C++[サーバーサイドg++] / HTML）
+- コード実行（JavaScript / TypeScript / Python[Pyodide] / C++[サーバーサイドg++] / HTML）
 - チャット履歴の保存・管理、システムプロンプトのテンプレート化
 - モバイル対応レスポンシブUI、MonacoベースのエディタUI
 
@@ -127,7 +127,7 @@ ChatBot/
 
 - OpenAI（公式）
 	- APIキーを入力
-	- モデル: gpt-4o-mini, gpt-4o, gpt-5-mini, gpt-5
+	- モデル: gpt-4o-mini, gpt-4o, gpt-5-mini, gpt-5, gpt-5.2
 - Azure OpenAI
 	- APIキーを入力
 	- 各モデルのデプロイメントエンドポイントURLを入力（モデルごとにフィールドあり）
@@ -137,12 +137,12 @@ ChatBot/
 	- APIキーを入力
 
 Web検索:
-- OpenAI: Responses APIでWeb検索を利用可能（gpt-5-mini / gpt-5）
+- OpenAI: Responses APIでWeb検索を利用可能（gpt-5-mini / gpt-5 / gpt-5.2）
 - Claude: 全対応モデルでWeb検索ツールを利用可能
 
 ## 使い方のヒント
 
-- メッセージ中のコードブロックには「実行」ボタンが付き、ブラウザ内で実行できます（JS/HTML/Python/C++）。
+- メッセージ中のコードブロックには「実行」ボタンが付き、ブラウザ内で実行できます（JS/TS/HTML/Python/C++）。
 - Mermaidコードブロック（```mermaid）はプレビュー/コード表示を切替でき、SVG保存や全画面表示が可能です。
 - 画像などの添付に対応。対応タイプや最大サイズは `app/public/js/core/config.js` を参照。
 - システムプロンプトはテンプレート化して保存/切替ができます。

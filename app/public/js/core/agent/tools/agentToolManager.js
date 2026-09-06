@@ -160,6 +160,10 @@ class AgentToolManager {
      */
     #registerBuiltInTools() {
         // Calculator
+        if (window.WebSearchTool) {
+            this.registerTool(WebSearchTool.getInstance);
+        }
+
         if (window.CalculatorTool) {
             this.registerTool(CalculatorTool.getInstance);
         }
@@ -414,7 +418,7 @@ class AgentToolManager {
         for (const tool of tools) {
             const name = tool.name;
 
-            if (['url_fetch', 'rag_search', 'file_read'].includes(name)) {
+            if (['web_search', 'url_fetch', 'rag_search', 'file_read'].includes(name)) {
                 categories.information.push(name);
             } else if (['calculator', 'text_analyzer'].includes(name)) {
                 categories.processing.push(name);

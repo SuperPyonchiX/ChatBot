@@ -1,90 +1,50 @@
 ---
 name: chatbot-component
-description: ChatBotプロジェクトに新しいUIコンポーネントを追加するためのスキル。コンポーネント作成手順、CSS構成ルール、イベントハンドリングパターンを提供します。新しいUIコンポーネントを作成する時、モーダルを追加する時、CSSスタイルを追加する時、UIイベントを処理する時に使用してください。
+description: ChatBotプロジェクトにUIコンポーネントやモーダルを追加する工程スキル。`js/components/{機能}/` または `js/modals/{機能}/{機能}Modal.js` のシングルトンクラス作成、`css/components/{カテゴリ}/` へのCSS追加とCSS変数の使用、index.html への `<link>` / `<script>` 追加位置、イベント登録パターンを扱う。「新しい画面を作って」「モーダルを追加して」「サイドバーにボタンを足して」「このCSSをどこに置けばいい」で使う。AI API の追加は chatbot-api、フロービルダーのノード追加は chatbot-flow-node、エージェントツールは chatbot-agent-tool。
 ---
 
-# ChatBot コンポーネント追加スキル
+# UI コンポーネント追加
 
-このスキルはChatBotプロジェクトに新しいUIコンポーネントを追加する際のガイダンスを提供します。
+## 配置先
 
-## コンポーネント作成手順
+| 種別 | JS | CSS |
+| --- | --- | --- |
+| 画面部品 | `app/public/js/components/{機能}/{機能}.js` | `app/public/css/components/{カテゴリ}/{名前}.css` |
+| モーダル | `app/public/js/modals/{機能}/{機能}Modal.js` | 同上（既存は `modals/modals.css` に共通、機能固有は `components/{機能}/` に別ファイル） |
 
-### 1. JavaScriptクラスの作成
+## 手順
 
-`app/public/js/components/{機能名}/{機能名}.js` に配置：
+1. **クラス**: シングルトン定型（CLAUDE.md の規約）で作り、`initialize()` でイベント登録する。雛形は `references/component-template.md`。末尾で `window.Xxx = Xxx;`
+2. **HTML**: `app/public/index.html` の該当位置に要素を追加。モーダルは既存の `.modal` 構造（`modals/modals.css`）に合わせる
+3. **CSS**: `references/css-structure.md` の配置ルールと CSS 変数を使う。色・余白・角丸・フォントサイズは `css/base/variables.css` の変数のみ
+4. **index.html への読み込み**
+   - `<link>`: `<!-- Components CSS -->` の並びに追加。`css/tools.css` が最後
+   - `<script>`: 画面部品は `<!-- コンポーネント関連のファイル -->`、モーダルは `<!-- モーダル関連のファイル -->` ブロック内。依存するクラスより後ろに置く
+5. **イベント**: `references/event-handling.md`。グローバルな開閉は `js/modals/modalHandlers.js`、DOM 参照は `js/core/domElements.js` / `window.Elements` を経由する
+6. **設定値**: 幅・件数上限などは `window.CONFIG.UI` 配下に追加する
 
-```javascript
-class ComponentName {
-    static #instance = null;
+## 手本
 
-    constructor() {
-        if (ComponentName.#instance) {
-            return ComponentName.#instance;
-        }
-        ComponentName.#instance = this;
-    }
+| 用途 | ファイル |
+| --- | --- |
+| タブ付きモーダル（最新） | `js/modals/agentSettings/agentSettingsModal.js` |
+| キャンバス・パレット・プロパティパネル | `js/modals/chatFlowBuilder/chatFlowBuilderModal.js`, `js/components/workflow/*` |
+| チャット表示 | `js/components/chat/chatRenderer.js`, `chatUI.js` |
+| サイドバー | `js/components/sidebar/sidebar.js` |
+| 単純なフォームモーダル | `js/modals/renameChat/renameChatModal.js` |
+| リサイズ可能なパネル | `js/components/artifact/artifactPanel.js`, `js/core/dragManager.js` |
 
-    static get getInstance() {
-        if (!ComponentName.#instance) {
-            ComponentName.#instance = new ComponentName();
-        }
-        return ComponentName.#instance;
-    }
+## 動作確認
 
-    initialize() {
-        this.#setupEventListeners();
-    }
-
-    #setupEventListeners() {
-        // イベントリスナーの設定
-    }
-}
-```
-
-### 2. CSSスタイルの作成
-
-`app/public/css/components/{カテゴリ}/{ファイル名}.css` に配置：
-
-```css
-.component-name {
-    background: var(--background-secondary);
-    border-radius: var(--border-radius-md);
-    padding: var(--spacing-md);
-}
-
-.component-name__element {
-    /* BEM命名規則 */
-}
-```
-
-### 3. HTMLの追加
-
-`app/public/index.html` の適切な位置に要素を追加。
-
-### 4. スクリプト読み込み
-
-`app/public/index.html` の末尾にscriptタグを追加。
-
-## CSS変数（必須使用）
-
-色・間隔・サイズはすべてCSS変数で定義：
-
-- 背景色: `--background-primary`, `--background-secondary`, `--background-tertiary`
-- テキスト色: `--text-primary`, `--text-secondary`, `--text-tertiary`
-- 間隔: `--spacing-xs` ~ `--spacing-xl`
-- 角丸: `--border-radius-sm` ~ `--border-radius-xl`
-- アニメーション: `--transition-fast`, `--transition-normal`
-
-## 参考コンポーネント
-
-- **チャット系**: `chatRenderer.js`, `chatUI.js`
-- **サイドバー**: `sidebar.js`
-- **モーダル**: `apiSettingsModal.js`, `systemPromptModal.js`
+1. `cd app && npm start` → ブラウザコンソールに `Uncaught ReferenceError` が無い（読み込み順の誤り）
+2. 追加した要素が表示され、ダーク基調の既存画面と色が揃っている
+3. モーダルは開閉・Esc・オーバーレイクリックで閉じる
+4. ウィンドウ幅を狭めてレイアウトが崩れない
 
 ## 参照ファイル
 
-詳細は以下のファイルを参照：
-
-- `references/component-template.md`: コンポーネントテンプレート
-- `references/css-structure.md`: CSS構成ルール
-- `references/event-handling.md`: イベントハンドリングパターン
+| ファイル | 読むタイミング |
+| --- | --- |
+| `references/component-template.md` | 手順1でクラスを書くとき |
+| `references/css-structure.md` | 手順3で CSS を書くとき |
+| `references/event-handling.md` | 手順5でイベントを結ぶとき |

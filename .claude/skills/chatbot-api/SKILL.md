@@ -1,68 +1,54 @@
 ---
 name: chatbot-api
-description: ChatBotプロジェクトに新しいAI APIを統合するためのスキル。APIクラスの実装パターン、プロキシ設定、ストリーミング実装を提供します。新しいAI APIを追加する時、APIクラスを実装する時、ストリーミング機能を追加する時、サーバープロキシを設定する時に使用してください。
+description: ChatBotプロジェクトに新しいAIプロバイダを組み込む工程スキル。`js/core/xxxApi.js` のAPIクラス作成、`api.js` のルーティング追加、`config.js` の MODELS / ENDPOINTS / STORAGE.KEYS / TOOLS.COMPATIBLE_MODELS 追加、`app/server/index.js` のプロキシ追加、apiSettingsModal のキー入力欄追加、SSEストリーミング実装までを順に行う。「新しいAI APIを追加したい」「○○のモデルを使えるようにして」「プロキシを追加して」「ストリーミングに対応させて」で使う。エージェント用ツールの追加は chatbot-agent-tool、UI部品の追加は chatbot-component。
 ---
 
-# ChatBot API統合スキル
+# AI プロバイダ追加
 
-このスキルはChatBotプロジェクトに新しいAI APIを統合する際のガイダンスを提供します。
+## 既存クラス（手本）
 
-## API追加手順
+| クラス | ファイル | 特徴 |
+| --- | --- | --- |
+| `OpenAIAPI` | `js/core/openaiApi.js` | Chat Completions。最も標準的な手本 |
+| `ClaudeAPI` | `js/core/claudeApi.js` | Messages API。Web検索ツール対応 |
+| `GeminiAPI` | `js/core/geminiApi.js` | GenerateContent |
+| `ResponsesAPI` | `js/core/responsesApi.js` | OpenAI Responses API（Web検索） |
 
-### 1. 設定値の追加（config.js）
+ルーターは `js/core/api.js` の `AIAPI.callAIAPI(messages, model, attachments, options)`。モデル名でプロバイダを判定して各クラスに委譲する。
 
-```javascript
-// window.CONFIG.AIAPI.ENDPOINTS に追加
-ENDPOINTS: {
-    OPENAI: '/openai/v1/chat/completions',
-    CLAUDE: '/anthropic/v1/messages',
-    GEMINI: '/gemini/v1beta/models',
-    NEW_API: '/newapi/v1/chat'  // 新しいエンドポイント
-}
+## 手順
 
-// window.CONFIG.STORAGE.KEYS に追加
-KEYS: {
-    NEW_API_KEY: 'newApiKey'  // 新しいAPIキー
-}
-```
+1. **config.js**（`app/public/js/core/config.js`）
+   - `AIAPI.ENDPOINTS` にプロキシ経由のパスを追加（例: `NEW_API: '/newapi/v1/chat'`）
+   - `STORAGE.KEYS` に API キー保存用キーを追加（例: `NEW_API_KEY: 'newApiKey'`）
+   - `MODELS` にモデル配列を追加。既存は `MODELS.OPENAI` / `CLAUDE` / `GEMINI`
+   - Function Calling に対応するなら `TOOLS.COMPATIBLE_MODELS` にも同じモデル名を足す。ここに無いとチャットツールが出ない
+   - Web検索に対応するなら `WEB_SEARCH` 配下の対応モデル表にも足す
+2. **サーバープロキシ**（`app/server/index.js`）: `references/server-proxy-setup.md`。単純転送なら `createProxyMiddleware`、ヘッダ組み替えや動的 URL なら `app.post` 型。起動ログの `Proxy Endpoints:` 一覧にも1行足す
+3. **API クラス**（`js/core/newApi.js`）: `references/api-class-template.md`。必須メソッド:
+   - `callNewAPI(messages, model, attachments, options)`
+   - `#validateAPISettings()`
+   - `#prepareNewRequest()`
+   - `#executeNewRequest()`（非ストリーミング）
+   - `#executeStreamNewRequest()`（ストリーミング。`references/streaming-implementation.md`）
+4. **ルーティング**（`js/core/api.js`）: `callAIAPI` のプロバイダ判定に分岐を追加
+5. **API 設定 UI**（`js/modals/apiSettings/apiSettingsModal.js` と `index.html` の対応フォーム）: キー入力欄と保存処理を追加。キーは `Storage` 経由で暗号化保存される
+6. **index.html**: `<script src="js/core/responsesApi.js">` の並び（`api.js` の直後ブロック）に追加
+7. **README.md** の対応モデル表を更新
 
-### 2. APIクラスの作成
+## 動作確認
 
-`app/public/js/core/newApi.js` に配置。
-
-### 3. サーバープロキシの追加
-
-`app/server/index.js` にプロキシ設定を追加。
-
-### 4. api.js への統合
-
-`AIAPI.callAIAPI` メソッドにルーティングを追加。
-
-### 5. UI設定の追加
-
-APIキー設定モーダルにフォームを追加。
-
-## 既存APIクラス一覧
-
-| クラス | ファイル | 機能 |
-|--------|----------|------|
-| `OpenAIAPI` | `openaiApi.js` | OpenAI Chat Completions API |
-| `ClaudeAPI` | `claudeApi.js` | Anthropic Claude Messages API |
-| `GeminiAPI` | `geminiApi.js` | Google Gemini API |
-| `ResponsesAPI` | `responsesApi.js` | OpenAI Responses API (Web検索) |
-
-## 必須メソッド
-
-1. `callXxxAPI(messages, model, attachments, options)` - メインAPI呼び出し
-2. `#validateAPISettings()` - API設定の検証
-3. `#prepareXxxRequest()` - リクエスト準備
-4. `#executeXxxRequest()` - 非ストリーミング実行
-5. `#executeStreamXxxRequest()` - ストリーミング実行
+1. `cd app && npm start` → 起動ログに新プロキシが出る
+2. API 設定モーダルでキーを保存し、再読み込み後も残っている
+3. モデル選択に新モデルが出て、非ストリーミング・ストリーミング双方で応答が返る
+4. サーバーコンソールに `[NewAPI] POST /...` のログが出る
+5. 添付ファイル付きで送って `#prepareNewRequest` が壊れない
+6. 無効なキーで `[NewAPI]` プレフィックスのエラーが UI に表示される
 
 ## 参照ファイル
 
-詳細は以下のファイルを参照：
-
-- `references/api-class-template.md`: 完全なAPIクラステンプレート
-- `references/server-proxy-setup.md`: Express プロキシ設定方法
-- `references/streaming-implementation.md`: SSE実装パターン
+| ファイル | 読むタイミング |
+| --- | --- |
+| `references/api-class-template.md` | 手順3でクラスを書くとき |
+| `references/server-proxy-setup.md` | 手順2でプロキシを足すとき |
+| `references/streaming-implementation.md` | SSE ストリーミングを実装するとき |

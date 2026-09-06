@@ -335,6 +335,61 @@ app.post('/confluence-proxy', express.json({ limit: '10mb' }), async (req, res) 
 });
 
 // ========================================
+// 汎用URLフェッチプロキシ（url_fetch ツール / ワークフロー http ノード用）
+// ========================================
+app.all('/api/fetch-url', express.json({ limit: '10mb' }), async (req, res) => {
+    const targetUrl = req.query.url;
+
+    let parsed;
+    try {
+        parsed = new URL(String(targetUrl));
+    } catch {
+        return res.status(400).json({ error: { message: 'url クエリパラメータが不正です' } });
+    }
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+        return res.status(400).json({ error: { message: 'http / https 以外のURLは取得できません' } });
+    }
+
+    const method = req.method === 'OPTIONS' ? 'GET' : req.method;
+    console.log(`[FetchURL] ${method} ${parsed.href}`);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
+    try {
+        const options = {
+            method,
+            headers: {
+                'Accept': req.headers['accept'] || '*/*',
+                'User-Agent': 'ChatBot-FetchProxy/1.0'
+            },
+            signal: controller.signal,
+            redirect: 'follow'
+        };
+        if (['POST', 'PUT', 'PATCH'].includes(method) && req.body && Object.keys(req.body).length > 0) {
+            options.headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(req.body);
+        }
+
+        const response = await fetch(parsed.href, options);
+        clearTimeout(timeout);
+
+        const contentType = response.headers.get('content-type') || 'text/plain; charset=utf-8';
+        const body = await response.text();
+        res.status(response.status).set('Content-Type', contentType).send(body);
+    } catch (error) {
+        clearTimeout(timeout);
+        if (error.name === 'AbortError') {
+            console.error('[FetchURL] タイムアウト');
+            res.status(504).json({ error: { message: 'URLの取得がタイムアウトしました', details: 'Request timeout after 30 seconds' } });
+        } else {
+            console.error('[FetchURL] 取得エラー:', error.message);
+            res.status(502).json({ error: { message: 'URLの取得に失敗しました', details: error.message } });
+        }
+    }
+});
+
+// ========================================
 // C++ コンパイル・実行 API
 // ========================================
 app.post('/api/compile/cpp', express.json({ limit: '1mb' }), async (req, res) => {
@@ -467,6 +522,8 @@ app.listen(PORT, () => {
     console.log(`   - OpenAI Embeddings: http://localhost:${PORT}/openai-embeddings`);
     console.log(`   - Azure Embeddings:  http://localhost:${PORT}/azure-openai-embeddings`);
     console.log(`   - Confluence:        http://localhost:${PORT}/confluence-proxy`);
+    console.log(`   - Fetch URL:         http://localhost:${PORT}/api/fetch-url?url=...`);
+    console.log(`   - C++ Compile:       http://localhost:${PORT}/api/compile/cpp`);
     console.log('');
     console.log(`Open http://localhost:${PORT} in your browser`);
     console.log('');

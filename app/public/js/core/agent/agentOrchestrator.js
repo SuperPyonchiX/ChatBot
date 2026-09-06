@@ -61,6 +61,9 @@ class AgentOrchestrator {
     /** @type {Array} */
     #availableTools = [];
 
+    /** @type {Array} addTool() で追加された、AgentToolManager 管理外のツール */
+    #extraTools = [];
+
     /**
      * @constructor
      */
@@ -107,7 +110,7 @@ class AgentOrchestrator {
         const {
             mode = this.#mode,
             maxIterations = this.#maxIterations,
-            tools = this.#availableTools,
+            tools = this.#resolveTools(),
             context = {},
             onObserve,
             onThink,
@@ -414,8 +417,8 @@ class AgentOrchestrator {
         if (window.AgentToolManager) {
             const toolManager = AgentToolManager.getInstance;
             await toolManager.initialize();
-            this.#availableTools = toolManager.getAllTools();
-            console.log(`[AgentOrchestrator] AgentToolManagerからツールをロード: ${this.#availableTools.length}個`);
+            this.#availableTools = toolManager.getEnabledTools();
+            console.log(`[AgentOrchestrator] AgentToolManagerから有効ツールをロード: ${this.#availableTools.length}個`);
         } else {
             // フォールバック: 基本ツールを定義
             this.#availableTools = [
@@ -457,7 +460,7 @@ class AgentOrchestrator {
      */
     addTool(tool) {
         if (tool.name && tool.description) {
-            this.#availableTools.push(tool);
+            this.#extraTools.push(tool);
             console.log(`[AgentOrchestrator] ツールを追加: ${tool.name}`);
         }
     }
@@ -467,7 +470,22 @@ class AgentOrchestrator {
      * @returns {Array}
      */
     getAvailableTools() {
-        return [...this.#availableTools];
+        return this.#resolveTools();
+    }
+
+    /**
+     * 実行時点で有効なツール一覧を解決する
+     * AgentToolManager がある場合は設定モーダルの有効/無効を毎回反映し、
+     * addTool() で追加されたツールを末尾に加える
+     * @returns {Array}
+     */
+    #resolveTools() {
+        if (window.AgentToolManager) {
+            this.#availableTools = AgentToolManager.getInstance.getEnabledTools();
+        }
+        const names = new Set(this.#availableTools.map(t => t.name));
+        const extras = this.#extraTools.filter(t => !names.has(t.name));
+        return [...this.#availableTools, ...extras];
     }
 
     /**
@@ -750,11 +768,12 @@ class AgentOrchestrator {
      * @returns {Promise<Object>}
      */
     async #executeExternalTool(toolName, parameters) {
-        // ToolExecutorを使用して外部ツールを実行
+        // チャットツール（ToolRegistry に登録された executor）を試す
         try {
-            const toolExecutor = window.ToolExecutor?.getInstance;
-            if (toolExecutor) {
-                const result = await toolExecutor.executeTool(toolName, parameters);
+            const registry = window.ToolRegistry?.getInstance;
+            const tool = registry?.get(toolName);
+            if (tool?.executor?.execute) {
+                const result = await tool.executor.execute(parameters);
                 return { success: true, result };
             }
         } catch (error) {

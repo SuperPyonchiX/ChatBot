@@ -536,11 +536,11 @@ class AgentSettingsModal {
                 <div class="agent-settings-tool-list" id="agent-builtin-tools">
                     ${allTools.map(tool => `
                         <label class="agent-settings-tool-item">
-                            <input type="checkbox" value="${tool.name}"
+                            <input type="checkbox" value="${this.#escapeHtml(tool.name)}"
                                 ${this.#settings.enabledBuiltinTools.includes(tool.name) ? 'checked' : ''}>
                             <span class="agent-settings-tool-info">
-                                <span class="agent-settings-tool-name">${tool.name}</span>
-                                <span class="agent-settings-tool-desc">${tool.description || ''}</span>
+                                <span class="agent-settings-tool-name">${this.#escapeHtml(tool.name)}</span>
+                                <span class="agent-settings-tool-desc">${this.#escapeHtml(tool.description || '')}</span>
                             </span>
                         </label>
                     `).join('')}

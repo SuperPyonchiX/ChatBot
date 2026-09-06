@@ -375,7 +375,7 @@ window.CONFIG = {
         // ツール対応モデル
         COMPATIBLE_MODELS: {
             CLAUDE: ['claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'],
-            OPENAI: ['gpt-4o', 'gpt-4o-mini', 'gpt-5', 'gpt-5-mini', 'o1', 'o1-mini'],
+            OPENAI: ['gpt-4o', 'gpt-4o-mini', 'gpt-5', 'gpt-5-mini', 'gpt-5.2'],
             GEMINI: ['gemini-3-pro-preview', 'gemini-2.5-pro', 'gemini-2.5-flash']
         },
 
@@ -605,7 +605,8 @@ window.CONFIG = {
         // ビルトインエージェントツール
         TOOLS: {
             // デフォルトで有効なビルトインツール
-            BUILTIN: ['web_search', 'code_execute', 'rag_search', 'ask_user', 'file_read'],
+            // AgentToolManager に実際に登録されるツール名と一致させること
+            BUILTIN: ['web_search', 'calculator', 'url_fetch', 'text_analyzer', 'rag_search', 'code_execute', 'file_read', 'ask_user'],
             // ツール自動選択を有効にするか
             AUTO_SELECT: true,
             // ツール選択時の最大ツール数
