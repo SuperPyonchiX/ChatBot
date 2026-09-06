@@ -30,74 +30,6 @@ input, textarea {
     line-height: 1.4;
 }
 
-/* サイドバースタイル */
-.sidebar-header {
-    padding: var(--spacing-sm);
-}
-
-.chat-history {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-}
-
-.history-item {
-    padding: 0;
-    margin-bottom: 5px;
-    border-radius: 5px;
-    overflow: hidden;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all var(--transition-fast);
-    border: 1px solid transparent;
-    font-size: var(--font-size-sm);
-}
-
-.history-item:hover {
-    background-color: var(--sidebar-item-hover-bg);
-}
-
-.history-item.active {
-    background-color: var(--sidebar-item-active-bg);
-}
-
-.history-item-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm);
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    cursor: pointer;
-}
-
-.history-item-title {
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.history-item-actions {
-    display: flex;
-    align-items: center;
-    opacity: 0;
-    transition: opacity var(--transition-fast);
-}
-
-.history-item:hover .history-item-actions {
-    opacity: 1;
-}
-
-.edit-button:hover {
-    color: var(--accent-color);
-}
-
-.delete-button:hover {
-    color: var(--error-color);
-}
-
 /* スクロールバー */
 ::-webkit-scrollbar {
     width: 8px;
@@ -121,4 +53,23 @@ input, textarea {
 * {
     scrollbar-width: thin;
     scrollbar-color: var(--border-color) transparent;
+}
+
+/* キーボード操作時のみフォーカスリングを出す */
+:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    border-radius: var(--border-radius-sm);
+}
+
+/* アニメーションを控える設定を尊重する */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }

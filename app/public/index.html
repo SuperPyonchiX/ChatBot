@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="AIを活用したチャットボットアプリケーション">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#212121">
     <title>ChatBot</title>
     <link rel="icon" href="icon/ChatBot.ico?v=2" type="image/png">
     <!-- CSS ファイル -->
@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="css/components/prompt/prompt-suggestions.css">
     <link rel="stylesheet" href="css/components/code/code-execution.css">
     <link rel="stylesheet" href="css/components/code/monaco-editor.css">
+    <link rel="stylesheet" href="css/components/code/simple-editor.css">
     <link rel="stylesheet" href="css/components/animations/typing.css">
     <link rel="stylesheet" href="css/components/animations/system-messages.css">
     <link rel="stylesheet" href="css/components/file-preview/pdf-preview.css">
@@ -62,20 +63,6 @@
     <!-- JSZip ライブラリ (PPTX, DOCX解析用) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
-    <!-- シンプルコードエディタスタイル -->
-    <style>
-        .simple-editor-fallback textarea {
-            width: 100%;
-            height: 300px;
-            background-color: #1e1e1e;
-            color: #d4d4d4;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 14px;
-            padding: 10px;
-            border: 1px solid #444;
-            resize: none;
-        }
-    </style>
     
     <!-- Prism.js ランタイム読み込み用スクリプト -->
     <script>
@@ -100,7 +87,7 @@
         <!-- サイドバー -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <button id="newChatButton" class="new-chat-button cyber-style">
+                <button id="newChatButton" class="new-chat-button">
                     <i class="fas fa-plus"></i> 新しいチャット
                 </button>
             </div>
@@ -114,11 +101,11 @@
                 <!-- チャット履歴はJSで動的に追加 -->
             </div>
             <div class="sidebar-footer">
-                <button id="clearHistoryButton" class="clear-history-button cyber-style" title="履歴を一括クリア">
+                <button id="clearHistoryButton" class="clear-history-button" title="履歴を一括クリア">
                     <i class="fas fa-trash"></i>
                 </button>
                 <div class="settings-dropdown">
-                    <button id="settingsButton" class="settings-button cyber-style" title="設定">
+                    <button id="settingsButton" class="settings-button" title="設定">
                         <i class="fas fa-cog"></i>
                     </button>
                     <div id="settingsMenu" class="settings-menu">

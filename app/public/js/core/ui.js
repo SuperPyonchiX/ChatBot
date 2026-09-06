@@ -293,7 +293,7 @@ class UI {
                             clearTimeout(resizeTimeout);
                             resizeTimeout = setTimeout(() => {
                                 const sidebar = document.querySelector('.sidebar');
-                                if (sidebar && window.innerWidth > 576) {
+                                if (sidebar && window.innerWidth > (window.CONFIG?.UI?.MOBILE_BREAKPOINT ?? 768)) {
                                     sidebar.classList.remove('show');
                                 }
                             }, 100);

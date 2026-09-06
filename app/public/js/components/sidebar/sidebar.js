@@ -26,7 +26,7 @@ class Sidebar {
      * @returns {number} CONFIG.UI.MOBILE_BREAKPOINT の値
      */
     get #mobileBreakpoint() {
-        return window.CONFIG?.UI?.MOBILE_BREAKPOINT ?? 576;
+        return window.CONFIG?.UI?.MOBILE_BREAKPOINT ?? 768;
     }
 
     /**
@@ -59,12 +59,14 @@ class Sidebar {
         UICache.getInstance.get('.chat-container', true).addEventListener('click', () => {
             if (window.innerWidth <= this.#mobileBreakpoint && sidebarEl.classList.contains('show')) {
                 sidebarEl.classList.remove('show');
+                this.#toggleOverlay(false, sidebarEl);
             }
         });
         
         window.addEventListener('resize', () => {
             if (window.innerWidth > this.#mobileBreakpoint) {
                 sidebarEl.classList.remove('show');
+                this.#toggleOverlay(false, sidebarEl);
             }
         });
         
@@ -75,12 +77,45 @@ class Sidebar {
 
     /**
      * サイドバーの状態をトグルします
+     * 画面幅がブレークポイント以下のときはドロワーの開閉（.show）、
+     * それより広いときは折りたたみ（.collapsed）を切り替えます
+     * @param {HTMLElement} sidebar - サイドバー要素
+     * @param {HTMLElement} toggleButton - トグルボタン要素
+     * @returns {void}
      */
     #toggleSidebarState(sidebar, toggleButton) {
+        if (window.innerWidth <= this.#mobileBreakpoint) {
+            const willShow = !sidebar.classList.contains('show');
+            sidebar.classList.toggle('show', willShow);
+            this.#toggleOverlay(willShow, sidebar);
+            return;
+        }
+
         const isNowCollapsed = sidebar.classList.contains('collapsed');
         sidebar.classList.toggle('collapsed');
         toggleButton.classList.toggle('sidebar-visible');
         // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.saveSidebarState(!isNowCollapsed);
+    }
+
+    /**
+     * ドロワー表示時の背面オーバーレイを切り替えます
+     * @param {boolean} show - 表示するかどうか
+     * @param {HTMLElement} sidebar - サイドバー要素
+     * @returns {void}
+     */
+    #toggleOverlay(show, sidebar) {
+        let overlay = document.querySelector('.sidebar-overlay');
+
+        if (!overlay) {
+            overlay = UIUtils.getInstance.createElement('div', { classList: ['sidebar-overlay'] });
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('show');
+                this.#toggleOverlay(false, sidebar);
+            });
+            document.querySelector('.app-container').appendChild(overlay);
+        }
+
+        overlay.classList.toggle('show', show);
     }
 }

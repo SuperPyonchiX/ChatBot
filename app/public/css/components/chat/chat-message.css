@@ -147,3 +147,20 @@
     font-size: var(--font-size-sm);
     color: var(--text-secondary);
 }
+
+/* ===== 空の状態 =====
+   メッセージが1件も無いときだけ中央に見出しを出す。
+   :empty を使うので最初のメッセージが入った瞬間に自動で消える */
+.chat-messages:empty {
+    justify-content: center;
+    align-items: center;
+}
+
+.chat-messages:empty::before {
+    content: '今日は何をお手伝いしましょうか？';
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+    padding: 0 var(--spacing-lg);
+}

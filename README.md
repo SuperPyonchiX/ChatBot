@@ -19,7 +19,13 @@
 - 添付ファイル（画像ほか）とプレビュー
 - コード実行（JavaScript / TypeScript / Python[Pyodide] / C++[サーバーサイドg++] / HTML）
 - チャット履歴の保存・管理、システムプロンプトのテンプレート化
+	- サイドバーの会話一覧は更新日時でグループ化（今日 / 昨日 / 過去7日間 / 過去30日間 / それ以前）
+	- `app/public/js/core/config.js` の `UI.SIDEBAR.GROUPING` を `'prompt'` にすると、
+	  システムプロンプト単位のグループ表示に切り替わる
 - モバイル対応レスポンシブUI、MonacoベースのエディタUI
+	- 本文は 768px 幅でセンタリング。ユーザーの発言は右寄せバブル、AIの返答は全幅表示
+	- 768px 以下はサイドバーがドロワーになる（`UI.MOBILE_BREAKPOINT` と
+	  `css/layouts/layout.css` の値を揃えること）
 
 ## 動作要件
 

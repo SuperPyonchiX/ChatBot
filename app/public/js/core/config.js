@@ -347,7 +347,8 @@ window.CONFIG = {
         PERFORMANCE_WARNING_THRESHOLD: 50,
 
         // モバイル表示のブレークポイント（ピクセル）
-        MOBILE_BREAKPOINT: 576,
+        // layouts/layout.css のドロワー切替と同じ値にすること
+        MOBILE_BREAKPOINT: 768,
 
         // テキストエリアの最大高さ比率（画面の高さに対する割合）
         TEXTAREA_MAX_HEIGHT_RATIO: 0.4,

@@ -50,7 +50,10 @@ class ChatRenderer {
 
         // アバターは AI 側のみ。ユーザーの発言はバブルで判別できるため出さない
         if (role !== 'user') {
-            messageDiv.appendChild(this.#createAvatar('bot', provider));
+            const avatar = this.#createAvatar('bot', provider);
+            // 送信者名ヘッダーを廃止したので、プロバイダー名はアバターの title で示す
+            avatar.title = this.#getProviderDisplayName(provider);
+            messageDiv.appendChild(avatar);
         }
 
         const bodyDiv = document.createElement('div');
@@ -1652,31 +1655,6 @@ class ChatRenderer {
         }
 
         return avatar;
-    }
-
-    /**
-     * メッセージヘッダーを作成する
-     * @param {string} senderName - 送信者名
-     * @param {number} timestamp - タイムスタンプ
-     * @returns {HTMLElement} ヘッダー要素
-     */
-    #createMessageHeader(senderName, timestamp) {
-        const header = document.createElement('div');
-        header.className = 'message-header';
-
-        const sender = document.createElement('span');
-        sender.className = 'message-sender';
-        sender.textContent = senderName;
-
-        const time = document.createElement('span');
-        time.className = 'message-timestamp';
-        time.textContent = this.#formatTimestamp(timestamp);
-        time.title = this.#formatFullTimestamp(timestamp);
-
-        header.appendChild(sender);
-        header.appendChild(time);
-
-        return header;
     }
 
     /**
