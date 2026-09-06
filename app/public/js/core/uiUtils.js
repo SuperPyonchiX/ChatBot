@@ -147,14 +147,22 @@
     /**
      * テキストエリアの高さを自動調整します
      * 入力内容に応じてテキストエリアの高さを動的に変更します
+     * 上限は CONFIG.UI.TEXTAREA_MAX_HEIGHT_RATIO（画面高に対する割合）で決まり、
+     * 超えた分はテキストエリア内でスクロールさせます
      * 
      * @param {HTMLTextAreaElement} textarea - 対象のテキストエリア要素
      * @returns {void}
      */
     autoResizeTextarea(textarea) {
         if (!textarea) return;
+
+        const ratio = window.CONFIG?.UI?.TEXTAREA_MAX_HEIGHT_RATIO;
+        const maxHeight = ratio ? window.innerHeight * ratio : Infinity;
+
         textarea.style.height = 'auto';
-        textarea.style.height = `${textarea.scrollHeight}px`;
+        const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
+        textarea.style.height = `${nextHeight}px`;
+        textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
     }
 
     /**

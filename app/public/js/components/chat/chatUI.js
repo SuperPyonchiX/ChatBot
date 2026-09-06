@@ -111,7 +111,27 @@ class ChatUI {
         sendButton.classList.remove('stop-mode');
         sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
         sendButton.title = 'メッセージを送信';
-        sendButton.disabled = false;
+        this.updateSendButtonState();
+    }
+
+    /**
+     * 入力内容に応じて送信ボタンの有効・無効を切り替えます
+     * 生成中（停止モード）は常に押せる状態を保ちます
+     * @returns {void}
+     */
+    updateSendButtonState() {
+        const sendButton = window.Elements?.sendButton;
+        const userInput = window.Elements?.userInput;
+        if (!sendButton || !userInput) return;
+
+        if (this.isStopMode()) {
+            sendButton.disabled = false;
+            return;
+        }
+
+        const hasText = userInput.value.trim().length > 0;
+        const hasAttachment = (FileHandler.getInstance?.selectedFiles?.length ?? 0) > 0;
+        sendButton.disabled = !hasText && !hasAttachment;
     }
 
     /**

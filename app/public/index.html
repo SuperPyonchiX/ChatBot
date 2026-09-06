@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="css/components/buttons/buttons.css">
     <link rel="stylesheet" href="css/components/chat/chat-category.css">
     <link rel="stylesheet" href="css/components/forms/forms.css">
+    <link rel="stylesheet" href="css/components/chat/composer.css">
     <link rel="stylesheet" href="css/components/forms/claude-websearch.css">
     <link rel="stylesheet" href="css/components/modals/modals.css">
     <link rel="stylesheet" href="css/components/settings/settings-menu.css">
@@ -151,22 +152,26 @@
                     <div class="main-input-area">
                         <textarea id="userInput" placeholder="メッセージを入力..." rows="1"></textarea>
                         <div class="input-actions">
-                            <button id="agentModeToggle" class="toggle-button" title="エージェントモードのON/OFF切替">
-                                <span>🤖</span>
-                            </button>
-                            <button id="webSearchToggle" class="toggle-button" title="Web検索機能のON/OFF切替">
-                                <span>🌐</span>
-                            </button>
-                            <label class="file-upload-label" title="ファイルを添付する">
-                                <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.txt,.md,.csv,.pdf,.js,.html,.css,.json">
-                                <i class="fas fa-paperclip"></i>
-                            </label>
+                            <div class="composer-actions-left">
+                                <label class="file-upload-label" title="ファイルを添付する">
+                                    <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.txt,.md,.csv,.pdf,.js,.html,.css,.json">
+                                    <i class="fas fa-paperclip"></i>
+                                </label>
+                                <button id="agentModeToggle" class="toggle-button" title="エージェントモードのON/OFF切替">
+                                    <i class="fas fa-robot"></i>
+                                </button>
+                                <button id="webSearchToggle" class="toggle-button" title="Web検索機能のON/OFF切替">
+                                    <i class="fas fa-globe"></i>
+                                </button>
+                            </div>
+                            <div class="composer-actions-right">
+                                <button id="sendButton">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <button id="sendButton" class="cyber-style">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
             </div>
         </div>
 

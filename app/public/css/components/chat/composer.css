@@ -1,0 +1,128 @@
+/* ===== コンポーザー（入力エリア・ChatGPT 風） =====
+   forms.css の枠組みを上書きし、送信ボタンまで含めた
+   角丸カプセル1個にまとめる。 */
+
+.chat-input-container {
+    display: block;
+    width: 100%;
+    max-width: calc(var(--composer-max-width) + var(--spacing-lg) * 2);
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg) var(--spacing-lg);
+    border-top: none;
+    background: var(--background-primary);
+}
+
+.input-wrapper {
+    background: var(--composer-bg);
+    border: 1px solid var(--composer-border);
+    border-radius: var(--composer-radius);
+    padding: var(--spacing-sm) var(--spacing-md);
+    box-shadow: var(--composer-shadow);
+}
+
+.input-wrapper:focus-within {
+    border-color: var(--border-color-hover);
+    box-shadow: var(--composer-shadow);
+}
+
+/* テキストエリアを1行目に、操作ボタンを2行目に積む */
+.main-input-area {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-xs);
+}
+
+/* main-input-area を縦積みにしたため flex:1 は縦方向の伸縮になる。
+   高さは autoResizeTextarea が実測値で設定するので flex には委ねない */
+#userInput {
+    flex: 0 0 auto;
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-xs);
+    font-size: var(--font-size-md);
+    line-height: 1.5;
+    max-height: none;
+}
+
+#userInput::placeholder {
+    color: var(--text-tertiary);
+}
+
+.input-actions {
+    justify-content: space-between;
+    width: 100%;
+    margin-right: 0;
+}
+
+.composer-actions-left,
+.composer-actions-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+/* 丸いアイコンボタンに統一 */
+.input-actions .toggle-button,
+.input-actions .file-upload-label {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: var(--border-radius-full);
+    opacity: 1;
+    color: var(--text-secondary);
+}
+
+.input-actions .toggle-button:hover,
+.input-actions .file-upload-label:hover {
+    background-color: var(--surface-hover);
+    color: var(--text-primary);
+    opacity: 1;
+}
+
+.input-actions .toggle-button.active {
+    background-color: var(--accent-light, rgba(16, 163, 127, 0.15));
+    color: var(--accent-color);
+}
+
+/* 送信ボタン: 円形。入力が空のときは沈める */
+#sendButton {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: var(--border-radius-full);
+    background: var(--text-primary);
+    color: var(--background-primary);
+    font-size: 13px;
+    transition: background-color var(--transition-fast) ease,
+                opacity var(--transition-fast) ease;
+}
+
+#sendButton:hover:not(:disabled) {
+    background: #ffffff;
+}
+
+#sendButton:disabled {
+    background: var(--surface-1);
+    color: var(--text-tertiary);
+    cursor: not-allowed;
+}
+
+/* 生成中は停止ボタンに変わる */
+#sendButton.stop-mode {
+    background: var(--error-color);
+    color: #ffffff;
+}
+
+/* 添付プレビューは入力欄の上 */
+.input-wrapper .file-preview {
+    order: -1;
+    margin-bottom: var(--spacing-sm);
+}
+
+/* 入力欄下の注記スペース確保用（プロンプト候補が被らないように） */
+#promptSuggestions {
+    margin-bottom: var(--spacing-sm);
+}

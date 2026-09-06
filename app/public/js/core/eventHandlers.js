@@ -79,8 +79,14 @@ class EventHandlers {
             }
         });
         
-        // テキストエリアの入力イベント（自動リサイズ）
-        window.Elements.userInput.addEventListener('input', () => UIUtils.getInstance.autoResizeTextarea(window.Elements.userInput));
+        // テキストエリアの入力イベント（自動リサイズ + 送信ボタンの有効状態）
+        window.Elements.userInput.addEventListener('input', () => {
+            UIUtils.getInstance.autoResizeTextarea(window.Elements.userInput);
+            ChatUI.getInstance.updateSendButtonState();
+        });
+
+        // 初期状態（空入力）を反映
+        ChatUI.getInstance.updateSendButtonState();
 
         // 新しいチャットボタン
         window.Elements.newChatButton.addEventListener('click', ChatActions.getInstance.createNewConversation.bind(ChatActions.getInstance));

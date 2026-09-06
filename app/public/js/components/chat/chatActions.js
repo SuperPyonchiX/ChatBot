@@ -271,6 +271,7 @@ class ChatActions {
                 // ユーザー入力をクリア
                 userInput.value = '';
                 UIUtils.getInstance.autoResizeTextarea(userInput);
+                ChatUI.getInstance.updateSendButtonState();
                 return await this.#processWithChatFlow(userText, chatMessages, conversation, attachments);
             }
 
@@ -279,12 +280,14 @@ class ChatActions {
                 // ユーザー入力をクリア
                 userInput.value = '';
                 UIUtils.getInstance.autoResizeTextarea(userInput);
+                ChatUI.getInstance.updateSendButtonState();
                 return await this.#processWithAgent(userText, chatMessages, conversation, attachments);
             }
 
             // ユーザー入力をクリア
             userInput.value = '';
             UIUtils.getInstance.autoResizeTextarea(userInput);
+            ChatUI.getInstance.updateSendButtonState();
 
             let titleUpdated = false;
             const timestamp = Date.now();
