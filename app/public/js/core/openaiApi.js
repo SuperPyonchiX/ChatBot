@@ -172,6 +172,13 @@ class OpenAIAPI {
             }
             // GPT-5系モデルでは他のパラメータ（top_p, frequency_penalty, presence_penalty）も
             // 制限がある可能性があるため省略
+
+            // 一部の推論モデル（gpt-5.6 系など）は /v1/chat/completions で
+            // 「function tools + 推論」の併用を拒否する。ツールを使うときは
+            // reasoning_effort を明示的に切って通す
+            if (apiBody.tools) {
+                apiBody.reasoning_effort = 'none';
+            }
         } else {
             // GPT-4系などの従来モデル
             apiBody.max_tokens = window.CONFIG.AIAPI.DEFAULT_PARAMS.max_tokens;
