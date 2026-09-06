@@ -7,6 +7,9 @@ class ChatRenderer {
     // シングルトンインスタンス
     static #instance = null;
 
+    /** 単語分割器（生成コストが高いので使い回す） */
+    #segmenter = null;
+
     /**
      * シングルトンインスタンスを取得します
      * @returns {ChatRenderer} ChatRendererのシングルトンインスタンス
@@ -561,14 +564,21 @@ class ChatRenderer {
      * @param {HTMLElement} container - 更新するメッセージコンテナ
      * @param {string} chunk - 新しく受信したテキストチャンク
      * @param {string} currentFullText - これまでに受信したテキスト全体
-     * @param {boolean} isFirstChunk - 最初のチャンクかどうかのフラグ
      * @returns {Promise<void>}
      */
-    async updateStreamingBotMessage(container, chunk, currentFullText, isFirstChunk = false) {
+    async updateStreamingBotMessage(container, chunk, currentFullText) {
         if (!container) return;
+
+        // 直前の呼び出しがまだ Markdown 変換中でも新しいテキストで上書きしたいので、
+        // 世代番号を進めて「戻ってきたときに最新かどうか」を判定できるようにする
+        const seq = (Number(container.dataset.renderSeq) || 0) + 1;
+        container.dataset.renderSeq = String(seq);
 
         try {
             const renderedHTML = await Markdown.getInstance.renderMarkdown(currentFullText);
+
+            // 変換の間に新しいチャンクが来ていたら、古い結果で上書きしない
+            if (Number(container.dataset.renderSeq) !== seq) return;
 
             // 本文が出るので待機インジケーターを隠す（2回目以降は即座に戻る）
             const messageDiv = container.closest('.message');
@@ -578,6 +588,8 @@ class ChatRenderer {
             if (chatMessages) {
                 const isNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
                 container.innerHTML = renderedHTML;
+
+                this.#fadeInNewTail(container, currentFullText);
 
                 if (typeof Prism !== 'undefined') {
                     Prism.highlightAllUnder(container);
@@ -591,6 +603,107 @@ class ChatRenderer {
             console.error('ストリーミング中のMarkdown解析エラー:', e);
             container.textContent = currentFullText;
         }
+    }
+
+    /**
+     * 新しく届いた末尾の文字だけをフェードイン対象として包みます
+     *
+     * 本文は毎回 innerHTML を丸ごと差し替えるため、前回付けた span は既に消えています。
+     * つまり「末尾だけ包む」ことで、それより前は最初から不透明のまま残り、
+     * アニメーションが再生され直すことも DOM が累積することもありません。
+     * 走査量は届いたチャンクの長さに比例し、本文全体の長さには比例しません。
+     *
+     * @param {HTMLElement} container - 本文コンテナ（.markdown-content）
+     * @param {string} currentFullText - これまでに受信したテキスト全体
+     * @returns {void}
+     */
+    #fadeInNewTail(container, currentFullText) {
+        const streaming = window.CONFIG?.UI?.STREAMING ?? {};
+        const prevLen = Number(container.dataset.prevLen) || 0;
+        const fullLen = currentFullText?.length ?? 0;
+        container.dataset.prevLen = String(fullLen);
+
+        if (streaming.WORD_FADE_ENABLED === false) return;
+        if (this.#prefersReducedMotion()) return;
+
+        let remaining = Math.min(fullLen - prevLen, streaming.MAX_FADE_CHARS ?? 120);
+        if (remaining <= 0) return;
+
+        try {
+            // コードブロックや退避したツール結果の中は触らない（Prism の解析と競合するため）
+            const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+                acceptNode(node) {
+                    return node.parentElement?.closest('pre, code, .mermaid, .tool-result-text')
+                        ? NodeFilter.FILTER_REJECT
+                        : NodeFilter.FILTER_ACCEPT;
+                }
+            });
+
+            const textNodes = [];
+            while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+            // 末尾から必要な文字数ぶんだけ遡る
+            for (let i = textNodes.length - 1; i >= 0 && remaining > 0; i--) {
+                const node = textNodes[i];
+                const len = node.data.length;
+                if (len === 0) continue;
+
+                const target = len <= remaining ? node : node.splitText(len - remaining);
+                remaining -= target.data.length;
+                this.#wrapAsTokens(target);
+            }
+        } catch (e) {
+            // 包めなくても本文は既に表示されている。アニメーションを諦めるだけに留める
+            console.warn('[ChatRenderer] ストリーミングのフェード処理をスキップしました:', e);
+        }
+    }
+
+    /**
+     * テキストノードを単語ごとの span に置き換えます
+     * 日本語は語間に空白が無いため Intl.Segmenter を使い、
+     * 使えない環境では短い固定長で区切ります
+     * @param {Text} textNode - 対象のテキストノード
+     * @returns {void}
+     */
+    #wrapAsTokens(textNode) {
+        const text = textNode.data;
+        if (!text) return;
+
+        const fragment = document.createDocumentFragment();
+        for (const token of this.#segmentText(text)) {
+            const span = document.createElement('span');
+            span.className = 'stream-token';
+            span.textContent = token;
+            fragment.appendChild(span);
+        }
+        textNode.replaceWith(fragment);
+    }
+
+    /**
+     * テキストを単語単位に分割します
+     * @param {string} text - 分割対象
+     * @returns {string[]} 分割後のトークン
+     */
+    #segmentText(text) {
+        if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
+            if (!this.#segmenter) {
+                this.#segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
+            }
+            return [...this.#segmenter.segment(text)].map(s => s.segment);
+        }
+
+        // フォールバック: 2文字ずつ
+        const chunks = [];
+        for (let i = 0; i < text.length; i += 2) chunks.push(text.slice(i, i + 2));
+        return chunks;
+    }
+
+    /**
+     * アニメーションを控える設定かどうかを返します
+     * @returns {boolean} 控える設定なら true
+     */
+    #prefersReducedMotion() {
+        return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
     }
 
     /**

@@ -384,7 +384,6 @@ class ChatActions {
             }
 
             let fullResponseText = '';
-            let isFirstChunk = true;
 
             // 思考過程データを収集（ページ更新時の復元用）
             let thinkingData = {
@@ -416,8 +415,7 @@ class ChatActions {
                     onChunk: (chunk) => {
                         fullResponseText += chunk;
                         // ストリーミング中のメッセージ更新
-                        ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, chunk, fullResponseText, isFirstChunk);
-                        isFirstChunk = false;
+                        ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, chunk, fullResponseText);
                     },
                     onComplete: (fullText) => {
                         // ストリーミング完了時の処理
@@ -1046,7 +1044,7 @@ class ChatActions {
             // アシスタントメッセージをチャットに表示（エージェントコンテナとは別）
             if (finalResponse && finalResponse !== '') {
                 const { messageDiv, contentContainer } = ChatRenderer.getInstance.addStreamingBotMessage(chatMessages, botTimestamp);
-                ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, finalResponse, finalResponse, true);
+                ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, finalResponse, finalResponse);
                 ChatRenderer.getInstance.finalizeStreamingBotMessage(messageDiv, contentContainer, finalResponse);
             }
 
@@ -1153,7 +1151,7 @@ class ChatActions {
             const outputHandler = (data) => {
                 if (data.content) {
                     fullResponseText += data.content;
-                    ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, data.content, fullResponseText, fullResponseText === data.content);
+                    ChatRenderer.getInstance.updateStreamingBotMessage(contentContainer, data.content, fullResponseText);
                 }
             };
 
