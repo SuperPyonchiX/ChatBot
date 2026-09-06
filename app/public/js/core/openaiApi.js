@@ -198,7 +198,7 @@ class OpenAIAPI {
             }
 
             // プロキシエンドポイントを使用
-            endpoint = '/azure-openai';
+            endpoint = window.CONFIG.AIAPI.ENDPOINTS.AZURE_PROXY;
             headers = {
                 'Content-Type': 'application/json'
             };

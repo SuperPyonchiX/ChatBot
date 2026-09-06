@@ -66,22 +66,14 @@ class ModalHandlers {
                     window.AppState.apiSettings.azureApiKey = window.Elements.azureApiKeyInput.value.trim();
                 }
 
-                // モデルごとのエンドポイントを設定
-                const endpointIds = {
-                    'gpt-4o-mini': 'azureEndpointGpt4oMini',
-                    'gpt-4o': 'azureEndpointGpt4o',
-                    'gpt-5-mini': 'azureEndpointGpt5Mini',
-                    'gpt-5': 'azureEndpointGpt5',
-                    'gpt-5.2': 'azureEndpointGpt52'
-                };
-
-                // 各エンドポイントを保存（window.ElementsまたはUICacheから取得）
+                // モデルごとのエンドポイントを保存
+                // 入力欄は ApiSettingsModal が CONFIG.MODELS.OPENAI から生成するため、
+                // ここではモデル名を data-model 属性から読む（モデル一覧の増減に自動追従する）
                 window.AppState.apiSettings.azureEndpoints = {};
-                Object.entries(endpointIds).forEach(([model, elementId]) => {
-                    const element = window.Elements[elementId] || UICache.getInstance.get(elementId);
-                    if (element && element.value !== undefined) {
-                        window.AppState.apiSettings.azureEndpoints[model] = element.value.trim();
-                    }
+                document.querySelectorAll('#azureModelEndpoints input[data-model]').forEach(element => {
+                    const model = element.dataset.model;
+                    if (!model || element.value === undefined) return;
+                    window.AppState.apiSettings.azureEndpoints[model] = element.value.trim();
                 });
 
                 // Azure埋め込みエンドポイントを保存（RAG用）

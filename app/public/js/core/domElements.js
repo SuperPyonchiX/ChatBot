@@ -47,8 +47,7 @@ window.Elements = (function() {
         // API設定関連
         'apiKeyModal', 'saveApiKey', 'cancelApiKey', 
         'openaiSystemRadio', 'geminiSystemRadio', 'claudeSystemRadio', 'openaiRadio', 'azureRadio',
-        'apiKeyInput', 'azureApiKeyInput', 'geminiApiKeyInput', 'claudeApiKeyInput', 'azureEndpointGpt4oMini', 
-        'azureEndpointGpt4o', 'azureEndpointGpt5Mini', 'azureEndpointGpt5', 'azureEndpointGpt52', 
+        'apiKeyInput', 'azureApiKeyInput', 'geminiApiKeyInput', 'claudeApiKeyInput',
         'openaiSystemSettings', 'geminiSystemSettings', 'claudeSystemSettings', 'openaiSettings', 'azureSettings',
         
         // チャット名前変更関連

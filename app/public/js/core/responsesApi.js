@@ -98,8 +98,12 @@ class ResponsesAPI {
         }
 
         // Azure OpenAIが完全に設定されている場合はAzureを使用
+        // 設定の実体は azureEndpoints（モデル名をキーにしたマップ）で、
+        // 単数形の azureEndpoint は存在しないため参照しない
         // @ts-ignore
-        if (window.apiSettings.azureApiKey && window.apiSettings.azureEndpoint) {
+        const azureEndpoints = window.apiSettings.azureEndpoints || {};
+        // @ts-ignore
+        if (window.apiSettings.azureApiKey && Object.values(azureEndpoints).some(url => url)) {
             return; // Azure設定OK
         }
 
@@ -220,6 +224,9 @@ class ResponsesAPI {
                          window.apiSettings.azureEndpoints &&
                          window.apiSettings.azureEndpoints[model];
 
+        // Azureへの転送先URL（プロキシ経由で送るため通常のendpointとは別に持つ）
+        let azureTargetUrl = null;
+
         if (useAzure) {
             // Azure OpenAI API - 新しいv1 API形式を使用
             // @ts-ignore
@@ -228,7 +235,8 @@ class ResponsesAPI {
             // https://xxx.openai.azure.com/openai/deployments/xxx/chat/completions?api-version=xxx
             // → https://xxx.openai.azure.com/openai/v1/responses?api-version=preview
             const baseUrl = azureEndpoint.split('/openai/')[0];
-            endpoint = `${baseUrl}/openai/v1/responses?api-version=preview`;
+            azureTargetUrl = `${baseUrl}/openai/v1/responses?api-version=preview`;
+            endpoint = azureTargetUrl;
 
             // エンドポイントURLからデプロイメント名を抽出
             const deploymentMatch = azureEndpoint.match(/\/deployments\/([^\/]+)\//);
@@ -304,6 +312,21 @@ class ResponsesAPI {
 
         if (allTools.length > 0) {
             body.tools = allTools;
+        }
+
+        if (azureTargetUrl) {
+            // Azureのエンドポイントはブラウザから直接呼べない（CORS）ため、
+            // Chat Completionsと同じサーバー側プロキシに転送先を渡す
+            return {
+                endpoint: window.CONFIG.AIAPI.ENDPOINTS.AZURE_PROXY,
+                headers: { 'Content-Type': 'application/json' },
+                body: {
+                    targetUrl: azureTargetUrl,
+                    // @ts-ignore
+                    apiKey: window.apiSettings.azureApiKey,
+                    body
+                }
+            };
         }
 
         return { endpoint, headers, body };

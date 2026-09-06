@@ -115,6 +115,9 @@ window.CONFIG = {
         // Azure OpenAI API バージョン
         AZURE_API_VERSION: '2023-05-15',
 
+        // Azure エンドポイント入力欄のプレースホルダー
+        AZURE_ENDPOINT_PLACEHOLDER: 'https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15',
+
         // Anthropic Claude API バージョン
         ANTHROPIC_API_VERSION: '2023-06-01',
 
@@ -149,8 +152,9 @@ window.CONFIG = {
             OPENAI: '/openai/v1/chat/completions',
             RESPONSES: '/responses/v1/responses',
             GEMINI: '/gemini/v1beta/models',
-            CLAUDE: '/anthropic/v1/messages'
-            // Azure用エンドポイントはユーザー設定から生成
+            CLAUDE: '/anthropic/v1/messages',
+            // Azureの転送先URLはユーザー設定から生成し、このプロキシに渡す
+            AZURE_PROXY: '/azure-openai'
         }
     },
 
