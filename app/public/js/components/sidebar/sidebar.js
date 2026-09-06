@@ -22,6 +22,14 @@ class Sidebar {
     }
 
     /**
+     * モバイル判定のブレークポイント（px）
+     * @returns {number} CONFIG.UI.MOBILE_BREAKPOINT の値
+     */
+    get #mobileBreakpoint() {
+        return window.CONFIG?.UI?.MOBILE_BREAKPOINT ?? 576;
+    }
+
+    /**
      * モバイル用のサイドバートグルボタンを作成します
      * 画面サイズに応じてサイドバーの表示/非表示を切り替えるボタンを配置します
      */
@@ -49,13 +57,13 @@ class Sidebar {
         toggleButton.addEventListener('click', () => this.#toggleSidebarState(sidebarEl, toggleButton));
         
         UICache.getInstance.get('.chat-container', true).addEventListener('click', () => {
-            if (window.innerWidth <= 576 && sidebarEl.classList.contains('show')) {
+            if (window.innerWidth <= this.#mobileBreakpoint && sidebarEl.classList.contains('show')) {
                 sidebarEl.classList.remove('show');
             }
         });
         
         window.addEventListener('resize', () => {
-            if (window.innerWidth > 576) {
+            if (window.innerWidth > this.#mobileBreakpoint) {
                 sidebarEl.classList.remove('show');
             }
         });

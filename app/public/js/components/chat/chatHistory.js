@@ -20,6 +20,7 @@ class ChatHistory {
     // 検索関連のプライベート変数
     #searchQuery = '';
     #lastRenderParams = null;
+    #menuDismissHandlerRegistered = false;
 
     /**
      * プライベートコンストラクタ
@@ -125,7 +126,7 @@ class ChatHistory {
             return;
         }
 
-        const promptGroups = this.#groupConversationsByPrompt(conversations);
+        const promptGroups = this.#groupConversations(conversations);
 
         Object.entries(promptGroups).forEach(([promptKey, groupConversations]) => {
             if (!Array.isArray(groupConversations) || groupConversations.length === 0) return;
@@ -334,7 +335,7 @@ class ChatHistory {
             return;
         }
 
-        const promptGroups = this.#groupConversationsByPrompt(filteredConversations);
+        const promptGroups = this.#groupConversations(filteredConversations);
         
         Object.entries(promptGroups).forEach(([promptKey, groupConversations]) => {
             if (!Array.isArray(groupConversations) || groupConversations.length === 0) return;
@@ -536,35 +537,7 @@ class ChatHistory {
             <span class="history-item-title">${conversation.title || '新しいチャット'}</span>
         `;
         
-        const actionButtons = document.createElement('div');
-        actionButtons.className = 'history-item-actions';
-        
-        const editButton = document.createElement('button');
-        editButton.className = 'history-action-button edit-button';
-        editButton.innerHTML = '<i class="fas fa-edit"></i>';
-        editButton.title = 'チャットの名前を変更';
-        
-        editButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (typeof onShowRenameModal === 'function') {
-                onShowRenameModal(conversation);
-            }
-        });
-        
-        const deleteButton = document.createElement('button');
-        deleteButton.className = 'history-action-button delete-button';
-        deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
-        deleteButton.title = 'チャットを削除';
-        
-        deleteButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (typeof onDeleteConversation === 'function') {
-                onDeleteConversation(conversation.id);
-            }
-        });
-        
-        actionButtons.appendChild(editButton);
-        actionButtons.appendChild(deleteButton);
+        const actionButtons = this.#createItemMenu(conversation, onShowRenameModal, onDeleteConversation);
         
         historyItem.appendChild(itemContent);
         historyItem.appendChild(actionButtons);
@@ -576,6 +549,173 @@ class ChatHistory {
         });
         
         return historyItem;
+    }
+
+    /**
+     * 履歴アイテムの「…」メニューを作成する
+     * ボタン1つとポップオーバーを返す。開いている間は他のメニューを閉じる
+     * @param {Object} conversation - 対象の会話
+     * @param {Function} onShowRenameModal - 名前変更モーダルを開くコールバック
+     * @param {Function} onDeleteConversation - 削除コールバック
+     * @returns {HTMLElement} メニューを内包した要素
+     */
+    #createItemMenu(conversation, onShowRenameModal, onDeleteConversation) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'history-item-actions';
+
+        const menuButton = document.createElement('button');
+        menuButton.className = 'history-action-button menu-button';
+        menuButton.innerHTML = '<i class="fas fa-ellipsis-h"></i>';
+        menuButton.title = 'その他の操作';
+        menuButton.setAttribute('aria-haspopup', 'true');
+        menuButton.setAttribute('aria-expanded', 'false');
+
+        const menu = document.createElement('div');
+        menu.className = 'popover-menu';
+
+        /**
+         * メニュー項目を作る
+         * @param {string} icon - Font Awesome のクラス名
+         * @param {string} label - 表示ラベル
+         * @param {string} extraClass - 追加クラス
+         * @param {Function} handler - クリック時の処理
+         * @returns {HTMLElement} メニュー項目
+         */
+        const createItem = (icon, label, extraClass, handler) => {
+            const item = document.createElement('button');
+            item.className = `popover-menu-item ${extraClass}`.trim();
+            item.innerHTML = `<i class="fas ${icon}"></i><span>${label}</span>`;
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.#closeItemMenus();
+                handler();
+            });
+            return item;
+        };
+
+        menu.appendChild(createItem('fa-pen', '名前を変更', '', () => {
+            if (typeof onShowRenameModal === 'function') {
+                onShowRenameModal(conversation);
+            }
+        }));
+
+        menu.appendChild(createItem('fa-trash', '削除', 'danger', () => {
+            if (typeof onDeleteConversation === 'function') {
+                onDeleteConversation(conversation.id);
+            }
+        }));
+
+        menuButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const willOpen = !wrapper.classList.contains('open');
+            this.#closeItemMenus();
+            wrapper.classList.toggle('open', willOpen);
+            menuButton.setAttribute('aria-expanded', String(willOpen));
+        });
+
+        wrapper.appendChild(menuButton);
+        wrapper.appendChild(menu);
+
+        this.#ensureMenuDismissHandler();
+
+        return wrapper;
+    }
+
+    /**
+     * 開いている「…」メニューをすべて閉じる
+     * @returns {void}
+     */
+    #closeItemMenus() {
+        document.querySelectorAll('.history-item-actions.open').forEach(el => {
+            el.classList.remove('open');
+            el.querySelector('.menu-button')?.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    /**
+     * メニュー外クリックと Escape で閉じるハンドラーを一度だけ登録する
+     * @returns {void}
+     */
+    #ensureMenuDismissHandler() {
+        if (this.#menuDismissHandlerRegistered) return;
+        this.#menuDismissHandlerRegistered = true;
+
+        document.addEventListener('click', () => this.#closeItemMenus());
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') this.#closeItemMenus();
+        });
+    }
+
+    /**
+     * 設定に応じた方式で会話をグループ化する
+     * CONFIG.UI.SIDEBAR.GROUPING が 'prompt' のときのみ従来のシステムプロンプト単位になる
+     * @param {Array} conversations - 会話配列
+     * @returns {Object<string, Array>} グループ名をキーとした会話配列
+     */
+    #groupConversations(conversations) {
+        const grouping = window.CONFIG?.UI?.SIDEBAR?.GROUPING ?? 'date';
+        return grouping === 'prompt'
+            ? this.#groupConversationsByPrompt(conversations)
+            : this.#groupConversationsByDate(conversations);
+    }
+
+    /**
+     * 会話を更新日時でグループ化する（今日 / 昨日 / 過去7日 / 過去30日 / それ以前）
+     * 各グループ内は新しい順に並べる
+     * @param {Array} conversations - 会話配列
+     * @returns {Object<string, Array>} グループ名をキーとした会話配列
+     */
+    #groupConversationsByDate(conversations) {
+        if (!Array.isArray(conversations)) {
+            return {};
+        }
+
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const dayMs = 24 * 60 * 60 * 1000;
+        const todayMs = startOfToday.getTime();
+
+        /** @type {Object<string, Array>} */
+        const groups = {};
+        const order = ['今日', '昨日', '過去7日間', '過去30日間', 'それ以前'];
+
+        [...conversations]
+            .filter(Boolean)
+            .sort((a, b) => this.#getConversationTime(b) - this.#getConversationTime(a))
+            .forEach(conversation => {
+                const time = this.#getConversationTime(conversation);
+                let label;
+                if (time >= todayMs) {
+                    label = '今日';
+                } else if (time >= todayMs - dayMs) {
+                    label = '昨日';
+                } else if (time >= todayMs - dayMs * 7) {
+                    label = '過去7日間';
+                } else if (time >= todayMs - dayMs * 30) {
+                    label = '過去30日間';
+                } else {
+                    label = 'それ以前';
+                }
+
+                if (!groups[label]) groups[label] = [];
+                groups[label].push(conversation);
+            });
+
+        // 定義順に並べ直す（Object のキー順がそのまま表示順になるため）
+        const ordered = {};
+        order.forEach(label => {
+            if (groups[label]) ordered[label] = groups[label];
+        });
+        return ordered;
+    }
+
+    /**
+     * 会話の並べ替えに使う時刻を取得する
+     * @param {Object} conversation - 会話オブジェクト
+     * @returns {number} エポックミリ秒。取得できない場合は 0
+     */
+    #getConversationTime(conversation) {
+        return Number(conversation?.updatedAt) || Number(conversation?.timestamp) || 0;
     }
 
     /**
