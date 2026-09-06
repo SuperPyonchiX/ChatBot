@@ -1,0 +1,107 @@
+/* ===== 待機インジケーター =====
+   本物の ChatGPT に合わせ、通常の待機は脈打つ小さな丸だけ。
+   ツール実行や Web 検索など「何をしているか語れる」ときだけ、
+   光沢が流れるテキストを添える。 */
+
+.stream-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-height: 24px;
+}
+
+.stream-indicator[data-state="hidden"] {
+    display: none;
+}
+
+/* ラベルが空のときに余分な隙間を作らない */
+.stream-indicator[data-state="waiting"] .stream-label {
+    display: none;
+}
+
+/* ===== 脈打つ丸 ===== */
+.stream-dot {
+    width: var(--stream-dot-size);
+    height: var(--stream-dot-size);
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--stream-dot-color);
+    animation: streamDotPulse var(--stream-dot-duration) ease-in-out infinite;
+    will-change: transform, opacity;
+}
+
+@keyframes streamDotPulse {
+    0%, 100% {
+        transform: scale(0.72);
+        opacity: 0.45;
+    }
+    50% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ===== シマーテキスト =====
+   グラデーションを文字の形に切り抜き、背景位置を動かして光沢を流す。
+   agent.css の shimmer は要素に重ねるオーバーレイ方式で用途が違うため、
+   名前も実装も分けている */
+.stream-label {
+    font-size: var(--font-size-md);
+    line-height: 1.5;
+    background-image: linear-gradient(
+        90deg,
+        var(--stream-shimmer-base) 0%,
+        var(--stream-shimmer-base) 40%,
+        var(--stream-shimmer-highlight) 50%,
+        var(--stream-shimmer-base) 60%,
+        var(--stream-shimmer-base) 100%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: streamShimmer var(--stream-shimmer-duration) linear infinite;
+    will-change: background-position;
+}
+
+@keyframes streamShimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -20% 0; }
+}
+
+/* ===== ストリーミング中のトークン（Phase 3 で使う） ===== */
+@keyframes streamTokenIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.stream-token {
+    animation: streamTokenIn var(--stream-token-fade-duration) ease-out both;
+}
+
+/* ハイコントラストでは背景切り抜きが効かず文字が消えるため単色に戻す */
+@media (forced-colors: active) {
+    .stream-label {
+        background: none;
+        color: CanvasText;
+        animation: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .stream-dot {
+        animation: none;
+        transform: none;
+        opacity: 0.7;
+    }
+
+    .stream-label {
+        background: none;
+        color: var(--text-secondary);
+        animation: none;
+    }
+
+    .stream-token {
+        animation: none;
+    }
+}
