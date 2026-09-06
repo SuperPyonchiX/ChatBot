@@ -766,12 +766,7 @@ class ChatActions {
      * @returns {string} 表示名
      */
     #getToolDisplayName(name) {
-        const toolNames = {
-            'generate_powerpoint': 'PowerPointスライド生成',
-            'process_excel': 'Excel処理',
-            'render_canvas': 'Canvas描画'
-        };
-        return toolNames[name] || name;
+        return window.CONFIG?.TOOLS?.DISPLAY_NAMES?.[name] ?? name;
     }
 
     /**

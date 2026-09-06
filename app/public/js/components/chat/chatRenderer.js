@@ -772,12 +772,7 @@ class ChatRenderer {
      * @returns {string} 表示名
      */
     #getToolDisplayName(toolName) {
-        const displayNames = {
-            'generate_powerpoint': 'PowerPoint',
-            'process_excel': 'Excel',
-            'render_canvas': 'Canvas画像'
-        };
-        return displayNames[toolName] || toolName;
+        return window.CONFIG?.TOOLS?.DISPLAY_NAMES?.[toolName] ?? toolName;
     }
 
     /**
@@ -1598,11 +1593,11 @@ class ChatRenderer {
      * @param {string} message - 表示するメッセージ
      * @param {Object} options - 表示オプション
      * @param {string} options.status - メッセージの状態 ('thinking', 'searching', 'processing', 'error')
-     * @param {string} options.animation - アニメーション種類 ('fade', 'slide', 'pulse', 'gradient', 'ripple', 'particles')
+     * @param {string} options.animation - アニメーション種類 ('fade' | 'slide')
      * @param {boolean} options.showDots - タイピングドットを表示するか
      * @returns {Object} メッセージ要素の参照
      */
-    addSystemMessage(chatMessages, message, options = { status: 'info', animation: 'fade', showDots: false }) {
+    addSystemMessage(chatMessages, message, options = { status: 'thinking', animation: 'fade', showDots: true }) {
         if (!chatMessages) return null;
 
         const {
@@ -1675,42 +1670,14 @@ class ChatRenderer {
         if (status && messageDiv.getAttribute('data-status') !== status) {
             // ステータス変更のアニメーション
             if (animate) {
-                messageDiv.classList.add('system-message-pulse');
-                setTimeout(() => {
-                    messageDiv.classList.remove('system-message-pulse');
-                }, 1200); // より長いパルスアニメーション時間
             }
             messageDiv.setAttribute('data-status', status);
         }
 
-        if (animate && messageContent.innerHTML !== this.#formatSystemMessage(message, showDots)) {
-            // より滑らかなコンテンツ変更アニメーション
-            // CSS transitionsを設定
-            messageContent.style.transition = 'transform 0.4s ease-in-out, opacity 0.4s ease-in-out';
-            messageContent.style.transform = 'scale(0.95)';
-            messageContent.style.opacity = '0.2';
-
-            setTimeout(() => {
-                messageContent.innerHTML = this.#formatSystemMessage(message, showDots);
-                // 復帰アニメーション
-                messageContent.style.transform = 'scale(1.02)'; // 少しオーバーシュート
-                messageContent.style.opacity = '1';
-
-                // オーバーシュート後の最終調整
-                setTimeout(() => {
-                    messageContent.style.transform = 'scale(1)';
-
-                    // トランジション完了後にスタイルをクリア
-                    setTimeout(() => {
-                        messageContent.style.transition = '';
-                        messageContent.style.transform = '';
-                        messageContent.style.opacity = '';
-                    }, 200);
-                }, 150);
-            }, 300); // より長いフェードアウト時間
-        } else if (!animate) {
-            messageContent.innerHTML = this.#formatSystemMessage(message, showDots);
-        }
+        // 差し替えは即座に行い、見た目の繋ぎは CSS のクロスフェードに任せる。
+        // 以前は 300/150/200ms の入れ子 setTimeout で scale と opacity を
+        // 直接操作しており、更新が続くとタイマー同士が競合していた
+        messageContent.innerHTML = this.#formatSystemMessage(message, showDots);
     }
 
     /**
@@ -1799,7 +1766,7 @@ class ChatRenderer {
     #formatSystemMessage(message, showDots) {
         const dotsHtml = showDots ?
             '<span class="typing-dots"><span></span><span></span><span></span></span>' : '';
-        return `<p>${message}${dotsHtml}</p>`;
+        return `<p>${this.#escapeHtml(message ?? '')}${dotsHtml}</p>`;
     }
 
     /**

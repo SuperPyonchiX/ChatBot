@@ -104,3 +104,31 @@
         opacity: 0.55;
     }
 }
+
+/* ===== 退場アニメーション =====
+   removeSystemMessage が付けるクラス。以前は JS が待ち時間だけ取って
+   対応する CSS が無く、何も起きないまま消えていた */
+.message.bot.system-message.system-message-fade-out {
+    opacity: 0;
+    transition: opacity var(--transition-fast) ease-out;
+}
+
+.message.bot.system-message.system-message-slide-out {
+    opacity: 0;
+    transform: translateX(-12px);
+    transition: opacity var(--transition-normal) ease-out,
+                transform var(--transition-normal) ease-out;
+}
+
+/* システムメッセージ本文の差し替えを滑らかにする */
+.message.bot.system-message .markdown-content {
+    transition: opacity var(--transition-fast) ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .message.bot.system-message.system-message-fade-out,
+    .message.bot.system-message.system-message-slide-out {
+        transition: none;
+        transform: none;
+    }
+}

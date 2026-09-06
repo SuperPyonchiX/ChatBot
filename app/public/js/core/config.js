@@ -399,6 +399,13 @@ window.CONFIG = {
         // 有効なツール
         ENABLED: ['generate_powerpoint', 'process_excel', 'render_canvas'],
 
+        // UI に出すツールの表示名（以前は3箇所に重複していて文言も揃っていなかった）
+        DISPLAY_NAMES: {
+            generate_powerpoint: 'PowerPointスライド生成',
+            process_excel: 'Excel処理',
+            render_canvas: 'Canvas描画'
+        },
+
         // ツール対応モデル
         COMPATIBLE_MODELS: {
             CLAUDE: ['claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'],
