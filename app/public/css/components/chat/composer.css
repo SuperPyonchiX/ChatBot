@@ -121,8 +121,3 @@
     order: -1;
     margin-bottom: var(--spacing-sm);
 }
-
-/* 入力欄下の注記スペース確保用（プロンプト候補が被らないように） */
-#promptSuggestions {
-    margin-bottom: var(--spacing-sm);
-}

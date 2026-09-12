@@ -213,88 +213,6 @@ app.post('/azure-openai', express.json({ limit: '10mb' }), async (req, res) => {
 });
 
 // ========================================
-// OpenAI Embeddings API プロキシ
-// ========================================
-app.post('/openai-embeddings', express.json({ limit: '10mb' }), async (req, res) => {
-    const { input, model, dimensions } = req.body;
-    const apiKey = req.headers['authorization']?.replace('Bearer ', '');
-
-    if (!apiKey || !input) {
-        return res.status(400).json({
-            error: { message: 'APIキーと入力テキストは必須です' }
-        });
-    }
-
-    console.log(`[OpenAI Embeddings] POST - texts: ${Array.isArray(input) ? input.length : 1}`);
-
-    try {
-        const response = await fetch('https://api.openai.com/v1/embeddings', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: model || 'text-embedding-3-large',
-                input: input,
-                dimensions: dimensions || 3072
-            })
-        });
-
-        const data = await response.json();
-        res.status(response.status).json(data);
-    } catch (error) {
-        console.error('[OpenAI Embeddings] プロキシエラー:', error.message);
-        res.status(500).json({
-            error: {
-                message: 'OpenAI Embeddings APIへの接続に失敗しました',
-                details: error.message
-            }
-        });
-    }
-});
-
-// ========================================
-// Azure OpenAI Embeddings API プロキシ
-// ========================================
-app.post('/azure-openai-embeddings', express.json({ limit: '10mb' }), async (req, res) => {
-    const { targetUrl, apiKey, input, dimensions } = req.body;
-
-    if (!targetUrl || !apiKey || !input) {
-        return res.status(400).json({
-            error: { message: 'targetUrl, apiKey, inputは必須です' }
-        });
-    }
-
-    console.log(`[Azure Embeddings] POST ${targetUrl} - texts: ${Array.isArray(input) ? input.length : 1}`);
-
-    try {
-        const response = await fetch(targetUrl, {
-            method: 'POST',
-            headers: {
-                'api-key': apiKey,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                input: input,
-                dimensions: dimensions || 3072
-            })
-        });
-
-        const data = await response.json();
-        res.status(response.status).json(data);
-    } catch (error) {
-        console.error('[Azure Embeddings] プロキシエラー:', error.message);
-        res.status(500).json({
-            error: {
-                message: 'Azure OpenAI Embeddings APIへの接続に失敗しました',
-                details: error.message
-            }
-        });
-    }
-});
-
-// ========================================
 // Confluence Data Center API プロキシ
 // ========================================
 app.post('/confluence-proxy', express.json({ limit: '10mb' }), async (req, res) => {
@@ -537,8 +455,6 @@ app.listen(PORT, () => {
     console.log(`   - Claude:            http://localhost:${PORT}/anthropic/*`);
     console.log(`   - Gemini:            http://localhost:${PORT}/gemini/*`);
     console.log(`   - Azure OpenAI:      http://localhost:${PORT}/azure-openai`);
-    console.log(`   - OpenAI Embeddings: http://localhost:${PORT}/openai-embeddings`);
-    console.log(`   - Azure Embeddings:  http://localhost:${PORT}/azure-openai-embeddings`);
     console.log(`   - Confluence:        http://localhost:${PORT}/confluence-proxy`);
     console.log(`   - Jira/Confluence:   /api/enterprise/read`);
     console.log(`   - Fetch URL:         http://localhost:${PORT}/api/fetch-url?url=...`);

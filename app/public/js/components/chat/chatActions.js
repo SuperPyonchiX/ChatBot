@@ -393,42 +393,12 @@ class ChatActions {
             // ストリーミング用のボットメッセージを表示（thinkingContainerも取得）
             const { messageDiv, contentContainer, thinkingContainer } = ChatRenderer.getInstance.addStreamingBotMessage(chatMessages, botTimestamp);
 
-            // RAGプロンプト拡張（augmentPrompt内部で有効/無効を判定）
-            // returnSources: trueで参照資料情報も取得
-            let ragSources = [];
-            if (typeof RAGManager !== 'undefined') {
-                try {
-                    const ragResult = await RAGManager.getInstance.augmentPrompt(
-                        messagesWithSystem,
-                        userText,
-                        { returnSources: true }
-                    );
-
-                    // 戻り値がオブジェクトの場合（returnSources: true）
-                    if (ragResult && ragResult.messages) {
-                        messagesWithSystem = ragResult.messages;
-                        ragSources = ragResult.sources || [];
-                    } else {
-                        // 後方互換性：配列の場合
-                        messagesWithSystem = ragResult;
-                    }
-
-                    // RAG参照資料を思考過程に表示
-                    if (ragSources.length > 0 && thinkingContainer) {
-                        ChatRenderer.getInstance.addThinkingItem(thinkingContainer, 'rag', ragSources);
-                    }
-                } catch (ragError) {
-                    console.warn('RAGプロンプト拡張エラー:', ragError);
-                    // RAGエラーは無視して続行
-                }
-            }
-
             let fullResponseText = '';
 
             // 思考過程データを収集（ページ更新時の復元用）
             let thinkingData = {
                 webSearchQueries: [],
-                ragSources: ragSources.length > 0 ? ragSources : [],
+                ragSources: [],
                 toolCalls: []  // ツール実行情報
             };
 

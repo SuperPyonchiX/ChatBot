@@ -109,7 +109,7 @@ class ChatUI {
         if (!sendButton) return;
 
         sendButton.classList.remove('stop-mode');
-        sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        sendButton.innerHTML = '<i class="fas fa-arrow-up" aria-hidden="true"></i>';
         sendButton.title = 'メッセージを送信';
         this.updateSendButtonState();
     }

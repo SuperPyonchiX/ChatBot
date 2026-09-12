@@ -79,7 +79,7 @@ class ToolManager {
     #registerAgentTools() {
         const registry = ToolRegistry.getInstance;
         const classes = [
-            'WebSearchTool', 'UrlFetchTool', 'RagSearchTool', 'CalculatorTool',
+            'WebSearchTool', 'UrlFetchTool', 'CalculatorTool',
             'JiraSearchTool', 'JiraGetIssueTool', 'ConfluenceSearchTool', 'ConfluenceGetPageTool',
             'CodeExecuteTool', 'CodexTaskTool', 'FileWriteTool', 'ShellExecuteTool'
         ];

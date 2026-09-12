@@ -315,15 +315,7 @@
     }
 
     /* 設定メニュー最適化 */
-    .settings-menu {
-        min-width: 180px;
-        right: -8px;
-    }
 
-    .settings-menu button {
-        padding: var(--spacing-sm) var(--spacing-md);
-        font-size: var(--font-size-sm);
-    }
 }
 
 /* タッチデバイス向け最適化 */

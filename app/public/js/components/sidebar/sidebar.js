@@ -35,15 +35,18 @@ class Sidebar {
      */
     createSidebarToggle() {
         const sidebarEl = UICache.getInstance.get('.sidebar', true);
-        const appContainer = UICache.getInstance.get('.app-container', true);
+        if (document.querySelector('.sidebar-toggle')) return;
+        sidebarEl.id = 'chatSidebar';
         
         // トグルボタンの表示エリアと、トグルボタンを作成
-        const toggleArea = UIUtils.getInstance.createElement('div', { classList: ['sidebar-toggle-area'] });
         const toggleButton = UIUtils.getInstance.createElement('button', { 
             classList: ['sidebar-toggle'],
             innerHTML: '<i class="fas fa-bars"></i>'
         });
         
+        toggleButton.setAttribute('aria-label', 'サイドバーを開閉');
+        toggleButton.setAttribute('aria-controls', 'chatSidebar');
+
         // 保存された状態を復元
         // @ts-ignore - Storageはカスタムクラス（型定義あり）
         const isCollapsed = Storage.getInstance.loadSidebarState();
@@ -53,10 +56,30 @@ class Sidebar {
             toggleButton.classList.add('sidebar-visible');
         }
         
+        const syncAccessibility = () => {
+            const open = window.innerWidth <= this.#mobileBreakpoint ? sidebarEl.classList.contains('show') : !sidebarEl.classList.contains('collapsed');
+            toggleButton.setAttribute('aria-expanded', String(open));
+            sidebarEl.inert = !open;
+        };
+        new MutationObserver(syncAccessibility).observe(sidebarEl, { attributes: true, attributeFilter: ['class'] });
+        window.addEventListener('resize', () => {
+            sidebarEl.classList.remove('show');
+            this.#toggleOverlay(false, sidebarEl);
+            syncAccessibility();
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && sidebarEl.classList.contains('show')) {
+                sidebarEl.classList.remove('show');
+                this.#toggleOverlay(false, sidebarEl);
+                toggleButton.focus();
+            }
+        });
+        syncAccessibility();
         // イベントリスナーをまとめて設定
         toggleButton.addEventListener('click', () => this.#toggleSidebarState(sidebarEl, toggleButton));
         
-        UICache.getInstance.get('.chat-container', true).addEventListener('click', () => {
+        UICache.getInstance.get('.chat-container', true).addEventListener('click', event => {
+            if (toggleButton.contains(event.target)) return;
             if (window.innerWidth <= this.#mobileBreakpoint && sidebarEl.classList.contains('show')) {
                 sidebarEl.classList.remove('show');
                 this.#toggleOverlay(false, sidebarEl);
@@ -71,8 +94,7 @@ class Sidebar {
         });
         
         // 要素を追加
-        toggleArea.appendChild(toggleButton);
-        appContainer.appendChild(toggleArea);
+        document.querySelector('.chat-header').prepend(toggleButton);
     }
 
     /**

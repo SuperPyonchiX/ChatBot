@@ -1,5 +1,14 @@
 /* グローバルなCSS変数定義 */
 :root {
+    --settings-width: 780px;
+    --settings-nav-width: 190px;
+    --settings-min-height: 400px;
+    --shell-control-size: 36px;
+    --shell-menu-width: 220px;
+    --shell-welcome-size: 28px;
+    --shell-welcome-offset: 24vh;
+    --shell-overlay: rgba(0, 0, 0, 0.55);
+    --border-radius-full: 999px;
     /* カラーパレット - ダークテーマ */
     --background-primary: #212121;
     --background-secondary: #171717;
@@ -122,40 +131,12 @@
     --modal-width: 90%;
     --modal-max-width-default: 1000px;
     --modal-max-width-small: 400px;
-    --modal-max-height-system-prompt: 450px;
-    --modal-template-sidebar-width: 300px;
-    
-    /* システムプロンプト設定 */
-    --system-prompt-item-padding: 10px 12px;
-    --system-prompt-header-icon-size: 10px;
-    --system-prompt-count-padding: 2px 6px;
-    --system-prompt-gap: 8px;
-    --system-prompt-translate-y: -1px;
-
-    /* プロンプトマネージャー */
-    --prompt-manager-width: 900px;
-    --prompt-manager-height: 60vh;
-    --prompt-manager-mobile-height: 70vh;
-    --prompt-sidebar-width: 250px;
-    --prompt-mobile-sidebar-height: 150px;
-    --prompt-item-name-size: 1.1em;
-    --prompt-tag-radius: 12px;
-    --prompt-tag-padding: 2px 8px;
-    --prompt-search-padding: 8px;
-
-    /* プロンプト候補表示 */
     --suggestions-max-height: 250px;
     --suggestions-padding: 8px 12px;
     --suggestion-label-padding: 2px 6px;
     --suggestion-label-margin: 5px;
     --suggestion-name-margin: 2px;
     --suggestion-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-
-    /* 設定メニュー */
-    --settings-menu-min-width: 200px;
-    --settings-menu-margin: 8px;
-    --settings-menu-padding: 10px 15px;
-    --settings-menu-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 
     /* Officeプレビュー */
     --office-preview-max-width: 300px;

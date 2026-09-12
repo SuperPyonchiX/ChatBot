@@ -35,7 +35,7 @@ description: ChatBotプロジェクトに、モデルが通常チャットで自
 
 1. `cd app && npm start` でサーバーを起動し http://localhost:50000 を開く
 2. ブラウザコンソールの `[ToolManager] 初期化完了: N 個登録` の N が 1 増え、`Uncaught ReferenceError` が無い
-3. 設定メニュー「ツール設定」の一覧に新ツールが出て、有効/無効を切り替えて保存できる（保存先は localStorage `tool_settings`）
+3. 設定 → 高度な機能 → ツール設定の一覧に新ツールが出て、有効/無効を切り替えて保存できる（保存先は localStorage `tool_settings`）
 4. 対応モデルを選び、ツールを使いたくなる依頼を送る。思考過程に「{表示名}を実行中...」→「{表示名}完了」が出て、モデルが結果を踏まえて答える
 5. `execute` に不正パラメータを渡したとき `{ success: false, error }` が返り、モデルがエラー内容を受け取って会話が続く（例外で止まらない）
 

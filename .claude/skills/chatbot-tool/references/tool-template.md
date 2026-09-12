@@ -143,7 +143,6 @@ TOOLS: {
 | `render_canvas` | executors/CanvasRenderer.js | generate | PNG 描画 |
 | `web_search` | builtin/webSearchTool.js | info | プロバイダ組み込み Web 検索（Responses API / Claude）をラップ |
 | `url_fetch` | builtin/urlFetchTool.js | info | URL 取得（`/api/fetch-url` 経由） |
-| `rag_search` | builtin/ragSearchTool.js | info | ナレッジベース検索 |
 | `calculator` | builtin/calculatorTool.js | exec | 数式評価・単位変換 |
 | `code_execute` | builtin/codeExecuteTool.js | exec | コード実行（CodeExecutor 経由） |
 | `codex_task` | builtin/codexTaskTool.js | workspace | Codex CLI をサブエージェントとして起動（`CodexClient` 経由、並列可）。既定無効 |

@@ -14,7 +14,7 @@ class EnterpriseSettingsModal {
         this.#overlay.className = 'tool-settings-overlay visible';
         this.#overlay.addEventListener('click', () => this.hide());
         this.#element = document.createElement('div');
-        this.#element.className = 'tool-settings-modal visible';
+        this.#element.className = 'tool-settings-modal enterprise-settings-modal visible';
         this.#element.setAttribute('role', 'dialog');
         this.#element.setAttribute('aria-modal', 'true');
         this.#element.setAttribute('aria-label', '社内情報連携');
@@ -82,6 +82,7 @@ class EnterpriseSettingsModal {
 
     /** @returns {void} @throws {Error} None. */
     hide() {
+        document.dispatchEvent(new Event('settings-detail-closed'));
         document.removeEventListener('keydown', this.#escape);
         this.#element?.remove(); this.#overlay?.remove();
         this.#element = null; this.#overlay = null;

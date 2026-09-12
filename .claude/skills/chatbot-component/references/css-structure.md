@@ -20,9 +20,7 @@ app/public/css/
 │   ├── forms/               # forms, claude-websearch
 │   ├── modals/              # モーダル共通
 │   ├── notifications/
-│   ├── prompt/              # prompt-manager, prompt-suggestions
-│   ├── rag/                 # knowledge-base, confluence-settings
-│   ├── settings/            # settings-menu
+│   ├── settings/            # chat-shell
 │   ├── tools/               # ツール設定モーダル・カスタムツールエディタ
 │   └── workspace/           # ワークスペースモーダル
 └── tools.css                # チャットツールUI（例外的に css 直下）

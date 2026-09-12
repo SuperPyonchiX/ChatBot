@@ -196,15 +196,7 @@ class Storage {
      * @returns {string} システムプロンプト
      */
     loadSystemPrompt() {
-        const savedPrompt = this.getItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT, '');
-        
-        // 初回起動時（保存されたプロンプトが空の場合）は「デフォルト」プロンプトを返す
-        if (!savedPrompt) {
-            const templates = window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORIES;
-            return templates['基本']?.['デフォルト'] || window.CONFIG.SYSTEM_PROMPTS.DEFAULT_SYSTEM_PROMPT;
-        }
-        
-        return savedPrompt;
+        return this.getItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT, '');
     }
 
     /**
@@ -216,76 +208,9 @@ class Storage {
         this.setItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT, systemPrompt);
     }
 
-    /**
-     * システムプロンプトテンプレートを読み込む
-     * @returns {Object} プロンプトテンプレートのオブジェクト
-     */
-    loadSystemPromptTemplates() {
-        const customTemplates = this.getItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT_TEMPLATES, {}, true);
-        
-        const defaultPrompts = {};
-        Object.entries(window.CONFIG.SYSTEM_PROMPTS.TEMPLATES.CATEGORIES).forEach(([category, templates]) => {
-            Object.entries(templates).forEach(([systemPromptName, systemPrompt]) => {
-                defaultPrompts[systemPromptName] = {
-                    content: systemPrompt,
-                    category: category,
-                    description: '',
-                    tags: []
-                };
-            });
-        });
-        
-        return { ...defaultPrompts, ...customTemplates };
-    }
 
-    /**
-     * システムプロンプトテンプレートを保存
-     * @param {Object} templates - プロンプトテンプレートのオブジェクト
-     */
-    saveSystemPromptTemplates(templates) {
-        if (!templates || typeof templates !== 'object') return;
-        
-        try {
-            // @ts-ignore - systemPromptTemplatesはオブジェクト
-            window.AppState.systemPromptTemplates = templates;
-            
-            this.setItem(window.CONFIG.STORAGE.KEYS.SYSTEM_PROMPT_TEMPLATES, templates);
-        } catch (error) {
-            console.error('システムプロンプトテンプレートの保存に失敗しました:', error);
-        }
-    }
 
-    /**
-     * システムプロンプトテンプレートを追加
-     * @param {string} name - テンプレート名
-     * @param {string} prompt - プロンプト内容
-     * @returns {boolean} 保存成功時はtrue
-     */
-    addSystemPromptTemplate(name, prompt) {
-        if (!name || !prompt) return false;
-        
-        const templates = this.loadSystemPromptTemplates() || {};
-        templates[name] = prompt;
-        this.saveSystemPromptTemplates(templates);
-        return true;
-    }
 
-    /**
-     * システムプロンプトテンプレートを削除
-     * @param {string} name - 削除するテンプレート名
-     * @returns {boolean} 削除成功時はtrue
-     */
-    removeSystemPromptTemplate(name) {
-        if (!name) return false;
-        
-        const templates = this.loadSystemPromptTemplates();
-        if (templates[name]) {
-            delete templates[name];
-            this.saveSystemPromptTemplates(templates);
-            return true;
-        }
-        return false;
-    }
 
     /**
      * カテゴリの状態を保存

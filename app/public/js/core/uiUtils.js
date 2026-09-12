@@ -173,7 +173,7 @@
         if (e.key === 'Escape') {
             const visibleModal = document.querySelector('.modal.show');
             if (visibleModal) {
-                this.toggleModal(visibleModal.id, false);
+                UIUtils.getInstance.toggleModal(visibleModal.id, false);
             }
         }
     }

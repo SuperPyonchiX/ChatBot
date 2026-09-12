@@ -660,10 +660,7 @@ class ChatHistory {
      * @returns {Object<string, Array>} グループ名をキーとした会話配列
      */
     #groupConversations(conversations) {
-        const grouping = window.CONFIG?.UI?.SIDEBAR?.GROUPING ?? 'date';
-        return grouping === 'prompt'
-            ? this.#groupConversationsByPrompt(conversations)
-            : this.#groupConversationsByDate(conversations);
+        return this.#groupConversationsByDate(conversations);
     }
 
     /**
@@ -725,56 +722,7 @@ class ChatHistory {
         return Number(conversation?.updatedAt) || Number(conversation?.timestamp) || 0;
     }
 
-    /**
-     * 会話をシステムプロンプトでグループ化する
-     */
-    #groupConversationsByPrompt(conversations) {
-        if (!Array.isArray(conversations)) {
-            return { '未分類': [] };
-        }
-        
-        const groups = {};
-        
-        conversations.forEach(conversation => {
-            if (!conversation) return;
-            
-            let systemPrompt = '未分類';
-            
-            const systemMessage = conversation.messages?.find(m => m?.role === 'system');
-            if (systemMessage && systemMessage.content) {
-                systemPrompt = this.#getPromptCategory(systemMessage.content);
-            }
-            
-            if (!groups[systemPrompt]) {
-                groups[systemPrompt] = [];
-            }
-            
-            groups[systemPrompt].push(conversation);
-        });
-        
-        if (!groups['未分類']) {
-            groups['未分類'] = [];
-        }
-        
-        return groups;
-    }
     
-    /**
-     * システムプロンプトからカテゴリを判定する
-     */
-    #getPromptCategory(promptText) {
-        if (!promptText) return '未分類';
-        
-        const templates = window.AppState.systemPromptTemplates;
-        
-        for (const templateName in templates) {
-            if (templates[templateName].content === promptText) {
-                return templateName;
-            }
-        }
-        
-        return '未分類';
-    }
     
     /**
      * シンプルなユーザーメッセージを表示する（ChatRendererフォールバック）

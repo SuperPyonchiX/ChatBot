@@ -34,15 +34,10 @@ window.Elements = (function() {
         'webSearchToggle',
         
         // ボタン関連
-        'newChatButton', 'clearHistoryButton', 'settingsButton', 'settingsMenu',
-        'openSystemPromptSettings', 'openApiSettings', 'openPromptManager',
+        'newChatButton', 'clearHistoryButton', 'settingsButton',
         
         // ファイル関連
         'fileInput',
-        
-        // システムプロンプト関連
-        'systemPromptModal', 'systemPromptInput', 'saveSystemPrompt',
-        'cancelSystemPrompt', 'saveNewSystemPrompt', 'newSystemPromptName', 'newTemplateCategory',
         
         // API設定関連
         'apiKeyModal', 'saveApiKey', 'cancelApiKey', 
@@ -53,12 +48,6 @@ window.Elements = (function() {
         // チャット名前変更関連
         'saveRenameChat', 'cancelRenameChat', 'renameChatModal', 'chatTitleInput',
         
-        // プロンプトマネージャー関連
-        'promptManagerModal', 'closePromptManager',
-        'addPromptButton', 'promptSearchInput', 'promptEditModal',
-        'savePromptEdit', 'cancelPromptEdit', 'promptNameInput',
-        'promptTagsInput', 'promptDescriptionInput', 'promptContentInput',
-        'showAllPrompts', 'showFavorites', 'promptSortSelect'
     ];
     
     return getElements(ids);

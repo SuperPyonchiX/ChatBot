@@ -34,6 +34,10 @@ description: ChatBotプロジェクトにUIコンポーネントやモーダル�
 | 単純なフォームモーダル | `js/modals/renameChat/renameChatModal.js` |
 | リサイズ可能なパネル | `js/components/artifact/artifactPanel.js`, `js/core/dragManager.js` |
 
+## 設定画面への追加
+
+設定の入口は `js/modals/settings/settingsModal.js`。接続・高度な機能などの該当カテゴリに配置する。詳細モーダルを閉じるときは `settings-detail-closed` を通知し、設定へ戻して元のボタンにフォーカスを復帰する。通常画面の機能操作は入力欄の「＋」に配置する。
+
 ## 動作確認
 
 1. `cd app && npm start` → ブラウザコンソールに `Uncaught ReferenceError` が無い（読み込み順の誤り）

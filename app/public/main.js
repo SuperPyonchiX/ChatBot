@@ -41,16 +41,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         }
 
-        // プロンプトマネージャーの初期化
-        PromptManager.getInstance;
-
-        // RAGマネージャーの初期化
-        if (typeof RAGManager !== 'undefined') {
-            RAGManager.getInstance.initialize().catch(err => {
-                console.warn('RAGManager初期化エラー:', err);
-            });
-        }
-
         // ツールマネージャーの初期化
         if (typeof ToolManager !== 'undefined') {
             ToolManager.getInstance.initialize().catch(err => {
@@ -104,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         EventHandlers.getInstance.setupModalEvents();
         EventHandlers.getInstance.setupGlobalEvents();
         
-        // プロンプト候補表示はUI.initializeで初期化済み
+        ChatShell.getInstance.initialize();
     }
 
     /**

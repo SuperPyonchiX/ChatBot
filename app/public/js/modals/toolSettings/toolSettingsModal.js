@@ -57,14 +57,11 @@ class ToolSettingsModal {
      * モーダルを閉じる
      */
     hide() {
-        this.#modalElement?.classList.remove('visible');
-        this.#overlayElement?.classList.remove('visible');
-        setTimeout(() => {
-            this.#modalElement?.remove();
-            this.#overlayElement?.remove();
-            this.#modalElement = null;
-            this.#overlayElement = null;
-        }, 300);
+        this.#modalElement?.remove();
+        this.#overlayElement?.remove();
+        this.#modalElement = null;
+        this.#overlayElement = null;
+        document.dispatchEvent(new Event('settings-detail-closed'));
     }
 
     // ========================================

@@ -37,14 +37,12 @@ class EnterpriseClient {
         this.getConnection(service);
         for (const [suffix, value] of [['BASE_URL', connection.baseUrl], ['AUTH_TYPE', connection.authType], ['AUTH_DATA', connection.authData]])
             Storage.getInstance.setItem(window.CONFIG.STORAGE.KEYS[`${service.toUpperCase()}_${suffix}`], value);
-        if (service === 'confluence') window.ConfluenceDataSource?.getInstance.reloadSettings();
     }
 
     /** @param {string} service @returns {void} @throws {Error} Invalid service. */
     clearConnection(service) {
         this.getConnection(service);
         for (const suffix of ['BASE_URL', 'AUTH_TYPE', 'AUTH_DATA']) Storage.getInstance.removeItem(window.CONFIG.STORAGE.KEYS[`${service.toUpperCase()}_${suffix}`]);
-        if (service === 'confluence') window.ConfluenceDataSource?.getInstance.reloadSettings();
     }
 
     /** Recognize registered hosts before generic URL fetching. @param {string} value @returns {Object|null} @throws {Error} None. */

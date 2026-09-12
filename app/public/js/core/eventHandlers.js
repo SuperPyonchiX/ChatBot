@@ -70,7 +70,7 @@ class EventHandlers {
 
         // テキストエリアのEnterキーイベント（Shift+Enterで改行）
         window.Elements.userInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
                 e.preventDefault();
                 // ストリーミング中は送信しない
                 if (!window.AppState.isStreaming) {
@@ -99,83 +99,7 @@ class EventHandlers {
      * 設定関連のイベントをセットアップします
      */
     setupSettingsEvents() {
-        if (!window.Elements.settingsButton || !window.Elements.settingsMenu || 
-            !window.Elements.openSystemPromptSettings || !window.Elements.openApiSettings) return;
-        
-        // 設定ボタンのクリックでメニュー表示
-        window.Elements.settingsButton.addEventListener('click', () => {
-            window.Elements.settingsMenu.style.display = 
-                window.Elements.settingsMenu.style.display === 'block' ? 'none' : 'block';
-        });
-        
-        // ドキュメント内のクリックでメニューを閉じる
-        document.addEventListener('click', e => {
-            if (window.Elements.settingsMenu.style.display === 'block' && 
-                !window.Elements.settingsButton.contains(e.target) && 
-                !window.Elements.settingsMenu.contains(e.target)) {
-                window.Elements.settingsMenu.style.display = 'none';
-            }
-        });
-        
-        // システムプロンプト設定
-        window.Elements.openSystemPromptSettings.addEventListener('click', () => {
-            window.Elements.settingsMenu.style.display = 'none';
-            SystemPromptModal.getInstance.showSystemPromptModal(
-                window.AppState.systemPrompt, 
-                window.AppState.systemPromptTemplates, 
-                ModalHandlers.getInstance.onTemplateSelect, 
-                ModalHandlers.getInstance.onTemplateDelete
-            );
-        });
-        
-        // API設定
-        window.Elements.openApiSettings.addEventListener('click', () => {
-            window.Elements.settingsMenu.style.display = 'none';
-            ApiSettingsModal.getInstance.showApiKeyModal(window.AppState.apiSettings);
-        });
-        
-        // 高度なプロンプト管理
-        if (window.Elements.openPromptManager) {
-            window.Elements.openPromptManager.addEventListener('click', () => {
-                window.Elements.settingsMenu.style.display = 'none';
-                PromptManagerModal.getInstance.showPromptManagerModal();
-            });
-        }
-
-        // ナレッジベース (RAG)
-        const openKnowledgeBaseBtn = document.getElementById('openKnowledgeBase');
-        if (openKnowledgeBaseBtn) {
-            openKnowledgeBaseBtn.addEventListener('click', () => {
-                window.Elements.settingsMenu.style.display = 'none';
-                KnowledgeBaseModal.getInstance.showModal();
-            });
-        }
-
-        // ワークスペース（Codex 作業ディレクトリ）
-        const openWorkspaceBtn = document.getElementById('openWorkspace');
-        if (openWorkspaceBtn) {
-            openWorkspaceBtn.addEventListener('click', () => {
-                window.Elements.settingsMenu.style.display = 'none';
-                if (typeof WorkspaceModal !== 'undefined') {
-                    WorkspaceModal.getInstance.show();
-                }
-            });
-        }
-
-        // ツール設定
-        document.getElementById('openEnterpriseSettings')?.addEventListener('click', () => {
-            window.Elements.settingsMenu.style.display = 'none';
-            window.EnterpriseSettingsModal.getInstance.show();
-        });
-        const openToolSettingsBtn = document.getElementById('openToolSettings');
-        if (openToolSettingsBtn) {
-            openToolSettingsBtn.addEventListener('click', () => {
-                window.Elements.settingsMenu.style.display = 'none';
-                if (typeof ToolSettingsModal !== 'undefined') {
-                    ToolSettingsModal.getInstance.show();
-                }
-            });
-        }
+        SettingsModal.getInstance.initialize();
     }
 
     /**
@@ -294,7 +218,6 @@ class EventHandlers {
             if (e.key === 'Escape') {
                 // 開いているモーダルを閉じる
                 const modals = [
-                    { id: 'systemPromptModal', hide: SystemPromptModal.getInstance.hideSystemPromptModal },
                     { id: 'apiKeyModal', hide: ApiSettingsModal.getInstance.hideApiKeyModal },
                     { id: 'renameChatModal', hide: RenameChatModal.getInstance.hideRenameChatModal }
                 ];
@@ -313,45 +236,10 @@ class EventHandlers {
      * モーダル関連のイベントをセットアップします
      */
     setupModalEvents() {
-        this.#setupSystemPromptModal();
         this.#setupApiKeyModal();
         this.#setupRenameChatModal();
-        this.#setupPromptManagerModal();
-        this.#setupKnowledgeBaseModal();
     }
 
-    /**
-     * システムプロンプトモーダルのイベントをセットアップします
-     */
-    #setupSystemPromptModal() {
-        if (!window.Elements.saveSystemPrompt || !window.Elements.cancelSystemPrompt || 
-            !window.Elements.saveNewSystemPrompt) return;
-        
-        // システムプロンプト保存
-        window.Elements.saveSystemPrompt.addEventListener('click', () => {
-            if (!window.Elements.systemPromptInput) return;
-            
-            window.AppState.systemPrompt = window.Elements.systemPromptInput.value.trim();
-            // @ts-ignore - Storageはカスタムクラス（型定義あり）
-            Storage.getInstance.saveSystemPrompt(window.AppState.systemPrompt);
-            SystemPromptModal.getInstance.hideSystemPromptModal();
-        });
-        
-        // システムプロンプトキャンセル
-        window.Elements.cancelSystemPrompt.addEventListener('click', SystemPromptModal.getInstance.hideSystemPromptModal.bind(SystemPromptModal.getInstance));
-        
-        // 新しいシステムプロンプト保存
-        window.Elements.saveNewSystemPrompt.addEventListener('click', ModalHandlers.getInstance.saveNewSystemPrompt.bind(SystemPromptModal.getInstance));
-
-        // 高度なプロンプト管理へ切り替え
-        const switchToPromptManagerBtn = UICache.getInstance.get('switchToPromptManager');
-        if (switchToPromptManagerBtn) {
-            switchToPromptManagerBtn.addEventListener('click', () => {
-                SystemPromptModal.getInstance.hideSystemPromptModal();
-                PromptManagerModal.getInstance.showPromptManagerModal();
-            });
-        }
-    }
 
     /**
      * APIキーモーダルのイベントをセットアップします
@@ -395,72 +283,6 @@ class EventHandlers {
         window.Elements.cancelRenameChat.addEventListener('click', RenameChatModal.getInstance.hideRenameChatModal);
     }
 
-    /**
-     * プロンプト管理モーダルのイベントをセットアップします
-     */
-    #setupPromptManagerModal() {
-        // 閉じるボタンのイベントハンドラー
-        const closePromptManagerBtn = UICache.getInstance.get('closePromptManager');
-        if (closePromptManagerBtn) {
-            closePromptManagerBtn.addEventListener('click', () => {
-                PromptManagerModal.getInstance.hidePromptManagerModal();
-            });
-        }
-
-        // システムプロンプト設定への切り替えボタンのイベントハンドラー
-        const switchToSystemPromptBtn = UICache.getInstance.get('switchToSystemPrompt');
-        if (switchToSystemPromptBtn) {
-            switchToSystemPromptBtn.addEventListener('click', () => {
-                PromptManagerModal.getInstance.hidePromptManagerModal();
-                SystemPromptModal.getInstance.showSystemPromptModal(
-                    window.AppState.systemPrompt,
-                    window.AppState.systemPromptTemplates,
-                    ModalHandlers.getInstance.onTemplateSelect,
-                    ModalHandlers.getInstance.onTemplateDelete
-                );
-            });
-        }
-
-        // 新規プロンプト追加ボタンのイベントハンドラー
-        const addPromptButton = UICache.getInstance.get('addPromptButton');
-        if (addPromptButton) {
-            addPromptButton.addEventListener('click', () => {
-                PromptManagerModal.getInstance.showPromptEditModal(null);
-            });
-        }
-
-        // フィルターボタン（すべて）
-        const showAllBtn = document.getElementById('showAllPrompts');
-        if (showAllBtn) {
-            showAllBtn.addEventListener('click', () => {
-                PromptManagerModal.getInstance.handleFilterChange(false);
-            });
-        }
-
-        // フィルターボタン（お気に入り）
-        const showFavoritesBtn = document.getElementById('showFavorites');
-        if (showFavoritesBtn) {
-            showFavoritesBtn.addEventListener('click', () => {
-                PromptManagerModal.getInstance.handleFilterChange(true);
-            });
-        }
-
-        // ソート選択
-        const sortSelect = document.getElementById('promptSortSelect');
-        if (sortSelect) {
-            sortSelect.addEventListener('change', (e) => {
-                PromptManagerModal.getInstance.handleSortChange(e.target.value);
-            });
-        }
-
-        // 検索入力
-        const searchInput = UICache.getInstance.get('promptSearchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                PromptManagerModal.getInstance.handleSearchChange(e.target.value);
-            });
-        }
-    }
 
     /**
      * Claude Web検索設定の表示/非表示を切り替え
@@ -478,13 +300,4 @@ class EventHandlers {
         }
     }
 
-    /**
-     * ナレッジベースモーダルのイベントをセットアップします
-     */
-    #setupKnowledgeBaseModal() {
-        // KnowledgeBaseModalのイベントリスナーを初期化
-        if (typeof KnowledgeBaseModal !== 'undefined') {
-            KnowledgeBaseModal.getInstance.initializeEventListeners();
-        }
-    }
 }

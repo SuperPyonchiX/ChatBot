@@ -69,16 +69,16 @@ test('registered URLs use only enterprise fetch and preserve URL query forms', a
     assert.equal(c.api.matchUrl('https://jira.example/context/pages/viewpage.action?pageId=42').service, 'confluence');
 });
 
-test('existing Confluence data source shares changed settings and UTF-8 Basic auth', () => {
+test('Confluence direct search uses updated connection settings without a RAG data source', async () => {
     const c = client();
-    vm.runInContext(fs.readFileSync(path.join(root, 'rag/confluenceDataSource.js'), 'utf8'), c);
-    const source = c.ConfluenceDataSource.getInstance;
     c.api.saveConnection('confluence', { baseUrl: 'https://new-wiki.example/context', authType: 'basic', authData: 'new-auth' });
-    assert.equal(source.getBaseUrl(), 'https://new-wiki.example/context');
-    assert.equal(source.getAuthType(), 'basic');
-    source.saveSettings({ baseUrl: 'https://wiki.example', authType: 'basic', username: '日本語', password: '秘密' });
-    assert.equal(Buffer.from(c.api.getConnection('confluence').authData, 'base64').toString('utf8'), '日本語:秘密');
-    c.api.clearConnection('confluence'); assert.equal(source.isConfigured(), false);
+    await c.ConfluenceSearchTool.getInstance.execute({ query: '設計' });
+    assert.equal(c.api.getConnection('confluence').baseUrl, 'https://new-wiki.example/context');
+    assert.equal(c.api.getConnection('confluence').authData, 'new-auth');
+    assert.equal(c.calls[0].url, '/api/enterprise/read');
+    c.api.clearConnection('confluence');
+    const result = await c.ConfluenceSearchTool.getInstance.execute({ query: '設計' });
+    assert.equal(result.success, false);
 });
 
 test('all tools return data to caller without credentials or any AI-provider selection', async () => {

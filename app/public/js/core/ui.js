@@ -339,7 +339,7 @@ class UI {
         Sidebar.getInstance?.createSidebarToggle();
         this.Core.Performance.optimize();
         this._initializeModelSelect();
-        PromptSuggestions.getInstance.init();
+
     }
 
     /**

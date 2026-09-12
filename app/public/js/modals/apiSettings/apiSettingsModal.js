@@ -87,14 +87,6 @@ class ApiSettingsModal {
             deployments.appendChild(group);
         });
 
-        const embeddingEndpoint = document.getElementById('azureEndpointEmbedding');
-        if (embeddingEndpoint) {
-            embeddingEndpoint.value = Storage.getInstance.getItem(
-                window.CONFIG.STORAGE.KEYS.AZURE_EMBEDDING_ENDPOINT,
-                ''
-            );
-        }
-
         // API系統を設定
         if (apiSettings.apiType === 'gemini') {
             elements.geminiSystemRadio.checked = true;
@@ -171,6 +163,7 @@ class ApiSettingsModal {
      * API設定モーダルを非表示にします
      */
     hideApiKeyModal() {
+        document.dispatchEvent(new Event('settings-detail-closed'));
         UIUtils.getInstance.toggleModal('apiKeyModal', false);
     }
     

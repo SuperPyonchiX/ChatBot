@@ -71,6 +71,7 @@ class WorkspaceModal {
      * モーダルを閉じる
      */
     hide() {
+        document.dispatchEvent(new Event('settings-detail-closed'));
         UIUtils.getInstance.toggleModal('workspaceModal', false);
     }
 
