@@ -114,6 +114,11 @@
     opacity: 1;
 }
 
+.history-item-actions.open {
+    /* transform が作る重なり順ごと持ち上げ、後続の会話行による遮蔽を防ぐ */
+    z-index: var(--z-dropdown, 100);
+}
+
 .history-action-button {
     width: 26px;
     height: 26px;
