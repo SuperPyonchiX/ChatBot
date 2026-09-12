@@ -20,11 +20,13 @@ const fs = require('fs').promises;
 const os = require('os');
 const crypto = require('crypto');
 const { registerCodexRoutes, WORKSPACE_DIR, EXEC_ENABLED } = require('./codexRoutes');
+const { registerEnterpriseRoutes } = require('./enterpriseRoutes');
 
 // ポート設定
 const PORT = process.env.PORT || 50000;
 
 const app = express();
+registerEnterpriseRoutes(app);
 
 // ========================================
 // CORS設定（すべてのオリジンを許可）
@@ -304,7 +306,6 @@ app.post('/confluence-proxy', express.json({ limit: '10mb' }), async (req, res) 
         });
     }
 
-    console.log(`[Confluence] GET ${targetUrl}`);
 
     try {
         const controller = new AbortController();
@@ -312,6 +313,7 @@ app.post('/confluence-proxy', express.json({ limit: '10mb' }), async (req, res) 
 
         const response = await fetch(targetUrl, {
             method: 'GET',
+            redirect: 'error',
             headers: {
                 'Authorization': authorization,
                 'Content-Type': 'application/json',
@@ -334,11 +336,11 @@ app.post('/confluence-proxy', express.json({ limit: '10mb' }), async (req, res) 
                 }
             });
         } else {
-            console.error('[Confluence] プロキシエラー:', error.message);
+            console.error('[Confluence] プロキシエラー:', error.name);
             res.status(500).json({
                 error: {
                     message: 'Confluence APIへの接続に失敗しました',
-                    details: error.message
+                    details: 'ネットワーク・証明書・認証設定を確認してください'
                 }
             });
         }
@@ -538,6 +540,7 @@ app.listen(PORT, () => {
     console.log(`   - OpenAI Embeddings: http://localhost:${PORT}/openai-embeddings`);
     console.log(`   - Azure Embeddings:  http://localhost:${PORT}/azure-openai-embeddings`);
     console.log(`   - Confluence:        http://localhost:${PORT}/confluence-proxy`);
+    console.log(`   - Jira/Confluence:   /api/enterprise/read`);
     console.log(`   - Fetch URL:         http://localhost:${PORT}/api/fetch-url?url=...`);
     console.log(`   - C++ Compile:       http://localhost:${PORT}/api/compile/cpp`);
     console.log(`   - Codex Run (SSE):   http://localhost:${PORT}/api/codex/run`);

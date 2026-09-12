@@ -80,6 +80,7 @@ class ToolManager {
         const registry = ToolRegistry.getInstance;
         const classes = [
             'WebSearchTool', 'UrlFetchTool', 'RagSearchTool', 'CalculatorTool',
+            'JiraSearchTool', 'JiraGetIssueTool', 'ConfluenceSearchTool', 'ConfluenceGetPageTool',
             'CodeExecuteTool', 'CodexTaskTool', 'FileWriteTool', 'ShellExecuteTool'
         ];
         for (const className of classes) {

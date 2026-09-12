@@ -97,6 +97,12 @@ class UrlFetchTool {
         }
 
         try {
+            const enterprise = window.EnterpriseClient?.getInstance;
+            const match = enterprise?.matchUrl(url);
+            if (match) {
+                if (!match.id) return { success: false, url, error: '登録済み社内サーバーのURLですが、課題URLまたはpageId付きページURLではありません。専用検索ツールを使ってください。' };
+                return await enterprise.execute(match.service, 'get', { id: match.id });
+            }
             // サーバー経由でフェッチ（CORS回避）
             const content = await this.#fetchViaProxy(url);
 

@@ -1,0 +1,29 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><title>Enterprise browser checks</title>
+<h1>社内連携のブラウザ検証（合成データ）</h1><button id="run">検証を実行</button><pre id="result">未実行</pre>
+<script src="/js/core/config.js"></script><script src="/js/core/enterpriseConfig.js"></script>
+<script src="/js/core/storage.js"></script><script src="/js/core/enterpriseClient.js"></script>
+<script src="/js/core/tools/builtin/jiraSearchTool.js"></script><script src="/js/core/tools/builtin/jiraGetIssueTool.js"></script>
+<script src="/js/core/tools/builtin/confluenceSearchTool.js"></script><script src="/js/core/tools/builtin/confluenceGetPageTool.js"></script>
+<script src="/js/core/tools/builtin/urlFetchTool.js"></script>
+<script>
+// Only this isolated preview origin receives these disposable values.
+window.CryptoHelper = { getInstance: { encrypt: v => 'fixture:' + v, isEncrypted: v => v?.startsWith('fixture:'), decrypt: v => v.slice(8) } };
+document.getElementById('run').onclick = async () => {
+ const report = document.getElementById('result'); report.textContent = '実行中';
+ const check = (condition, message) => { if (!condition) throw new Error(message); };
+ try {
+  const client = EnterpriseClient.getInstance;
+  for (const service of ['jira', 'confluence']) client.saveConnection(service, { baseUrl: location.origin + '/fixture', authType: 'basic', authData: btoa('demo:demo') });
+  const extracted = client.extractHtml('<p>Hello</p><table><tr><td>A</td><td>B</td></tr></table><script>bad()<\/script><ac:structured-macro ac:name="jira"><ac:parameter ac:name="key">TEST-1</ac:parameter></ac:structured-macro>');
+  check(extracted.text.includes('A\tB'), 'table columns'); check(!extracted.text.includes('bad()'), 'script stripping');
+  check(extracted.jiraReferences[0].key === 'TEST-1', 'Jira macro');
+  const issues = await JiraSearchTool.getInstance.execute({ query: 'review' }); check(issues.results[0].id === 'TEST-1', 'Jira search');
+  const issue = await JiraGetIssueTool.getInstance.execute({ id: 'TEST-1' }); check(issue.comments.length === 1 && issue.related.length === 1, 'Jira detail');
+  const pages = await ConfluenceSearchTool.getInstance.execute({ query: 'review' }); check(pages.results[0].id === '42', 'Confluence search');
+  const page = await ConfluenceGetPageTool.getInstance.execute({ id: '42' }); check(page.comments.length === 1 && page.jiraReferences[0].key === 'TEST-1', 'Confluence detail');
+  check(page.content.includes('In Progress'), 'page table text');
+  const viaUrl = await UrlFetchTool.getInstance.execute({ url: location.origin + '/fixture/browse/TEST-1?src=confmacro' }); check(viaUrl.id === 'TEST-1', 'URL dispatch');
+  report.textContent = 'PASS: HTML・表・Jiraマクロ抽出 / Jira検索・本文・コメント・関連課題 / Confluence検索・本文・コメント / URL振り分け';
+ } catch (error) { report.textContent = 'FAIL: ' + error.message; }
+};
+</script></html>

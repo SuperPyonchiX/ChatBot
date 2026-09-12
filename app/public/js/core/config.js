@@ -246,7 +246,10 @@ window.CONFIG = {
             // Confluence Data Center設定
             CONFLUENCE_BASE_URL: 'confluenceBaseUrl',
             CONFLUENCE_AUTH_TYPE: 'confluenceAuthType',
-            CONFLUENCE_AUTH_DATA: 'confluenceAuthData'
+            CONFLUENCE_AUTH_DATA: 'confluenceAuthData',
+            JIRA_BASE_URL: 'jiraBaseUrl',
+            JIRA_AUTH_TYPE: 'jiraAuthType',
+            JIRA_AUTH_DATA: 'jiraAuthData'
         },
 
         // デフォルト値
@@ -436,6 +439,10 @@ window.CONFIG = {
             render_canvas: 'Canvas描画',
             web_search: 'Web検索',
             url_fetch: 'URL取得',
+            jira_search: 'Jira検索',
+            jira_get_issue: 'Jira課題取得',
+            confluence_search: 'Confluence検索',
+            confluence_get_page: 'Confluenceページ取得',
             rag_search: 'ナレッジ検索',
             calculator: '計算',
             code_execute: 'コード実行',
@@ -451,6 +458,10 @@ window.CONFIG = {
             render_canvas: 'generate',
             web_search: 'info',
             url_fetch: 'info',
+            jira_search: 'info',
+            jira_get_issue: 'info',
+            confluence_search: 'info',
+            confluence_get_page: 'info',
             rag_search: 'info',
             calculator: 'exec',
             code_execute: 'exec',

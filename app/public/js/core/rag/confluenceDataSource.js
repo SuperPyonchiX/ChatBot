@@ -45,7 +45,11 @@ class ConfluenceDataSource {
         this.#baseUrl = storage.getItem(keys.CONFLUENCE_BASE_URL, '');
         this.#authType = storage.getItem(keys.CONFLUENCE_AUTH_TYPE, 'basic');
         this.#authHeader = storage.getItem(keys.CONFLUENCE_AUTH_DATA, '');
+        if (this.#authHeader) storage.setItem(keys.CONFLUENCE_AUTH_DATA, this.#authHeader);
     }
+
+    /** Reload shared settings after editing connections. @returns {void} @throws {Error} None. */
+    reloadSettings() { this.#loadSettings(); }
 
     /**
      * 設定を保存
@@ -67,7 +71,7 @@ class ConfluenceDataSource {
         // 認証データを生成
         if (settings.authType === 'basic') {
             // Base64エンコード (username:password)
-            this.#authHeader = btoa(`${settings.username}:${settings.password}`);
+            this.#authHeader = btoa(Array.from(new TextEncoder().encode(`${settings.username}:${settings.password}`), b => String.fromCharCode(b)).join(''));
         } else {
             // Personal Access Token
             this.#authHeader = settings.token;

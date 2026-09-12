@@ -163,6 +163,10 @@ class EventHandlers {
         }
 
         // ツール設定
+        document.getElementById('openEnterpriseSettings')?.addEventListener('click', () => {
+            window.Elements.settingsMenu.style.display = 'none';
+            window.EnterpriseSettingsModal.getInstance.show();
+        });
         const openToolSettingsBtn = document.getElementById('openToolSettings');
         if (openToolSettingsBtn) {
             openToolSettingsBtn.addEventListener('click', () => {

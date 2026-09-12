@@ -623,7 +623,9 @@ class Storage {
         const sensitiveKeys = [
             window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY,
             window.CONFIG.STORAGE.KEYS.AZURE_API_KEY,
-            window.CONFIG.STORAGE.KEYS.AZURE_RESPONSES_ENDPOINT
+            window.CONFIG.STORAGE.KEYS.AZURE_RESPONSES_ENDPOINT,
+            window.CONFIG.STORAGE.KEYS.CONFLUENCE_AUTH_DATA,
+            window.CONFIG.STORAGE.KEYS.JIRA_AUTH_DATA
         ];
         
         if (key.startsWith(window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX)) {
@@ -647,7 +649,9 @@ class Storage {
         const sensitiveKeys = [
             window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY,
             window.CONFIG.STORAGE.KEYS.AZURE_API_KEY,
-            window.CONFIG.STORAGE.KEYS.AZURE_RESPONSES_ENDPOINT
+            window.CONFIG.STORAGE.KEYS.AZURE_RESPONSES_ENDPOINT,
+            window.CONFIG.STORAGE.KEYS.CONFLUENCE_AUTH_DATA,
+            window.CONFIG.STORAGE.KEYS.JIRA_AUTH_DATA
         ];
         
         if (key.startsWith(window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX)) {

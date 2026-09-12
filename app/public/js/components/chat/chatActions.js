@@ -318,6 +318,12 @@ class ChatActions {
                 return await this.#processWithCodex(userText, chatMessages, conversation, attachments);
             }
 
+            const enterpriseUrl = (userText.match(/https?:\/\/[^\s<>]+/g) || []).some(url => window.EnterpriseClient?.getInstance.matchUrl(url));
+            if ((enterpriseUrl || /jira|confluence/i.test(userText)) && (typeof ToolManager === 'undefined' || !ToolManager.getInstance.isModelCompatible(conversation.model))) {
+                alert('このモデルはツール呼び出しに対応していないため、Jira／Confluenceを参照できません。対応モデルを選択してください。');
+                return { error: 'Enterprise tools require a tool-compatible model' };
+            }
+
             // ユーザー入力をクリア
             userInput.value = '';
             UIUtils.getInstance.autoResizeTextarea(userInput);
@@ -798,12 +804,14 @@ class ChatActions {
     #buildToolResultsMessage(executed) {
         const maxChars = window.CONFIG?.TOOLS?.RESULT_MAX_CHARS || 12000;
         const blocks = executed.map(({ toolCall, result, error }) => {
+            const resultLimit = /^(jira_|confluence_)/.test(toolCall.name) || result?.notice
+                ? window.CONFIG.ENTERPRISE.RESULT_LIMIT : maxChars;
             const payload = error
                 ? { success: false, error }
                 : this.#summarizeToolResultForModel(result);
             let text = JSON.stringify(payload, null, 0);
-            if (text.length > maxChars) {
-                text = text.substring(0, maxChars) + `... (${text.length - maxChars} 文字省略)`;
+            if (text.length > resultLimit) {
+                text = text.substring(0, resultLimit) + `... (${text.length - resultLimit} 文字省略)`;
             }
             return `<tool_result name="${toolCall.name}"${toolCall.id ? ` id="${toolCall.id}"` : ''}>\n${text}\n</tool_result>`;
         });

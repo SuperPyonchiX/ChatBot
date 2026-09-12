@@ -232,7 +232,7 @@ Codex 連携:
 | 分類 | ツール | 既定 |
 | --- | --- | --- |
 | ファイル生成 | `generate_powerpoint` `process_excel` `render_canvas` | ON |
-| 情報取得 | `web_search` `url_fetch` `rag_search` | ON |
+| 情報取得 | `web_search` `url_fetch` `rag_search` `jira_search` `jira_get_issue` `confluence_search` `confluence_get_page` | ON |
 | 計算・実行 | `calculator` `code_execute` | ON |
 | ワークスペース操作 | `codex_task`（Codex をサブエージェントとして起動）`file_write` `shell_execute` | **OFF**（ホスト OS に触るため、使うときだけ ON にする） |
 | カスタムツール | ユーザーが作った JavaScript ツール | 作成時 ON |
@@ -240,6 +240,27 @@ Codex 連携:
 「実行回数」は 1 回の送信でツールを往復させる上限。無限ループ防止用で、通常は変えなくてよい。
 
 **カスタムツール**は「カスタムツールを作成」から作る。ツール名（`snake_case`）、説明（AI がいつ使うか判断する文）、パラメータ（JSON Schema）、実行コード（`params` を受け取る JavaScript）を入力し、テスト実行で確かめてから保存する。保存先はブラウザの IndexedDB。
+
+### Jira・Confluenceの検索と参照
+
+設定メニューの「社内情報連携」に、Jira／ConfluenceのベースURLと認証情報を登録する。それぞれ1接続先に対応する。URLにコンテキストパスがある場合は、そのパスまで入力する（例: `https://your-server.example/confluence`）。課題・ページ個別のURLは接続設定に入力しない。
+
+1. ID・パスワード、またはPersonal Access Tokenを入力する。
+2. 「接続テスト」で確認し、「保存」を押す。接続に失敗した場合、以前の保存設定は変更しない。
+3. ツール呼び出し対応モデルを選び、通常チャットで依頼する。CodexトグルはOFFにする。
+4. 「このJira課題の状況を教えて」とURLを貼る、または「Confluenceで○○の設計資料を検索して」と入力する。
+
+`/browse/TEST-123` と `/pages/viewpage.action?pageId=123` 形式のURLに対応する。Jiraの状態・説明・コメント・親子／関連課題、Confluenceの本文・表・コメント・Jiraマクロの参照情報を読み、AIが出典リンク付きで回答する。Jiraマクロの検索式は `jira_search` の `jql` 引数で検索できる。リンク先本文や検索の続きはAIが必要に応じて追加取得する。
+
+取得した情報は**チャットで選択したAI**へ送られる。Azure限定の制約はなく、接続先とAIの組み合わせはユーザーが管理する。認証情報はツール定義・ツール結果には含めず、既存の暗号化保存処理を使用する。既存Confluenceの認証設定も共用する。
+
+公開Web検索の設定は維持される。社内参照ツールの失敗時に公開検索へ自動フォールバックする処理は設けていないが、公開検索自体を強制的に禁止する機能ではない。社内情報だけで回答させる場合は、Web検索トグルと `web_search` ツールをOFFにする。
+
+取得範囲は検索10件、本文2万文字、コメント最大20件。Confluenceコメントは最大500件を走査して新しい順に選ぶため、500件を超える場合は全体の最新20件とは限らない。結果には省略・未取得を表示する。1ツールの結果が4万文字を超える場合も省略する。制限値は `CONFIG.ENTERPRISE` で管理する。編集・投稿・添付ファイルの本文解析・ナレッジベースへの自動登録は行わない。
+
+接続方式はJira REST API v2／Confluence REST API v1（Server／Data Center系）。API仕様は [Jiraの課題API](https://developer.atlassian.com/server/jira/platform/rest/v10005/api-group-issue/) と [Confluenceの子コンテンツAPI](https://developer.atlassian.com/server/confluence/rest/v9219/api-group-child-content/) を参照。実サーバーの互換性、SSO環境でのAPI認証可否は接続テストで確認する。ChatBotサーバー側に社内ネットワーク／VPNへの接続が必要。証明書エラーは社内CAの信頼設定を確認し、証明書検証は無効化しない。
+
+開発時は `node Tools/Preview-Enterprise.cjs` で合成データだけを使う検証サーバーを起動できる。表示されたURLで設定画面を、`/enterprise-check` で検索・本文抽出を確認する。会社環境でJira課題とConfluenceページを各1件以上参照し、実画面と回答を照合して実接続を検証する。
 
 ### Codex（ファイル作成・コマンド実行）
 

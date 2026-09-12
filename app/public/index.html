@@ -41,6 +41,7 @@
     <link rel="stylesheet" href="css/components/rag/confluence-settings.css">
     <link rel="stylesheet" href="css/components/artifact/artifact-panel.css">
     <link rel="stylesheet" href="css/components/tools/tool-settings.css">
+    <link rel="stylesheet" href="css/components/settings/enterprise-settings.css">
     <link rel="stylesheet" href="css/components/codex/codex.css">
     <link rel="stylesheet" href="css/components/workspace/workspace.css">
     <link rel="stylesheet" href="css/tools.css">
@@ -115,6 +116,7 @@
                         <button id="openPromptManager">ユーザープロンプト管理</button>
                         <button id="openKnowledgeBase">ナレッジベース (RAG)</button>
                         <button id="openToolSettings">ツール設定</button>
+                        <button id="openEnterpriseSettings">社内情報連携</button>
                         <button id="openWorkspace">ワークスペース (Codex)</button>
                         <button id="openApiSettings">API設定</button>
                     </div>
@@ -769,9 +771,11 @@
 
     <!-- Core -->
     <script src="js/core/config.js"></script>
+    <script src="js/core/enterpriseConfig.js"></script>
     <script src="js/core/keyboardShortcuts.js"></script>
     <script src="js/utils/cryptoHelper.js"></script>
     <script src="js/core/storage.js"></script>
+    <script src="js/core/enterpriseClient.js"></script>
 
     <!-- Core -->
     <script src="js/core/uiCache.js"></script>
@@ -811,6 +815,10 @@
     <!-- 情報取得・実行系ツール（モデルが必要に応じて呼ぶ） -->
     <script src="js/core/tools/builtin/webSearchTool.js"></script>
     <script src="js/core/tools/builtin/urlFetchTool.js"></script>
+    <script src="js/core/tools/builtin/jiraSearchTool.js"></script>
+    <script src="js/core/tools/builtin/jiraGetIssueTool.js"></script>
+    <script src="js/core/tools/builtin/confluenceSearchTool.js"></script>
+    <script src="js/core/tools/builtin/confluenceGetPageTool.js"></script>
     <script src="js/core/tools/builtin/ragSearchTool.js"></script>
     <script src="js/core/tools/builtin/calculatorTool.js"></script>
     <script src="js/core/tools/builtin/codeExecuteTool.js"></script>
@@ -863,6 +871,7 @@
     <script src="js/modals/promptManager/promptManagerModal.js"></script>
     <script src="js/modals/knowledgeBase/knowledgeBaseModal.js"></script>
     <script src="js/modals/toolSettings/toolSettingsModal.js"></script>
+    <script src="js/modals/enterprise/enterpriseSettingsModal.js"></script>
     <script src="js/modals/workspace/workspaceModal.js"></script>
 
     <!-- Monaco Editor コントローラー -->
