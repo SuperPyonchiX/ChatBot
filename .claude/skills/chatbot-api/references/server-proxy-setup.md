@@ -10,7 +10,7 @@
 | `createProxyMiddleware` | `/responses/*` | api.openai.com |
 | `createProxyMiddleware` | `/anthropic/*` | api.anthropic.com |
 | `createProxyMiddleware` | `/gemini/*` | generativelanguage.googleapis.com |
-| `app.post` | `/azure-openai` | リクエストボディの endpoint（動的） |
+| `app.post` | `/azure-openai` | リクエストボディの `targetUrl`（動的、Responses / Chat Completions共通） |
 | `app.post` | `/openai-embeddings` | api.openai.com |
 | `app.post` | `/azure-openai-embeddings` | 動的 |
 | `app.post` | `/confluence-proxy` | ボディの `targetUrl`（動的、認証ヘッダ組み替え） |

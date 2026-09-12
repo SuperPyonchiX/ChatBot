@@ -109,6 +109,10 @@ class AIAPI {
 
         // API呼び出し関数を定義
         const executeAPICall = async () => {
+            if (window.apiSettings?.apiType === 'azure' &&
+                window.apiSettings.azureResponsesEndpoint && window.CONFIG.MODELS.OPENAI.includes(model)) {
+                return await ResponsesAPI.getInstance.callResponsesAPI(messages, model, attachments, options);
+            }
             // Web検索が有効でResponses API対応モデルの場合はResponses APIを使用
             if (options.enableWebSearch && this.#isWebSearchCompatibleModel(model)) {
                 return await ResponsesAPI.getInstance.callResponsesAPI(messages, model, attachments, options);

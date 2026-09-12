@@ -145,7 +145,11 @@ ChatBot/
 	- モデル: gpt-4o-mini, gpt-4o, gpt-5-mini, gpt-5, gpt-5.2
 - Azure OpenAI
 	- APIキーを入力
-	- 各モデルのデプロイメントエンドポイントURLを入力（モデルごとにフィールドあり）
+	- 「Responses API エンドポイントURL（共通）」に `/openai/responses?api-version=2025-04-01-preview` まで含む完全なURLを入力。APIM経由のパス・クエリもそのまま使用する
+	- 利用するモデルの「デプロイ名」を入力。本文の `model` にこの名前を送る（URLには追加しない）
+	- 共通URLを設定すると、Web検索OFFでもResponses APIを利用する。認証は `api-key` ヘッダー
+	- 共通URLが空なら「従来の Chat Completions 設定」のモデル別URLを使用する。RAG用エンドポイントは別設定
+	- URL内の改行は除去するが、文字は置換しない。コピー元に `ı` などがある場合は実際のURLと照合する
 - Claude（Anthropic）
 	- APIキーを入力（通信はローカルプロキシ経由で `http://localhost:50000/anthropic/v1/messages` へ）
 - Gemini（Google）

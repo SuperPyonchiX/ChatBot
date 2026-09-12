@@ -35,6 +35,20 @@ class ModalHandlers {
         
         // 現在の設定を取得（既存のAPIキーを保持）
         const currentSettings = Storage.getInstance.loadApiSettings();
+        const responsesInput = document.getElementById('azureResponsesEndpoint');
+        let responsesEndpoint = '';
+        if (window.Elements.azureRadio.checked && window.Elements.openaiSystemRadio.checked) {
+            try {
+                responsesEndpoint = ResponsesAPI.getInstance.normalizeAzureEndpoint(responsesInput?.value || '');
+                responsesInput.setCustomValidity('');
+            } catch (error) {
+                console.error('[ModalHandlers] Azure設定検証エラー:', error);
+                responsesInput.setCustomValidity(error.message);
+                responsesInput.reportValidity();
+                responsesInput.oninput = () => responsesInput.setCustomValidity('');
+                return;
+            }
+        }
         
         // API系統を判定
         if (window.Elements.geminiSystemRadio.checked) {
@@ -60,6 +74,11 @@ class ModalHandlers {
             // OpenAI系を選択 - OpenAI または Azure OpenAI を判定
             if (window.Elements.azureRadio.checked) {
                 window.AppState.apiSettings.apiType = 'azure';
+                window.AppState.apiSettings.azureResponsesEndpoint = responsesEndpoint;
+                window.AppState.apiSettings.azureDeployments = {};
+                document.querySelectorAll('#azureModelDeployments input[data-model]').forEach(element => {
+                    window.AppState.apiSettings.azureDeployments[element.dataset.model] = element.value.trim();
+                });
 
                 // Azure OpenAI APIキーとエンドポイントを更新
                 if (window.Elements.azureApiKeyInput) {

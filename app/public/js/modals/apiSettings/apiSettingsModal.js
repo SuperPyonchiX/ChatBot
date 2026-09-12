@@ -67,6 +67,25 @@ class ApiSettingsModal {
         // Azure設定は apiType に関わらず先に反映しておく
         // （openai で開いてから azure に切り替えて保存したときに空で上書きされるのを防ぐ）
         this.#renderAzureEndpointFields(apiSettings.azureEndpoints);
+        const responsesEndpoint = document.getElementById('azureResponsesEndpoint');
+        responsesEndpoint.value = apiSettings.azureResponsesEndpoint || '';
+        responsesEndpoint.placeholder = window.CONFIG.AIAPI.AZURE_RESPONSES_ENDPOINT_PLACEHOLDER;
+        const deployments = document.getElementById('azureModelDeployments');
+        deployments.replaceChildren();
+        window.CONFIG.MODELS.OPENAI.filter(Boolean).forEach(model => {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            const label = document.createElement('label');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.id = `azureDeployment-${model}`;
+            input.dataset.model = model;
+            input.value = apiSettings.azureDeployments?.[model] || '';
+            label.htmlFor = input.id;
+            label.textContent = `${model} デプロイ名:`;
+            group.append(label, input);
+            deployments.appendChild(group);
+        });
 
         const embeddingEndpoint = document.getElementById('azureEndpointEmbedding');
         if (embeddingEndpoint) {

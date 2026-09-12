@@ -33,6 +33,8 @@
  * @property {string} [azureApiKey] - Azure OpenAI APIキー (暗号化済み)
  * @property {string} [claudeApiKey] - Claude APIキー (暗号化済み)
  * @property {string} [geminiApiKey] - Gemini APIキー (暗号化済み)
+ * @property {string} [azureResponsesEndpoint] - Azure Responses API共通URL
+ * @property {Object.<string, string>} [azureDeployments] - モデル別デプロイ名
  * @property {Object.<string, string>} [azureEndpoints] - Azure OpenAIエンドポイント設定
  */
 
@@ -114,6 +116,7 @@ window.CONFIG = {
 
         // Azure OpenAI API バージョン
         AZURE_API_VERSION: '2023-05-15',
+        AZURE_RESPONSES_ENDPOINT_PLACEHOLDER: 'https://your-resource.openai.azure.com/openai/responses?api-version=2025-04-01-preview',
 
         // Azure エンドポイント入力欄のプレースホルダー
         AZURE_ENDPOINT_PLACEHOLDER: 'https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15',
@@ -224,6 +227,8 @@ window.CONFIG = {
             CLAUDE_API_KEY: 'claudeApiKey',
             API_TYPE: 'apiType',
             AZURE_ENDPOINT_PREFIX: 'azureEndpoint_',
+            AZURE_RESPONSES_ENDPOINT: 'azureResponsesEndpoint',
+            AZURE_DEPLOYMENTS: 'azureDeployments',
             SYSTEM_PROMPT: 'systemPrompt',
             SYSTEM_PROMPT_TEMPLATES: 'systemPromptTemplates',
             CATEGORY_STATES: 'categoryStates',

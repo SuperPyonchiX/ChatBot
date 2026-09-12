@@ -145,6 +145,8 @@ class Storage {
             apiType: this.getItem(window.CONFIG.STORAGE.KEYS.API_TYPE, window.CONFIG.STORAGE.DEFAULT_API_TYPE),
             // @ts-ignore - azureEndpointsは動的に構築されるオブジェクト
             azureEndpoints,
+            azureResponsesEndpoint: this.getItem(window.CONFIG.STORAGE.KEYS.AZURE_RESPONSES_ENDPOINT, ''),
+            azureDeployments: this.getItem(window.CONFIG.STORAGE.KEYS.AZURE_DEPLOYMENTS, {}, true),
             claudeWebSearchSettings: this.getClaudeWebSearchSettings()
         };
     }
@@ -171,6 +173,12 @@ class Storage {
             this.saveClaudeWebSearchSettings(apiSettings.claudeWebSearchSettings);
         }
 
+        if (apiSettings.azureResponsesEndpoint !== undefined) {
+            this.setItem(window.CONFIG.STORAGE.KEYS.AZURE_RESPONSES_ENDPOINT, apiSettings.azureResponsesEndpoint);
+        }
+        if (apiSettings.azureDeployments !== undefined) {
+            this.setItem(window.CONFIG.STORAGE.KEYS.AZURE_DEPLOYMENTS, apiSettings.azureDeployments);
+        }
         if (apiSettings.azureEndpoints) {
             // AzureエンドポイントはOpenAIモデルのみに適用
             window.CONFIG.MODELS.OPENAI.forEach(model => {
@@ -614,7 +622,8 @@ class Storage {
     #encryptSensitiveData(key, value) {
         const sensitiveKeys = [
             window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY,
-            window.CONFIG.STORAGE.KEYS.AZURE_API_KEY
+            window.CONFIG.STORAGE.KEYS.AZURE_API_KEY,
+            window.CONFIG.STORAGE.KEYS.AZURE_RESPONSES_ENDPOINT
         ];
         
         if (key.startsWith(window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX)) {
@@ -637,7 +646,8 @@ class Storage {
     #decryptSensitiveData(key, value) {
         const sensitiveKeys = [
             window.CONFIG.STORAGE.KEYS.OPENAI_API_KEY,
-            window.CONFIG.STORAGE.KEYS.AZURE_API_KEY
+            window.CONFIG.STORAGE.KEYS.AZURE_API_KEY,
+            window.CONFIG.STORAGE.KEYS.AZURE_RESPONSES_ENDPOINT
         ];
         
         if (key.startsWith(window.CONFIG.STORAGE.KEYS.AZURE_ENDPOINT_PREFIX)) {

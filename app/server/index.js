@@ -140,17 +140,22 @@ app.use('/gemini', createProxyMiddleware({
 app.post('/azure-openai', express.json({ limit: '10mb' }), async (req, res) => {
     const { targetUrl, apiKey, body } = req.body;
 
-    if (!targetUrl || !apiKey) {
+    if (!targetUrl || !apiKey || !body) {
         return res.status(400).json({
-            error: { message: 'targetUrlとapiKeyは必須です' }
+            error: { message: 'targetUrlとapiKeyとbodyは必須です' }
         });
     }
 
     console.log(`[Azure OpenAI] POST ${targetUrl}`);
 
+    const controller = new AbortController();
+    const abortUpstream = () => controller.abort();
+    res.on('close', abortUpstream);
+
     try {
         const response = await fetch(targetUrl, {
             method: 'POST',
+            signal: controller.signal,
             headers: {
                 'api-key': apiKey,
                 'Content-Type': 'application/json'
@@ -161,6 +166,7 @@ app.post('/azure-openai', express.json({ limit: '10mb' }), async (req, res) => {
         // ストリーミングレスポンスの場合
         const contentType = response.headers.get('content-type');
         if (body.stream && contentType && contentType.includes('text/event-stream')) {
+            res.status(response.status);
             res.setHeader('Content-Type', 'text/event-stream');
             res.setHeader('Cache-Control', 'no-cache');
             res.setHeader('Connection', 'keep-alive');
@@ -173,23 +179,25 @@ app.post('/azure-openai', express.json({ limit: '10mb' }), async (req, res) => {
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) {
-                        res.end();
+                        res.end(decoder.decode());
                         break;
                     }
                     res.write(decoder.decode(value, { stream: true }));
                 }
             };
 
-            pump().catch(err => {
+            await pump().catch(err => {
                 console.error('[Azure OpenAI] ストリーミングエラー:', err.message);
-                res.end();
+                res.destroy(err);
             });
         } else {
             // 通常のJSONレスポンス
-            const data = await response.json();
-            res.status(response.status).json(data);
+            const data = await response.text();
+            if (contentType) res.setHeader('Content-Type', contentType);
+            res.status(response.status).send(data);
         }
     } catch (error) {
+        if (controller.signal.aborted) return;
         console.error('[Azure OpenAI] プロキシエラー:', error.message);
         res.status(500).json({
             error: {
@@ -197,6 +205,8 @@ app.post('/azure-openai', express.json({ limit: '10mb' }), async (req, res) => {
                 details: error.message
             }
         });
+    } finally {
+        res.off('close', abortUpstream);
     }
 });
 

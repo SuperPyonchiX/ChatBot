@@ -52,3 +52,13 @@ description: ChatBotプロジェクトに新しいAIプロバイダを組み込�
 | `references/api-class-template.md` | 手順3でクラスを書くとき |
 | `references/server-proxy-setup.md` | 手順2でプロキシを足すとき |
 | `references/streaming-implementation.md` | SSE ストリーミングを実装するとき |
+
+
+## Azure Responses API の設定と検証
+
+- Azure の通常チャットは `azureResponsesEndpoint`（共通の完全URL）が設定されていれば Responses API を使用する。`azureDeployments[model]` を本文の `model` に設定し、URLのパス・クエリは保持する。
+- 設定の追加時は `config.js` の型・保存キー、`storage.js`、`apiSettingsModal.js` の表示、`modalHandlers.js` の保存を揃える。デプロイ名マップは JSON として読み戻す。
+- `apiType` で OpenAI / Azure を選ぶ。保存済み Azure 設定が存在するだけで OpenAI の送信先を変更しない。
+- 共通URLが空のときだけ従来の `azureEndpoints[model]` を使用する。RAG用のエンドポイントは別設定。
+- `/azure-openai` は `{ targetUrl, apiKey, body }` を受け取り、`api-key` 認証で転送する。
+- 回帰確認: リポジトリ直下で `node --test tests/azure-responses.test.cjs`。続けてブラウザで保存・再読み込み・通常チャットを確認する。
