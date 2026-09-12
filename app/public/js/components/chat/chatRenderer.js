@@ -7,11 +7,9 @@ class ChatRenderer {
     // シングルトンインスタンス
     static #instance = null;
 
-    /** 単語分割器（生成コストが高いので使い回す） */
-    #segmenter = null;
-
     /** 描画待ちのストリーミング要求（コンテナごとに1件だけ保持する） */
     #pendingRenders = new WeakMap();
+    #fadeStates = new WeakMap();
 
     /**
      * シングルトンインスタンスを取得します
@@ -79,9 +77,10 @@ class ChatRenderer {
      * @param {HTMLElement} chatMessages - メッセージを表示する親DOM要素
      * @param {Attachment[]} [attachments=[]] - 添付ファイルの配列
      * @param {number|null} [timestamp=null] - メッセージのタイムスタンプ、nullの場合は現在時刻を使用
+     * @param {boolean} [animate=false] - 新規送信時だけ入場アニメーションを適用する
      * @returns {Promise<void>}
      */
-    async addUserMessage(message, chatMessages, attachments = [], timestamp = null) {
+    async addUserMessage(message, chatMessages, attachments = [], timestamp = null, animate = false) {
         if (!chatMessages) return;
 
         const msgTimestamp = timestamp || Date.now();
@@ -119,6 +118,13 @@ class ChatRenderer {
         bodyDiv.appendChild(actionsDiv);
 
         messageDiv.appendChild(bodyDiv);
+        if (animate) {
+            const motion = window.CONFIG.UI.STREAMING;
+            messageDiv.style.setProperty('--stream-token-fade-duration', `${motion.FADE_DURATION_MS}ms`);
+            messageDiv.style.setProperty('--stream-enter-distance', `${motion.ENTER_DISTANCE_PX}px`);
+            messageDiv.classList.add('message-enter');
+            messageDiv.addEventListener('animationend', () => messageDiv.classList.remove('message-enter'), { once: true });
+        }
         fragment.appendChild(messageDiv);
         chatMessages.appendChild(fragment);
 
@@ -258,6 +264,7 @@ class ChatRenderer {
      */
     addStreamingBotMessage(chatMessages, timestamp = null) {
         if (!chatMessages) return null;
+        const follow = this.#isNearBottom(chatMessages);
 
         const msgTimestamp = timestamp || Date.now();
         const provider = this.#getCurrentProvider();
@@ -288,7 +295,7 @@ class ChatRenderer {
         messageDiv.classList.add('streaming');
 
         chatMessages.appendChild(messageDiv);
-        this.#smoothScrollToBottom(chatMessages);
+        if (follow) chatMessages.scrollTop = chatMessages.scrollHeight;
 
         return {
             messageDiv: messageDiv,
@@ -570,7 +577,7 @@ class ChatRenderer {
      * @returns {Promise<void>}
      */
     async updateStreamingBotMessage(container, chunk, currentFullText) {
-        if (!container) return;
+        if (!container?.isConnected || container.dataset.streamClosed === 'true') return;
 
         // チャンクは1秒間に何十回も届くが、描画はフレームに1回で足りる。
         // 保留中の要求は最新テキストで上書きし、まとめて1回だけ描画する
@@ -586,7 +593,7 @@ class ChatRenderer {
                 // finalize などで取り消された場合は描画しない。
                 // rAF は登録済みだと止められないので、ここで自分の要求が
                 // まだ生きているかを確認する
-                if (this.#pendingRenders.get(container) !== entry) {
+                if (this.#pendingRenders.get(container) !== entry || !container.isConnected || container.dataset.streamClosed === 'true') {
                     resolve();
                     return;
                 }
@@ -615,18 +622,17 @@ class ChatRenderer {
             const renderedHTML = await Markdown.getInstance.renderMarkdown(currentFullText);
 
             // 変換の間に新しいチャンクが来ていたら、古い結果で上書きしない
-            if (Number(container.dataset.renderSeq) !== seq) return;
+            if (Number(container.dataset.renderSeq) !== seq || !container.isConnected || container.dataset.streamClosed === 'true') return;
 
             // 本文が出るので待機インジケーターを隠す（2回目以降は即座に戻る）
             const messageDiv = container.closest('.message');
-            if (messageDiv) StreamingIndicator.getInstance.onBodyChunk(messageDiv);
-
             const chatMessages = container.closest('.chat-messages');
             if (chatMessages) {
-                const isNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
+                const isNearBottom = this.#isNearBottom(chatMessages);
+                if (messageDiv && currentFullText.trim()) StreamingIndicator.getInstance.onBodyChunk(messageDiv);
                 container.innerHTML = renderedHTML;
 
-                this.#fadeInNewTail(container, currentFullText);
+                this.#fadeInNewTail(container);
 
                 if (typeof Prism !== 'undefined') {
                     Prism.highlightAllUnder(container);
@@ -637,102 +643,67 @@ class ChatRenderer {
                 }
             }
         } catch (e) {
+            if (Number(container.dataset.renderSeq) !== seq || !container.isConnected || container.dataset.streamClosed === 'true') return;
             console.error('ストリーミング中のMarkdown解析エラー:', e);
             container.textContent = currentFullText;
+            if (currentFullText.trim()) StreamingIndicator.getInstance.onBodyChunk(container.closest('.message'));
         }
     }
 
     /**
-     * 新しく届いた末尾の文字だけをフェードイン対象として包みます
-     *
-     * 本文は毎回 innerHTML を丸ごと差し替えるため、前回付けた span は既に消えています。
-     * つまり「末尾だけ包む」ことで、それより前は最初から不透明のまま残り、
-     * アニメーションが再生され直すことも DOM が累積することもありません。
-     * 走査量は届いたチャンクの長さに比例し、本文全体の長さには比例しません。
+     * 新着文字とフェード途中の文字を開始時刻つきで包み直します。
+     * 表示済み文字列の共通部分は時刻を維持し、完了した範囲は破棄します。
      *
      * @param {HTMLElement} container - 本文コンテナ（.markdown-content）
-     * @param {string} currentFullText - これまでに受信したテキスト全体
      * @returns {void}
      */
-    #fadeInNewTail(container, currentFullText) {
-        const streaming = window.CONFIG?.UI?.STREAMING ?? {};
-        const prevLen = Number(container.dataset.prevLen) || 0;
-        const fullLen = currentFullText?.length ?? 0;
-        container.dataset.prevLen = String(fullLen);
-
-        if (streaming.WORD_FADE_ENABLED === false) return;
-        if (this.#prefersReducedMotion()) return;
-
-        let remaining = Math.min(fullLen - prevLen, streaming.MAX_FADE_CHARS ?? 120);
-        if (remaining <= 0) return;
-
-        try {
-            // コードブロックや退避したツール結果の中は触らない（Prism の解析と競合するため）
-            const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
-                acceptNode(node) {
-                    return node.parentElement?.closest('pre, code, .mermaid, .tool-result-text')
-                        ? NodeFilter.FILTER_REJECT
-                        : NodeFilter.FILTER_ACCEPT;
-                }
-            });
-
-            const textNodes = [];
-            while (walker.nextNode()) textNodes.push(walker.currentNode);
-
-            // 末尾から必要な文字数ぶんだけ遡る
-            for (let i = textNodes.length - 1; i >= 0 && remaining > 0; i--) {
-                const node = textNodes[i];
-                const len = node.data.length;
-                if (len === 0) continue;
-
-                const target = len <= remaining ? node : node.splitText(len - remaining);
-                remaining -= target.data.length;
-                this.#wrapAsTokens(target);
+    #fadeInNewTail(container) {
+        const streaming = window.CONFIG.UI.STREAMING;
+        if (!streaming.WORD_FADE_ENABLED || this.#prefersReducedMotion()) {
+            this.#fadeStates.delete(container);
+            return;
+        }
+        // Markdownの記号数ではなく、実際に表示した文字の位置と開始時刻を保存する。
+        const text = container.textContent || '';
+        const previous = this.#fadeStates.get(container) || { text: '', ranges: [] };
+        const now = performance.now();
+        let common = 0;
+        while (common < text.length && common < previous.text.length && text[common] === previous.text[common]) common++;
+        const ranges = previous.ranges
+            .filter(r => now - r.time < streaming.FADE_DURATION_MS && r.start < common)
+            .map(r => ({ ...r, end: Math.min(r.end, common) }));
+        if (text.length > common) ranges.push({
+            start: Math.max(common, text.length - streaming.MAX_FADE_CHARS), end: text.length, time: now
+        });
+        this.#fadeStates.set(container, { text, ranges });
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        let offset = 0;
+        for (const node of nodes) {
+            const start = offset;
+            offset += node.textContent.length;
+            if (node.parentElement?.closest('pre, code, .katex, math, mjx-container, .MathJax, .mermaid, svg, .tool-download-card, .tool-image-preview, .tool-analysis-result, .tool-result-text')) continue;
+            const active = ranges.filter(r => r.start < offset && r.end > start);
+            if (!active.length) continue;
+            const fragment = document.createDocumentFragment();
+            const value = node.textContent;
+            let cursor = 0;
+            for (const range of active) {
+                const from = Math.max(range.start - start, 0);
+                const to = Math.min(range.end - start, value.length);
+                fragment.append(value.slice(cursor, from));
+                const span = document.createElement('span');
+                span.className = 'stream-token';
+                span.textContent = value.slice(from, to);
+                // DOMを交換しても、同じ文字は同じ時点の不透明度から続ける。
+                span.style.animationDelay = `${-(now - range.time)}ms`;
+                fragment.appendChild(span);
+                cursor = to;
             }
-        } catch (e) {
-            // 包めなくても本文は既に表示されている。アニメーションを諦めるだけに留める
-            console.warn('[ChatRenderer] ストリーミングのフェード処理をスキップしました:', e);
+            fragment.append(value.slice(cursor));
+            node.replaceWith(fragment);
         }
-    }
-
-    /**
-     * テキストノードを単語ごとの span に置き換えます
-     * 日本語は語間に空白が無いため Intl.Segmenter を使い、
-     * 使えない環境では短い固定長で区切ります
-     * @param {Text} textNode - 対象のテキストノード
-     * @returns {void}
-     */
-    #wrapAsTokens(textNode) {
-        const text = textNode.data;
-        if (!text) return;
-
-        const fragment = document.createDocumentFragment();
-        for (const token of this.#segmentText(text)) {
-            const span = document.createElement('span');
-            span.className = 'stream-token';
-            span.textContent = token;
-            fragment.appendChild(span);
-        }
-        textNode.replaceWith(fragment);
-    }
-
-    /**
-     * テキストを単語単位に分割します
-     * @param {string} text - 分割対象
-     * @returns {string[]} 分割後のトークン
-     */
-    #segmentText(text) {
-        if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
-            if (!this.#segmenter) {
-                this.#segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
-            }
-            return [...this.#segmenter.segment(text)].map(s => s.segment);
-        }
-
-        // フォールバック: 2文字ずつ
-        const chunks = [];
-        for (let i = 0; i < text.length; i += 2) chunks.push(text.slice(i, i + 2));
-        return chunks;
     }
 
     /**
@@ -789,8 +760,7 @@ class ChatRenderer {
         if (!messageDiv || !container) return;
 
         // 保留中のストリーミング描画を捨てる（完了後に古い本文で上書きされないように）
-        this.#pendingRenders.delete(container);
-        container.dataset.renderSeq = String((Number(container.dataset.renderSeq) || 0) + 1);
+        this.cancelStreamingMessage(messageDiv);
 
         // 生成が終わったのでカーソルを止め、待機インジケーターを取り除く
         messageDiv.classList.remove('streaming');
@@ -812,6 +782,9 @@ class ChatRenderer {
 
             // 回答本文のみを更新（思考過程コンテナは保持される）
             const renderedHTML = await Markdown.getInstance.renderMarkdown(fullText);
+            if (!container.isConnected) return;
+            const chatMessages = container.closest('.chat-messages');
+            const follow = chatMessages && this.#isNearBottom(chatMessages);
             container.innerHTML = renderedHTML;
 
             // ツール結果要素を再追加
@@ -845,11 +818,34 @@ class ChatRenderer {
 
             // アーティファクト検出と表示
             this.#detectAndDisplayArtifacts(fullText);
+            if (follow) chatMessages.scrollTop = chatMessages.scrollHeight;
 
         } catch (e) {
             console.error('ストリーミング完了時のMarkdown解析エラー:', e);
             container.textContent = fullText;
         }
+    }
+
+    /**
+     * 停止・エラー・会話切り替え時に描画待ちと演出を破棄する。
+     * @param {HTMLElement} messageDiv - 終了対象のメッセージ
+     * @returns {void}
+     */
+    cancelStreamingMessage(messageDiv) {
+        const container = messageDiv?.querySelector('.markdown-content');
+        if (container) {
+            this.#pendingRenders.delete(container);
+            this.#fadeStates.delete(container);
+            container.dataset.streamClosed = 'true';
+            container.dataset.renderSeq = String((Number(container.dataset.renderSeq) || 0) + 1);
+            container.querySelectorAll('.stream-token').forEach(el => el.replaceWith(...el.childNodes));
+        }
+        messageDiv?.classList.remove('streaming');
+        StreamingIndicator.getInstance.finish(messageDiv);
+    }
+
+    #isNearBottom(container) {
+        return container.scrollHeight - container.scrollTop - container.clientHeight < window.CONFIG.UI.STREAMING.SCROLL_THRESHOLD_PX;
     }
 
     /**

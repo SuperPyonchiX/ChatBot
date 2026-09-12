@@ -156,6 +156,9 @@ class ChatHistory {
     async displayConversation(conversation, chatMessages, modelSelect) {
         if (!conversation || !chatMessages) return;
         
+        chatMessages.querySelectorAll('.message.streaming').forEach(message => {
+            ChatRenderer.getInstance.cancelStreamingMessage(message);
+        });
         chatMessages.innerHTML = '';
         
         for (const message of conversation.messages) {

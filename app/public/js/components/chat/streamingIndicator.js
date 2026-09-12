@@ -2,9 +2,10 @@
  * streamingIndicator.js
  * AI応答の待機中インジケーターを管理します
  *
- * 表示は3状態を行き来します。
- *   waiting … 脈打つ丸だけ（何をしているか語れないとき）
- *   busy    … 丸 + シマーテキスト（ツール実行・Web検索など語れるとき）
+ * 表示は4状態を行き来します。
+ *   waiting … リング + 通常待機ラベル
+ *   busy    … リング + 実際の処理ラベル
+ *   leaving … 本文へ切り替える短いフェード
  *   hidden  … 非表示（本文のストリーミングが始まったあと）
  *
  * インジケーターは .markdown-content の「外」に置きます。中に置くと
@@ -15,6 +16,7 @@ class StreamingIndicator {
 
     /** 現在ストリーミング中のメッセージ要素（単一ストリーム前提） */
     #activeMessage = null;
+    #exits = new WeakMap();
 
     /**
      * シングルトンインスタンスを取得します
@@ -47,6 +49,18 @@ class StreamingIndicator {
         const existing = this.#find(messageDiv);
         if (existing) return existing;
 
+        if (this.#activeMessage && this.#activeMessage !== messageDiv) {
+            this.finish(this.#activeMessage);
+        }
+        const motion = window.CONFIG.UI.STREAMING;
+        for (const [name, value] of Object.entries({
+            '--stream-ring-size': `${motion.RING_SIZE_PX}px`,
+            '--stream-ring-duration': `${motion.RING_DURATION_MS}ms`,
+            '--stream-shimmer-duration': `${motion.SHIMMER_DURATION_MS}ms`,
+            '--stream-exit-duration': `${motion.EXIT_DURATION_MS}ms`,
+            '--stream-token-fade-duration': `${motion.FADE_DURATION_MS}ms`
+        })) messageDiv.style.setProperty(name, value);
+
         const indicator = document.createElement('div');
         indicator.className = 'stream-indicator';
         indicator.dataset.state = 'waiting';
@@ -54,10 +68,12 @@ class StreamingIndicator {
         indicator.setAttribute('aria-live', 'polite');
 
         const dot = document.createElement('span');
-        dot.className = 'stream-dot';
+        dot.className = 'stream-ring';
+        dot.setAttribute('aria-hidden', 'true');
 
         const label = document.createElement('span');
         label.className = 'stream-label';
+        label.textContent = motion.LABELS.WAITING;
 
         indicator.appendChild(dot);
         indicator.appendChild(label);
@@ -80,13 +96,15 @@ class StreamingIndicator {
         const indicator = this.#find(messageDiv);
         if (!indicator || !text) return;
 
+        this.#cancelExit(indicator);
+
         const label = indicator.querySelector('.stream-label');
-        if (label) label.textContent = text;
+        if (label && label.textContent !== text) label.textContent = text;
         indicator.dataset.state = 'busy';
     }
 
     /**
-     * ラベルを消して待機状態（丸だけ）に戻します
+     * 標準の待機文言に戻します
      * @param {HTMLElement} messageDiv - 対象のメッセージ要素
      * @returns {void}
      */
@@ -94,8 +112,7 @@ class StreamingIndicator {
         const indicator = this.#find(messageDiv);
         if (!indicator) return;
 
-        const label = indicator.querySelector('.stream-label');
-        if (label) label.textContent = '';
+        this.setLabel(messageDiv, window.CONFIG.UI.STREAMING.LABELS.WAITING);
         indicator.dataset.state = 'waiting';
     }
 
@@ -107,9 +124,21 @@ class StreamingIndicator {
      */
     onBodyChunk(messageDiv) {
         const indicator = this.#find(messageDiv);
-        if (!indicator || indicator.dataset.state === 'hidden') return;
-
-        indicator.dataset.state = 'hidden';
+        if (!indicator || ['hidden', 'leaving'].includes(indicator.dataset.state)) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            indicator.dataset.state = 'hidden';
+            return;
+        }
+        // 絶対配置へ切り替えても、消える文字の位置を変えない。
+        indicator.style.top = `${indicator.offsetTop}px`;
+        indicator.dataset.state = 'leaving';
+        const timer = setTimeout(() => {
+            if (this.#exits.get(indicator) !== timer) return;
+            this.#exits.delete(indicator);
+            indicator.dataset.state = 'hidden';
+            indicator.style.removeProperty('top');
+        }, window.CONFIG.UI.STREAMING.EXIT_DURATION_MS);
+        this.#exits.set(indicator, timer);
     }
 
     /**
@@ -119,7 +148,10 @@ class StreamingIndicator {
      */
     finish(messageDiv) {
         const indicator = this.#find(messageDiv);
-        if (indicator) indicator.remove();
+        if (indicator) {
+            this.#cancelExit(indicator);
+            indicator.remove();
+        }
 
         if (this.#activeMessage === messageDiv) {
             this.#activeMessage = null;
@@ -161,6 +193,12 @@ class StreamingIndicator {
      */
     #find(messageDiv) {
         return messageDiv?.querySelector?.(':scope > .message-body > .message-content > .stream-indicator') ?? null;
+    }
+
+    #cancelExit(indicator) {
+        clearTimeout(this.#exits.get(indicator));
+        this.#exits.delete(indicator);
+        indicator.style.removeProperty('top');
     }
 }
 

@@ -8,7 +8,7 @@
 	- OpenAI: gpt-4o-mini, gpt-4o, gpt-5-mini, gpt-5, gpt-5.2
 	- Claude: claude-opus-4-5, claude-sonnet-4-5, claude-haiku-4-5
 	- Gemini: gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash
-- ストリーミング表示（SSE）と入力中アニメーション
+- ストリーミング表示（SSE）。応答待ちは細いリングと光が流れる「応答を準備中」を表示し、検索・ツール実行時には処理内容へ切り替わります。本文への切り替えと新着テキストは短いフェードでつなぎ、OSの「視差効果を減らす」設定にも対応します。
 - Web検索連携
 	- OpenAI Responses API: gpt-5-mini / gpt-5 / gpt-5.2 で対応
 	- Claude: 全対応モデルでツール呼び出しにより対応

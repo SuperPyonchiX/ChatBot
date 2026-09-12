@@ -1,44 +1,41 @@
-/* ===== 待機インジケーター =====
-   本物の ChatGPT に合わせ、通常の待機は脈打つ小さな丸だけ。
-   ツール実行や Web 検索など「何をしているか語れる」ときだけ、
-   光沢が流れるテキストを添える。 */
+/* 待機 → 本文の切り替え。寸法と時間は CONFIG.UI.STREAMING から継承する。 */
+.message.streaming .message-content { position: relative; }
 
 .stream-indicator {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
     min-height: 24px;
+    opacity: 1;
+    transition: opacity var(--stream-exit-duration) ease-out;
+    pointer-events: none;
 }
 
 .stream-indicator[data-state="hidden"] {
     display: none;
 }
 
-/* ラベルが空のときに余分な隙間を作らない */
-.stream-indicator[data-state="waiting"] .stream-label {
-    display: none;
+.stream-indicator[data-state="leaving"] {
+    position: absolute;
+    inset-inline-start: 0;
+    opacity: 0;
 }
 
-/* ===== 脈打つ丸 ===== */
-.stream-dot {
-    width: var(--stream-dot-size);
-    height: var(--stream-dot-size);
+/* 固定サイズの軌道に、明るい弧だけを回す。 */
+.stream-ring {
+    width: var(--stream-ring-size);
+    height: var(--stream-ring-size);
     flex-shrink: 0;
+    box-sizing: border-box;
     border-radius: 50%;
-    background: var(--stream-dot-color);
-    animation: streamDotPulse var(--stream-dot-duration) ease-in-out infinite;
-    will-change: transform, opacity;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--text-primary);
+    border-right-color: var(--text-secondary);
+    animation: streamRingTurn var(--stream-ring-duration) linear infinite;
 }
 
-@keyframes streamDotPulse {
-    0%, 100% {
-        transform: scale(0.72);
-        opacity: 0.45;
-    }
-    50% {
-        transform: scale(1);
-        opacity: 1;
-    }
+@keyframes streamRingTurn {
+    to { transform: rotate(1turn); }
 }
 
 /* ===== シマーテキスト =====
@@ -61,7 +58,8 @@
     background-clip: text;
     color: transparent;
     animation: streamShimmer var(--stream-shimmer-duration) linear infinite;
-    will-change: background-position;
+    overflow-wrap: anywhere;
+    min-width: 0;
 }
 
 @keyframes streamShimmer {
@@ -79,6 +77,15 @@
     animation: streamTokenIn var(--stream-token-fade-duration) ease-out both;
 }
 
+.message.message-enter {
+    animation: streamMessageIn var(--stream-token-fade-duration) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes streamMessageIn {
+    from { opacity: 0; transform: translateY(var(--stream-enter-distance)); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* ハイコントラストでは背景切り抜きが効かず文字が消えるため単色に戻す */
 @media (forced-colors: active) {
     .stream-label {
@@ -89,7 +96,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .stream-dot {
+    .stream-ring {
         animation: none;
         transform: none;
         opacity: 0.7;
@@ -101,7 +108,8 @@
         animation: none;
     }
 
-    .stream-token {
+    .stream-token, .message.message-enter {
         animation: none;
     }
+    .stream-indicator { transition: none; }
 }

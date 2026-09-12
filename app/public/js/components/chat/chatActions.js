@@ -331,7 +331,7 @@ class ChatActions {
             let displayAttachments = attachments || [];
 
             // ユーザーメッセージを表示
-            await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, displayAttachments, timestamp);
+            await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, displayAttachments, timestamp, true);
 
             // WEB検索の実行判断
             let searchPerformed = false;
@@ -577,7 +577,7 @@ class ChatActions {
         const messageDiv = chatMessages?.querySelector('.message.bot.streaming');
         if (!messageDiv) return;
 
-        StreamingIndicator.getInstance.finish(messageDiv);
+        ChatRenderer.getInstance.cancelStreamingMessage(messageDiv);
         messageDiv.classList.remove('streaming');
 
         const thinkingContainer = messageDiv.querySelector('.thinking-process');
@@ -1038,7 +1038,7 @@ class ChatActions {
         let titleUpdated = false;
         const timestamp = Date.now();
 
-        await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, attachments, timestamp);
+        await ChatRenderer.getInstance.addUserMessage(userText, chatMessages, attachments, timestamp, true);
 
         let attachmentContent = '';
         if (attachments && attachments.length > 0) {

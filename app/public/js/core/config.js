@@ -371,17 +371,25 @@ window.CONFIG = {
 
         // ストリーミング中の待機表示
         STREAMING: {
+            RING_SIZE_PX: 18,
+            RING_DURATION_MS: 1600,
+            SHIMMER_DURATION_MS: 2400,
+            EXIT_DURATION_MS: 160,
+            FADE_DURATION_MS: 180,
+            ENTER_DISTANCE_PX: 4,
+            SCROLL_THRESHOLD_PX: 50,
             // 経過時間を表示し始めるしきい値（ミリ秒）。短い応答でちらつかせない
             ELAPSED_MIN_MS: 3000,
 
-            // 新しく届いたテキストを単語単位でフェードインさせるか
+            // 新しく届いたテキストをフェードインさせるか
             WORD_FADE_ENABLED: true,
 
             // 一度にフェード対象とする最大文字数（大きなチャンクが来たときの保険）
             MAX_FADE_CHARS: 120,
 
-            // 「何をしているか」を示すラベル。語れないときは表示せず丸だけにする
+            // 通常待機と、実際の処理に対応するラベル
             LABELS: {
+                WAITING: '応答を準備中',
                 WEB_SEARCH: 'ウェブを検索しています',
                 WEB_SEARCH_ANALYZE: '検索結果を読んでいます',
                 TOOL_RUNNING: '{name}を実行しています',

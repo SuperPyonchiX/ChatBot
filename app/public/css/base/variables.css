@@ -263,12 +263,8 @@
     --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 
     /* 待機インジケーター（脈打つ丸とシマーテキスト） */
-    --stream-dot-size: 9px;
-    --stream-dot-color: var(--text-primary);
-    --stream-dot-duration: 1.4s;
-    --stream-shimmer-base: #8e8e8e;
-    --stream-shimmer-highlight: #ffffff;
-    --stream-shimmer-duration: 2.2s;
-    --stream-token-fade-duration: 0.32s;
+    --stream-shimmer-base: var(--text-secondary);
+    --stream-shimmer-highlight: var(--text-primary);
+    --stream-shimmer-duration: 2.4s;
     --thinking-collapse-duration: var(--transition-normal);
 }
