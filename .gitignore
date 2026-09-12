@@ -29,3 +29,8 @@ build/
 
 # Codex workspace (generated files)
 app/workspace/
+
+# Local agent settings and verification output
+/.claude/settings.local.json
+/.playwright-mcp/
+/ChatBot.lnk

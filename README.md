@@ -352,3 +352,25 @@ Node.js/Expressプロキシサーバー (port 50000)
 ---
 
 最終更新: 2026年9月
+
+## 開発・エージェント共通運用
+
+Claude / Codex の共通指示は [AGENTS.md](AGENTS.md) に記載しています。Claude は [CLAUDE.md](CLAUDE.md) から参照します。
+プロジェクトスキルは `.agents/skills/` を編集し、次のコマンドで `.claude/skills/` に同期してください。両方を同じコミットに含めます。
+
+```powershell
+powershell -NoProfile -File Tools/Sync-AgentSkills.ps1
+```
+
+検証はリポジトリ直下で実行します。PowerShell 7 では `powershell` を `pwsh` に置き換えます。
+
+```powershell
+# 共通ハーネスと既存の Node.js テストをまとめて実行（Node.js 18 以上）
+powershell -NoProfile -File Tools/Test-Repository.ps1
+
+# 指示の入口・スキル構造・同期状態だけを検査
+powershell -NoProfile -File Tools/Test-AgentHarness.ps1
+```
+
+アプリのテストは `tests/` にあります。UI や API の変更時はブラウザでも対象機能とコンソールエラーを確認してください。
+`.claude/settings.local.json`、`.playwright-mcp/`、`ChatBot.lnk` は各環境のローカルファイルとして扱い、Git 管理から除外します。
