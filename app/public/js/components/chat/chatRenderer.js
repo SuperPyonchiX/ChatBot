@@ -7,6 +7,10 @@ class ChatRenderer {
     // シングルトンインスタンス
     static #instance = null;
 
+    /** 描画待ちのストリーミング要求（コンテナごとに1件だけ保持する） */
+    #pendingRenders = new WeakMap();
+    #fadeStates = new WeakMap();
+
     /**
      * シングルトンインスタンスを取得します
      * @returns {ChatRenderer} ChatRendererのシングルトンインスタンス
@@ -28,6 +32,44 @@ class ChatRenderer {
     }
 
     /**
+     * メッセージの外枠（コンテナ・アバター・ボディ・ヘッダー・コンテンツ）を組み立てる
+     * user / bot の全メッセージ生成が共通で使う骨格
+     * @param {'user'|'bot'} role - メッセージの役割
+     * @param {Object} options - 組み立てオプション
+     * @param {number} options.timestamp - メッセージのタイムスタンプ
+     * @param {string} options.ariaLabel - スクリーンリーダー向けラベル
+     * @param {string|null} [options.provider=null] - bot の場合のプロバイダー名
+     * @param {string|null} [options.rawMessage=null] - dataset に保持する生テキスト。null なら設定しない
+     * @returns {{messageDiv: HTMLElement, bodyDiv: HTMLElement, contentDiv: HTMLElement}} 組み立てた要素
+     */
+    #buildMessageShell(role, { timestamp, ariaLabel, provider = null, rawMessage = null }) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', role);
+        messageDiv.dataset.timestamp = timestamp.toString();
+        if (rawMessage !== null) {
+            messageDiv.dataset.rawMessage = rawMessage;
+        }
+        messageDiv.setAttribute('role', 'region');
+        messageDiv.setAttribute('aria-label', ariaLabel);
+
+        // アバターは AI 側のみ。ユーザーの発言はバブルで判別できるため出さない
+        if (role !== 'user') {
+            const avatar = this.#createAvatar('bot', provider);
+            // 送信者名ヘッダーを廃止したので、プロバイダー名はアバターの title で示す
+            avatar.title = this.#getProviderDisplayName(provider);
+            messageDiv.appendChild(avatar);
+        }
+
+        const bodyDiv = document.createElement('div');
+        bodyDiv.className = 'message-body';
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+
+        return { messageDiv, bodyDiv, contentDiv };
+    }
+
+    /**
      * ユーザーメッセージを追加する
      * ユーザーのメッセージとその添付ファイルをチャット画面に表示します
      * @async
@@ -35,37 +77,21 @@ class ChatRenderer {
      * @param {HTMLElement} chatMessages - メッセージを表示する親DOM要素
      * @param {Attachment[]} [attachments=[]] - 添付ファイルの配列
      * @param {number|null} [timestamp=null] - メッセージのタイムスタンプ、nullの場合は現在時刻を使用
+     * @param {boolean} [animate=false] - 新規送信時だけ入場アニメーションを適用する
      * @returns {Promise<void>}
      */
-    async addUserMessage(message, chatMessages, attachments = [], timestamp = null) {
+    async addUserMessage(message, chatMessages, attachments = [], timestamp = null, animate = false) {
         if (!chatMessages) return;
 
         const msgTimestamp = timestamp || Date.now();
         const fragment = document.createDocumentFragment();
 
-        // メッセージコンテナ作成
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'user');
-        messageDiv.dataset.timestamp = msgTimestamp.toString();
-        messageDiv.dataset.rawMessage = message || '';
-        messageDiv.setAttribute('role', 'region');
-        messageDiv.setAttribute('aria-label', 'あなたのメッセージ');
-
-        // アバター作成
-        const avatarDiv = this.#createAvatar('user');
-        messageDiv.appendChild(avatarDiv);
-
-        // メッセージボディ作成
-        const bodyDiv = document.createElement('div');
-        bodyDiv.className = 'message-body';
-
-        // ヘッダー（名前 + タイムスタンプ）
-        const headerDiv = this.#createMessageHeader('You', msgTimestamp);
-        bodyDiv.appendChild(headerDiv);
-
-        // コンテンツ
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
+        // メッセージの骨格を作成
+        const { messageDiv, bodyDiv, contentDiv } = this.#buildMessageShell('user', {
+            timestamp: msgTimestamp,
+            ariaLabel: 'あなたのメッセージ',
+            rawMessage: message || ''
+        });
 
         try {
             const renderedMarkdown = await Markdown.getInstance.renderMarkdown(message || '');
@@ -92,6 +118,13 @@ class ChatRenderer {
         bodyDiv.appendChild(actionsDiv);
 
         messageDiv.appendChild(bodyDiv);
+        if (animate) {
+            const motion = window.CONFIG.UI.STREAMING;
+            messageDiv.style.setProperty('--stream-token-fade-duration', `${motion.FADE_DURATION_MS}ms`);
+            messageDiv.style.setProperty('--stream-enter-distance', `${motion.ENTER_DISTANCE_PX}px`);
+            messageDiv.classList.add('message-enter');
+            messageDiv.addEventListener('animationend', () => messageDiv.classList.remove('message-enter'), { once: true });
+        }
         fragment.appendChild(messageDiv);
         chatMessages.appendChild(fragment);
 
@@ -114,30 +147,13 @@ class ChatRenderer {
         const msgTimestamp = timestamp || Date.now();
         const provider = this.#getCurrentProvider();
 
-        // メッセージコンテナ作成
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'bot');
-        messageDiv.dataset.timestamp = msgTimestamp.toString();
-        messageDiv.dataset.rawMessage = message || '';
-        messageDiv.setAttribute('role', 'region');
-        messageDiv.setAttribute('aria-label', 'AIからの返答');
-
-        // アバター作成
-        const avatarDiv = this.#createAvatar('bot', provider);
-        messageDiv.appendChild(avatarDiv);
-
-        // メッセージボディ作成
-        const bodyDiv = document.createElement('div');
-        bodyDiv.className = 'message-body';
-
-        // ヘッダー（名前 + タイムスタンプ）
-        const senderName = this.#getProviderDisplayName(provider);
-        const headerDiv = this.#createMessageHeader(senderName, msgTimestamp);
-        bodyDiv.appendChild(headerDiv);
-
-        // コンテンツ
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
+        // メッセージの骨格を作成
+        const { messageDiv, bodyDiv, contentDiv } = this.#buildMessageShell('bot', {
+            timestamp: msgTimestamp,
+            ariaLabel: 'AIからの返答',
+            provider,
+            rawMessage: message || ''
+        });
         const messageContent = document.createElement('div');
         messageContent.className = 'markdown-content';
 
@@ -195,30 +211,13 @@ class ChatRenderer {
         const msgTimestamp = timestamp || Date.now();
         const provider = this.#getCurrentProvider();
 
-        // メッセージコンテナ作成
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'bot');
-        messageDiv.dataset.timestamp = msgTimestamp.toString();
-        messageDiv.dataset.rawMessage = message || '';
-        messageDiv.setAttribute('role', 'region');
-        messageDiv.setAttribute('aria-label', 'AIからの返答');
-
-        // アバター作成
-        const avatarDiv = this.#createAvatar('bot', provider);
-        messageDiv.appendChild(avatarDiv);
-
-        // メッセージボディ作成
-        const bodyDiv = document.createElement('div');
-        bodyDiv.className = 'message-body';
-
-        // ヘッダー
-        const senderName = this.#getProviderDisplayName(provider);
-        const headerDiv = this.#createMessageHeader(senderName, msgTimestamp);
-        bodyDiv.appendChild(headerDiv);
-
-        // コンテンツ
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
+        // メッセージの骨格を作成
+        const { messageDiv, bodyDiv, contentDiv } = this.#buildMessageShell('bot', {
+            timestamp: msgTimestamp,
+            ariaLabel: 'AIからの返答',
+            provider,
+            rawMessage: message || ''
+        });
 
         // 思考過程コンテナを作成（初期状態では非表示）
         const thinkingContainer = this.#createThinkingContainer();
@@ -265,51 +264,38 @@ class ChatRenderer {
      */
     addStreamingBotMessage(chatMessages, timestamp = null) {
         if (!chatMessages) return null;
+        const follow = this.#isNearBottom(chatMessages);
 
         const msgTimestamp = timestamp || Date.now();
         const provider = this.#getCurrentProvider();
 
-        // メッセージコンテナ作成
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'bot');
-        messageDiv.dataset.timestamp = msgTimestamp.toString();
-        messageDiv.setAttribute('role', 'region');
-        messageDiv.setAttribute('aria-label', 'AIからの返答');
-
-        // アバター作成
-        const avatarDiv = this.#createAvatar('bot', provider);
-        messageDiv.appendChild(avatarDiv);
-
-        // メッセージボディ作成
-        const bodyDiv = document.createElement('div');
-        bodyDiv.className = 'message-body';
-
-        // ヘッダー
-        const senderName = this.#getProviderDisplayName(provider);
-        const headerDiv = this.#createMessageHeader(senderName, msgTimestamp);
-        bodyDiv.appendChild(headerDiv);
-
-        // コンテンツ
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
+        // メッセージの骨格を作成
+        const { messageDiv, bodyDiv, contentDiv } = this.#buildMessageShell('bot', {
+            timestamp: msgTimestamp,
+            ariaLabel: 'AIからの返答',
+            provider
+        });
 
         // 思考過程コンテナを作成（初期状態では非表示）
         const thinkingContainer = this.#createThinkingContainer();
         contentDiv.appendChild(thinkingContainer);
 
-        // 回答本文コンテナを作成
+        // 回答本文コンテナを作成（最初のチャンクが来るまでは空）
         const markdownContent = document.createElement('div');
         markdownContent.className = 'markdown-content';
-
-        // 初期状態: Thinking表示
-        markdownContent.innerHTML = this.#formatSystemMessage('Thinking', true);
 
         contentDiv.appendChild(markdownContent);
         bodyDiv.appendChild(contentDiv);
         messageDiv.appendChild(bodyDiv);
 
+        // 待機インジケーターを本文の外に置く。中に置くと本文の innerHTML 置換で消えてしまう
+        StreamingIndicator.getInstance.attach(messageDiv, contentDiv);
+
+        // 生成中は本文末尾に点滅カーソルを出す（CSS の ::after が担当）
+        messageDiv.classList.add('streaming');
+
         chatMessages.appendChild(messageDiv);
-        this.#smoothScrollToBottom(chatMessages);
+        if (follow) chatMessages.scrollTop = chatMessages.scrollHeight;
 
         return {
             messageDiv: messageDiv,
@@ -321,12 +307,15 @@ class ChatRenderer {
 
     /**
      * 思考過程コンテナを作成する
+     * 実行中（running）は現在のステップを1行だけ見せ、
+     * 完了（done）で「実行した処理を見る」の折りたたみに切り替わる
      * @returns {HTMLElement} 思考過程コンテナ要素
      */
     #createThinkingContainer() {
         const container = document.createElement('div');
         container.className = 'thinking-process';
-        container.dataset.collapsed = 'true'; // 初期状態は折りたたみ
+        container.dataset.collapsed = 'true';
+        container.dataset.mode = 'running';
         container.style.display = 'none'; // 思考アイテムがない場合は非表示
 
         // ヘッダー部分
@@ -334,27 +323,36 @@ class ChatRenderer {
         header.className = 'thinking-header';
         header.setAttribute('role', 'button');
         header.setAttribute('aria-expanded', 'false');
-        header.setAttribute('tabindex', '0');
+        // 実行中は開けないのでフォーカスも取らせない
+        header.setAttribute('tabindex', '-1');
 
-        const toggleIcon = document.createElement('span');
-        toggleIcon.className = 'thinking-toggle';
-        toggleIcon.textContent = '▶';
+        // 三角は CSS で描く。textContent は書かない（回転と記号差し替えの二重管理を避ける）
+        const chevron = document.createElement('span');
+        chevron.className = 'thinking-chevron';
+        chevron.setAttribute('aria-hidden', 'true');
 
         const title = document.createElement('span');
         title.className = 'thinking-title';
-        title.textContent = '思考過程';
 
-        header.appendChild(toggleIcon);
+        const elapsed = document.createElement('span');
+        elapsed.className = 'thinking-elapsed';
+
+        header.appendChild(chevron);
         header.appendChild(title);
+        header.appendChild(elapsed);
 
-        // コンテンツ部分
+        // コンテンツ部分（grid で高さを 0fr↔1fr させるため wrap を挟む）
+        const contentWrap = document.createElement('div');
+        contentWrap.className = 'thinking-content-wrap';
+
         const content = document.createElement('div');
         content.className = 'thinking-content';
 
+        contentWrap.appendChild(content);
         container.appendChild(header);
-        container.appendChild(content);
+        container.appendChild(contentWrap);
 
-        // 折りたたみ切り替えイベント
+        // 折りたたみ切り替えイベント（done のときだけ効く）
         header.addEventListener('click', () => this.#toggleThinkingCollapse(container));
         header.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -368,10 +366,12 @@ class ChatRenderer {
 
     /**
      * 思考過程の折りたたみを切り替える
+     * 実行中は開閉しない。三角の向きは CSS が data-collapsed を見て回す
      * @param {HTMLElement} container - 思考過程コンテナ
+     * @returns {void}
      */
     #toggleThinkingCollapse(container) {
-        if (!container) return;
+        if (!container || container.dataset.mode !== 'done') return;
 
         const isCollapsed = container.dataset.collapsed === 'true';
         container.dataset.collapsed = isCollapsed ? 'false' : 'true';
@@ -380,20 +380,75 @@ class ChatRenderer {
         if (header) {
             header.setAttribute('aria-expanded', isCollapsed ? 'true' : 'false');
         }
+    }
 
-        const toggle = container.querySelector('.thinking-toggle');
-        if (toggle) {
-            toggle.textContent = isCollapsed ? '▼' : '▶';
+    /**
+     * 実行中に見せる1行を更新する
+     * @param {HTMLElement} container - 思考過程コンテナ
+     * @param {string} text - 表示する文言
+     * @returns {void}
+     */
+    #setThinkingCurrentStep(container, text) {
+        if (!container || container.dataset.mode !== 'running' || !text) return;
+
+        const title = container.querySelector('.thinking-title');
+        if (title) title.textContent = text;
+    }
+
+    /**
+     * 思考過程を完了状態にする
+     * 見出しを「実行した処理を見る」に変え、折りたたみを開けるようにする
+     * @param {HTMLElement} container - 思考過程コンテナ
+     * @param {Object} [options] - オプション
+     * @param {number} [options.elapsedMs] - 応答にかかった時間（ミリ秒）
+     * @returns {void}
+     */
+    finalizeThinking(container, options = {}) {
+        if (!container || container.dataset.mode === 'done') return;
+
+        container.dataset.mode = 'done';
+
+        const title = container.querySelector('.thinking-title');
+        if (title) title.textContent = '実行した処理を見る';
+
+        const header = container.querySelector('.thinking-header');
+        if (header) header.setAttribute('tabindex', '0');
+
+        this.setThinkingElapsed(container, options.elapsedMs);
+    }
+
+    /**
+     * 経過時間の表示を更新する
+     * 短すぎる応答では表示しない（表示がちらつくため）
+     * @param {HTMLElement} container - 思考過程コンテナ
+     * @param {number} [elapsedMs] - 経過時間（ミリ秒）
+     * @returns {void}
+     */
+    setThinkingElapsed(container, elapsedMs) {
+        const elapsedEl = container?.querySelector('.thinking-elapsed');
+        if (!elapsedEl) return;
+
+        const minMs = window.CONFIG?.UI?.STREAMING?.ELAPSED_MIN_MS ?? 3000;
+        if (!elapsedMs || elapsedMs < minMs) {
+            elapsedEl.textContent = '';
+            return;
         }
+
+        elapsedEl.textContent = `${Math.round(elapsedMs / 1000)}秒`;
     }
 
     /**
      * 思考過程にアイテムを追加する
+     * 同じ key のアイテムが既にあれば、追加せずその場で内容を差し替える
+     * （ツールの「実行中」→「完了」が2行に増えるのを防ぐ）
      * @param {HTMLElement} thinkingContainer - 思考過程コンテナ
-     * @param {string} type - アイテムの種類 ('rag', 'web-search', 'thinking')
+     * @param {string} type - アイテムの種類 ('rag' | 'web-search' | 'tool' | 'tool-complete' | 'tool-error' | 'thinking')
      * @param {any} content - アイテムの内容
+     * @param {Object} [options] - オプション
+     * @param {string} [options.key] - 同一アイテムとして扱うためのキー
+     * @returns {void}
      */
-    addThinkingItem(thinkingContainer, type, content) {
+    addThinkingItem(thinkingContainer, type, content, options = {}) {
         if (!thinkingContainer) return;
 
         const thinkingContent = thinkingContainer.querySelector('.thinking-content');
@@ -402,9 +457,15 @@ class ChatRenderer {
         // コンテナを表示
         thinkingContainer.style.display = 'block';
 
-        const item = document.createElement('div');
+        const key = options.key;
+        const existing = key
+            ? thinkingContent.querySelector(`.thinking-item[data-key="${CSS.escape(key)}"]`)
+            : null;
+
+        const item = existing || document.createElement('div');
         item.className = 'thinking-item';
         item.dataset.type = type;
+        if (key) item.dataset.key = key;
 
         switch (type) {
             case 'rag':
@@ -428,7 +489,11 @@ class ChatRenderer {
                 break;
         }
 
-        thinkingContent.appendChild(item);
+        if (!existing) thinkingContent.appendChild(item);
+
+        // 実行中はヘッダーの1行を最新のステップに追従させる。
+        // アイテムは複数行を持つことがあるので空白を畳んで1行にする
+        this.#setThinkingCurrentStep(thinkingContainer, item.textContent.replace(/\s+/g, ' ').trim());
     }
 
     /**
@@ -509,18 +574,65 @@ class ChatRenderer {
      * @param {HTMLElement} container - 更新するメッセージコンテナ
      * @param {string} chunk - 新しく受信したテキストチャンク
      * @param {string} currentFullText - これまでに受信したテキスト全体
-     * @param {boolean} isFirstChunk - 最初のチャンクかどうかのフラグ
      * @returns {Promise<void>}
      */
-    async updateStreamingBotMessage(container, chunk, currentFullText, isFirstChunk = false) {
-        if (!container) return;
+    async updateStreamingBotMessage(container, chunk, currentFullText) {
+        if (!container?.isConnected || container.dataset.streamClosed === 'true') return;
+
+        // チャンクは1秒間に何十回も届くが、描画はフレームに1回で足りる。
+        // 保留中の要求は最新テキストで上書きし、まとめて1回だけ描画する
+        const pending = this.#pendingRenders.get(container);
+        if (pending) {
+            pending.text = currentFullText;
+            return pending.promise;
+        }
+
+        const entry = { text: currentFullText, promise: null };
+        entry.promise = new Promise(resolve => {
+            requestAnimationFrame(() => {
+                // finalize などで取り消された場合は描画しない。
+                // rAF は登録済みだと止められないので、ここで自分の要求が
+                // まだ生きているかを確認する
+                if (this.#pendingRenders.get(container) !== entry || !container.isConnected || container.dataset.streamClosed === 'true') {
+                    resolve();
+                    return;
+                }
+
+                const text = entry.text;
+                this.#pendingRenders.delete(container);
+                this.#renderStreamingText(container, text).then(resolve, resolve);
+            });
+        });
+        this.#pendingRenders.set(container, entry);
+        return entry.promise;
+    }
+
+    /**
+     * ストリーミング中の本文を実際に描画します
+     * @param {HTMLElement} container - 本文コンテナ（.markdown-content）
+     * @param {string} currentFullText - これまでに受信したテキスト全体
+     * @returns {Promise<void>}
+     */
+    async #renderStreamingText(container, currentFullText) {
+        // Markdown 変換は非同期なので、戻ってきたときに自分が最新かを世代番号で判定する
+        const seq = (Number(container.dataset.renderSeq) || 0) + 1;
+        container.dataset.renderSeq = String(seq);
 
         try {
             const renderedHTML = await Markdown.getInstance.renderMarkdown(currentFullText);
+
+            // 変換の間に新しいチャンクが来ていたら、古い結果で上書きしない
+            if (Number(container.dataset.renderSeq) !== seq || !container.isConnected || container.dataset.streamClosed === 'true') return;
+
+            // 本文が出るので待機インジケーターを隠す（2回目以降は即座に戻る）
+            const messageDiv = container.closest('.message');
             const chatMessages = container.closest('.chat-messages');
             if (chatMessages) {
-                const isNearBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
+                const isNearBottom = this.#isNearBottom(chatMessages);
+                if (messageDiv && currentFullText.trim()) StreamingIndicator.getInstance.onBodyChunk(messageDiv);
                 container.innerHTML = renderedHTML;
+
+                this.#fadeInNewTail(container);
 
                 if (typeof Prism !== 'undefined') {
                     Prism.highlightAllUnder(container);
@@ -531,53 +643,98 @@ class ChatRenderer {
                 }
             }
         } catch (e) {
+            if (Number(container.dataset.renderSeq) !== seq || !container.isConnected || container.dataset.streamClosed === 'true') return;
             console.error('ストリーミング中のMarkdown解析エラー:', e);
             container.textContent = currentFullText;
+            if (currentFullText.trim()) StreamingIndicator.getInstance.onBodyChunk(container.closest('.message'));
         }
     }
 
     /**
-     * ストリーミング中のステータス表示を更新します（ツール実行中など）
-     * @param {HTMLElement} container - 内容を表示するコンテナ要素（.markdown-content）
-     * @param {string} status - ステータスの種類 ('thinking' | 'tool-running' | 'tool-complete')
-     * @param {string} [toolName] - ツール名（tool-running時に使用）
+     * 新着文字とフェード途中の文字を開始時刻つきで包み直します。
+     * 表示済み文字列の共通部分は時刻を維持し、完了した範囲は破棄します。
+     *
+     * @param {HTMLElement} container - 本文コンテナ（.markdown-content）
+     * @returns {void}
      */
-    updateStreamingStatus(container, status, toolName = '') {
-        if (!container) return;
+    #fadeInNewTail(container) {
+        const streaming = window.CONFIG.UI.STREAMING;
+        if (!streaming.WORD_FADE_ENABLED || this.#prefersReducedMotion()) {
+            this.#fadeStates.delete(container);
+            return;
+        }
+        // Markdownの記号数ではなく、実際に表示した文字の位置と開始時刻を保存する。
+        const text = container.textContent || '';
+        const previous = this.#fadeStates.get(container) || { text: '', ranges: [] };
+        const now = performance.now();
+        let common = 0;
+        while (common < text.length && common < previous.text.length && text[common] === previous.text[common]) common++;
+        const ranges = previous.ranges
+            .filter(r => now - r.time < streaming.FADE_DURATION_MS && r.start < common)
+            .map(r => ({ ...r, end: Math.min(r.end, common) }));
+        if (text.length > common) ranges.push({
+            start: Math.max(common, text.length - streaming.MAX_FADE_CHARS), end: text.length, time: now
+        });
+        this.#fadeStates.set(container, { text, ranges });
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        let offset = 0;
+        for (const node of nodes) {
+            const start = offset;
+            offset += node.textContent.length;
+            if (node.parentElement?.closest('pre, code, .katex, math, mjx-container, .MathJax, .mermaid, svg, .tool-download-card, .tool-image-preview, .tool-analysis-result, .tool-result-text')) continue;
+            const active = ranges.filter(r => r.start < offset && r.end > start);
+            if (!active.length) continue;
+            const fragment = document.createDocumentFragment();
+            const value = node.textContent;
+            let cursor = 0;
+            for (const range of active) {
+                const from = Math.max(range.start - start, 0);
+                const to = Math.min(range.end - start, value.length);
+                fragment.append(value.slice(cursor, from));
+                const span = document.createElement('span');
+                span.className = 'stream-token';
+                span.textContent = value.slice(from, to);
+                // DOMを交換しても、同じ文字は同じ時点の不透明度から続ける。
+                span.style.animationDelay = `${-(now - range.time)}ms`;
+                fragment.appendChild(span);
+                cursor = to;
+            }
+            fragment.append(value.slice(cursor));
+            node.replaceWith(fragment);
+        }
+    }
 
-        // 現在のテキストコンテンツを保持（ツール完了後に復元）
-        const existingContent = container.querySelector('.streaming-status-temp');
+    /**
+     * アニメーションを控える設定かどうかを返します
+     * @returns {boolean} 控える設定なら true
+     */
+    #prefersReducedMotion() {
+        return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+    }
 
-        let statusHtml = '';
-        switch (status) {
-            case 'tool-running':
-                const displayName = this.#getToolDisplayName(toolName);
-                statusHtml = `<p class="streaming-status streaming-status-tool">
-                    <span class="tool-status-icon">🔧</span>
-                    <span class="tool-status-text">${displayName}を作成中</span>
-                    <span class="typing-dots cyber-neon"><span></span><span></span><span></span></span>
-                </p>`;
-                break;
-            case 'tool-complete':
-                // ツール完了時はThinkingに戻す（テキストがある場合はそれを表示）
-                statusHtml = this.#formatSystemMessage('Thinking', true);
-                break;
-            case 'thinking':
-            default:
-                statusHtml = this.#formatSystemMessage('Thinking', true);
-                break;
+    /**
+     * ストリーミング中のステータス表示を更新します（ツール実行中など）
+     * 表示の実体は本文の外にある待機インジケーターが持つため、
+     * ここではラベルの出し入れだけを行い本文には触れません
+     * @param {HTMLElement} messageDiv - 対象のメッセージ要素
+     * @param {string} status - ステータスの種類 ('thinking' | 'tool-running')
+     * @param {string} [toolName] - ツール名（tool-running時に使用）
+     * @returns {void}
+     */
+    updateStreamingStatus(messageDiv, status, toolName = '') {
+        if (!messageDiv) return;
+
+        const indicator = StreamingIndicator.getInstance;
+
+        if (status === 'tool-running') {
+            const template = window.CONFIG?.UI?.STREAMING?.LABELS?.TOOL_RUNNING ?? '{name}';
+            indicator.setLabel(messageDiv, template.replace('{name}', this.#getToolDisplayName(toolName)));
+            return;
         }
 
-        // 既存のツール結果要素を保存
-        const toolResults = container.querySelectorAll('.tool-download-card, .tool-image-preview, .tool-analysis-result');
-        const savedToolResults = Array.from(toolResults);
-
-        container.innerHTML = statusHtml;
-
-        // ツール結果要素を再追加
-        savedToolResults.forEach(result => {
-            container.appendChild(result);
-        });
+        indicator.clearLabel(messageDiv);
     }
 
     /**
@@ -586,12 +743,7 @@ class ChatRenderer {
      * @returns {string} 表示名
      */
     #getToolDisplayName(toolName) {
-        const displayNames = {
-            'generate_powerpoint': 'PowerPoint',
-            'process_excel': 'Excel',
-            'render_canvas': 'Canvas画像'
-        };
-        return displayNames[toolName] || toolName;
+        return window.CONFIG?.TOOLS?.DISPLAY_NAMES?.[toolName] ?? toolName;
     }
 
     /**
@@ -607,13 +759,32 @@ class ChatRenderer {
     async finalizeStreamingBotMessage(messageDiv, container, fullText, bodyDiv = null) {
         if (!messageDiv || !container) return;
 
+        // 保留中のストリーミング描画を捨てる（完了後に古い本文で上書きされないように）
+        this.cancelStreamingMessage(messageDiv);
+
+        // 生成が終わったのでカーソルを止め、待機インジケーターを取り除く
+        messageDiv.classList.remove('streaming');
+        StreamingIndicator.getInstance.finish(messageDiv);
+
+        // 思考過程を完了状態にする（中断・エラー経路でもここを通る）
+        const thinkingContainer = messageDiv.querySelector('.thinking-process');
+        if (thinkingContainer) {
+            const startedAt = Number(messageDiv.dataset.streamStartedAt);
+            this.finalizeThinking(thinkingContainer, {
+                elapsedMs: startedAt ? Date.now() - startedAt : undefined
+            });
+        }
+
         try {
             // ツール結果要素を退避（innerHTML上書き前に保存）
-            const toolResults = container.querySelectorAll('.tool-download-card, .tool-image-preview, .tool-analysis-result');
+            const toolResults = container.querySelectorAll('.tool-download-card, .tool-image-preview, .tool-analysis-result, .tool-result-text');
             const savedToolResults = Array.from(toolResults);
 
             // 回答本文のみを更新（思考過程コンテナは保持される）
             const renderedHTML = await Markdown.getInstance.renderMarkdown(fullText);
+            if (!container.isConnected) return;
+            const chatMessages = container.closest('.chat-messages');
+            const follow = chatMessages && this.#isNearBottom(chatMessages);
             container.innerHTML = renderedHTML;
 
             // ツール結果要素を再追加
@@ -647,11 +818,34 @@ class ChatRenderer {
 
             // アーティファクト検出と表示
             this.#detectAndDisplayArtifacts(fullText);
+            if (follow) chatMessages.scrollTop = chatMessages.scrollHeight;
 
         } catch (e) {
             console.error('ストリーミング完了時のMarkdown解析エラー:', e);
             container.textContent = fullText;
         }
+    }
+
+    /**
+     * 停止・エラー・会話切り替え時に描画待ちと演出を破棄する。
+     * @param {HTMLElement} messageDiv - 終了対象のメッセージ
+     * @returns {void}
+     */
+    cancelStreamingMessage(messageDiv) {
+        const container = messageDiv?.querySelector('.markdown-content');
+        if (container) {
+            this.#pendingRenders.delete(container);
+            this.#fadeStates.delete(container);
+            container.dataset.streamClosed = 'true';
+            container.dataset.renderSeq = String((Number(container.dataset.renderSeq) || 0) + 1);
+            container.querySelectorAll('.stream-token').forEach(el => el.replaceWith(...el.childNodes));
+        }
+        messageDiv?.classList.remove('streaming');
+        StreamingIndicator.getInstance.finish(messageDiv);
+    }
+
+    #isNearBottom(container) {
+        return container.scrollHeight - container.scrollTop - container.clientHeight < window.CONFIG.UI.STREAMING.SCROLL_THRESHOLD_PX;
     }
 
     /**
@@ -1395,21 +1589,21 @@ class ChatRenderer {
      * @param {string} message - 表示するメッセージ
      * @param {Object} options - 表示オプション
      * @param {string} options.status - メッセージの状態 ('thinking', 'searching', 'processing', 'error')
-     * @param {string} options.animation - アニメーション種類 ('fade', 'slide', 'pulse', 'gradient', 'ripple', 'particles')
+     * @param {string} options.animation - アニメーション種類 ('fade' | 'slide')
      * @param {boolean} options.showDots - タイピングドットを表示するか
      * @returns {Object} メッセージ要素の参照
      */
-    addSystemMessage(chatMessages, message, options = { status: 'info', animation: 'fade', showDots: false }) {
+    addSystemMessage(chatMessages, message, options = { status: 'thinking', animation: 'fade', showDots: true }) {
         if (!chatMessages) return null;
 
         const {
             status = 'thinking',
-            animation = 'tech-scan',
+            animation = 'fade',
             showDots = true
         } = options;
 
         const messageDiv = ChatUI.getInstance.createElement('div', {
-            classList: ['message', 'bot', 'system-message', 'cyber-style', `anim-${animation}`],
+            classList: ['message', 'bot', 'system-message', `anim-${animation}`],
             attributes: {
                 'role': 'status',
                 'aria-live': 'polite',
@@ -1417,6 +1611,8 @@ class ChatRenderer {
             }
         });
 
+        // 他のメッセージと同じ骨格に揃える（message > message-body > message-content）
+        const bodyDiv = ChatUI.getInstance.createElement('div', { classList: 'message-body' });
         const contentDiv = ChatUI.getInstance.createElement('div', { classList: 'message-content' });
 
         const messageContent = ChatUI.getInstance.createElement('div', {
@@ -1425,12 +1621,11 @@ class ChatRenderer {
         });
 
         contentDiv.appendChild(messageContent);
-        messageDiv.appendChild(contentDiv);
+        bodyDiv.appendChild(contentDiv);
+        messageDiv.appendChild(bodyDiv);
 
         // DOMに追加
         chatMessages.appendChild(messageDiv);
-
-        console.log(`📝 messageDiv classes: ${messageDiv.className}`);
 
         // アニメーション開始（次フレームで実行してCSSが確実に適用されるようにする）
         setTimeout(() => {
@@ -1471,42 +1666,14 @@ class ChatRenderer {
         if (status && messageDiv.getAttribute('data-status') !== status) {
             // ステータス変更のアニメーション
             if (animate) {
-                messageDiv.classList.add('system-message-pulse');
-                setTimeout(() => {
-                    messageDiv.classList.remove('system-message-pulse');
-                }, 1200); // より長いパルスアニメーション時間
             }
             messageDiv.setAttribute('data-status', status);
         }
 
-        if (animate && messageContent.innerHTML !== this.#formatSystemMessage(message, showDots)) {
-            // より滑らかなコンテンツ変更アニメーション
-            // CSS transitionsを設定
-            messageContent.style.transition = 'transform 0.4s ease-in-out, opacity 0.4s ease-in-out';
-            messageContent.style.transform = 'scale(0.95)';
-            messageContent.style.opacity = '0.2';
-
-            setTimeout(() => {
-                messageContent.innerHTML = this.#formatSystemMessage(message, showDots);
-                // 復帰アニメーション
-                messageContent.style.transform = 'scale(1.02)'; // 少しオーバーシュート
-                messageContent.style.opacity = '1';
-
-                // オーバーシュート後の最終調整
-                setTimeout(() => {
-                    messageContent.style.transform = 'scale(1)';
-
-                    // トランジション完了後にスタイルをクリア
-                    setTimeout(() => {
-                        messageContent.style.transition = '';
-                        messageContent.style.transform = '';
-                        messageContent.style.opacity = '';
-                    }, 200);
-                }, 150);
-            }, 300); // より長いフェードアウト時間
-        } else if (!animate) {
-            messageContent.innerHTML = this.#formatSystemMessage(message, showDots);
-        }
+        // 差し替えは即座に行い、見た目の繋ぎは CSS のクロスフェードに任せる。
+        // 以前は 300/150/200ms の入れ子 setTimeout で scale と opacity を
+        // 直接操作しており、更新が続くとタイマー同士が競合していた
+        messageContent.innerHTML = this.#formatSystemMessage(message, showDots);
     }
 
     /**
@@ -1595,7 +1762,7 @@ class ChatRenderer {
     #formatSystemMessage(message, showDots) {
         const dotsHtml = showDots ?
             '<span class="typing-dots"><span></span><span></span><span></span></span>' : '';
-        return `<p>${message}${dotsHtml}</p>`;
+        return `<p>${this.#escapeHtml(message ?? '')}${dotsHtml}</p>`;
     }
 
     /**
@@ -1687,31 +1854,6 @@ class ChatRenderer {
     }
 
     /**
-     * メッセージヘッダーを作成する
-     * @param {string} senderName - 送信者名
-     * @param {number} timestamp - タイムスタンプ
-     * @returns {HTMLElement} ヘッダー要素
-     */
-    #createMessageHeader(senderName, timestamp) {
-        const header = document.createElement('div');
-        header.className = 'message-header';
-
-        const sender = document.createElement('span');
-        sender.className = 'message-sender';
-        sender.textContent = senderName;
-
-        const time = document.createElement('span');
-        time.className = 'message-timestamp';
-        time.textContent = this.#formatTimestamp(timestamp);
-        time.title = this.#formatFullTimestamp(timestamp);
-
-        header.appendChild(sender);
-        header.appendChild(time);
-
-        return header;
-    }
-
-    /**
      * タイムスタンプをフォーマットする（短縮形式）
      * @param {number} timestamp - タイムスタンプ
      * @returns {string} フォーマットされた時刻
@@ -1729,6 +1871,23 @@ class ChatRenderer {
     #formatFullTimestamp(timestamp) {
         const date = new Date(timestamp);
         return date.toLocaleString('ja-JP');
+    }
+
+    /**
+     * メッセージのタイムスタンプ要素を作成する
+     * 送信者名ヘッダーを廃止したため、アクション列の末尾に添える
+     * @param {HTMLElement} messageDiv - タイムスタンプを持つメッセージ要素
+     * @returns {HTMLElement|null} タイムスタンプ要素。値が無い場合は null
+     */
+    #createTimestampElement(messageDiv) {
+        const raw = Number(messageDiv.dataset.timestamp);
+        if (!raw) return null;
+
+        const time = document.createElement('span');
+        time.className = 'message-timestamp';
+        time.textContent = this.#formatTimestamp(raw);
+        time.title = this.#formatFullTimestamp(raw);
+        return time;
     }
 
     /**
@@ -1764,6 +1923,9 @@ class ChatRenderer {
         deleteBtn.title = '削除';
         deleteBtn.addEventListener('click', () => this.#handleDeleteMessage(messageDiv));
         actions.appendChild(deleteBtn);
+
+        const timestampEl = this.#createTimestampElement(messageDiv);
+        if (timestampEl) actions.appendChild(timestampEl);
 
         return actions;
     }
@@ -1817,6 +1979,9 @@ class ChatRenderer {
         deleteBtn.title = '削除';
         deleteBtn.addEventListener('click', () => this.#handleDeleteMessage(messageDiv));
         actions.appendChild(deleteBtn);
+
+        const timestampEl = this.#createTimestampElement(messageDiv);
+        if (timestampEl) actions.appendChild(timestampEl);
 
         return actions;
     }
@@ -2073,3 +2238,5 @@ class ChatRenderer {
         bodyDiv.appendChild(actionsDiv);
     }
 }
+
+window.ChatRenderer = ChatRenderer;

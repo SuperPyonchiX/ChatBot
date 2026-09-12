@@ -1,0 +1,985 @@
+/**
+ * tool-settings.css
+ * エージェント設定モーダルのスタイル
+ */
+
+/* ========================================
+   オーバーレイ
+   ======================================== */
+
+.tool-settings-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9998;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.tool-settings-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ========================================
+   モーダル本体
+   ======================================== */
+
+.tool-settings-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    width: 90%;
+    max-width: 700px;
+    max-height: 85vh;
+    background: var(--background-secondary);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+}
+
+.tool-settings-modal.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* ========================================
+   ヘッダー
+   ======================================== */
+
+.tool-settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tool-settings-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tool-settings-icon {
+    font-size: 24px;
+}
+
+.tool-settings-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.tool-settings-close:hover {
+    background: var(--background-hover);
+    color: var(--text-primary);
+}
+
+/* ========================================
+   タブ
+   ======================================== */
+
+.tool-settings-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 8px 16px 0;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--background-primary);
+}
+
+.tool-settings-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: background 0.2s, color 0.2s;
+    position: relative;
+}
+
+.tool-settings-tab:hover {
+    background: var(--background-hover);
+    color: var(--text-primary);
+}
+
+.tool-settings-tab.active {
+    background: var(--background-secondary);
+    color: var(--accent-color);
+}
+
+.tool-settings-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent-color);
+}
+
+.tool-settings-tab i {
+    font-size: 14px;
+}
+
+/* ========================================
+   コンテンツ
+   ======================================== */
+
+.tool-settings-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.tool-settings-tab-content {
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================
+   セクション
+   ======================================== */
+
+.tool-settings-section {
+    margin-bottom: 24px;
+}
+
+.tool-settings-section:last-child {
+    margin-bottom: 0;
+}
+
+.tool-settings-section-title {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tool-settings-description {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.tool-settings-description code {
+    background: var(--background-tertiary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+}
+
+/* ========================================
+   フォーム要素
+   ======================================== */
+
+.tool-settings-form-group {
+    margin-bottom: 16px;
+}
+
+.tool-settings-form-group:last-child {
+    margin-bottom: 0;
+}
+
+.tool-settings-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.tool-settings-hint {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.tool-settings-input {
+    width: 100%;
+    max-width: 200px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.tool-settings-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.2);
+}
+
+.tool-settings-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: 'Consolas', monospace;
+    resize: vertical;
+    min-height: 120px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.tool-settings-textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.2);
+}
+
+/* ========================================
+   ラジオボタン
+   ======================================== */
+
+.tool-settings-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tool-settings-radio {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.tool-settings-radio:hover {
+    background: var(--background-hover);
+}
+
+.tool-settings-radio input {
+    display: none;
+}
+
+.tool-settings-radio-mark {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    position: relative;
+    transition: border-color 0.2s;
+}
+
+.tool-settings-radio input:checked + .tool-settings-radio-mark {
+    border-color: var(--accent-color);
+}
+
+.tool-settings-radio input:checked + .tool-settings-radio-mark::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    background: var(--accent-color);
+    border-radius: 50%;
+}
+
+.tool-settings-radio-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tool-settings-radio-label strong {
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.tool-settings-radio-label small {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+/* ========================================
+   チェックボックス
+   ======================================== */
+
+.tool-settings-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.tool-settings-checkbox input {
+    display: none;
+}
+
+.tool-settings-checkbox-mark {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    position: relative;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.tool-settings-checkbox input:checked + .tool-settings-checkbox-mark {
+    border-color: var(--accent-color);
+    background: var(--accent-color);
+}
+
+.tool-settings-checkbox input:checked + .tool-settings-checkbox-mark::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 6px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.tool-settings-checkbox-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: var(--text-primary);
+}
+
+.tool-settings-checkbox-label strong {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.tool-settings-checkbox-label small {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+/* ========================================
+   ツールリスト
+   ======================================== */
+
+.tool-settings-tool-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.tool-settings-tool-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--background-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.tool-settings-tool-item:hover {
+    background: var(--background-hover);
+}
+
+.tool-settings-tool-item input {
+    display: none;
+}
+
+.tool-settings-tool-item input:checked ~ .tool-settings-tool-info {
+    opacity: 1;
+}
+
+.tool-settings-tool-item input:not(:checked) ~ .tool-settings-tool-info {
+    opacity: 0.6;
+}
+
+.tool-settings-tool-item::before {
+    content: '';
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.tool-settings-tool-item:has(input:checked)::before {
+    border-color: var(--accent-color);
+    background: var(--accent-color);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+    background-size: 14px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.tool-settings-tool-info {
+    flex: 1;
+    min-width: 0;
+    transition: opacity 0.2s;
+}
+
+.tool-settings-tool-name {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    font-family: 'Consolas', monospace;
+}
+
+.tool-settings-tool-desc {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tool-settings-tool-actions {
+    margin-top: 12px;
+}
+
+/* ========================================
+   プロンプトアクション
+   ======================================== */
+
+.tool-settings-prompt-actions {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* ========================================
+   フッター
+   ======================================== */
+
+.tool-settings-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--background-primary);
+    border-radius: 0 0 12px 12px;
+}
+
+.tool-settings-footer-right {
+    display: flex;
+    gap: 8px;
+}
+
+/* ========================================
+   ボタン
+   ======================================== */
+
+.tool-settings-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.tool-settings-btn:active {
+    transform: scale(0.98);
+}
+
+.tool-settings-btn-primary {
+    background: var(--accent-color);
+    color: white;
+}
+
+.tool-settings-btn-primary:hover {
+    background: var(--accent-hover-color);
+}
+
+.tool-settings-btn-secondary {
+    background: var(--background-tertiary);
+    color: var(--text-primary);
+}
+
+.tool-settings-btn-secondary:hover {
+    background: var(--background-hover);
+}
+
+/* ========================================
+   スクロールバー
+   ======================================== */
+
+.tool-settings-content::-webkit-scrollbar,
+.tool-settings-tool-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.tool-settings-content::-webkit-scrollbar-track,
+.tool-settings-tool-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tool-settings-content::-webkit-scrollbar-thumb,
+.tool-settings-tool-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.tool-settings-content::-webkit-scrollbar-thumb:hover,
+.tool-settings-tool-list::-webkit-scrollbar-thumb:hover {
+    background: var(--border-color-hover);
+}
+
+/* ========================================
+   レスポンシブ
+   ======================================== */
+
+@media (max-width: 600px) {
+    .tool-settings-modal {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .tool-settings-tabs {
+        flex-wrap: wrap;
+    }
+
+    .tool-settings-tab {
+        flex: 1;
+        min-width: calc(50% - 4px);
+        justify-content: center;
+    }
+
+    .tool-settings-footer {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .tool-settings-footer-right {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+/* ========================================
+   ツールエディタ
+   ======================================== */
+
+.custom-tool-editor-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.custom-tool-editor-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.custom-tool-editor-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    width: 95%;
+    max-width: 900px;
+    max-height: 90vh;
+    background: var(--background-secondary);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+}
+
+.custom-tool-editor-modal.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.custom-tool-editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.custom-tool-editor-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.custom-tool-editor-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.custom-tool-editor-close:hover {
+    background: var(--background-hover);
+    color: var(--text-primary);
+}
+
+.custom-tool-editor-content {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.custom-tool-editor-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.custom-tool-editor-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.custom-tool-editor-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.custom-tool-editor-label .required {
+    color: var(--error-color);
+}
+
+.custom-tool-editor-input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.custom-tool-editor-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.2);
+}
+
+.custom-tool-editor-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.custom-tool-editor-textarea {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-primary);
+    font-size: 14px;
+    resize: vertical;
+    min-height: 60px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.custom-tool-editor-textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.2);
+}
+
+.custom-tool-editor-textarea.custom-tool-editor-code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.custom-tool-editor-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* テストセクション */
+.custom-tool-editor-test {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    background: var(--background-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.custom-tool-editor-test-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.custom-tool-editor-test-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.custom-tool-editor-test-result {
+    padding: 12px;
+    background: var(--background-tertiary);
+    border-radius: 6px;
+    min-height: 100px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.test-result-placeholder {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.test-result-loading {
+    color: var(--accent-color);
+    font-size: 14px;
+}
+
+.test-result-loading i {
+    margin-right: 8px;
+}
+
+.test-result-success {
+    color: #22c55e;
+    font-size: 14px;
+}
+
+.test-result-success i {
+    margin-right: 8px;
+}
+
+.test-result-error {
+    color: var(--error-color);
+    font-size: 14px;
+}
+
+.test-result-error i {
+    margin-right: 8px;
+}
+
+.test-result-output {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--background-secondary);
+    border-radius: 4px;
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.test-result-errors,
+.test-result-warnings {
+    margin-top: 8px;
+    padding: 8px;
+    background: var(--background-secondary);
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.test-result-warnings {
+    color: #f59e0b;
+}
+
+/* フッター */
+.custom-tool-editor-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--background-primary);
+    border-radius: 0 0 12px 12px;
+}
+
+.custom-tool-editor-footer-left,
+.custom-tool-editor-footer-right {
+    display: flex;
+    gap: 8px;
+}
+
+.custom-tool-editor-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.custom-tool-editor-btn:active {
+    transform: scale(0.98);
+}
+
+.custom-tool-editor-btn-primary {
+    background: var(--accent-color);
+    color: white;
+}
+
+.custom-tool-editor-btn-primary:hover {
+    background: var(--accent-hover-color);
+}
+
+.custom-tool-editor-btn-secondary {
+    background: var(--background-tertiary);
+    color: var(--text-primary);
+}
+
+.custom-tool-editor-btn-secondary:hover {
+    background: var(--background-hover);
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+    .custom-tool-editor-content {
+        grid-template-columns: 1fr;
+    }
+
+    .custom-tool-editor-test {
+        order: -1;
+    }
+}
+
+/* ========================================
+   フォーカス状態の改善
+   ======================================== */
+
+.tool-settings-input:focus,
+.tool-settings-textarea:focus {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+.tool-settings-btn:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+.tool-settings-tab:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: -2px;
+}
+
+.tool-settings-radio:focus-within,
+.tool-settings-checkbox:focus-within {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
+/* ========================================
+   ツール設定モーダル（追加分）
+   ======================================== */
+
+.tool-settings-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.tool-settings-section-warning {
+    border: 1px solid var(--warning-color);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.tool-settings-section-warning .tool-settings-section-title {
+    color: var(--warning-color);
+}
+
+.tool-settings-tool-name code {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    background: var(--code-bg);
+    padding: 0 4px;
+    border-radius: 3px;
+}

@@ -1,0 +1,260 @@
+/**
+ * codex.css
+ * Codex 実行カード（チャット内）のスタイル
+ */
+
+.codex-run-container {
+    background: var(--background-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    margin: var(--spacing-md) 0;
+    overflow: hidden;
+    font-size: 14px;
+}
+
+.codex-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--background-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.codex-header-left,
+.codex-header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.codex-icon {
+    font-size: 18px;
+}
+
+.codex-title {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.codex-thread-badge {
+    font-family: var(--font-family-code);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    background: var(--background-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 1px 6px;
+}
+
+.codex-thread-badge:empty {
+    display: none;
+}
+
+.codex-status {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.codex-status[data-state="running"],
+.codex-status[data-state="stopping"] {
+    color: var(--accent-color);
+}
+
+.codex-status[data-state="done"] {
+    color: var(--success-color);
+}
+
+.codex-status[data-state="error"] {
+    color: var(--error-color);
+}
+
+.codex-status[data-state="aborted"] {
+    color: var(--warning-color);
+}
+
+.codex-stop-btn,
+.codex-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 2px 8px;
+    font-size: 12px;
+}
+
+.codex-stop-btn:hover:not(:disabled) {
+    color: var(--error-color);
+    border-color: var(--error-color);
+}
+
+.codex-toggle-btn:hover {
+    color: var(--text-primary);
+}
+
+.codex-content {
+    padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.codex-content.collapsed {
+    display: none;
+}
+
+.codex-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.codex-item {
+    border-left: 3px solid var(--border-color);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    color: var(--text-primary);
+}
+
+.codex-item.in-progress {
+    border-left-color: var(--accent-color);
+    opacity: 0.85;
+}
+
+.codex-item-command_execution.completed {
+    border-left-color: var(--info-color);
+}
+
+.codex-item-file_change {
+    border-left-color: var(--success-color);
+}
+
+.codex-item-agent_message {
+    border-left-color: var(--accent-color);
+}
+
+.codex-item-error {
+    border-left-color: var(--error-color);
+    color: var(--error-color);
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.codex-item-line,
+.codex-command-line {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+}
+
+.codex-item-icon {
+    flex-shrink: 0;
+}
+
+.codex-command {
+    font-family: var(--font-family-code);
+    font-size: 13px;
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    word-break: break-all;
+}
+
+.codex-exit-code {
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: white;
+}
+
+.codex-exit-code.ok {
+    background: var(--success-color);
+}
+
+.codex-exit-code.ng {
+    background: var(--error-color);
+}
+
+.codex-command-output,
+.codex-stderr-body {
+    margin: var(--spacing-xs) 0 0;
+    padding: var(--spacing-sm);
+    background: var(--code-bg);
+    border-radius: var(--border-radius-sm);
+    font-family: var(--font-family-code);
+    font-size: 12px;
+    max-height: 240px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.codex-reasoning summary {
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.codex-reasoning-body {
+    margin-top: var(--spacing-xs);
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    font-size: 13px;
+}
+
+.codex-file-list {
+    margin: var(--spacing-xs) 0 0;
+    padding-left: var(--spacing-lg);
+    font-family: var(--font-family-code);
+    font-size: 13px;
+}
+
+.codex-file-kind {
+    color: var(--text-tertiary);
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.codex-message-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.codex-stderr {
+    margin-top: var(--spacing-sm);
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.codex-stderr summary {
+    cursor: pointer;
+}
+
+.codex-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+    background: var(--background-secondary);
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.codex-workspace-link {
+    background: transparent;
+    border: 1px solid var(--accent-color);
+    color: var(--accent-color);
+    border-radius: var(--border-radius-sm);
+    padding: 2px 10px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.codex-workspace-link:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+/* エージェントのイテレーション内に埋め込むときは余白を詰める */
+.agent-iterations .codex-run-container {
+    margin: var(--spacing-sm) 0;
+}

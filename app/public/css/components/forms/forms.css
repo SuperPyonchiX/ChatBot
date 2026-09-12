@@ -48,9 +48,7 @@
 }
 
 /* プロンプト候補表示エリアはinput-wrapper内で絶対配置 */
-#promptSuggestions {
-    margin-bottom: var(--spacing-sm);
-}
+
 
 .main-input-area {
     display: flex;

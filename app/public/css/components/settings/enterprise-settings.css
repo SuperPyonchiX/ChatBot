@@ -1,0 +1,6 @@
+.enterprise-connection { display: grid; gap: var(--spacing-sm); border-top: 1px solid var(--border-color); padding-block: var(--spacing-md); }
+.enterprise-connection label { display: grid; gap: var(--spacing-xs); }
+.enterprise-connection [hidden] { display: none; }
+.enterprise-connection input, .enterprise-connection select { width: 100%; box-sizing: border-box; padding: var(--spacing-sm); background: var(--background-primary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); }
+.enterprise-actions { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); }
+.enterprise-connection [role="status"] { overflow-wrap: anywhere; }

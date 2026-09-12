@@ -13,6 +13,28 @@ class ResponsesAPI {
     }
 
     /**
+     * Azure Responsesの完全URLを検証し、貼り付け時の改行を除去する。
+     * @param {string} value - 設定値
+     * @returns {string} 正規化したURL（空欄は空文字）
+     * @throws {Error} HTTP(S)のResponses URLでない場合
+     */
+    normalizeAzureEndpoint(value) {
+        const endpoint = value.trim().replace(/[\r\n]/g, '');
+        if (!endpoint) return '';
+        try {
+            const url = new URL(endpoint);
+            if (!['https:', 'http:'].includes(url.protocol) ||
+                !/\/responses\/?$/.test(url.pathname) || url.hash || /\s/.test(endpoint)) {
+                throw new Error('invalid endpoint');
+            }
+            return endpoint;
+        } catch (error) {
+            console.error('[ResponsesAPI] Azure URL検証エラー:', error);
+            throw new Error('Azure Responses APIの完全なHTTP(S) URLを入力してください（末尾は /responses）');
+        }
+    }
+
+    /**
      * シングルトンインスタンスを取得
      */
     static get getInstance() {
@@ -39,10 +61,11 @@ class ResponsesAPI {
     async callResponsesAPI(messages, model, attachments = [], options = { stream: false, enableWebSearch: false, enableTools: false, tools: [], thinkingContainer: null, onChunk: null, onComplete: null, onWebSearchQuery: null, onToolCall: null }) {
         try {
             // API設定を確認
-            this.#validateAPISettings();
+            this.#validateAPISettings(model);
 
             // GPT-4o/GPT-5シリーズをサポート
-            if (!model.startsWith('gpt-4o') && !model.startsWith('gpt-5')) {
+            if (!(window.apiSettings.apiType === 'azure' && window.apiSettings.azureResponsesEndpoint) &&
+                !model.startsWith('gpt-4o') && !model.startsWith('gpt-5')) {
                 throw new Error(`Responses APIはGPT-4o/GPT-5シリーズのみサポートしています: ${model}`);
             }
 
@@ -73,11 +96,11 @@ class ResponsesAPI {
                     options.signal
                 );
             } else {
-                return await this.#executeResponsesRequest(endpoint, headers, body, options.signal);
+                return await this.#executeResponsesRequest(endpoint, headers, body, options.signal, options.onToolCall);
             }
 
         } catch (error) {
-            console.error('Responses API呼び出しエラー:', error);
+            console.error('[ResponsesAPI] Responses API呼び出しエラー:', error);
             throw error;
         }
     }
@@ -85,9 +108,9 @@ class ResponsesAPI {
     /**
      * API設定を検証
      * Responses APIはOpenAI/Azure OpenAI専用（GPT-5/GPT-4oモデル）
-     * apiTypeに関係なく、有効なAPIキーがあるかを確認
+     * 選択中サービスのキーと対象モデルの設定を確認
      */
-    #validateAPISettings() {
+    #validateAPISettings(model) {
         // AppStateで初期化されたキャッシュを使用（存在しない場合はフォールバック）
         // @ts-ignore - apiSettingsはAppStateで初期化されるグローバルプロパティ
         if (!window.apiSettings) {
@@ -97,10 +120,19 @@ class ResponsesAPI {
             window.apiSettings = Storage.getInstance.loadApiSettings();
         }
 
-        // Azure OpenAIが完全に設定されている場合はAzureを使用
-        // @ts-ignore
-        if (window.apiSettings.azureApiKey && window.apiSettings.azureEndpoint) {
-            return; // Azure設定OK
+        if (window.apiSettings.apiType === 'azure') {
+            if (!window.apiSettings.azureApiKey) {
+                throw new Error('Azure OpenAI APIキーが設定されていません');
+            }
+            if (window.apiSettings.azureResponsesEndpoint) {
+                this.normalizeAzureEndpoint(window.apiSettings.azureResponsesEndpoint);
+                if (!window.apiSettings.azureDeployments?.[model]?.trim()) {
+                    throw new Error(`Azure OpenAI: モデル ${model} のデプロイ名が設定されていません`);
+                }
+            } else if (!window.apiSettings.azureEndpoints?.[model]) {
+                throw new Error(`Azure OpenAI: モデル ${model} のエンドポイントが設定されていません`);
+            }
+            return;
         }
 
         // OpenAI APIキーを確認
@@ -156,7 +188,7 @@ class ResponsesAPI {
                     // テキスト部分を追加
                     if (typeof message.content === 'string' && message.content.trim()) {
                         content.push({
-                            type: "text",
+                            type: "input_text",
                             text: message.content
                         });
                     }
@@ -165,10 +197,8 @@ class ResponsesAPI {
                     for (const attachment of attachments) {
                         if (attachment.type === 'image') {
                             content.push({
-                                type: "image_url",
-                                image_url: {
-                                    url: attachment.data
-                                }
+                                type: "input_image",
+                                image_url: attachment.data
                             });
                         }
                     }
@@ -213,29 +243,25 @@ class ResponsesAPI {
         }
 
         // Responses APIはOpenAI/Azure OpenAI専用
-        // apiTypeに関係なく、利用可能なAPI設定を使用
+        // 選択中のサービスに従って送信先を決める
 
-        // @ts-ignore - Azure OpenAIが完全に設定されている場合はAzureを優先
-        const useAzure = window.apiSettings.azureApiKey &&
-                         window.apiSettings.azureEndpoints &&
-                         window.apiSettings.azureEndpoints[model];
+        // @ts-ignore - apiSettingsはAppStateで初期化される
+        const useAzure = window.apiSettings.apiType === 'azure';
+
+        // Azureへの転送先URL（プロキシ経由で送るため通常のendpointとは別に持つ）
+        let azureTargetUrl = null;
 
         if (useAzure) {
-            // Azure OpenAI API - 新しいv1 API形式を使用
-            // @ts-ignore
-            const azureEndpoint = window.apiSettings.azureEndpoints[model];
-            // 既存のChat CompletionsエンドポイントをResponses APIに変換
-            // https://xxx.openai.azure.com/openai/deployments/xxx/chat/completions?api-version=xxx
-            // → https://xxx.openai.azure.com/openai/v1/responses?api-version=preview
-            const baseUrl = azureEndpoint.split('/openai/')[0];
-            endpoint = `${baseUrl}/openai/v1/responses?api-version=preview`;
-
-            // エンドポイントURLからデプロイメント名を抽出
-            const deploymentMatch = azureEndpoint.match(/\/deployments\/([^\/]+)\//);
-
-            if (deploymentMatch) {
-                // デプロイメント名が見つかった場合は、それをモデル名として使用
-                model = deploymentMatch[1];
+            if (window.apiSettings.azureResponsesEndpoint) {
+                azureTargetUrl = this.normalizeAzureEndpoint(window.apiSettings.azureResponsesEndpoint);
+                model = window.apiSettings.azureDeployments[model].trim();
+            } else {
+                // 従来のChat Completions設定でWeb検索を使う場合の互換経路
+                const azureEndpoint = window.apiSettings.azureEndpoints[model];
+                const baseUrl = azureEndpoint.split('/openai/')[0];
+                azureTargetUrl = `${baseUrl}/openai/v1/responses?api-version=preview`;
+                const deploymentMatch = azureEndpoint.match(/\/deployments\/([^/]+)\//);
+                if (deploymentMatch) model = decodeURIComponent(deploymentMatch[1]);
             }
 
             // @ts-ignore
@@ -306,6 +332,21 @@ class ResponsesAPI {
             body.tools = allTools;
         }
 
+        if (azureTargetUrl) {
+            // Azureのエンドポイントはブラウザから直接呼べない（CORS）ため、
+            // Chat Completionsと同じサーバー側プロキシに転送先を渡す
+            return {
+                endpoint: window.CONFIG.AIAPI.ENDPOINTS.AZURE_PROXY,
+                headers: { 'Content-Type': 'application/json' },
+                body: {
+                    targetUrl: azureTargetUrl,
+                    // @ts-ignore
+                    apiKey: window.apiSettings.azureApiKey,
+                    body
+                }
+            };
+        }
+
         return { endpoint, headers, body };
     }
 
@@ -316,15 +357,17 @@ class ResponsesAPI {
      * @param {Object} body - リクエストボディ
      * @param {AbortSignal} [externalSignal] - 外部からのAbortSignal
      */
-    async #executeResponsesRequest(endpoint, headers, body, externalSignal = null) {
+    async #executeResponsesRequest(endpoint, headers, body, externalSignal = null, onToolCall = null) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
             controller.abort();
         }, window.CONFIG.AIAPI.REQUEST_TIMEOUT);
 
         // 外部signalが中断された場合、内部controllerも中断
+        const onAbort = () => controller.abort();
         if (externalSignal) {
-            externalSignal.addEventListener('abort', () => controller.abort());
+            if (externalSignal.aborted) controller.abort();
+            externalSignal.addEventListener('abort', onAbort, { once: true });
         }
 
         try {
@@ -335,11 +378,9 @@ class ResponsesAPI {
                 signal: controller.signal
             });
 
-            clearTimeout(timeoutId);
-
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('Responses APIエラー:', errorText);
+                console.error('[ResponsesAPI] Responses APIエラー:', errorText);
                 const error = new Error(`Responses API error: ${response.status} ${errorText}`);
                 error.status = response.status;
                 throw error;
@@ -347,6 +388,15 @@ class ResponsesAPI {
 
             const responseData = await response.json();
 
+            if (responseData.error || ['failed', 'incomplete'].includes(responseData.status)) {
+                throw new Error(responseData.error?.message || `Responses API: ${responseData.status}`);
+            }
+            for (const item of responseData.output || []) {
+                if (item.type === 'function_call' && onToolCall && typeof ToolExecutor !== 'undefined') {
+                    const result = ToolExecutor.getInstance.detectToolCall({ type: 'response.output_item.done', item }, 'openai-responses');
+                    if (result) onToolCall(result);
+                }
+            }
             // レスポンスからテキストを抽出
             return this.#extractTextFromResponse(responseData);
 
@@ -359,6 +409,10 @@ class ResponsesAPI {
                 throw new Error('Responses APIリクエストがタイムアウトしました');
             }
             throw error;
+        } finally {
+            clearTimeout(timeoutId);
+            externalSignal?.removeEventListener('abort', onAbort);
+            controller.abort();
         }
     }
 
@@ -384,8 +438,10 @@ class ResponsesAPI {
         let webSearchAddedToThinking = false; // 思考過程への追加フラグ
 
         // 外部signalが中断された場合、内部controllerも中断
+        const onAbort = () => controller.abort();
         if (externalSignal) {
-            externalSignal.addEventListener('abort', () => controller.abort());
+            if (externalSignal.aborted) controller.abort();
+            externalSignal.addEventListener('abort', onAbort, { once: true });
         }
 
         const resetTimeout = () => {
@@ -410,7 +466,7 @@ class ResponsesAPI {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('Responses APIストリーミングエラー:', {
+                console.error('[ResponsesAPI] Responses APIストリーミングエラー:', {
                     status: response.status,
                     statusText: response.statusText,
                     // @ts-ignore - headers.entriesはDOM APIで利用可能
@@ -427,26 +483,30 @@ class ResponsesAPI {
             while (true) {
                 const { done, value } = await reader.read();
                 
-                if (value) {
+                if (value || done) {
                     resetTimeout();
-                    buffer += decoder.decode(value, { stream: true });
+                    buffer += done ? decoder.decode() + '\n' : decoder.decode(value, { stream: true });
                     
                     const lines = buffer.split('\n');
                     buffer = lines.pop() || '';
                     
                     for (const line of lines) {
-                        if (!line || line === 'data: [DONE]') continue;
+                        if (!line || line.trim() === 'data: [DONE]') continue;
                         
-                        if (line.startsWith('data: ')) {
+                        if (line.startsWith('data:')) {
                             try {
-                                const jsonData = JSON.parse(line.substring(6));
+                                const jsonData = JSON.parse(line.substring(5).trim());
                                 
+                                if (jsonData.type === 'error' || jsonData.type === 'response.failed' || jsonData.type === 'response.incomplete') {
+                                    throw new Error(jsonData.error?.message || jsonData.response?.error?.message ||
+                                        `Responses API: ${jsonData.type}`);
+                                }
                                 // イベントIDがある場合は重複チェック
-                                const eventId = jsonData.id || JSON.stringify(jsonData);
-                                if (processedEvents.has(eventId)) {
+                                const eventId = jsonData.sequence_number;
+                                if (eventId !== undefined && processedEvents.has(eventId)) {
                                     continue;
                                 }
-                                processedEvents.add(eventId);
+                                if (eventId !== undefined) processedEvents.add(eventId);
                                 
                                 // Web検索ステータスのチェック
                                 const statusResult = this.#handleWebSearchStatus(jsonData, webSearchStatusMessage, thinkingContainer, webSearchAddedToThinking, onWebSearchQuery);
@@ -475,12 +535,12 @@ class ResponsesAPI {
                                 const extractedText = this.#extractStreamingText(jsonData);
                                 
                                 if (extractedText) {
-                                    onChunk(extractedText);
+                                    onChunk?.(extractedText);
                                     fullText += extractedText;
                                     chunkCount++;
                                 }
                             } catch (parseError) {
-                                console.warn('Responses APIストリーミングパースエラー:', parseError, line);
+                                throw parseError;
                             }
                         }
                     }
@@ -506,7 +566,7 @@ class ResponsesAPI {
 
             clearTimeout(timeoutId);
             
-            onComplete(fullText);
+            onComplete?.(fullText);
             return '';
 
         } catch (error) {
@@ -531,13 +591,17 @@ class ResponsesAPI {
                 if (externalSignal?.aborted) {
                     // 中断時も受信済みのテキストで完了コールバックを呼ぶ
                     if (fullText && onComplete) {
-                        onComplete(fullText);
+                        onComplete?.(fullText);
                     }
                     throw error;
                 }
                 throw new Error('Responses APIストリーミングがタイムアウトしました');
             }
             throw error;
+        } finally {
+            clearTimeout(timeoutId);
+            externalSignal?.removeEventListener('abort', onAbort);
+            controller.abort();
         }
     }
 
@@ -637,77 +701,12 @@ class ResponsesAPI {
                                    (jsonData.output && jsonData.output.some(item => item.type === 'web_search_call'));
 
         if (isWebSearchStarting) {
-            // 検索クエリを取得
-            const searchQuery = extractSearchQuery(jsonData);
+            // 待機インジケーターのラベルを差し替えるだけでよい。
+            // 検索クエリは思考過程アイテム側に残すので、ここでは本文へ流さない
+            StreamingIndicator.getInstance.setActiveLabel(
+                window.CONFIG?.UI?.STREAMING?.LABELS?.WEB_SEARCH ?? 'ウェブを検索しています'
+            );
 
-            // システムメッセージを「Web検索を実行中」に更新
-            const searchMessage = searchQuery ?
-                `🔍 Web検索を実行中: "${searchQuery}"` :
-                '🔍 Web検索を実行中';
-
-            // 既存のThinkingメッセージを探して更新（thinkingContainerの有無に関わらず）
-            const existingThinkingMessage = /** @type {HTMLElement|null} */ (chatMessages.querySelector('.message.bot:last-child'));
-            if (existingThinkingMessage && chatRenderer) {
-                try {
-                    chatRenderer.updateSystemMessage(
-                        existingThinkingMessage,
-                        searchMessage,
-                        {
-                            status: 'searching',
-                            animate: true,
-                            showDots: true
-                        }
-                    );
-                } catch (error) {
-                    console.error('🔍 Thinkingメッセージ更新エラー:', error);
-                }
-            }
-
-            // 思考過程コンテナがある場合
-            // Web検索開始時はクエリがまだ取得できないので、思考過程への追加はcompletedSearchQueryで行う
-            if (thinkingContainer) {
-                // addedToThinkingはfalseのまま返す（クエリ確定時に追加するため）
-                return { statusMessage: existingThinkingMessage, shouldSkip: true, addedToThinking: false };
-            }
-
-            // 思考過程コンテナがない場合の処理
-            if (existingThinkingMessage) {
-                return { statusMessage: existingThinkingMessage, shouldSkip: true, addedToThinking: false };
-            }
-
-            if (!currentStatusMessage && !thinkingContainer) {
-                try {
-                    const statusResult = chatRenderer.addSystemMessage(
-                        /** @type {HTMLElement} */ (chatMessages),
-                        searchMessage,
-                        {
-                            status: 'searching',
-                            animation: 'gradient',
-                            showDots: true
-                        }
-                    );
-                    return { statusMessage: statusResult.messageDiv, shouldSkip: true, addedToThinking: false };
-                } catch (error) {
-                    console.error('🔍 システムメッセージ作成エラー:', error);
-                }
-            } else if (!thinkingContainer) {
-                try {
-                    chatRenderer.updateSystemMessage(
-                        currentStatusMessage,
-                        searchMessage,
-                        {
-                            status: 'searching',
-                            animate: true,
-                            showDots: true
-                        }
-                    );
-                } catch (error) {
-                    console.error('🔍 システムメッセージ更新エラー:', error);
-                }
-                return { statusMessage: currentStatusMessage, shouldSkip: true, addedToThinking: false };
-            }
-
-            // thinkingContainerがある場合はシステムメッセージは作成しない
             return { statusMessage: currentStatusMessage, shouldSkip: true, addedToThinking: alreadyAddedToThinking };
         }
         
@@ -744,48 +743,18 @@ class ResponsesAPI {
                 }
             }
 
-            // システムメッセージを「検索結果を分析中」に更新（thinkingContainerの有無に関わらず）
-            const existingMessage = currentStatusMessage || /** @type {HTMLElement|null} */ (chatMessages.querySelector('.message.bot:last-child'));
-            if (existingMessage && chatRenderer) {
-                try {
-                    const processingMessage = `🔍 検索結果を分析中: "${completedSearchQuery}"`;
-                    chatRenderer.updateSystemMessage(
-                        existingMessage,
-                        processingMessage,
-                        {
-                            status: 'processing',
-                            animate: true,
-                            showDots: true
-                        }
-                    );
-
-                    // 少し遅延して「Thinking...」に戻す
-                    setTimeout(() => {
-                        try {
-                            chatRenderer.updateSystemMessage(
-                                existingMessage,
-                                'Thinking',
-                                {
-                                    status: 'thinking',
-                                    animate: true,
-                                    showDots: true
-                                }
-                            );
-                        } catch (e) {
-                            console.warn('Thinkingへの復帰エラー:', e);
-                        }
-                    }, 1500);
-                } catch (error) {
-                    console.error('🔍 検索結果処理メッセージ更新エラー:', error);
-                }
-            }
+            // 待機インジケーターを「検索結果を読んでいます」に切り替える
+            const labels = window.CONFIG?.UI?.STREAMING?.LABELS ?? {};
+            StreamingIndicator.getInstance.setActiveLabel(
+                labels.WEB_SEARCH_ANALYZE ?? '検索結果を読んでいます'
+            );
 
             if (thinkingContainer) {
-                return { statusMessage: existingMessage, shouldSkip: true, addedToThinking: true };
+                return { statusMessage: currentStatusMessage, shouldSkip: true, addedToThinking: true };
             }
 
             // thinkingContainerがない場合
-            return { statusMessage: existingMessage, shouldSkip: true, addedToThinking: false };
+            return { statusMessage: currentStatusMessage, shouldSkip: true, addedToThinking: false };
         }
 
         return { statusMessage: currentStatusMessage, shouldSkip: false, addedToThinking: alreadyAddedToThinking };
@@ -795,6 +764,7 @@ class ResponsesAPI {
      * ストリーミングレスポンスからテキストを抽出
      */
     #extractStreamingText(jsonData) {
+        if (jsonData.type === 'response.completed') return '';
         // 完了イベント（完全なテキスト）は処理しない（重複防止）
         if (jsonData.type === 'response.output_text.done' || 
             jsonData.type === 'response.content_part.done' ||
@@ -855,3 +825,5 @@ class ResponsesAPI {
         return '';
     }
 }
+
+window.ResponsesAPI = ResponsesAPI;

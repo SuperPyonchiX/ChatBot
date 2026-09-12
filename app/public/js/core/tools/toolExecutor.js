@@ -389,9 +389,10 @@ class ToolExecutor {
     /**
      * ツールを実行
      * @param {Object} toolCall - ツール呼び出し情報
+     * @param {Object} [context] - 実行コンテキスト（表示先コンテナなど）
      * @returns {Promise<Object>} 実行結果
      */
-    async execute(toolCall) {
+    async execute(toolCall, context = {}) {
         this.#emit('tool:start', { toolCall });
 
         try {
@@ -407,7 +408,10 @@ class ToolExecutor {
             });
 
             // ツールを実行
-            const result = await tool.executor.execute(toolCall.arguments);
+            const args = typeof toolCall.arguments === 'string'
+                ? this.#safeParseArgs(toolCall.arguments)
+                : (toolCall.arguments || {});
+            const result = await tool.executor.execute(args, context);
 
             // 完了イベント
             this.#emit('tool:complete', { toolCall, result });
@@ -427,6 +431,18 @@ class ToolExecutor {
             this.#pendingToolCalls.delete(toolCall.id);
 
             throw error;
+        }
+    }
+
+    /**
+     * @param {string} text
+     * @returns {Object}
+     */
+    #safeParseArgs(text) {
+        try {
+            return JSON.parse(text);
+        } catch {
+            return {};
         }
     }
 

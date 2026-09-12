@@ -24,58 +24,6 @@ class UI {
             throw new Error('UIクラスは直接インスタンス化できません。getInstance()を使用してください。');
         }
         this.Core = {
-            Theme: {
-                /**
-                 * テーマの切り替えを行います
-                 * @param {boolean} [isDark] - 指定時：true=ダークモード、false=ライトモード
-                 */
-                toggle: function(isDark) {
-                    const bodyEl = document.body;
-                    const currentIsDark = bodyEl.classList.contains('dark-theme');
-                    const newIsDark = isDark !== undefined ? isDark : !currentIsDark;
-                    
-                    if (newIsDark) {
-                        bodyEl.classList.add('dark-theme');
-                        bodyEl.classList.remove('light-theme');
-                    } else {
-                        bodyEl.classList.add('light-theme');
-                        bodyEl.classList.remove('dark-theme');
-                    }
-                    
-                    try {
-                        localStorage.setItem('theme', newIsDark ? 'dark' : 'light');
-                    } catch (e) {
-                        console.warn('テーマ設定の保存に失敗しました:', e);
-                    }
-                    
-                    return newIsDark;
-                },
-
-                /**
-                 * 保存されたテーマ設定を適用します
-                 */
-                apply: function() {
-                    try {
-                        const savedTheme = localStorage.getItem('theme');
-                        
-                        if (savedTheme) {
-                            this.toggle(savedTheme === 'dark');
-                        } else {
-                            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                            this.toggle(prefersDark);
-                            
-                            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-                                if (!localStorage.getItem('theme')) {
-                                    this.toggle(e.matches);
-                                }
-                            });
-                        }
-                    } catch (e) {
-                        console.warn('テーマ設定の適用に失敗しました:', e);
-                    }
-                }
-            },
-
             Notification: {
                 /**
                  * 通知を表示します
@@ -345,7 +293,7 @@ class UI {
                             clearTimeout(resizeTimeout);
                             resizeTimeout = setTimeout(() => {
                                 const sidebar = document.querySelector('.sidebar');
-                                if (sidebar && window.innerWidth > 576) {
+                                if (sidebar && window.innerWidth > (window.CONFIG?.UI?.MOBILE_BREAKPOINT ?? 768)) {
                                     sidebar.classList.remove('show');
                                 }
                             }, 100);
@@ -386,13 +334,12 @@ class UI {
      * アプリケーションの初期化処理を行います
      */
     initialize() {
-        this.Core.Theme.apply();
         this.Core.Accessibility.setup();
         this.Core.TouchOptimization.setup();
         Sidebar.getInstance?.createSidebarToggle();
         this.Core.Performance.optimize();
         this._initializeModelSelect();
-        PromptSuggestions.getInstance.init();
+
     }
 
     /**
@@ -420,9 +367,11 @@ class UI {
         });
 
         // デフォルト選択値の設定
-        const defaultModel = 'gpt-4o-mini';
+        const defaultModel = window.CONFIG.MODELS.DEFAULT;
         if (allModels.includes(defaultModel)) {
             modelSelect.value = defaultModel;
         }
     }
 }
+
+window.UI = UI;

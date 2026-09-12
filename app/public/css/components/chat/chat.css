@@ -9,24 +9,11 @@
     gap: var(--spacing-md);
 }
 
-/* ===== メッセージスタイル（吹き出し風） ===== */
+/* ===== メッセージスタイル =====
+   レイアウトは chat-message.css が担当する。ここにはアバターや
+   添付表示など、レイアウトに依存しない見た目だけを置く */
 .message {
-    display: flex;
-    gap: 12px;
-    max-width: 85%;
     position: relative;
-    padding: 8px 24px;
-}
-
-/* ユーザーメッセージ: 右寄せ */
-.message.user {
-    margin-left: auto;
-    flex-direction: row-reverse;
-}
-
-/* AIメッセージ: 左寄せ */
-.message.bot {
-    margin-right: auto;
 }
 
 /* アバター（文字ベース） */
@@ -69,45 +56,9 @@
     background-color: var(--text-tertiary);
 }
 
-/* メッセージボディ（吹き出し） */
-.message-body {
-    flex: 1;
-    min-width: 0;
-    background: var(--bot-message-bg);
-    border-radius: var(--message-border-radius);
-    padding: 12px 16px;
-}
-
-.message.user .message-body {
-    background: var(--user-message-bg);
-    border-radius: var(--message-border-radius);
-}
-
-/* メッセージヘッダー */
-.message-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-}
-
-.message-sender {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.message-timestamp {
-    font-size: 11px;
-    color: var(--text-tertiary);
-    font-weight: normal;
-}
-
 /* メッセージコンテンツ */
 .message-content {
     position: relative;
-    font-size: 15px;
-    line-height: 1.6;
     color: var(--text-primary);
 }
 
@@ -138,18 +89,6 @@
 }
 
 /* ===== メッセージアクション ===== */
-.message-actions {
-    display: flex;
-    gap: 4px;
-    margin-top: 10px;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.message:hover .message-actions {
-    opacity: 1;
-}
-
 .action-btn {
     padding: 5px 8px;
     border: none;
@@ -307,20 +246,20 @@
 
 /* ===== コードブロック ===== */
 .message .markdown-content pre {
-    background-color: #1e1e1e;
+    background-color: var(--background-primary);
     margin: 12px 0;
     padding: 14px;
     overflow-x: auto;
     font-size: 13px;
     line-height: 1.5;
     border-radius: 8px;
-    border: 1px solid #3d3d3d;
+    border: 1px solid var(--background-quaternary);
 }
 
 .message .markdown-content pre code {
     background-color: transparent;
     padding: 0;
-    color: #d4d4d4;
+    color: var(--text-primary);
     font-size: 1em;
     font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
 }
@@ -341,12 +280,12 @@
 }
 
 .code-language {
-    background: #2d2d2d;
-    color: #9ca3af;
+    background: var(--background-tertiary);
+    color: var(--text-tertiary);
     padding: 6px 10px;
     font-size: 11px;
     border-radius: 8px 8px 0 0;
-    border: 1px solid #3d3d3d;
+    border: 1px solid var(--background-quaternary);
     border-bottom: none;
 }
 
@@ -371,7 +310,7 @@
     padding: 5px 8px;
     border: none;
     background: rgba(255, 255, 255, 0.1);
-    color: #9ca3af;
+    color: var(--text-tertiary);
     cursor: pointer;
     border-radius: 4px;
     font-size: 11px;
@@ -413,11 +352,11 @@
 }
 
 .message .markdown-content .token.punctuation {
-    color: #d4d4d4;
+    color: var(--text-primary);
 }
 
 .message .markdown-content .token.operator {
-    color: #d4d4d4;
+    color: var(--text-primary);
 }
 
 .message .markdown-content .token.keyword {
@@ -615,75 +554,6 @@
 .web-fetch-loading .typing-dots {
     display: inline-flex;
     margin-left: 4px;
-}
-
-/* ===== 思考過程コンテナ ===== */
-.thinking-process {
-    margin-bottom: 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.thinking-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: var(--background-tertiary);
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.15s ease;
-}
-
-.thinking-header:hover {
-    background: var(--background-quaternary);
-}
-
-.thinking-toggle {
-    font-size: 10px;
-    color: var(--text-tertiary);
-    transition: transform 0.2s ease;
-}
-
-.thinking-process[data-collapsed="false"] .thinking-toggle {
-    transform: rotate(90deg);
-}
-
-.thinking-title {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-secondary);
-}
-
-.thinking-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
-    background: var(--background-secondary);
-}
-
-.thinking-process[data-collapsed="false"] .thinking-content {
-    max-height: 500px;
-    overflow-y: auto;
-}
-
-.thinking-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 8px 12px;
-    border-top: 1px solid var(--border-color);
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.thinking-item-icon {
-    flex-shrink: 0;
-}
-
-.thinking-item-text {
-    flex: 1;
 }
 
 /* ===== システムメッセージ ===== */

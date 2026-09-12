@@ -1,0 +1,147 @@
+/**
+ * workspace.css
+ * ワークスペースモーダル（Codex 作業ディレクトリ）のスタイル
+ */
+
+.workspace-modal-content {
+    display: flex;
+    flex-direction: column;
+    height: 80vh;
+    max-width: var(--modal-max-width-default);
+}
+
+.workspace-modal-content > h2 {
+    margin-bottom: var(--spacing-sm);
+}
+
+.workspace-toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.workspace-root {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-family-code);
+}
+
+.workspace-body {
+    display: flex;
+    gap: var(--spacing-md);
+    flex: 1;
+    min-height: 0;
+}
+
+.workspace-file-list {
+    list-style: none;
+    margin: 0;
+    padding: var(--spacing-xs) 0;
+    width: 280px;
+    flex-shrink: 0;
+    overflow: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    background: var(--background-primary);
+    font-size: 13px;
+}
+
+.workspace-file {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 4px 8px;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.workspace-file.is-file {
+    cursor: pointer;
+}
+
+.workspace-file.is-file:hover {
+    background: var(--surface-hover);
+}
+
+.workspace-file.selected {
+    background: var(--sidebar-item-active-bg);
+}
+
+.workspace-file.is-dir {
+    color: var(--text-secondary);
+}
+
+.workspace-file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.workspace-file-size {
+    color: var(--text-tertiary);
+    font-size: 11px;
+}
+
+.workspace-empty {
+    padding: var(--spacing-md);
+    color: var(--text-tertiary);
+    white-space: normal;
+    font-size: 13px;
+}
+
+.workspace-preview-pane {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    background: var(--code-bg);
+    overflow: hidden;
+}
+
+.workspace-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+    background: var(--background-secondary);
+    font-family: var(--font-family-code);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.workspace-preview {
+    flex: 1;
+    margin: 0;
+    padding: var(--spacing-sm);
+    overflow: auto;
+    font-family: var(--font-family-code);
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre;
+    color: var(--text-primary);
+}
+
+.workspace-modal-content .modal-buttons {
+    margin-top: var(--spacing-sm);
+}
+
+@media (max-width: 768px) {
+    .workspace-body {
+        flex-direction: column;
+    }
+
+    .workspace-file-list {
+        width: auto;
+        max-height: 30vh;
+    }
+}

@@ -34,32 +34,20 @@ window.Elements = (function() {
         'webSearchToggle',
         
         // ボタン関連
-        'newChatButton', 'clearHistoryButton', 'settingsButton', 'settingsMenu',
-        'openSystemPromptSettings', 'openApiSettings', 'openPromptManager',
+        'newChatButton', 'clearHistoryButton', 'settingsButton',
         
         // ファイル関連
         'fileInput',
         
-        // システムプロンプト関連
-        'systemPromptModal', 'systemPromptInput', 'saveSystemPrompt',
-        'cancelSystemPrompt', 'saveNewSystemPrompt', 'newSystemPromptName', 'newTemplateCategory',
-        
         // API設定関連
         'apiKeyModal', 'saveApiKey', 'cancelApiKey', 
         'openaiSystemRadio', 'geminiSystemRadio', 'claudeSystemRadio', 'openaiRadio', 'azureRadio',
-        'apiKeyInput', 'azureApiKeyInput', 'geminiApiKeyInput', 'claudeApiKeyInput', 'azureEndpointGpt4oMini', 
-        'azureEndpointGpt4o', 'azureEndpointGpt5Mini', 'azureEndpointGpt5', 'azureEndpointGpt52', 
+        'apiKeyInput', 'azureApiKeyInput', 'geminiApiKeyInput', 'claudeApiKeyInput',
         'openaiSystemSettings', 'geminiSystemSettings', 'claudeSystemSettings', 'openaiSettings', 'azureSettings',
         
         // チャット名前変更関連
         'saveRenameChat', 'cancelRenameChat', 'renameChatModal', 'chatTitleInput',
         
-        // プロンプトマネージャー関連
-        'promptManagerModal', 'closePromptManager',
-        'addPromptButton', 'promptSearchInput', 'promptEditModal',
-        'savePromptEdit', 'cancelPromptEdit', 'promptNameInput',
-        'promptTagsInput', 'promptDescriptionInput', 'promptContentInput',
-        'showAllPrompts', 'showFavorites', 'promptSortSelect'
     ];
     
     return getElements(ids);

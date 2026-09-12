@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="AIを活用したチャットボットアプリケーション">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#212121">
     <title>ChatBot</title>
     <link rel="icon" href="icon/ChatBot.ico?v=2" type="image/png">
     <!-- CSS ファイル -->
@@ -14,30 +14,34 @@
     <!-- Components CSS -->
     <link rel="stylesheet" href="css/components/buttons/buttons.css">
     <link rel="stylesheet" href="css/components/chat/chat-category.css">
+    <link rel="stylesheet" href="css/components/sidebar/sidebar.css">
     <link rel="stylesheet" href="css/components/forms/forms.css">
+    <link rel="stylesheet" href="css/components/chat/composer.css">
     <link rel="stylesheet" href="css/components/forms/claude-websearch.css">
     <link rel="stylesheet" href="css/components/modals/modals.css">
-    <link rel="stylesheet" href="css/components/settings/settings-menu.css">
-    <link rel="stylesheet" href="css/components/prompt/prompt-manager.css">
-    <link rel="stylesheet" href="css/components/prompt/prompt-suggestions.css">
     <link rel="stylesheet" href="css/components/code/code-execution.css">
     <link rel="stylesheet" href="css/components/code/monaco-editor.css">
+    <link rel="stylesheet" href="css/components/code/simple-editor.css">
     <link rel="stylesheet" href="css/components/animations/typing.css">
+    <link rel="stylesheet" href="css/components/animations/message-entrance.css">
+    <link rel="stylesheet" href="css/components/animations/streaming-indicator.css">
     <link rel="stylesheet" href="css/components/animations/system-messages.css">
     <link rel="stylesheet" href="css/components/file-preview/pdf-preview.css">
     <link rel="stylesheet" href="css/components/file-preview/office-preview.css">
     <link rel="stylesheet" href="css/components/file-preview/text-preview.css">
     <link rel="stylesheet" href="css/components/notifications/notifications.css">
     <link rel="stylesheet" href="css/components/chat/chat.css">
+    <link rel="stylesheet" href="css/components/chat/chat-message.css">
+    <link rel="stylesheet" href="css/components/chat/thinking-process.css">
     <link rel="stylesheet" href="css/components/chat/markdown.css">
-    <link rel="stylesheet" href="css/components/rag/knowledge-base.css">
-    <link rel="stylesheet" href="css/components/rag/confluence-settings.css">
     <link rel="stylesheet" href="css/components/artifact/artifact-panel.css">
-    <link rel="stylesheet" href="css/components/agent/agent.css">
-    <link rel="stylesheet" href="css/components/agent/agent-settings.css">
-    <link rel="stylesheet" href="css/components/workflow/workflow.css">
-    <link rel="stylesheet" href="css/components/chatflow/chatflow.css">
+    <link rel="stylesheet" href="css/components/tools/tool-settings.css">
+    <link rel="stylesheet" href="css/components/settings/enterprise-settings.css">
+    <link rel="stylesheet" href="css/components/codex/codex.css">
+    <link rel="stylesheet" href="css/components/workspace/workspace.css">
     <link rel="stylesheet" href="css/tools.css">
+    <link rel="stylesheet" href="css/components/settings/chat-shell.css">
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer">
     
@@ -59,20 +63,6 @@
     <!-- JSZip ライブラリ (PPTX, DOCX解析用) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
-    <!-- シンプルコードエディタスタイル -->
-    <style>
-        .simple-editor-fallback textarea {
-            width: 100%;
-            height: 300px;
-            background-color: #1e1e1e;
-            color: #d4d4d4;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 14px;
-            padding: 10px;
-            border: 1px solid #444;
-            resize: none;
-        }
-    </style>
     
     <!-- Prism.js ランタイム読み込み用スクリプト -->
     <script>
@@ -82,22 +72,13 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.0/mammoth.browser.min.js"></script>
 
-    <!-- Transformers.js (ローカル埋め込み用) -->
-    <script type="module">
-        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3';
-        // ローカルモデルは使用しない（CDNからダウンロード）
-        env.allowLocalModels = false;
-        // グローバルに公開
-        window.TransformersJS = { pipeline, env };
-        console.log('✅ Transformers.js loaded');
-    </script>
 </head>
 <body>
     <div class="app-container">
         <!-- サイドバー -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <button id="newChatButton" class="new-chat-button cyber-style">
+                <button id="newChatButton" class="new-chat-button">
                     <i class="fas fa-plus"></i> 新しいチャット
                 </button>
             </div>
@@ -111,61 +92,45 @@
                 <!-- チャット履歴はJSで動的に追加 -->
             </div>
             <div class="sidebar-footer">
-                <button id="clearHistoryButton" class="clear-history-button cyber-style" title="履歴を一括クリア">
-                    <i class="fas fa-trash"></i>
-                </button>
-                <div class="settings-dropdown">
-                    <button id="settingsButton" class="settings-button cyber-style" title="設定">
-                        <i class="fas fa-cog"></i>
-                    </button>
-                    <div id="settingsMenu" class="settings-menu">
-                        <button id="openSystemPromptSettings">システムプロンプト設定</button>
-                        <button id="openPromptManager">ユーザープロンプト管理</button>
-                        <button id="openKnowledgeBase">ナレッジベース (RAG)</button>
-                        <button id="openWorkflowBuilder">ワークフロービルダー</button>
-                        <button id="openChatFlowBuilder">チャットフロービルダー</button>
-                        <button id="openAgentSettings">エージェント設定</button>
-                        <button id="openApiSettings">API設定</button>
-                    </div>
-                </div>
+                <button id="settingsButton" class="settings-button" aria-haspopup="dialog"><i class="fas fa-cog" aria-hidden="true"></i><span>設定</span></button>
             </div>
         </div>
 
         <!-- メインチャットエリア -->
         <div class="chat-container">
             <div class="chat-header">
-                <h1>ChatBot</h1>
+                <span class="app-name">ChatBot</span>
                 <div class="model-selector">
-                    <select id="modelSelect">
+                    <select id="modelSelect" aria-label="使用するモデル">
                         <!-- モデルはconfig.jsの設定からJavaScriptで動的に生成されます -->
                     </select>
                 </div>
             </div>
             <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-welcome" id="chatWelcome"><h1>今日は何をお手伝いしましょうか？</h1></div>
             <div class="chat-input-container" id="chatInputContainer">
                 <div class="input-wrapper">
-                    <div class="prompt-suggestions" id="promptSuggestions">
-                        <!-- プロンプト候補はJSで動的に追加 -->
-                    </div>
                     <div class="main-input-area">
-                        <textarea id="userInput" placeholder="メッセージを入力..." rows="1"></textarea>
+                        <textarea id="userInput" aria-label="メッセージ" placeholder="メッセージを入力" rows="1"></textarea>
                         <div class="input-actions">
-                            <button id="agentModeToggle" class="toggle-button" title="エージェントモードのON/OFF切替">
-                                <span>🤖</span>
-                            </button>
-                            <button id="webSearchToggle" class="toggle-button" title="Web検索機能のON/OFF切替">
-                                <span>🌐</span>
-                            </button>
-                            <label class="file-upload-label" title="ファイルを添付する">
-                                <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.txt,.md,.csv,.pdf,.js,.html,.css,.json">
-                                <i class="fas fa-paperclip"></i>
-                            </label>
+                            <div class="composer-actions-left">
+                                <button id="composerMenuButton" class="composer-plus" aria-label="添付と機能" aria-expanded="false" aria-controls="composerMenu"><i class="fas fa-plus" aria-hidden="true"></i></button>
+                                <div id="composerMenu" class="composer-menu" hidden>
+                                    <button id="attachFileButton"><i class="fas fa-paperclip" aria-hidden="true"></i>ファイルを添付</button>
+                                    <button id="webSearchToggle" class="toggle-button" aria-pressed="false"><i class="fas fa-globe" aria-hidden="true"></i>Web検索</button>
+                                    <button id="codexToggle" class="toggle-button" aria-pressed="false"><i class="fas fa-terminal" aria-hidden="true"></i>Codex</button>
+                                </div>
+                                <input type="file" id="fileInput" multiple hidden>
+                                <div id="composerActiveFeatures" class="composer-active-features"></div>
+                            </div>
+                            <div class="composer-actions-right">
+                                <button id="sendButton" aria-label="送信">
+                                    <i class="fas fa-arrow-up" aria-hidden="true"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <button id="sendButton" class="cyber-style">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
             </div>
         </div>
 
@@ -209,6 +174,43 @@
         </div>
     </div>
 
+    <dialog id="settingsDialog" class="settings-dialog" aria-labelledby="settingsTitle">
+        <header class="settings-heading"><h2 id="settingsTitle">設定</h2><button id="closeSettings" aria-label="設定を閉じる">×</button></header>
+        <div class="settings-layout">
+            <nav class="settings-nav" aria-label="設定カテゴリ">
+                <button data-settings-tab="customization" aria-current="page">回答のカスタマイズ</button>
+                <button data-settings-tab="connections">接続</button>
+                <button data-settings-tab="advanced">高度な機能</button>
+                <button data-settings-tab="data">データ管理</button>
+            </nav>
+            <div class="settings-panels">
+                <section data-settings-panel="customization">
+                    <h3>回答のカスタマイズ</h3>
+                    <p id="customizationHelp">口調や回答の詳しさなど、いつも伝えておきたいことを入力してください。空欄でも使えます。</p>
+                    <label for="customInstructions">AIに伝えておきたいこと</label>
+                    <textarea id="customInstructions" rows="7" aria-describedby="customizationHelp" placeholder="例：日本語で、結論から簡潔に答えてください。"></textarea>
+                    <p class="settings-note">保存すると次の通常チャットの送信から反映されます。</p>
+                    <div class="settings-actions"><button id="resetCustomization">既定に戻す</button><button id="cancelCustomization">キャンセル</button><button id="saveCustomization" class="settings-primary">保存</button></div>
+                    <p id="customizationStatus" role="status"></p>
+                </section>
+                <section data-settings-panel="connections" hidden>
+                    <h3>接続</h3><p>使用するAIと、検索する社内サービスを設定します。</p>
+                    <button id="openApiSettings" class="settings-row">AIのAPI設定 <span aria-hidden="true">›</span></button>
+                    <button id="openEnterpriseSettings" class="settings-row">社内情報連携 <span aria-hidden="true">›</span></button>
+                </section>
+                <section data-settings-panel="advanced" hidden>
+                    <h3>高度な機能</h3><p>AIが使う機能と、Codexの作業ファイルを管理します。</p>
+                    <button id="openToolSettings" class="settings-row">ツール設定 <span aria-hidden="true">›</span></button>
+                    <button id="openWorkspace" class="settings-row">Codexワークスペース <span aria-hidden="true">›</span></button>
+                </section>
+                <section data-settings-panel="data" hidden>
+                    <h3>データ管理</h3><p>このブラウザに保存されている会話履歴を管理します。</p>
+                    <button id="clearHistoryButton" class="settings-danger">会話履歴をすべて削除</button>
+                </section>
+            </div>
+        </div>
+    </dialog>
+
     <!-- モーダル -->
     <!-- APIキー設定モーダル -->
     <div id="apiKeyModal" class="modal">
@@ -250,29 +252,15 @@
                     </div>
                     <div class="azure-model-endpoints">
                         <div class="form-group">
-                            <label for="azureEndpointGpt4oMini">gpt-4o-mini エンドポイントURL:</label>
-                            <input type="text" id="azureEndpointGpt4oMini" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
+                            <label for="azureResponsesEndpoint">Responses API エンドポイントURL（共通）:</label>
+                            <input type="text" id="azureResponsesEndpoint" aria-describedby="azureResponsesHelp">
+                            <p id="azureResponsesHelp">/responses と api-version を含む完全なURLを入力してください。設定すると従来のURLより優先されます。</p>
                         </div>
-                        <div class="form-group">
-                            <label for="azureEndpointGpt4o">gpt-4o エンドポイントURL:</label>
-                            <input type="text" id="azureEndpointGpt4o" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
-                        </div>
-                        <div class="form-group">
-                            <label for="azureEndpointGpt5Mini">gpt-5-mini エンドポイントURL:</label>
-                            <input type="text" id="azureEndpointGpt5Mini" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
-                        </div>
-                        <div class="form-group">
-                            <label for="azureEndpointGpt5">gpt-5 エンドポイントURL:</label>
-                            <input type="text" id="azureEndpointGpt5" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
-                        </div>
-                        <div class="form-group">
-                            <label for="azureEndpointGpt52">gpt-5.2 エンドポイントURL:</label>
-                            <input type="text" id="azureEndpointGpt52" placeholder="https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15">
-                        </div>
-                        <div class="form-group" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
-                            <label for="azureEndpointEmbedding">text-embedding-3-large エンドポイントURL（RAG用）:</label>
-                            <input type="text" id="azureEndpointEmbedding" placeholder="https://your-resource.openai.azure.com/openai/deployments/text-embedding-3-large/embeddings?api-version=2023-05-15">
-                        </div>
+                        <div id="azureModelDeployments"></div>
+                        <details>
+                            <summary>従来の Chat Completions 設定</summary>
+                            <div id="azureModelEndpoints"></div>
+                        </details>
                     </div>
                 </div>
             </div>
@@ -329,109 +317,6 @@
         </div>
     </div>
 
-    <!-- システムプロンプト設定モーダル -->
-    <div id="systemPromptModal" class="modal">
-        <div class="modal-content">
-            <h2>システムプロンプト設定</h2>
-            <div class="system-prompt-container">
-                <div class="system-prompt-sidebar">
-                    <h3 class="system-prompt-list-title">システムプロンプト一覧</h3>
-                    <div id="systemPromptListArea" class="system-prompt-list-area">
-                        <!-- システムプロンプト一覧はJSで動的に生成 -->
-                    </div>
-                </div>
-                <div class="system-prompt-main">
-                    <div class="form-group">
-                        <div class="form-group">
-                            <label for="newTemplateCategory">カテゴリ:</label>
-                            <input type="text" id="newTemplateCategory" placeholder="カテゴリ名を入力">
-                        </div>
-                        <div class="form-group">
-                            <label for="newSystemPromptName">システムプロンプト名:</label>
-                            <input type="text" id="newSystemPromptName" placeholder="システムプロンプト名">
-                        </div>
-                        <div class="form-group">
-                            <label for="systemPromptInput">システムプロンプト:</label>
-                            <textarea id="systemPromptInput" rows="15" placeholder="システムプロンプトを入力..."></textarea>
-                        </div>
-                        <div style="margin-top: 15px;">
-                            <button id="saveNewSystemPrompt" class="secondary-button">システムプロンプトとして保存</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-buttons">
-                <button id="saveSystemPrompt" class="primary-button">保存</button>
-                <button id="cancelSystemPrompt" class="primary-button">キャンセル</button>
-                <button id="switchToPromptManager" class="primary-button">ユーザープロンプト管理へ</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ユーザープロンプト管理モーダル -->
-    <div id="promptManagerModal" class="modal">
-        <div class="modal-content prompt-manager-modal">
-            <h2>ユーザープロンプト管理</h2>
-            <div class="prompt-manager-container">
-                <div class="prompt-manager-header">
-                    <div class="prompt-filter-buttons">
-                        <button id="showAllPrompts" class="filter-button active">すべて</button>
-                        <button id="showFavorites" class="filter-button">
-                            <i class="fas fa-star"></i> お気に入り
-                        </button>
-                    </div>
-                    <div class="prompt-sort-select">
-                        <select id="promptSortSelect">
-                            <option value="recent">最近更新</option>
-                            <option value="mostUsed">よく使う</option>
-                            <option value="name">名前順</option>
-                        </select>
-                    </div>
-                    <div class="prompt-search">
-                        <input type="text" id="promptSearchInput" placeholder="プロンプト検索...">
-                    </div>
-                    <button id="addPromptButton" class="secondary-button">
-                        <i class="fas fa-plus"></i> 新規
-                    </button>
-                </div>
-                <div id="promptsList" class="prompts-list">
-                    <!-- プロンプト一覧はJSで動的に生成 -->
-                </div>
-            </div>
-            <div class="modal-buttons">
-                <button id="closePromptManager" class="primary-button">閉じる</button>
-                <button id="switchToSystemPrompt" class="primary-button">システムプロンプト設定へ</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ユーザープロンプト編集モーダル -->
-    <div id="promptEditModal" class="modal">
-        <div class="modal-content">
-            <h2 id="promptEditTitle">プロンプト編集</h2>
-            <div class="form-group">
-                <label for="promptNameInput">名前:</label>
-                <input type="text" id="promptNameInput" placeholder="プロンプト名">
-            </div>
-            <div class="form-group">
-                <label for="promptTagsInput">タグ (カンマ区切り):</label>
-                <input type="text" id="promptTagsInput" placeholder="タグ1, タグ2, ...">
-            </div>
-            <div class="form-group">
-                <label for="promptDescriptionInput">説明:</label>
-                <textarea id="promptDescriptionInput" rows="2" placeholder="プロンプトの説明..."></textarea>
-            </div>
-            <div class="form-group">
-                <label for="promptContentInput">プロンプト内容:</label>
-                <textarea id="promptContentInput" rows="10" placeholder="プロンプト内容を入力..."></textarea>
-            </div>
-            <div class="modal-buttons">
-                <button id="savePromptEdit" class="primary-button">保存</button>
-                <button id="cancelPromptEdit" class="secondary-button">キャンセル</button>
-            </div>
-        </div>
-    </div>
-    
     <!-- コードエディターモーダル -->
     <div id="codeEditorModal" class="modal code-editor-modal">
         <div class="modal-content code-editor-content">
@@ -477,272 +362,26 @@
         </div>
     </div>
 
-    <!-- RAGナレッジベースモーダル -->
-    <div id="knowledgeBaseModal" class="modal">
-        <div class="modal-content knowledge-base-modal">
-            <h2><i class="fas fa-book"></i> ナレッジベース</h2>
-
-            <!-- API警告 -->
-            <div id="kbApiWarning" class="kb-api-warning"></div>
-
-            <!-- RAGトグル -->
-            <div class="kb-toggle-section">
-                <label class="kb-toggle-label">
-                    <i class="fas fa-brain"></i>
-                    <span>RAGを有効にする</span>
-                </label>
-                <div class="kb-toggle-switch">
-                    <input type="checkbox" id="ragToggle">
-                    <span class="kb-toggle-slider"></span>
+    <!-- ワークスペース（Codex 作業ディレクトリ）モーダル -->
+    <div id="workspaceModal" class="modal">
+        <div class="modal-content workspace-modal-content">
+            <h2><i class="fas fa-folder-open"></i> ワークスペース</h2>
+            <div class="workspace-toolbar">
+                <span class="workspace-root" id="workspaceRoot" title="サーバー側の作業ディレクトリ"></span>
+                <button id="workspaceRefresh" class="secondary-button" title="更新"><i class="fas fa-sync-alt"></i></button>
+            </div>
+            <div class="workspace-body">
+                <ul id="workspaceFileList" class="workspace-file-list"></ul>
+                <div class="workspace-preview-pane">
+                    <div class="workspace-preview-header">
+                        <span id="workspacePreviewTitle">ファイルを選択してください</span>
+                        <button id="workspaceDownload" class="secondary-button" disabled title="ダウンロード"><i class="fas fa-download"></i></button>
+                    </div>
+                    <pre id="workspacePreview" class="workspace-preview"></pre>
                 </div>
             </div>
-
-            <!-- 統計情報 -->
-            <div id="kbStats" class="kb-stats-container">
-                <!-- 統計情報はJSで動的に生成 -->
-            </div>
-
-            <!-- RAG設定セクション -->
-            <details class="kb-settings-section">
-                <summary class="kb-settings-header">
-                    <i class="fas fa-cog"></i>
-                    <span>RAG設定</span>
-                </summary>
-                <div class="kb-settings-content">
-                    <!-- 埋め込みモード選択 -->
-                    <div class="kb-setting-group">
-                        <label class="kb-setting-label">
-                            <i class="fas fa-microchip"></i>
-                            埋め込みモード
-                        </label>
-                        <select id="kbEmbeddingMode" class="kb-select">
-                            <option value="local">ローカル (all-MiniLM-L6-v2, 384次元)</option>
-                            <option value="openai">OpenAI (text-embedding-3-large, 3072次元)</option>
-                            <option value="azure">Azure OpenAI (text-embedding-3-large, 3072次元)</option>
-                        </select>
-                        <p class="kb-setting-hint">モード変更時は既存ドキュメントの再埋め込みが必要です</p>
-                    </div>
-
-                    <!-- チャンクサイズ -->
-                    <div class="kb-setting-group">
-                        <label class="kb-setting-label">
-                            <i class="fas fa-cut"></i>
-                            チャンクサイズ: <span id="kbChunkSizeValue">500</span>文字
-                        </label>
-                        <input type="range" id="kbChunkSize" class="kb-slider" min="100" max="2000" value="500" step="50">
-                    </div>
-
-                    <!-- チャンクオーバーラップ -->
-                    <div class="kb-setting-group">
-                        <label class="kb-setting-label">
-                            <i class="fas fa-layer-group"></i>
-                            オーバーラップ: <span id="kbChunkOverlapValue">50</span>文字
-                        </label>
-                        <input type="range" id="kbChunkOverlap" class="kb-slider" min="0" max="200" value="50" step="10">
-                    </div>
-
-                    <!-- 類似度閾値 -->
-                    <div class="kb-setting-group">
-                        <label class="kb-setting-label">
-                            <i class="fas fa-balance-scale"></i>
-                            類似度閾値: <span id="kbSimilarityThresholdValue">0.3</span>
-                        </label>
-                        <input type="range" id="kbSimilarityThreshold" class="kb-slider" min="0.1" max="0.9" value="0.3" step="0.05">
-                    </div>
-
-                    <!-- TOP_K -->
-                    <div class="kb-setting-group">
-                        <label class="kb-setting-label">
-                            <i class="fas fa-list-ol"></i>
-                            検索結果数 (Top-K)
-                        </label>
-                        <select id="kbTopK" class="kb-select">
-                            <option value="3">3件</option>
-                            <option value="5" selected>5件</option>
-                            <option value="10">10件</option>
-                            <option value="15">15件</option>
-                            <option value="20">20件</option>
-                        </select>
-                    </div>
-                </div>
-            </details>
-
-            <!-- 検索テストセクション -->
-            <details class="kb-search-test-section">
-                <summary class="kb-settings-header">
-                    <i class="fas fa-search"></i>
-                    <span>検索テスト</span>
-                </summary>
-                <div class="kb-search-test-content">
-                    <div class="kb-search-input-group">
-                        <input type="text" id="kbSearchQuery" class="kb-search-input" placeholder="検索クエリを入力...">
-                        <button id="kbSearchBtn" class="kb-search-btn">
-                            <i class="fas fa-search"></i> 検索
-                        </button>
-                    </div>
-                    <div id="kbSearchResults" class="kb-search-results">
-                        <!-- 検索結果はJSで動的に生成 -->
-                    </div>
-                </div>
-            </details>
-
-            <!-- データソースタブ -->
-            <div class="kb-datasource-tabs">
-                <button id="kbFileTab" class="kb-tab active">
-                    <i class="fas fa-file"></i> ファイル
-                </button>
-                <button id="kbConfluenceTab" class="kb-tab">
-                    <i class="fas fa-atlas"></i> Confluence
-                </button>
-            </div>
-
-            <!-- ファイルアップロードセクション -->
-            <div id="kbFileSection" class="kb-section">
-                <div class="kb-upload-section">
-                    <div id="kbDropZone" class="kb-drop-zone">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <p>ファイルをドラッグ&ドロップ</p>
-                        <p class="kb-upload-hint">または</p>
-                        <div class="kb-upload-buttons">
-                            <button id="kbUploadBtn" class="kb-upload-btn">
-                                <i class="fas fa-file"></i> ファイルを選択
-                            </button>
-                            <button id="kbUploadFolderBtn" class="kb-upload-btn kb-upload-folder-btn">
-                                <i class="fas fa-folder"></i> フォルダを選択
-                            </button>
-                        </div>
-                        <input type="file" id="kbFileInput" class="kb-file-input" multiple
-                               accept=".pdf,.txt,.md,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.csv,.json,.js,.html,.css,.py,.java,.cpp,.c">
-                        <input type="file" id="kbFolderInput" class="kb-file-input" webkitdirectory>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Confluenceセクション -->
-            <div id="kbConfluenceSection" class="kb-section hidden">
-                <!-- Confluence設定フォーム -->
-                <div id="confluenceSettingsForm" class="confluence-settings-form">
-                    <div class="form-group">
-                        <label for="confluenceBaseUrl">Confluence URL:</label>
-                        <input type="text" id="confluenceBaseUrl" placeholder="https://confluence.example.com">
-                    </div>
-
-                    <div class="form-group">
-                        <label>認証方式:</label>
-                        <div class="radio-group">
-                            <label>
-                                <input type="radio" id="authBasic" name="confluenceAuthType" value="basic" checked>
-                                Basic認証
-                            </label>
-                            <label>
-                                <input type="radio" id="authPat" name="confluenceAuthType" value="pat">
-                                Personal Access Token
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Basic認証フィールド -->
-                    <div id="basicAuthFields" class="auth-fields">
-                        <div class="form-group">
-                            <label for="confluenceUsername">ユーザー名:</label>
-                            <input type="text" id="confluenceUsername" placeholder="username">
-                        </div>
-                        <div class="form-group">
-                            <label for="confluencePassword">パスワード:</label>
-                            <input type="password" id="confluencePassword" placeholder="password">
-                        </div>
-                    </div>
-
-                    <!-- PAT認証フィールド -->
-                    <div id="patAuthFields" class="auth-fields hidden">
-                        <div class="form-group">
-                            <label for="confluenceToken">Personal Access Token:</label>
-                            <input type="password" id="confluenceToken" placeholder="your-access-token">
-                        </div>
-                    </div>
-
-                    <div class="confluence-settings-buttons">
-                        <button id="testConfluenceConnection" class="secondary-button">
-                            <i class="fas fa-plug"></i> 接続テスト
-                        </button>
-                        <button id="saveConfluenceSettings" class="primary-button">
-                            <i class="fas fa-save"></i> 設定を保存
-                        </button>
-                    </div>
-                </div>
-
-                <!-- スペース選択セクション（設定完了後に表示） -->
-                <div id="confluenceSpaceSection" class="confluence-space-section hidden">
-                    <div class="confluence-connection-status connected" id="confluenceConnectionStatus">
-                        <i class="fas fa-check-circle"></i>
-                        <span id="confluenceStatusText">接続済み</span>
-                    </div>
-                    <div class="form-group">
-                        <label for="confluenceSpaceSelect">スペースを選択:</label>
-                        <select id="confluenceSpaceSelect">
-                            <option value="">スペースを選択</option>
-                        </select>
-                    </div>
-
-                    <!-- ページツリーセクション -->
-                    <div id="confluencePageTreeSection" class="confluence-page-tree-section hidden">
-                        <div class="confluence-page-tree-header">
-                            <span class="confluence-page-tree-title">
-                                <i class="fas fa-sitemap"></i> ページ階層
-                            </span>
-                            <div class="confluence-page-tree-actions">
-                                <button id="selectAllPages" class="tree-action-btn" title="全選択">
-                                    <i class="fas fa-check-double"></i>
-                                </button>
-                                <button id="deselectAllPages" class="tree-action-btn" title="全解除">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                                <button id="collapseAllPages" class="tree-action-btn" title="全折りたたみ">
-                                    <i class="fas fa-compress-alt"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="confluencePageTree" class="confluence-page-tree">
-                            <!-- ツリーノードはJSで動的に生成 -->
-                        </div>
-                        <div class="confluence-page-tree-footer">
-                            <span id="selectedPageCount">0 ページ選択中</span>
-                        </div>
-                    </div>
-
-                    <div class="confluence-space-buttons">
-                        <button id="importConfluencePages" class="primary-button">
-                            <i class="fas fa-download"></i> 選択したページをインポート
-                        </button>
-                        <button id="editConfluenceSettings" class="secondary-button">
-                            <i class="fas fa-cog"></i> 設定を変更
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 進捗表示 -->
-            <div id="kbProgress" class="kb-progress-container">
-                <div class="kb-progress-bar-wrapper">
-                    <div id="kbProgressBar" class="kb-progress-bar"></div>
-                </div>
-                <div id="kbProgressText" class="kb-progress-text">処理中...</div>
-            </div>
-
-            <!-- ドキュメント一覧 -->
-            <div class="kb-document-list-section">
-                <div class="kb-document-list-header">
-                    <h3>登録済みドキュメント</h3>
-                    <button id="kbClearAllBtn" class="kb-clear-all-btn">全て削除</button>
-                </div>
-                <div id="kbDocumentList" class="kb-document-list">
-                    <!-- ドキュメント一覧はJSで動的に生成 -->
-                </div>
-            </div>
-
-            <!-- フッター -->
-            <div class="kb-modal-footer">
-                <button id="closeKnowledgeBaseModal" class="kb-close-btn">閉じる</button>
+            <div class="modal-buttons">
+                <button id="workspaceClose" class="primary-button">閉じる</button>
             </div>
         </div>
     </div>
@@ -760,9 +399,11 @@
 
     <!-- Core -->
     <script src="js/core/config.js"></script>
+    <script src="js/core/enterpriseConfig.js"></script>
     <script src="js/core/keyboardShortcuts.js"></script>
     <script src="js/utils/cryptoHelper.js"></script>
     <script src="js/core/storage.js"></script>
+    <script src="js/core/enterpriseClient.js"></script>
 
     <!-- Core -->
     <script src="js/core/uiCache.js"></script>
@@ -772,6 +413,7 @@
     <script src="js/core/appState.js"></script>
     <script src="js/core/ui.js"></script>
     <script src="js/core/eventHandlers.js"></script>
+    <script src="js/core/codex/codexClient.js"></script>
 
     <!-- Utils -->
     <script src="js/utils/fileHandler.js"></script>
@@ -781,7 +423,6 @@
 
     <!-- Components -->
     <script src="js/components/fileAttachment/fileAttachmentUI.js"></script>
-    <!-- <script src="js/components/fileAttachment/attachmentViewer.js"></script> -->
 
     <script src="js/core/api.js"></script>
     <script src="js/core/openaiApi.js"></script>
@@ -799,59 +440,28 @@
     <script src="js/core/tools/executors/ExcelProcessor.js"></script>
     <script src="js/core/tools/executors/CanvasRenderer.js"></script>
     <script src="js/core/tools/storage/fileStorage.js"></script>
+    <!-- 情報取得・実行系ツール（モデルが必要に応じて呼ぶ） -->
+    <script src="js/core/tools/builtin/webSearchTool.js"></script>
+    <script src="js/core/tools/builtin/urlFetchTool.js"></script>
+    <script src="js/core/tools/builtin/jiraSearchTool.js"></script>
+    <script src="js/core/tools/builtin/jiraGetIssueTool.js"></script>
+    <script src="js/core/tools/builtin/confluenceSearchTool.js"></script>
+    <script src="js/core/tools/builtin/confluenceGetPageTool.js"></script>
+    <script src="js/core/tools/builtin/calculatorTool.js"></script>
+    <script src="js/core/tools/builtin/codeExecuteTool.js"></script>
+    <script src="js/core/tools/builtin/codexTaskTool.js"></script>
+    <script src="js/core/tools/builtin/fileWriteTool.js"></script>
+    <script src="js/core/tools/builtin/shellExecuteTool.js"></script>
+    <!-- カスタムツール（ユーザー定義） -->
+    <script src="js/core/tools/custom/customToolStorage.js"></script>
+    <script src="js/core/tools/custom/customToolExecutor.js"></script>
+    <script src="js/components/tools/customToolEditor.js"></script>
     <script src="js/core/tools/toolManager.js"></script>
-    <script src="js/components/toolUI/toolProgress.js"></script>
     <script src="js/components/toolUI/fileDownloader.js"></script>
     <script src="js/components/toolUI/toolPreview.js"></script>
 
-    <!-- RAG関連のファイル -->
-    <script src="js/core/rag/vectorStore.js"></script>
-    <script src="js/core/rag/embeddingApi.js"></script>
-    <script src="js/core/rag/documentChunker.js"></script>
-    <script src="js/core/rag/similaritySearch.js"></script>
-    <script src="js/core/rag/confluenceDataSource.js"></script>
-    <script src="js/core/rag/confluencePageTree.js"></script>
-    <script src="js/core/rag/ragManager.js"></script>
 
     <script src="js/utils/markdown.js"></script>
-    <script src="js/core/userprompts/promptManager.js"></script>
-    <script src="js/core/userprompts/promptSuggestions.js"></script>
-
-    <!-- エージェント関連のファイル -->
-    <script src="js/core/agent/agentMemory.js"></script>
-    <script src="js/core/agent/agentLoop.js"></script>
-    <script src="js/core/agent/agentToolSelector.js"></script>
-    <!-- エージェントツール -->
-    <script src="js/core/agent/tools/calculatorTool.js"></script>
-    <script src="js/core/agent/tools/urlFetchTool.js"></script>
-    <script src="js/core/agent/tools/textAnalyzerTool.js"></script>
-    <script src="js/core/agent/tools/ragSearchTool.js"></script>
-    <script src="js/core/agent/tools/codeExecuteTool.js"></script>
-    <script src="js/core/agent/tools/fileReadTool.js"></script>
-    <!-- カスタムツール関連 -->
-    <script src="js/core/agent/tools/customToolStorage.js"></script>
-    <script src="js/components/agent/customToolExecutor.js"></script>
-    <script src="js/components/agent/agentToolEditor.js"></script>
-    <script src="js/core/agent/tools/agentToolManager.js"></script>
-    <script src="js/core/agent/agentOrchestrator.js"></script>
-    <script src="js/components/agent/agentUI.js"></script>
-    <script src="js/components/agent/askUserDialog.js"></script>
-
-    <!-- ワークフロー関連のファイル -->
-    <script src="js/core/workflow/nodeRegistry.js"></script>
-    <script src="js/core/workflow/workflowEngine.js"></script>
-    <script src="js/core/workflow/workflowStorage.js"></script>
-    <script src="js/components/workflow/workflowCanvas.js"></script>
-    <script src="js/components/workflow/nodePalette.js"></script>
-    <script src="js/components/workflow/propertiesPanel.js"></script>
-    <script src="js/modals/workflowBuilder/workflowBuilderModal.js"></script>
-
-    <!-- チャットフロー関連のファイル -->
-    <script src="js/core/chatflow/chatFlowNodes.js"></script>
-    <script src="js/core/chatflow/chatFlowSession.js"></script>
-    <script src="js/core/chatflow/chatFlowEngine.js"></script>
-    <script src="js/core/chatflow/chatFlowStorage.js"></script>
-    <script src="js/modals/chatFlowBuilder/chatFlowBuilderModal.js"></script>
 
     <!-- アーティファクト関連のファイル -->
     <script src="js/components/artifact/artifactDetector.js"></script>
@@ -861,6 +471,8 @@
 
     <!-- コンポーネント関連のファイル -->
     <script src="js/components/chat/chatUI.js"></script>
+    <script src="js/components/codex/codexRunCard.js"></script>
+    <script src="js/components/chat/streamingIndicator.js"></script>
     <script src="js/components/chat/chatRenderer.js"></script>
     <script src="js/components/chat/chatHistory.js"></script>
     <script src="js/components/chat/chatActions.js"></script>
@@ -872,10 +484,9 @@
     <script src="js/modals/modalHandlers.js"></script>
     <script src="js/modals/apiSettings/apiSettingsModal.js"></script>
     <script src="js/modals/renameChat/renameChatModal.js"></script>
-    <script src="js/modals/systemPrompt/systemPromptModal.js"></script>
-    <script src="js/modals/promptManager/promptManagerModal.js"></script>
-    <script src="js/modals/knowledgeBase/knowledgeBaseModal.js"></script>
-    <script src="js/modals/agentSettings/agentSettingsModal.js"></script>
+    <script src="js/modals/toolSettings/toolSettingsModal.js"></script>
+    <script src="js/modals/enterprise/enterpriseSettingsModal.js"></script>
+    <script src="js/modals/workspace/workspaceModal.js"></script>
 
     <!-- Monaco Editor コントローラー -->
     <script src="js/core/monaco/MonacoEditorController.js"></script>
@@ -883,6 +494,9 @@
     <!-- ユーティリティ関連のファイル -->
     <script src="js/utils/webContentExtractor.js"></script>
     
+    <script src="js/modals/settings/settingsModal.js"></script>
+    <script src="js/components/chat/chatShell.js"></script>
+
     <!-- メインアプリケーションファイル -->
     <script src="main.js"></script>
 </body>

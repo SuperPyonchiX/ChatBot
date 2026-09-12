@@ -47,8 +47,6 @@ interface AppState {
     conversations: Conversation[];
     /** 現在の会話ID */
     currentConversationId: string | null;
-    /** システムプロンプトテンプレート */
-    systemPromptTemplates: Record<string, SystemPromptTemplate>;
     /** ユーザープロンプト */
     userPrompts: UserPrompt[];
     /** 現在の添付ファイル */
@@ -77,8 +75,6 @@ interface Conversation {
     timestamp: number;
     /** メッセージリスト */
     messages: Message[];
-    /** システムプロンプトキー（オプション） */
-    systemPromptKey?: string;
 }
 
 /**
@@ -105,32 +101,6 @@ interface ContentPart {
     image_url?: {
         url: string;
     };
-}
-
-/**
- * システムプロンプトテンプレート
- */
-interface SystemPromptTemplate {
-    /** テンプレート名 */
-    name: string;
-    /** プロンプト内容 */
-    content: string;
-    /** 説明（オプション） */
-    description?: string;
-}
-
-/**
- * ユーザープロンプト
- */
-interface UserPrompt {
-    /** プロンプトID */
-    id: string;
-    /** プロンプトタイトル */
-    title: string;
-    /** プロンプト内容 */
-    content: string;
-    /** 作成タイムスタンプ */
-    timestamp: number;
 }
 
 /**
@@ -243,4 +213,9 @@ declare const FileAttachment: AppFileAttachmentConstructor;
 interface Element {
     dataset: DOMStringMap;
     style: CSSStyleDeclaration;
+}
+
+interface Window {
+    SettingsModal: typeof SettingsModal;
+    ChatShell: typeof ChatShell;
 }

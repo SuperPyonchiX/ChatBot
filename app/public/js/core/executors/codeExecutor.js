@@ -207,3 +207,5 @@ class CodeExecutor {
         }
     }
 }
+
+window.CodeExecutor = CodeExecutor;

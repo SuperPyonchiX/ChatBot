@@ -2,7 +2,10 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ES2020",
-    "lib": ["ES2020", "DOM"],
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
     "checkJs": true,
     "strict": false,
     "noImplicitAny": false,
@@ -10,7 +13,6 @@
     "strictFunctionTypes": false,
     "strictPropertyInitialization": false,
     "noImplicitThis": false,
-    "alwaysStrict": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitReturns": false,
@@ -19,22 +21,23 @@
     "allowUnusedLabels": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["app/*"]
+      "@/*": [
+        "./app/*"
+      ]
     }
   },
   "include": [
     "app/**/*.js",
-    "app/types.d.ts",
-    "launcher/server/**/*.js"
+    "app/public/types.d.ts"
   ],
   "exclude": [
     "node_modules",
-    "app/js/lib/**/*.js"
+    "app/node_modules",
+    "app/public/js/lib/**/*.js"
   ]
 }

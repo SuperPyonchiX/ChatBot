@@ -32,6 +32,7 @@ class FileAttachmentUI {
         
         this.#createFilePreviewItems(files, previewArea);
         previewArea.style.display = 'flex'; // プレビューエリアを表示
+        ChatUI.getInstance.updateSendButtonState();
     }
 
     clearPreview() {
@@ -261,6 +262,7 @@ class FileAttachmentUI {
                 if (isNaN(indexToRemove)) return;
                 
                 FileHandler.getInstance.selectedFiles = FileHandler.getInstance.selectedFiles.filter((_, i) => i !== indexToRemove);
+                ChatUI.getInstance.updateSendButtonState();
                 
                 fileItem.remove();
                 this.#updateFileIndices();

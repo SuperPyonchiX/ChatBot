@@ -35,6 +35,20 @@ class ModalHandlers {
         
         // 現在の設定を取得（既存のAPIキーを保持）
         const currentSettings = Storage.getInstance.loadApiSettings();
+        const responsesInput = document.getElementById('azureResponsesEndpoint');
+        let responsesEndpoint = '';
+        if (window.Elements.azureRadio.checked && window.Elements.openaiSystemRadio.checked) {
+            try {
+                responsesEndpoint = ResponsesAPI.getInstance.normalizeAzureEndpoint(responsesInput?.value || '');
+                responsesInput.setCustomValidity('');
+            } catch (error) {
+                console.error('[ModalHandlers] Azure設定検証エラー:', error);
+                responsesInput.setCustomValidity(error.message);
+                responsesInput.reportValidity();
+                responsesInput.oninput = () => responsesInput.setCustomValidity('');
+                return;
+            }
+        }
         
         // API系統を判定
         if (window.Elements.geminiSystemRadio.checked) {
@@ -60,38 +74,27 @@ class ModalHandlers {
             // OpenAI系を選択 - OpenAI または Azure OpenAI を判定
             if (window.Elements.azureRadio.checked) {
                 window.AppState.apiSettings.apiType = 'azure';
+                window.AppState.apiSettings.azureResponsesEndpoint = responsesEndpoint;
+                window.AppState.apiSettings.azureDeployments = {};
+                document.querySelectorAll('#azureModelDeployments input[data-model]').forEach(element => {
+                    window.AppState.apiSettings.azureDeployments[element.dataset.model] = element.value.trim();
+                });
 
                 // Azure OpenAI APIキーとエンドポイントを更新
                 if (window.Elements.azureApiKeyInput) {
                     window.AppState.apiSettings.azureApiKey = window.Elements.azureApiKeyInput.value.trim();
                 }
 
-                // モデルごとのエンドポイントを設定
-                const endpointIds = {
-                    'gpt-4o-mini': 'azureEndpointGpt4oMini',
-                    'gpt-4o': 'azureEndpointGpt4o',
-                    'gpt-5-mini': 'azureEndpointGpt5Mini',
-                    'gpt-5': 'azureEndpointGpt5',
-                    'gpt-5.2': 'azureEndpointGpt52'
-                };
-
-                // 各エンドポイントを保存（window.ElementsまたはUICacheから取得）
+                // モデルごとのエンドポイントを保存
+                // 入力欄は ApiSettingsModal が CONFIG.MODELS.OPENAI から生成するため、
+                // ここではモデル名を data-model 属性から読む（モデル一覧の増減に自動追従する）
                 window.AppState.apiSettings.azureEndpoints = {};
-                Object.entries(endpointIds).forEach(([model, elementId]) => {
-                    const element = window.Elements[elementId] || UICache.getInstance.get(elementId);
-                    if (element && element.value !== undefined) {
-                        window.AppState.apiSettings.azureEndpoints[model] = element.value.trim();
-                    }
+                document.querySelectorAll('#azureModelEndpoints input[data-model]').forEach(element => {
+                    const model = element.dataset.model;
+                    if (!model || element.value === undefined) return;
+                    window.AppState.apiSettings.azureEndpoints[model] = element.value.trim();
                 });
 
-                // Azure埋め込みエンドポイントを保存（RAG用）
-                const embeddingEndpoint = document.getElementById('azureEndpointEmbedding');
-                if (embeddingEndpoint && embeddingEndpoint.value !== undefined) {
-                    Storage.getInstance.setItem(
-                        window.CONFIG.STORAGE.KEYS.AZURE_EMBEDDING_ENDPOINT,
-                        embeddingEndpoint.value.trim()
-                    );
-                }
             } else {
                 window.AppState.apiSettings.apiType = 'openai';
                 
@@ -115,11 +118,6 @@ class ModalHandlers {
         // ローカルストレージに保存
         // @ts-ignore - Storageはカスタムクラス（型定義あり）
         Storage.getInstance.saveApiSettings(window.AppState.apiSettings);
-
-        // 埋め込みAPIのモードを再検出（APIキー変更に対応）
-        if (typeof EmbeddingAPI !== 'undefined') {
-            EmbeddingAPI.getInstance.refreshMode();
-        }
 
         UI.getInstance.Core.Notification.show('API設定を保存しました', 'success');
         ApiSettingsModal.getInstance.hideApiKeyModal();
@@ -149,86 +147,8 @@ class ModalHandlers {
         RenameChatModal.getInstance.hideRenameChatModal();
     }
     
-    /**
-     * 新しいシステムプロンプトを保存します
-     */
-    saveNewSystemPrompt() {
-        const systemPromptName = UICache.getInstance.get('newSystemPromptName').value.trim();
-        const templateCategory = UICache.getInstance.get('newTemplateCategory').value.trim();
-        const systemPrompt = UICache.getInstance.get('systemPromptInput').value.trim();
-        
-        if (!systemPromptName || !systemPrompt) {
-            UI.getInstance.Core.Notification.show('システムプロンプト名と内容を入力してください', 'error');
-            return;
-        }
-
-        if (!templateCategory) {
-            UI.getInstance.Core.Notification.show('カテゴリを入力してください', 'error');
-            return;
-        }
-
-        const templates = window.AppState.systemPromptTemplates;
-        
-        // // 重複チェック
-        // if (templates[systemPromptName]) {
-        //     UI.getInstance.Core.Notification.show('同じ名前のシステムプロンプトが既に存在します', 'error');
-        //     return;
-        // }
-        
-        // システムプロンプトを保存
-        templates[systemPromptName] = {
-            content: systemPrompt,
-            category: templateCategory,
-            description: '',
-            tags: []
-        };
-        
-        // @ts-ignore - Storageはカスタムクラス（型定義あり）
-        
-        Storage.getInstance.saveSystemPromptTemplates(templates);
-        
-        // 入力をクリア
-        UICache.getInstance.get('newSystemPromptName').value = '';
-        UICache.getInstance.get('newTemplateCategory').value = '';
-        
-        // システムプロンプト一覧を更新
-        SystemPromptModal.getInstance.updateList(templates);
-        UI.getInstance.Core.Notification.show('システムプロンプトを保存しました', 'success');
-    }
     
-    /**
-     * システムプロンプト選択時のハンドラー
-     * @param {string} promptName - プロンプト名
-     */
-    onTemplateSelect(promptName) {
-        if (!window.Elements.systemPromptInput) return;
-        
-        const prompt = window.AppState.systemPromptTemplates[promptName];
-        if (prompt) {
-            window.Elements.systemPromptInput.value = prompt.content;
-            window.Elements.systemPromptInput.dispatchEvent(new Event('input'));
-        }
-    }
     
-    /**
-     * システムプロンプト削除時のハンドラー
-     * @param {string} promptName - プロンプト名
-     */
-    onTemplateDelete(promptName) {
-        if (confirm(`システムプロンプト "${promptName}" を削除してもよろしいですか？`)) {
-            delete window.AppState.systemPromptTemplates[promptName];
-            // @ts-ignore - Storageはカスタムクラス（型定義あり）
-            Storage.getInstance.saveSystemPromptTemplates(window.AppState.systemPromptTemplates);
-            
-            // システムプロンプト一覧を更新
-            SystemPromptModal.getInstance.updateList(
-                window.AppState.systemPromptTemplates, 
-                this.onTemplateSelect.bind(this), 
-                this.onTemplateDelete.bind(this)
-            );
-            UI.getInstance.Core.Notification.show('システムプロンプトを削除しました', 'success');
-        }
-    }
 
     /**
      * Claude Web検索設定を取得

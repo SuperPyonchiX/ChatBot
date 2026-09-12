@@ -120,7 +120,7 @@
 /* チャットコンテナレイアウト */
 .chat-container {
     flex: 1;
-    background-color: var(--background-secondary);
+    background-color: var(--background-primary);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -144,16 +144,17 @@
 .chat-header {
     background: var(--background-primary);
     color: var(--text-primary);
-    padding: var(--spacing-md) var(--spacing-lg);
+    height: var(--header-height);
+    flex: 0 0 var(--header-height);
+    padding: 0 var(--spacing-lg);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border-color);
     position: relative;
 }
 
 .chat-header h1 {
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-lg);
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -180,48 +181,61 @@
     position: relative;
 }
 
-/* レスポンシブデザイン */
+/* レスポンシブデザイン
+   768px 以下はサイドバーをドロワーに一本化する。
+   以前は 577〜768px でサイドバーが画面上部に最大 200px の帯として
+   居座り、縦の狭い画面でチャット領域を圧迫していた */
 @media (max-width: 768px) {
-    .app-container {
-        flex-direction: column;
+    /* 左上のトグルボタンと重ならないようヘッダーを空ける */
+    .chat-header {
+        padding-left: 56px;
     }
-    
-    .sidebar {
-        width: 100%;
-        height: auto;
-        max-height: 200px;
-    }
-    
+
     .chat-messages {
-        padding: var(--spacing-sm);
+        padding-bottom: var(--spacing-md);
     }
-    
+
     .message {
-        max-width: 90%;
+        padding-left: var(--spacing-md);
+        padding-right: var(--spacing-md);
+    }
+
+    .chat-input-container {
+        padding-left: var(--spacing-md);
+        padding-right: var(--spacing-md);
     }
 
     .modal-content {
         width: 95%;
         padding: var(--spacing-md);
     }
-}
 
-/* 小さい画面でのサイドバー切り替え */
-@media (max-width: 576px) {
     .sidebar {
         position: absolute;
         top: 0;
         left: 0;
         width: 80%;
+        max-width: 320px;
         height: 100%;
         z-index: 100;
         transform: translateX(-100%);
         transition: transform var(--transition-normal) ease;
     }
-    
+
     .sidebar.show {
         transform: translateX(0);
     }
+
+    /* 狭い画面ではトグルを常時表示にする（ホバーで出す方式は使えない）。
+       サイドバーが開いていても位置は動かさない */
+    .sidebar-toggle {
+        opacity: 1;
+    }
+
+    .sidebar-toggle.sidebar-visible {
+        transform: none;
+    }
+
     
     .sidebar-toggle {
         position: absolute;
@@ -270,13 +284,16 @@
     }
 
     .chat-messages {
-        padding: var(--spacing-xs);
-        gap: var(--spacing-sm);
+        padding: var(--spacing-xs) 0 var(--spacing-md);
     }
 
     .message {
-        max-width: 95%;
-        padding: var(--spacing-sm);
+        padding-left: var(--spacing-sm);
+        padding-right: var(--spacing-sm);
+    }
+
+    .message.user .message-body {
+        max-width: 85%;
     }
 
     /* モーダル最適化 */
@@ -298,15 +315,7 @@
     }
 
     /* 設定メニュー最適化 */
-    .settings-menu {
-        min-width: 180px;
-        right: -8px;
-    }
 
-    .settings-menu button {
-        padding: var(--spacing-sm) var(--spacing-md);
-        font-size: var(--font-size-sm);
-    }
 }
 
 /* タッチデバイス向け最適化 */

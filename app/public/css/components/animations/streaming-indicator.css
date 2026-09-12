@@ -1,0 +1,115 @@
+/* 待機 → 本文の切り替え。寸法と時間は CONFIG.UI.STREAMING から継承する。 */
+.message.streaming .message-content { position: relative; }
+
+.stream-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-height: 24px;
+    opacity: 1;
+    transition: opacity var(--stream-exit-duration) ease-out;
+    pointer-events: none;
+}
+
+.stream-indicator[data-state="hidden"] {
+    display: none;
+}
+
+.stream-indicator[data-state="leaving"] {
+    position: absolute;
+    inset-inline-start: 0;
+    opacity: 0;
+}
+
+/* 固定サイズの軌道に、明るい弧だけを回す。 */
+.stream-ring {
+    width: var(--stream-ring-size);
+    height: var(--stream-ring-size);
+    flex-shrink: 0;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--text-primary);
+    border-right-color: var(--text-secondary);
+    animation: streamRingTurn var(--stream-ring-duration) linear infinite;
+}
+
+@keyframes streamRingTurn {
+    to { transform: rotate(1turn); }
+}
+
+/* ===== シマーテキスト =====
+   グラデーションを文字の形に切り抜き、背景位置を動かして光沢を流す。
+   agent.css の shimmer は要素に重ねるオーバーレイ方式で用途が違うため、
+   名前も実装も分けている */
+.stream-label {
+    font-size: var(--font-size-md);
+    line-height: 1.5;
+    background-image: linear-gradient(
+        90deg,
+        var(--stream-shimmer-base) 0%,
+        var(--stream-shimmer-base) 40%,
+        var(--stream-shimmer-highlight) 50%,
+        var(--stream-shimmer-base) 60%,
+        var(--stream-shimmer-base) 100%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: streamShimmer var(--stream-shimmer-duration) linear infinite;
+    overflow-wrap: anywhere;
+    min-width: 0;
+}
+
+@keyframes streamShimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -20% 0; }
+}
+
+/* ===== ストリーミング中のトークン（Phase 3 で使う） ===== */
+@keyframes streamTokenIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.stream-token {
+    animation: streamTokenIn var(--stream-token-fade-duration) ease-out both;
+}
+
+.message.message-enter {
+    animation: streamMessageIn var(--stream-token-fade-duration) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes streamMessageIn {
+    from { opacity: 0; transform: translateY(var(--stream-enter-distance)); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ハイコントラストでは背景切り抜きが効かず文字が消えるため単色に戻す */
+@media (forced-colors: active) {
+    .stream-label {
+        background: none;
+        color: CanvasText;
+        animation: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .stream-ring {
+        animation: none;
+        transform: none;
+        opacity: 0.7;
+    }
+
+    .stream-label {
+        background: none;
+        color: var(--text-secondary);
+        animation: none;
+    }
+
+    .stream-token, .message.message-enter {
+        animation: none;
+    }
+    .stream-indicator { transition: none; }
+}

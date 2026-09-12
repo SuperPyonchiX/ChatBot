@@ -1,0 +1,13 @@
+/* Monaco が読み込めないときのフォールバックエディタ */
+.simple-editor-fallback textarea {
+    width: 100%;
+    height: var(--form-max-height);
+    padding: var(--form-input-padding);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    background-color: var(--code-bg);
+    color: var(--text-primary);
+    font-family: var(--font-family-code);
+    font-size: 14px;
+    resize: none;
+}
